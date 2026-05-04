@@ -6,12 +6,11 @@
 # Cloudflare resolves them here. When a new version ships, edit ONLY
 # the lines below — never the HTML.
 
-# === Windows (current beta) ===
-# When v0.2.2-beta ships with the same electron-builder artifactName
-# template, update the filename in this line to match.
-# Future cleanup: change electron-builder artifactName to a version-less
-# stable filename so this line never needs updating.
-/download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-0.2.4-beta.exe   302
+# === Windows ===
+# Stable filename — IG's electron-builder artifactName is now version-less
+# (set in electron/package.json), so this URL never needs updating per
+# release. New releases just become the new "latest" on GitHub Releases.
+/download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
 
 # === Mac (paused, 4-7 weeks) ===
 # When the .dmg ships, change this line to:
