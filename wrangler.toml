@@ -1,0 +1,19 @@
+# Cloudflare Workers Static Assets configuration.
+#
+# Cloudflare unified Workers + Pages in 2025; for static sites the modern
+# pattern is "Workers Static Assets" — same edge network, same custom-domain
+# story, same _redirects + _headers support, just deployed via `wrangler deploy`
+# instead of the old Pages git-integration UI.
+#
+# Docs: https://developers.cloudflare.com/workers/static-assets/
+
+name = "freelance-easy-site"
+compatibility_date = "2026-05-04"
+
+[assets]
+# All static files live at the repo root — index.html, styles.css, script.js,
+# privacy.html, terms.html, 404.html, assets/, _redirects, _headers, etc.
+directory = "./"
+
+# When a request doesn't match an asset, serve our branded 404 page.
+not_found_handling = "404-page"
