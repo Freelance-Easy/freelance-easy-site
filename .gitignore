@@ -1,0 +1,18 @@
+# Local backups (Claude Design originals — kept for instant restore)
+.backup-claude-design/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Node (in case a framework is added later)
+node_modules/
+dist/
+.cache/
+
+# Dependency lock files left untracked unless we ever add a framework
+# (mirrors the InvoiceGenerator/electron convention)
+package-lock.json

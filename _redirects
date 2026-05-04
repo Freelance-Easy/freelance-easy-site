@@ -1,0 +1,30 @@
+# Cloudflare Pages redirects
+# Format: <source> <destination> <status>
+#
+# This file is the SINGLE source of truth for download URLs.
+# index.html buttons point at /download/win and /download/mac (relative);
+# Cloudflare resolves them here. When a new version ships, edit ONLY
+# the lines below — never the HTML.
+
+# === Windows (current beta) ===
+# When v0.2.2-beta ships with the same electron-builder artifactName
+# template, update the filename in this line to match.
+# Future cleanup: change electron-builder artifactName to a version-less
+# stable filename so this line never needs updating.
+/download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-0.2.1-beta.exe   302
+
+# === Mac (paused, 4-7 weeks) ===
+# When the .dmg ships, change this line to:
+#   /download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-<version>-arm64.dmg   302
+# AND swap the disabled <button data-platform="mac"> in index.html to:
+#   <a class="btn btn-secondary" href="/download/mac" data-platform="mac">
+/download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302
+
+# === General ===
+/download       https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302
+/releases       https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302
+
+# Pretty URLs for the placeholder pages (Cloudflare Pages serves /privacy.html
+# automatically, but this catches /privacy/ with a trailing slash).
+/privacy/   /privacy   301
+/terms/     /terms     301
