@@ -11,7 +11,7 @@
 # template, update the filename in this line to match.
 # Future cleanup: change electron-builder artifactName to a version-less
 # stable filename so this line never needs updating.
-/download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-0.2.3-beta.exe   302
+/download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-0.2.4-beta.exe   302
 
 # === Mac (paused, 4-7 weeks) ===
 # When the .dmg ships, change this line to:
