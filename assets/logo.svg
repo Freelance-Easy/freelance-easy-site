@@ -1,6 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Freelance Easy">
-  <rect width="64" height="64" rx="14" fill="#0d1117"></rect>
-  <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="rgba(255,255,255,0.08)"></rect>
-  <text x="32" y="44" text-anchor="middle" font-family="&#39;Playfair Display&#39;, Georgia, serif" font-style="italic" font-weight="400" font-size="34" fill="#f2f3f6">F</text>
-  <circle cx="48" cy="46" r="3" fill="#2c7a7b"></circle>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Freelance Easy">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2028"/>
+      <stop offset="1" stop-color="#0a0d12"/>
+    </linearGradient>
+  </defs>
+  <rect x="80" y="80" width="864" height="864" rx="180" ry="180" fill="url(#tile)"/>
+  <rect x="80" y="80" width="864" height="864" rx="180" ry="180" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+  <text x="200" y="730" font-family="'Arial Black', 'Helvetica Black', system-ui, sans-serif" font-weight="900" font-size="620" fill="#7eccaa" letter-spacing="-30">F</text>
+  <text x="500" y="730" font-family="'Arial Black', 'Helvetica Black', system-ui, sans-serif" font-weight="900" font-size="620" fill="#f2f3f6" letter-spacing="-30">E</text>
 </svg>

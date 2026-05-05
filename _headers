@@ -20,3 +20,7 @@
   Cache-Control: public, max-age=3600, must-revalidate
 /script.js
   Cache-Control: public, max-age=3600, must-revalidate
+
+# Short-cache favicon so logo updates ship within a day
+/favicon.ico
+  Cache-Control: public, max-age=86400, must-revalidate

@@ -33,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 SITE_ROOT = HERE.parent
 ASSETS = SITE_ROOT / "assets"
 OUT_PATH = ASSETS / "og-image.png"
+BRAND_TILE = ASSETS / "logo.png"
 
 # Use the bundled fonts from the InvoiceGenerator project (canonical brand
 # fonts: Montserrat, Lato, Playfair Display). They live alongside this site
@@ -100,9 +101,9 @@ def _draw_wordmark(draw: ImageDraw.ImageDraw) -> None:
 
 
 def _draw_beta_pill(draw: ImageDraw.ImageDraw) -> None:
-    """Small Closed Beta v0.2.1 pill below the wordmark."""
+    """Small Closed Beta v0.2.x pill below the wordmark."""
     font = _load_font(F_LATO_BOLD, 18)
-    text = "Closed beta · v0.2.1"
+    text = "Closed beta · v0.2.9"
     x, y = 80, 150
     pad_x, pad_y = 14, 7
     bbox = draw.textbbox((x, y), text, font=font)
@@ -152,16 +153,19 @@ def _draw_bottom_brand(draw: ImageDraw.ImageDraw) -> None:
     draw.text((x, y), text, font=font, fill=TEXT_DIM)
 
 
-def _draw_corner_dots(draw: ImageDraw.ImageDraw) -> None:
-    """Three small dots in the top-right — subtle macOS window-traffic-light
-    homage that ties to the desktop-app positioning without being too cute."""
-    cx_start = W - 80 - 3 * 14 - 2 * 8
-    cy = 96
-    r = 7
-    colors = [(220, 90, 90), (220, 175, 80), (110, 200, 110)]
-    for i, c in enumerate(colors):
-        cx = cx_start + i * (2 * r + 8)
-        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=c)
+def _paste_brand_tile(img: Image.Image) -> None:
+    """Brand FE tile in the top-right — replaces the prior traffic-light dots.
+
+    Pulls from BRAND_TILE (the canonical 256x256 logo.png) and resizes for
+    the OG card. Sized to feel like a logo lockup with the wordmark."""
+    if not BRAND_TILE.exists():
+        return  # silently skip if missing — keeps script resilient in CI
+    tile = Image.open(BRAND_TILE).convert("RGBA")
+    target = 132  # px on long edge
+    tile = tile.resize((target, target), Image.LANCZOS)
+    x = W - 80 - target
+    y = 60
+    img.paste(tile, (x, y), tile)
 
 
 def main() -> None:
@@ -172,12 +176,12 @@ def main() -> None:
     _draw_accent_bar(draw)
     _draw_wordmark(draw)
     _draw_beta_pill(draw)
-    _draw_corner_dots(draw)
+    _paste_brand_tile(img)
     _draw_headline(draw)
     _draw_subtitle(draw)
     _draw_bottom_brand(draw)
 
-    ASSETS.mkdir(parents=True, exist_ok=True)
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     img.save(OUT_PATH, "PNG", optimize=True)
     print(f"Wrote {OUT_PATH} ({OUT_PATH.stat().st_size // 1024} KB)")
 
