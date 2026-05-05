@@ -33,7 +33,7 @@ Then `http://localhost:8000`. No watch step needed; refresh the browser after ed
 
 ## URLs hardcoded (paste actual values)
 
-- **Windows download:** `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-0.2.1-beta.exe`
+- **Windows download:** `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe` (stable filename — the version-suffixed URL pattern was retired in v0.2.5; in-app `/download/win` is the canonical entry point in `index.html`)
 - **Mac placeholder approach:** `<button disabled aria-disabled="true">` with label "macOS · Coming soon · 4–7 weeks". Not a link — clicks do nothing. Visually a muted secondary button. When Mac ships, swap the `<button>` for an `<a href="...dmg">` and update `_redirects`.
 - **GitHub releases link:** `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases`
 - **Footer email:** `mailto:support@freelance-easy.com`
@@ -47,19 +47,19 @@ Then `http://localhost:8000`. No watch step needed; refresh the browser after ed
 - **Contact email:** `support@freelance-easy.com` ✅ (no personal Gmail anywhere)
 - **Privacy email:** `privacy@freelance-easy.com` ✅
 - **Color palette match:** `#080a0f` (bg-0), `#0d1117` (bg-1), `#2c7a7b` (accent), `#1a5456` (accent-strong) ✅ — declared as CSS custom properties at `:root` in `styles.css`.
-- **Logo:** I designed a different mark — **flagging.** Current mark is an inline SVG/CSS "F" tile with a serif-italic "Easy" wordmark to match the in-app brand voice. **Swap in the canonical F+E mark from the app's icon set when ready** (`assets/logo.svg` is the current placeholder; the brand-mark span in `index.html` and the footer also need updating).
+- **Logo:** ✅ Swapped to the canonical FE-tile in v0.2.9-beta refresh (2026-05-05). `assets/logo.png` + `assets/logo.svg` + `favicon.ico` all carry the new mark; brand-mark spans in `index.html` header + footer reference `assets/logo.png` directly.
 - **Fonts:** Montserrat (logo + headings), Lato (body), Playfair Display (italic accents). All canonical. ✅ Loaded via Google Fonts. _Note: there are also `Inter-Variable-*.woff2` and `PlayfairDisplay-*.ttf` files in `assets/fonts/` from an earlier iteration — they are currently unreferenced and can be deleted, or kept as a self-host fallback._
 - **"7-day free trial" mentioned:** ✅ in hero CTA meta line ("7-day free trial · no card required") just below the Windows download button.
 - **Local-first leads the hero:** ✅ Hero lede now opens with "**Freelance Easy** is local-first invoicing for freelancers. Your invoices, clients, and PDFs live on your own machine — not in someone else's cloud." and continues into the retainer angle.
 - **Retainer angle:** ✅ Hero copy explicitly names "monthly retainers and ongoing client relationships." The "Recurring + reminders" feature card reinforces with "Set a monthly retainer once; it sends itself on the day you choose."
-- **Beta/version pill:** ✅ "Closed beta · v0.2.1" pill at top of hero.
+- **Beta/version pill:** ✅ "Closed beta · v0.2.9" pill at top of hero (bumped 2026-05-05 with the logo refresh).
 - **No code-signing claims:** ✅ Audited — no "verified publisher", "signed", or trust-badge language anywhere.
 - **Mac status:** ✅ Disabled button labeled "Coming soon · 4–7 weeks" (no broken link).
 
 ## Known TODOs / placeholders
 
-1. **Logo** — current F+E mark is my placeholder design. Swap in the canonical mark from the app (Pillow + Montserrat-Bold mark, exists at 16/24/32/48/64/128/256). Touch points: `assets/logo.svg`, the `.brand-mark` span in `index.html` header + footer, `favicon.ico`.
-2. **OG image** — `assets/og-image.png` is a generated text card. Replace with a real screenshot composite when convenient.
+1. ~~**Logo** — current F+E mark is my placeholder design. Swap in the canonical mark from the app~~ **DONE 2026-05-05** in v0.2.9-beta. New tile generated from a 1024×1024 source via tight alpha-bbox crop (~84% canvas fill) and downsized to 16/24/32/48/64/128/256 for the .ico, plus a 256 PNG and a hand-authored SVG. OG card was also updated to composite the new tile in the top-right.
+2. **OG image** — ✅ Now composites the new FE-tile via `_paste_brand_tile()` in `scripts/generate-og-image.py`. The bg gradient + headline + wordmark composition is unchanged. Replace with a real screenshot composite later if a richer card is wanted.
 3. **Privacy & Terms copy** — both pages have honest "real policy at public launch" placeholders. Real copy is pending.
 4. **Mailing address** — none on the page. Canonical guidance is to leave it off until public launch (full Nashville address is being added then).
 5. **Mac DMG wiring** — when Mac build ships, two changes:
