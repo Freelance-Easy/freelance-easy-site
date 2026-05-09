@@ -500,7 +500,9 @@ button {
 /* ---------- Dashboard mock (HTML/CSS replica of app) ---------- */
 .dash {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  /* minmax(0, 1fr) prevents grid blow-out from min-content children
+     (notably .inv-table, whose 5 columns total ~352px natural). */
+  grid-template-columns: 200px minmax(0, 1fr);
   min-height: 460px;
   background: var(--bg-1);
 }
@@ -671,7 +673,8 @@ button {
 
 .dash-row {
   display: grid;
-  grid-template-columns: 1.55fr 1fr;
+  /* minmax(0, ...) prevents min-content blow-out from chart axis + attn rows. */
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -1274,7 +1277,7 @@ section + section {
 @media (max-width: 760px) {
   /* Phone: collapse the dashboard mock so the chrome stays believable. */
   .dash {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     min-height: 0;
   }
   .dash-side {
@@ -1287,6 +1290,10 @@ section + section {
   .dash-greet h2 {
     font-size: 18px;
   }
+  /* Pill competes with the greeting for ~370px of content; greeting wins. */
+  .dash-pill {
+    display: none;
+  }
   .kpi-row {
     grid-template-columns: 1fr 1fr;
   }
@@ -1297,7 +1304,21 @@ section + section {
     display: none;
   }
   .dash-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Drop the Date column + tighten cell padding so the 5-col table fits. */
+  .inv-table th:nth-child(3),
+  .inv-table td:nth-child(3) {
+    display: none;
+  }
+  .inv-table th,
+  .inv-table td {
+    padding: 6px 4px;
+  }
+  /* The 12-month axis natural-sums to ~246 with 0.1em tracking — that's
+     32px too wide for the panel inner at 320. Drop tracking on mobile. */
+  .chart-axis {
+    letter-spacing: 0;
   }
 
   .nav a:not(.theme-toggle) {
@@ -1322,6 +1343,15 @@ section + section {
   }
   .site-footer .shell {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Sub-iPhone-SE widths: also drop the Status column, otherwise the
+     5-col table still overflows its panel after Date is hidden. */
+  .inv-table th:nth-child(5),
+  .inv-table td:nth-child(5) {
+    display: none;
   }
 }
 
