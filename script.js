@@ -50,33 +50,28 @@
   }
 
   function reorderCtas() {
-    // Each .cta-row contains [data-platform="win"] (real download) and
-    // [data-platform="mac"] (a disabled "Coming soon" button — Mac build is
-    // paused, 4-7 weeks). Mac users still see Windows as the primary CTA;
-    // we just keep Mac visible so they know support is coming.
     var os = detectPlatform();
     document.querySelectorAll(".cta-row").forEach(function (row) {
       var win = row.querySelector('[data-platform="win"]');
       var mac = row.querySelector('[data-platform="mac"]');
-      if (!win) return;
+      if (!win || !mac) return;
 
-      // Windows is always the active primary while Mac is paused.
-      win.classList.remove("btn-secondary");
-      win.classList.add("btn-primary");
-      if (win !== row.firstElementChild) {
-        row.insertBefore(win, row.firstElementChild);
+      var primary = os === "mac" ? mac : win;
+      var secondary = primary === win ? mac : win;
+
+      primary.classList.remove("btn-secondary");
+      primary.classList.add("btn-primary");
+      secondary.classList.remove("btn-primary");
+      secondary.classList.add("btn-secondary");
+
+      if (primary !== row.firstElementChild) {
+        row.insertBefore(primary, row.firstElementChild);
       }
-
-      // On Mac, surface the Mac "coming soon" button right after Windows
-      // so the user immediately sees their platform is acknowledged.
-      if (os === "mac" && mac) {
-        if (mac.previousElementSibling !== win) {
-          row.insertBefore(mac, win.nextSibling);
-        }
+      if (secondary.previousElementSibling !== primary) {
+        row.insertBefore(secondary, primary.nextSibling);
       }
     });
 
-    // Set body data attr so CSS / future copy can react if needed.
     document.body.setAttribute("data-os", os);
   }
 

@@ -350,6 +350,11 @@ button {
     transform 0.18s var(--ease-swift);
   white-space: nowrap;
 }
+
+.cta-row .btn {
+  min-width: 240px;
+  justify-content: flex-start;
+}
 .btn:active {
   transform: translateY(1px);
 }
