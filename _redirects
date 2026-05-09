@@ -12,12 +12,13 @@
 # release. New releases just become the new "latest" on GitHub Releases.
 /download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
 
-# === Mac (paused, 4-7 weeks) ===
-# When the .dmg ships, change this line to:
-#   /download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-<version>-arm64.dmg   302
-# AND swap the disabled <button data-platform="mac"> in index.html to:
-#   <a class="btn btn-secondary" href="/download/mac" data-platform="mac">
-/download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302
+# === Mac ===
+# Apple Silicon arm64 .dmg, signed + notarized via Apple Developer Program
+# (approved 2026-05-08, first DMG shipped v0.2.13-beta on 2026-05-09).
+# Stable filename via electron/package.json artifactName "${productName}.${ext}"
+# — same convention as Windows. URL never moves per release; new versions
+# become the new "latest" on GitHub Releases.
+/download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg   302
 
 # === General ===
 /download       https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302

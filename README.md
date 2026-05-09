@@ -53,19 +53,19 @@ freelance-easy-site/
 
 ## Hardcoded URLs
 
-- **Windows download** — `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup-0.2.1-beta.exe`
-- **Mac download** — disabled "Coming soon" button (Mac build paused, 4–7 weeks)
+- **Windows download** — `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe` (stable filename via electron-builder `artifactName`; never moves per release)
+- **Mac download** — `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg` (Apple Silicon arm64, signed + notarized; same stable-filename convention as Windows)
 - **All releases** — `https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases`
 - **Contact** — `mailto:support@freelance-easy.com`
 - **Privacy email** — `mailto:privacy@freelance-easy.com`
-- **Pretty redirect URLs** — `/download/win` (Win installer), `/download/mac` (→ releases page), `/download`, `/releases` (see `_redirects`)
+- **Pretty redirect URLs** — `/download/win`, `/download/mac`, `/download`, `/releases` (see `_redirects`)
 
 ## Things to wire up later
 
 - `<!-- ANALYTICS: insert tracking script here when ready -->` in `<head>` of every HTML file — drop Plausible or Cloudflare Web Analytics here.
 - Real privacy & terms copy — currently honest placeholders.
 - Real OG image — current is a generated text card; replace with a richer screenshot when one is ready (`assets/og-image.png`, 1200×630).
-- **Mac DMG link** — when Mac build comes back online (4–7 weeks), swap the disabled `<button data-platform="mac">` for an `<a>` with the real DMG URL, and update `_redirects` `/download/mac` to point at the installer.
+- **Universal Mac binary** — current Mac build is arm64-only (Apple Silicon). When Intel Mac support becomes a need, expand the electron-builder `mac.target.arch` from `["arm64"]` to `["universal"]` in `electron/package.json` of the InvoiceGenerator repo, plus the corresponding PyInstaller universal2 merge step. URL stays the same.
 
 ## Browser support
 
