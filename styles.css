@@ -1367,3 +1367,455 @@ section + section {
     scroll-behavior: auto;
   }
 }
+
+/* =============================================================
+   v2 landing (2026-09) — additions. Everything above is the v1 system;
+   the dashboard-mock rules (.dash*, .kpi*, .panel*, .inv-table, .chart*)
+   are no longer used by index.html and can be removed in a later cleanup.
+   ============================================================= */
+
+/* ---------- Download buttons: label on top, detail underneath ---------- */
+.btn .label .top {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: inherit;
+  letter-spacing: -0.005em;
+  text-transform: none;
+}
+.btn .label .bot {
+  font-size: 11.5px;
+  font-weight: 400;
+  opacity: 0.78;
+  letter-spacing: 0.01em;
+  margin-top: 3px;
+}
+.btn-secondary .label .top {
+  color: var(--text-0);
+}
+.btn-secondary .label .bot {
+  color: var(--text-2);
+  opacity: 1;
+}
+.cta-row .btn {
+  min-width: 0;
+  white-space: normal;
+  text-align: left;
+}
+
+/* ---------- OS-aware notes ---------- */
+.win-note,
+.intel-note {
+  display: none;
+  margin-top: 14px;
+  max-width: 60ch;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--due);
+  background: var(--bg-2);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  color: var(--text-1);
+  line-height: 1.5;
+}
+.win-note strong {
+  color: var(--text-0);
+  font-weight: 600;
+}
+.win-note em {
+  font-style: normal;
+  color: var(--text-0);
+  font-weight: 500;
+}
+body[data-os="win"] .win-note {
+  display: block;
+}
+.intel-note {
+  border-left-color: var(--accent);
+}
+.intel-note:not([hidden]) {
+  display: block;
+}
+.intel-note a,
+.intel-line a {
+  color: var(--text-1);
+  border-bottom: 1px solid var(--line-3);
+}
+.intel-note a:hover,
+.intel-line a:hover {
+  color: var(--text-0);
+  border-color: var(--text-2);
+}
+.intel-line {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+body[data-os="win"] .intel-line,
+body[data-os="mobile"] .intel-line {
+  display: none;
+}
+
+/* ---------- Phones: swap the download row for "send to my computer" ---------- */
+.share-row {
+  margin-top: 36px;
+}
+body[data-os="mobile"] .share-row {
+  display: block;
+}
+body[data-os="mobile"] .hero .cta-row {
+  display: none;
+}
+.share-row .btn {
+  width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+.share-sub {
+  margin-top: 12px;
+  font-size: 13.5px;
+  color: var(--text-2);
+  max-width: 44ch;
+}
+
+/* ---------- Hero screenshot ---------- */
+.shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1440 / 900;
+  background: var(--bg-1);
+}
+.shot-light {
+  display: none;
+}
+[data-theme="light"] .shot-dark {
+  display: none;
+}
+[data-theme="light"] .shot-light {
+  display: block;
+}
+
+/* ---------- How it works ---------- */
+.how {
+  border-top: 1px solid var(--line-1);
+}
+.steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 40px;
+}
+.step {
+  position: relative;
+  padding: 26px 24px 24px;
+  border: 1px solid var(--line-1);
+  background: var(--bg-1);
+  border-radius: var(--r-lg);
+}
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+[data-theme="light"] .step-num {
+  background: var(--accent-soft);
+}
+.step h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--text-0);
+}
+.step p {
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* ---------- Straight answers ---------- */
+.honest {
+  border-top: 1px solid var(--line-1);
+}
+.qa {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 28px;
+  margin-top: 40px;
+}
+.qa-item {
+  padding: 20px 22px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-lg);
+  background: var(--bg-1);
+}
+.qa-item dt {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15.5px;
+  letter-spacing: -0.01em;
+  color: var(--text-0);
+}
+.qa-item dd {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* ---------- Pricing v2 ---------- */
+.pricing-v2 {
+  border-top: 1px solid var(--line-1);
+}
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 40px;
+  align-items: stretch;
+}
+.plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 24px 24px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  background: var(--bg-1);
+}
+.plan-featured {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 18px 50px -24px rgba(44, 122, 123, 0.55);
+}
+.plan-flag {
+  position: absolute;
+  top: -12px;
+  left: 22px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.plan-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.plan-price {
+  margin-top: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.plan-price .amt {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text-0);
+}
+.plan-featured .plan-price .amt {
+  color: var(--accent);
+}
+.plan-price .per {
+  font-size: 14px;
+  color: var(--text-3);
+}
+.plan-sub {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--text-1);
+  min-height: 2.6em;
+}
+.plan-list {
+  list-style: none;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-1);
+  display: grid;
+  gap: 9px;
+}
+.plan-list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.plan-list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 9px;
+  height: 5px;
+  border-left: 1.6px solid var(--accent);
+  border-bottom: 1.6px solid var(--accent);
+  transform: rotate(-45deg);
+}
+.plans-foot {
+  margin-top: 22px;
+  font-size: 13.5px;
+  color: var(--text-3);
+  max-width: 70ch;
+}
+
+/* ---------- Footer version line ---------- */
+.version-line {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.version-line .ver {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+.version-line a {
+  color: var(--text-2);
+  border-bottom: 1px solid var(--line-2);
+}
+
+/* ---------- Campaign pages (mac-audio, audio) ---------- */
+.audience-note {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--text-2);
+  max-width: 60ch;
+}
+.audience-note strong {
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+/* ---------- Responsive additions ---------- */
+@media (max-width: 980px) {
+  .steps {
+    grid-template-columns: 1fr;
+  }
+  .plans {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+  }
+  .plan-featured {
+    order: -1;
+  }
+}
+@media (max-width: 760px) {
+  .qa {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Legal pages (real content, 2026-09) ---------- */
+.doc .updated {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-bottom: 28px;
+}
+.doc .tldr {
+  padding: 16px 18px;
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--accent);
+  background: var(--bg-2);
+  border-radius: var(--r-md);
+  margin-bottom: 28px;
+}
+.doc .tldr p {
+  margin: 0;
+}
+.doc h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 36px 0 10px;
+  color: var(--text-0);
+}
+.doc h3 {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+  margin: 22px 0 8px;
+  color: var(--text-0);
+}
+.doc ul,
+.doc ol {
+  margin: 0 0 16px 22px;
+  color: var(--text-1);
+  line-height: 1.6;
+}
+.doc li {
+  margin-bottom: 6px;
+}
+.doc a {
+  color: var(--accent);
+}
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 20px;
+  font-size: 14.5px;
+}
+.doc th,
+.doc td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line-1);
+  color: var(--text-1);
+}
+.doc th {
+  color: var(--text-2);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.doc .placeholder {
+  color: var(--due);
+  font-weight: 500;
+}
+.doc details {
+  margin: 16px 0 24px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  background: var(--bg-1);
+}
+.doc summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-0);
+}
+
+/* Narrow screens: let the meta line wrap and drop its separator dot. */
+@media (max-width: 640px) {
+  .cta-meta {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+  .cta-meta > span[aria-hidden] {
+    display: none;
+  }
+}

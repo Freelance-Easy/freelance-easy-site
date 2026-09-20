@@ -5,7 +5,7 @@ Output: assets/og-image.png at 1200×630, the standard OG/Twitter Card size.
 Composition:
     Top-left:    small wordmark "FREELANCE EASY" + accent bar
     Top-left:    "Closed beta · v0.2.1" pill below the wordmark
-    Center-left: Playfair Display Italic headline "Invoicing should be"
+    Center-left: Playfair Display headline "Make your first invoice"
                  / "the easy part."
     Below:       Lato Regular subtitle in muted color
     Bottom-right: small accent — three-dot indicator + tiny brand mark
@@ -38,7 +38,16 @@ BRAND_TILE = ASSETS / "logo.png"
 # Use the bundled fonts from the InvoiceGenerator project (canonical brand
 # fonts: Montserrat, Lato, Playfair Display). They live alongside this site
 # repo on disk; this script is run locally only.
-IG_FONTS = Path("C:/ClaudeCodeFiles/InvoiceGenerator/static/fonts")
+# Resolve the sibling InvoiceGenerator checkout on either machine (Windows
+# workstation or the Mac, where the workspace lives in Dropbox); override with
+# FE_FONTS_DIR if the layout differs.
+import os
+_candidates = [
+    Path(os.environ["FE_FONTS_DIR"]) if os.environ.get("FE_FONTS_DIR") else None,
+    Path(__file__).resolve().parents[2] / "InvoiceGenerator" / "static" / "fonts",
+    Path("C:/ClaudeCodeFiles/InvoiceGenerator/static/fonts"),
+]
+IG_FONTS = next((c for c in _candidates if c and c.exists()), _candidates[-1])
 F_MONTSERRAT_BOLD = IG_FONTS / "Montserrat-Bold.ttf"
 F_LATO_REGULAR = IG_FONTS / "Lato-Regular.ttf"
 F_LATO_BOLD = IG_FONTS / "Lato-Bold.ttf"
@@ -101,9 +110,9 @@ def _draw_wordmark(draw: ImageDraw.ImageDraw) -> None:
 
 
 def _draw_beta_pill(draw: ImageDraw.ImageDraw) -> None:
-    """Small Closed Beta v0.2.x pill below the wordmark."""
+    """Small category pill below the wordmark."""
     font = _load_font(F_LATO_BOLD, 18)
-    text = "Closed beta · v0.2.9"
+    text = "Local-first invoicing · Mac & Windows"
     x, y = 80, 150
     pad_x, pad_y = 14, 7
     bbox = draw.textbbox((x, y), text, font=font)
@@ -122,8 +131,8 @@ def _draw_headline(draw: ImageDraw.ImageDraw) -> None:
     .ttf in the bundled set, so Bold is used for headline weight — still reads
     as editorial vs the geometric sans body)."""
     font = _load_font(F_PLAYFAIR_BOLD, 86)
-    line1 = "Invoicing should be"
-    line2 = "the easy part."
+    line1 = "Make your first invoice"
+    line2 = "in 60 seconds."
     # Vertically center the headline block in the middle band of the canvas
     y = 240
     draw.text((80, y), line1, font=font, fill=TEXT_PRIMARY)
@@ -134,8 +143,8 @@ def _draw_headline(draw: ImageDraw.ImageDraw) -> None:
 
 def _draw_subtitle(draw: ImageDraw.ImageDraw) -> None:
     font = _load_font(F_LATO_REGULAR, 28)
-    line1 = "Native desktop invoicing for freelancers."
-    line2 = "Local-first. Beautiful PDFs."
+    line1 = "Free — no card. $5 a month or $50 a year when you need more."
+    line2 = "Your invoices stay on your own computer."
     x, y = 80, 470
     draw.text((x, y), line1, font=font, fill=TEXT_MUTED)
     bbox = draw.textbbox((x, y), line1, font=font)

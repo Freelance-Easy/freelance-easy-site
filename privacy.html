@@ -4,42 +4,192 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Privacy — Freelance Easy</title>
-    <meta name="description" content="Freelance Easy privacy policy." />
+    <meta name="description" content="What Freelance Easy stores on your computer, what reaches our servers, and why. Plain English." />
+    <link rel="canonical" href="https://freelance-easy.com/privacy" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&family=Montserrat:wght@500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" />
     <script>
       (function () {
         try {
           var t = localStorage.getItem("fe-theme");
-          if (t === "light")
-            document.documentElement.setAttribute("data-theme", "light");
+          if (t === "light") document.documentElement.setAttribute("data-theme", "light");
         } catch (e) {}
       })();
     </script>
     <link rel="stylesheet" href="./styles.css" />
+    <script async src="/js/script.js"></script>
+    <script>
+      window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+      plausible.init = plausible.init || function (i) { plausible.o = i || {}; };
+      plausible.init({ endpoint: "/api/event" });
+    </script>
   </head>
-  <body>
+  <body data-page="privacy">
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Privacy <em>policy.</em></h1>
-      <p class="muted">
-        A real privacy policy will be published with the public launch.
-      </p>
+      <p class="updated">Last updated: <span class="placeholder">[publication date]</span> · Effective the same day.</p>
+
+      <div class="tldr">
+        <p>
+          <strong>The short version.</strong> Your invoices, clients and PDFs
+          are stored on your own computer. We don't receive or host your
+          invoice database. What we keep is what your account needs: the email
+          and name from your Google sign-in, your subscription status, and a
+          few technical details. Our website uses cookieless analytics that
+          record no personal data. We don't sell or share personal information.
+        </p>
+      </div>
+
+      <h2>1. Who we are</h2>
       <p>
-        Short version while we're in beta: Freelance Easy stores your
-        invoices, clients, and settings on your own machine. We don't
-        receive or host your invoice database, and we don't sell or share
-        personal information. When you sign in, we keep your Google
-        account email and your subscription status so the app can check
-        your license with our server once per launch. Payments are handled
-        by Stripe. Invoices leave your machine only when you email them to
-        a client from your own email account, and a bug report reaches us
-        only if you choose to send one.
+        Freelance Easy is an invoicing app made by <strong>Freelance Easy LLC</strong>
+        ("we", "us"). It lets freelancers keep track of clients, make invoices,
+        send them by email, and keep everything in a folder on their own machine.
+        Privacy questions: <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.
+        Security reports: <a href="mailto:security@freelance-easy.com">security@freelance-easy.com</a>.
       </p>
+
+      <h2>2. Where your data lives</h2>
       <p>
-        Questions? Privacy-specific concerns go to
-        <a href="mailto:privacy@freelance-easy.com" style="color: var(--accent)">privacy@freelance-easy.com</a>.
-        Everything else, <a href="mailto:support@freelance-easy.com" style="color: var(--accent)">support@freelance-easy.com</a>.
+        Freelance Easy is a local-first app. Your business data stays on your
+        computer, not on our servers — a deliberate design choice that keeps your
+        clients' information out of our hands and means a security incident on
+        our side cannot expose your invoices.
+      </p>
+      <h3>On your computer (never on our servers)</h3>
+      <ul>
+        <li>All invoices, line items, payment terms, notes and PDFs</li>
+        <li>All client information (names, emails, addresses, phone numbers)</li>
+        <li>Attachments, documents, logos and imported invoices</li>
+        <li>Your email settings and the SMTP password you enter to send invoices from your own email account (stored encrypted on your machine)</li>
+        <li>Your recurring schedules and, if you turned it on, your backup folder</li>
+      </ul>
+      <h3>On our servers</h3>
+      <ul>
+        <li>Your email address, display name and account identifier from Google, received when you sign in</li>
+        <li>Your subscription status and its expiry date, plus your Stripe customer identifier and the notifications Stripe sends us about your subscription (started, renewed, failed, cancelled)</li>
+        <li>The plan you chose, which plan the app showed you first, the week your account was created, and — if you answered it — how you heard about us (from a fixed list); we use these only in aggregate to see which channels work</li>
+        <li>A secret used to verify that requests come from your copy of the app</li>
+        <li>Standard server request logs (IP address, request path, time), kept briefly by our hosting provider</li>
+        <li>Crash reports from <em>our server</em> (not from the app on your computer), with personal information removed before they are sent to our error-tracking service</li>
+        <li>A bug report, only if you choose to send one from inside the app</li>
+      </ul>
+      <p>
+        The app checks your subscription with our server <strong>once each time
+        it starts</strong>, tied to your account. That check carries your account
+        identifier and the app version; it does not carry your invoices, your
+        clients or how many invoices you've made — the free tier is counted on
+        your own computer.
+      </p>
+
+      <h2>3. Our website</h2>
+      <p>
+        freelance-easy.com uses <strong>Plausible Analytics</strong>, a
+        cookieless, privacy-focused service. It records which pages are viewed,
+        the referring site or campaign, the browser, operating system and
+        country, and which download button was clicked. It sets no cookies and
+        stores no personal data or persistent identifier; your IP address is
+        used momentarily to derive the country and is not stored. The analytics
+        script is served through our own domain. We do not use advertising
+        pixels, conversion tracking, or any other tracker.
+      </p>
+
+      <h2>4. Why we collect what we collect</h2>
+      <ul>
+        <li><strong>To let you sign in.</strong> Google handles the password; we receive your email and name after you authorize it. The app requests only your basic profile (name, email).</li>
+        <li><strong>To charge your subscription.</strong> Stripe handles the payment and your card details; we receive a customer identifier and a notification when your subscription changes. We never see your full card number.</li>
+        <li><strong>To run the service securely.</strong> Server logs and server-side crash reports help us find and fix problems and detect abuse.</li>
+        <li><strong>To communicate about your account.</strong> Receipts, payment failures, security notices and service announcements go to your account email. <strong>Tips or product news only if you ticked the box</strong> at sign-in (it is unticked by default), and every such email has a one-click unsubscribe.</li>
+        <li><strong>To understand which channels work.</strong> The optional "how did you hear about us" answer and the campaign parameters on our website are used only as aggregate counts.</li>
+      </ul>
+      <p>
+        Under the GDPR our lawful bases are performance of contract (Art. 6(1)(b))
+        for your account and subscription, and legitimate interest (Art. 6(1)(f))
+        for security logs and aggregate analytics.
+      </p>
+
+      <h2>5. Who we share data with</h2>
+      <p>We do <strong>not</strong> sell or share your personal information for advertising or any other third-party purpose. We use these providers to run the service:</p>
+      <table>
+        <thead><tr><th>Provider</th><th>What they handle</th><th>Location</th></tr></thead>
+        <tbody>
+          <tr><td>Google</td><td>Sign-in — receives your email and name when you authorize it</td><td>United States</td></tr>
+          <tr><td>Stripe</td><td>Subscription payments — handles your card data directly; receives your account identifier and the plan you chose</td><td>United States</td></tr>
+          <tr><td>Railway</td><td>Hosting and database for our server</td><td>United States</td></tr>
+          <tr><td>Cloudflare</td><td>DNS and hosting for this website</td><td>Global</td></tr>
+          <tr><td>Plausible</td><td>Cookieless website analytics (no personal data)</td><td>European Union</td></tr>
+          <tr><td>Sentry</td><td>Crash reports from our server, personal information removed first</td><td>United States</td></tr>
+          <tr><td>GitHub</td><td>Hosts the app installers you download</td><td>United States</td></tr>
+        </tbody>
+      </table>
+
+      <h2>6. How long we keep it</h2>
+      <ul>
+        <li>Your account data: for as long as you have an account. To close your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a> from the address you signed in with; we erase it from our live systems and it leaves our hosting provider's short-lived backups on their schedule.</li>
+        <li>Server request logs and server crash reports: kept briefly, then deleted.</li>
+        <li>Your local data (invoices, clients, attachments, backup folder): under your control. We never delete it from your computer.</li>
+      </ul>
+      <p>
+        You are responsible for keeping the invoice records your tax law
+        requires — most jurisdictions want several years of them. Deleting an
+        invoice in the app deletes it from your computer; we never had a copy.
+      </p>
+
+      <h2>7. International transfers</h2>
+      <p>
+        Our servers are in the United States. If you are outside the U.S., your
+        account data is processed there. We rely on Standard Contractual Clauses
+        or the EU–U.S. Data Privacy Framework, as applicable. Our documentation
+        and support are oriented toward U.S. and Canadian users.
+      </p>
+
+      <h2>8. Your rights</h2>
+      <ul>
+        <li><strong>Access and portability</strong> — email us and we'll send you a copy of everything we hold about your account. Your invoices and clients are already on your computer, in an ordinary SQLite database and PDF files.</li>
+        <li><strong>Correction</strong> — edit anything in the app; for account fields you can't edit, email us.</li>
+        <li><strong>Deletion</strong> — delete invoices and clients in the app at any time; email us to close your account.</li>
+        <li><strong>Objection</strong> — email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a> to object to any processing.</li>
+      </ul>
+      <p>
+        <strong>California (CCPA/CPRA):</strong> you also have the right to know the categories of personal information we collect (§2), the right to opt out of sale or sharing (we don't sell or share), and the right to non-discrimination for exercising your rights. Residents of other U.S. states with privacy laws have equivalent rights. <strong>EU/UK/EEA:</strong> you may also complain to your supervisory authority. <strong>Canada:</strong> you may complain to the Office of the Privacy Commissioner (priv.gc.ca); Quebec residents may complain to the Commission d'accès à l'information. We don't use automated decision-making.
+      </p>
+
+      <h2>9. Children</h2>
+      <p>Freelance Easy is a business tool and is not intended for anyone under 16. If you believe someone under 16 has an account, email us and we'll delete it.</p>
+
+      <h2>10. Security</h2>
+      <ul>
+        <li>All traffic between the app, this website and our server uses HTTPS.</li>
+        <li>Subscription and license requests are signed, so a stolen account identifier alone can't be used to act as you.</li>
+        <li>Our hosting provider encrypts database backups at rest.</li>
+        <li>Your local data is stored on your own computer — its security is ultimately in your hands. We recommend full-disk encryption (FileVault on macOS, BitLocker on Windows) and a backup.</li>
+      </ul>
+      <p>If we learn of a personal-data breach affecting you, we will notify you within 72 hours of becoming aware of it.</p>
+
+      <h2>11. Your backup folder (if you use it)</h2>
+      <p>
+        The backup folder is optional and off by default. When on, the app
+        writes copies of your invoice PDFs and attachments to a folder you
+        choose. It's your folder: deleting an invoice in the app does not
+        remove the copy there, and if you chose a synced folder (Dropbox,
+        iCloud Drive, OneDrive), your sync software will carry those files to
+        your cloud account under your terms with that provider.
+      </p>
+
+      <h2>12. Changes</h2>
+      <p>Material changes are posted here at least 30 days before they take effect, with a notice in the app. Minor edits (typos, an address, a replacement provider of the same kind) happen without notice.</p>
+
+      <h2>13. Contact</h2>
+      <p>
+        Privacy: <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a><br />
+        Security: <a href="mailto:security@freelance-easy.com">security@freelance-easy.com</a><br />
+        Support: <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a><br />
+        Mailing address: <span class="placeholder">[Freelance Easy LLC — registered address, to be added before publication]</span>
       </p>
     </main>
+    <script src="./script.js"></script>
   </body>
 </html>

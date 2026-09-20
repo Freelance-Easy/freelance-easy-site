@@ -1,0 +1,10 @@
+# Not part of the public site — keep out of the asset upload.
+worker.js
+wrangler.toml
+.assetsignore
+.gitignore
+README.md
+HANDOFF.md
+scripts/
+.git/
+.DS_Store

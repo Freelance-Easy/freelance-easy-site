@@ -1,5 +1,5 @@
-# Cloudflare Pages headers
-# https://developers.cloudflare.com/pages/configuration/headers/
+# Cloudflare headers (Workers Static Assets honours the Pages format)
+# https://developers.cloudflare.com/workers/static-assets/headers/
 
 /*
   X-Content-Type-Options: nosniff
@@ -10,6 +10,10 @@
 # Long-cache fonts (filenames are immutable enough for a year)
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Screenshots change only with a release; a month is fine.
+/assets/screenshots/*
+  Cache-Control: public, max-age=2592000
 
 # Long-cache images in assets/
 /assets/*
@@ -24,3 +28,9 @@
 # Short-cache favicon so logo updates ship within a day
 /favicon.ico
   Cache-Control: public, max-age=86400, must-revalidate
+
+# Campaign landing pages are for ads, not search.
+/mac-audio
+  X-Robots-Tag: noindex
+/audio
+  X-Robots-Tag: noindex

@@ -84,3 +84,19 @@ Then `http://localhost:8000`. No watch step needed; refresh the browser after ed
 Confirmed: opened `index.html` in the preview, no console errors, page renders correctly in dark and light, theme toggle persists, Windows download link points at the canonical GitHub Releases URL, Mac button is non-clickable. Folder is ready to `git init && git push` to a new public repo.
 
 The page targets modern evergreen browsers and degrades gracefully without JS (theme toggle and OS-aware CTA reorder go away; Windows download button still works).
+
+---
+
+## v2 landing (2026-09-20) — what changed and the publish gate
+
+**Branch `feat/v2-landing` — do not merge until v0.2.18 is in staged rollout and the LicenseServer annual/no-trial/promo-code change is deployed.** Until then the copy ("your first invoice is free — no card", "$50 a year") is false. Spec and plan live in the FREELANCE EASY VAULT: `04 - Future/Gate 0 — Lean Build Spec.md` §4 and `04 - Future/Landing v2 — Build Plan.md`.
+
+- **Copy contract (decided):** "Make your first invoice in 60 seconds. Free — no card. $5 a month (or $50 a year) when you need more." Never: "nothing leaves your machine", "anonymous heartbeats", "7-day trial", "closed beta", "coming soon", "first 3 invoices", "signed" for Windows until the cert flip, invented quotes.
+- **`index.html`** rewritten: hero with a real screenshot (`assets/screenshots/dashboard-{dark,light}.png`, theme-swapped by CSS), how-it-works, features, "Straight answers", pricing (Free / Yearly featured / Monthly), final CTA, footer with the current version line (bump at each release). Testimonials section deliberately absent until real, disclosed quotes exist.
+- **Campaign pages:** `mac-audio.html` (`/mac-audio`, Google Demand Gen final URL — Mac button only, `noindex`) and `audio.html` (`/audio`, Reddit — both platforms + the Windows note, `noindex`). `audio.html` was generated from `mac-audio.html`; keep them in step.
+- **`script.js` v2:** OS detection (mac / win / mobile / other), Windows-only SmartScreen note, Intel link (no download), phone → "Send this page to my computer" (Web Share), campaign download paths `/dl/<os>/<campaign>` from `?utm_campaign` or `<body data-campaign>`, Plausible events `Download Click {os, campaign, page}`, `Intel Notify`, `Share To Computer`.
+- **`worker.js` + `wrangler.toml`:** a Worker now fronts the assets only to proxy Plausible (`/js/script.js`, `/api/event`); everything else goes to the ASSETS binding so `_redirects` / `_headers` are unchanged in behaviour. `SCRIPT_UPSTREAM` holds a placeholder until the Plausible site exists (`https://plausible.io/js/pa-<id>.js`); until then the script route 404s harmlessly. `.assetsignore` keeps worker.js, wrangler.toml, docs and scripts out of the upload.
+- **`_redirects`:** `/dl/mac/*` and `/dl/win/*` (campaign splat) beside the existing `/download/*`; `/mac-audio/` and `/audio/` trailing-slash normalisation. **`_headers`:** screenshots cached a month; `X-Robots-Tag: noindex` on the campaign pages.
+- **Legal:** `privacy.html` and `terms.html` are now real pages built from the vault's Privacy Policy Draft + the 2026-09-19 required additions, restricted to what the product verifiably does today (no data-export claim — that route is a stub; account closure by email; Sentry is server-side only). Two visible placeholders remain until Daniel supplies them: the publication date and the LLC mailing address.
+- **Assets:** `scripts/capture-screenshots.py` (Playwright) regenerates the dashboard screenshots from the DEV app seeded with fictional demo data — run after any UI release. `scripts/generate-og-image.py` now finds the fonts on either machine and carries the v2 headline.
+- **Local preview:** `python3 -m http.server 8765` from the repo root; `_redirects` does not apply locally, so download buttons 404 there — expected.

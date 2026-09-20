@@ -4,35 +4,152 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Terms — Freelance Easy</title>
-    <meta name="description" content="Freelance Easy terms of service." />
+    <meta name="description" content="Freelance Easy terms of service, in plain English." />
+    <link rel="canonical" href="https://freelance-easy.com/terms" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&family=Montserrat:wght@500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" />
     <script>
       (function () {
         try {
           var t = localStorage.getItem("fe-theme");
-          if (t === "light")
-            document.documentElement.setAttribute("data-theme", "light");
+          if (t === "light") document.documentElement.setAttribute("data-theme", "light");
         } catch (e) {}
       })();
     </script>
     <link rel="stylesheet" href="./styles.css" />
+    <script async src="/js/script.js"></script>
+    <script>
+      window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+      plausible.init = plausible.init || function (i) { plausible.o = i || {}; };
+      plausible.init({ endpoint: "/api/event" });
+    </script>
   </head>
-  <body>
+  <body data-page="terms">
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Terms <em>of service.</em></h1>
-      <p class="muted">
-        Full terms will be published with the public launch.
-      </p>
+      <p class="updated">Last updated: <span class="placeholder">[publication date]</span> · Effective the same day.</p>
+
       <p>
-        Short version while we're in beta: the software is provided
-        as-is. You own your data. Don't redistribute the installer
-        without asking. Don't use Freelance Easy for anything illegal.
+        These terms govern your use of Freelance Easy. By signing in or using
+        the app you agree to them. If you don't agree, please don't use the app.
       </p>
+
+      <h2>1. Who we are</h2>
       <p>
-        Questions?
-        <a href="mailto:support@freelance-easy.com" style="color: var(--accent)">support@freelance-easy.com</a>.
+        Freelance Easy is an invoicing app provided by <strong>Freelance Easy LLC</strong>
+        ("we", "us"). It consists of a desktop application you install on your
+        own computer and the small web service that signs you in and checks
+        your subscription (together, "the Service").
+      </p>
+
+      <h2>2. What you get</h2>
+      <ul>
+        <li><strong>Free:</strong> your first invoice — make it, send it, get paid. No card, no time limit.</li>
+        <li><strong>Paid ($5 a month or $50 a year):</strong> unlimited invoices, clients, recurring schedules and documents, all stored on your own computer, plus access to our license server so the app stays unlocked.</li>
+        <li>Everything you make stays on your computer whether or not you subscribe.</li>
+        <li>The Service runs on a reasonable best-effort basis — we are a very small team, not a cloud provider.</li>
+      </ul>
+
+      <h2>3. Your account</h2>
+      <ul>
+        <li>You sign in with Google. The account is yours; keep access to the Google account you used.</li>
+        <li>You are at least 16 years old.</li>
+        <li>One person per account. If more people in your business need the app, each needs their own account.</li>
+        <li>Don't reverse-engineer, scrape or exploit the Service.</li>
+      </ul>
+
+      <h2>4. Your data and your clients' data</h2>
+      <p>
+        You own your data. We provide the tools to keep it on your computer and
+        the infrastructure to sign you in. We don't receive or host your invoice
+        database. When you invoice your clients you are storing their
+        information (names, emails, addresses) in the app on your own machine;
+        you are the controller of that data and it does not reach us in the
+        normal course of using the Service. You are responsible for telling
+        your clients what you do with their data if they ask. Details of what we
+        hold about <em>you</em>, for how long and why are in the
+        <a href="/privacy">Privacy Policy</a>.
+      </p>
+
+      <h2>5. Payment</h2>
+      <ul>
+        <li>Subscriptions renew automatically, monthly or yearly depending on the plan you chose, until you cancel. You can cancel any time from your billing portal (Settings in the app); you keep access until the end of the period you paid for.</li>
+        <li>Switching from monthly to yearly is billed at the time of the switch.</li>
+        <li>If something went wrong with a charge, email <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a> — we would rather refund than argue. We don't otherwise refund unused time.</li>
+        <li>Promotion codes, when offered, are applied at checkout and can't be applied afterwards.</li>
+        <li>Payments are processed by Stripe. We never see your full card number.</li>
+        <li>Prices are in U.S. dollars and exclude any sales tax we are required to collect.</li>
+      </ul>
+
+      <h2>6. Availability</h2>
+      <ul>
+        <li>We don't promise an uptime level.</li>
+        <li>The app checks your subscription with our server once each time it starts. If our server is unreachable, a subscribed app keeps working offline for a grace period (at least seven days), so short outages on our side should be invisible to you.</li>
+        <li>If the Service is down for an extended period and you're a paying customer, contact us for a pro-rated credit.</li>
+      </ul>
+
+      <h2>7. Things we don't allow</h2>
+      <ul>
+        <li>Using the Service for anything illegal, including invoicing for work that didn't happen.</li>
+        <li>Impersonating someone else.</li>
+        <li>Attempting to break into our systems or other people's accounts.</li>
+        <li>Scraping, crawling or automating our servers without written permission.</li>
+        <li>Reselling the Service or a modified version of it.</li>
+      </ul>
+
+      <h2>8. Changes to the Service</h2>
+      <p>We can add, remove or change features. Material changes that affect paying customers will be announced in the app at least 30 days ahead.</p>
+
+      <h2>9. Ending things</h2>
+      <ul>
+        <li>You can stop using the app at any time, and cancel a subscription from the billing portal. To close your account entirely, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.</li>
+        <li>We can terminate an account that violates these terms. We'll usually warn you first unless the violation is severe (fraud, illegal use, abuse).</li>
+        <li>If we terminate, we refund the unused part of your current billing period unless the termination is for cause.</li>
+      </ul>
+
+      <h2>10. Our liability</h2>
+      <p>
+        To the fullest extent the law allows, our total liability to you for
+        anything arising out of these terms or the Service is limited to the
+        amount you paid us in the twelve months before the claim, and we are not
+        liable for indirect, consequential or punitive damages. Nothing here
+        excludes liability we can't exclude by law.
+      </p>
+
+      <h2>11. Governing law</h2>
+      <p>These terms are governed by the laws of the State of Tennessee, USA. Disputes go to the state or federal courts in Davidson County, Tennessee.</p>
+
+      <h2>12. Data processing addendum</h2>
+      <details>
+        <summary>For businesses that need one — the short DPA</summary>
+        <p>
+          Where you are a controller of your clients' personal data and use the
+          app to process it, this addendum applies. <strong>Scope:</strong> the
+          app processes your clients' data on your computer only; Freelance Easy
+          LLC does not receive it and therefore does not process it on your
+          behalf in the ordinary course of the Service. <strong>Our processing
+          of your data</strong> (account email, name, subscription status) is
+          described in the Privacy Policy, together with our sub-processors.
+          <strong>Security:</strong> see Privacy Policy §10. <strong>Assistance:</strong>
+          we will help you respond to a data-subject request that concerns data
+          we hold, within 30 days. <strong>Deletion:</strong> on account closure
+          we erase your account data from our live systems. A signed copy of
+          this addendum is available on request from
+          <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.
+        </p>
+      </details>
+
+      <h2>13. Contact</h2>
+      <p>
+        Support: <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a><br />
+        Privacy: <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a><br />
+        Security: <a href="mailto:security@freelance-easy.com">security@freelance-easy.com</a><br />
+        Mailing address: <span class="placeholder">[Freelance Easy LLC — registered address, to be added before publication]</span>
       </p>
     </main>
+    <script src="./script.js"></script>
   </body>
 </html>

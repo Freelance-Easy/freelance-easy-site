@@ -5,15 +5,24 @@
 # story, same _redirects + _headers support, just deployed via `wrangler deploy`
 # instead of the old Pages git-integration UI.
 #
+# Since the v2 landing (2026-09) a tiny Worker (worker.js) sits in front of the
+# assets for exactly two paths — the Plausible Analytics proxy at /js/script.js
+# and /api/event. Every other request is passed to the ASSETS binding, so
+# _redirects and _headers behave exactly as before.
+#
 # Docs: https://developers.cloudflare.com/workers/static-assets/
 
 name = "freelance-easy-site"
+main = "worker.js"
 compatibility_date = "2026-05-04"
 
 [assets]
 # All static files live at the repo root — index.html, styles.css, script.js,
 # privacy.html, terms.html, 404.html, assets/, _redirects, _headers, etc.
+# Files listed in .assetsignore (worker.js, wrangler.toml, docs, scripts) are
+# not uploaded as assets.
 directory = "./"
+binding = "ASSETS"
 
 # When a request doesn't match an asset, serve our branded 404 page.
 not_found_handling = "404-page"
