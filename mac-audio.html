@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Freelance Easy for audio pros on Mac — make your first invoice in 60 seconds</title>
-    <meta name="description" content="Invoicing for mix engineers, producers and studios, on your own Mac. Your first invoice is free — no card. $5 a month or $50 a year when you need more." />
+    <meta name="description" content="Invoicing for mix engineers, producers and studios, on your own Mac. Your first invoice is free, no card. $5 a month or $50 a year when you need more." />
     <!-- Campaign landing page (Google ads, Mac-only). Not for search. -->
     <meta name="robots" content="noindex, nofollow" />
     <link rel="canonical" href="https://freelance-easy.com/" />
@@ -37,7 +37,7 @@
         <nav class="nav" aria-label="Primary">
           <a href="#pricing">Pricing</a>
           <a href="#download">Download</a>
-          <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Toggle theme">
+          <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
             <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
             <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
           </button>
@@ -50,16 +50,15 @@
         <div class="shell hero-grid">
           <div class="hero-copy">
             <p class="hero-kicker">Invoicing for mix engineers, producers and studios, on your Mac.</p>
-            <h1>Make your first invoice <em>in 60 seconds.</em></h1>
-            <p class="offer">Free — no card. $5 a month (or $50 a year) when you need more.</p>
+            <h1>Make your first invoice in 60 seconds</h1>
+            <p class="offer">Your first invoice is free. No card, no time limit. When you need more, it's $5 a month or $50 a year.</p>
             <p class="lede">
-              Bill for mixes, session days and kit fees. Make a PDF invoice with
-              your logo and keep track of what's been paid. Your invoice database
-              stays on your Mac — Freelance Easy doesn't receive or host it.
-              Built by Daniel, a working mix engineer in Nashville.
+              After installing and signing in with Google, a new invoice is a
+              client, a few line items and a PDF: a day rate, a kit fee, a
+              per-song mix. Your invoice database stays on your Mac.
             </p>
 
-            <div class="dl" data-dl data-placement="hero" data-single-platform>
+            <div class="dl" data-dl data-placement="hero" data-single-platform="mac">
               <div class="dl-desktop">
                 <div class="dl-actions">
                   <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac">
@@ -69,189 +68,166 @@
                   <a class="dl-alt" data-role="alt" href="/"><span data-label>Need the Windows version?</span></a>
                 </div>
                 <div class="dl-support" data-support="mac">
-                  Apple Silicon Macs (M1 or later). <strong>Intel Macs aren't supported.</strong> Signed and notarized by Apple.
+                  For Apple Silicon Macs, M1 or later. Intel Macs aren't supported. The app is signed and notarized by Apple.
                   <details data-compat-help>
-                    <summary>Not sure which Mac you have?</summary>
-                    <p>Apple menu → About This Mac. It says either an Apple chip (M1, M2, M3, M4…) or an Intel processor.</p>
+                    <summary>Check which chip your Mac has</summary>
+                    <p>Open the Apple menu, then About This Mac. It names either an Apple chip (M1, M2, M3, M4…) or an Intel processor.</p>
                   </details>
                 </div>
                 <div class="dl-support" data-support="win" hidden>This page is for the Mac version. <a href="/">The Windows download is on the main page.</a></div>
-                <p class="dl-note">Google sign-in required. Your first invoice is free, with no time limit.</p>
-                <p class="dl-release">Version v0.2.18-beta · <a href="/releases">Release files on GitHub</a> · <a href="/install">Installation help</a></p>
               </div>
               <div class="dl-mobile">
                 <button type="button" class="btn btn-primary" data-share><span data-label>Share this page</span></button>
-                <p>This download is for Apple Silicon Macs. Save this page to open it on your Mac.</p>
+                <p>There's no mobile app. Send yourself the link and open it on your Mac.</p>
                 <p class="dl-status" data-share-status aria-live="polite"></p>
               </div>
             </div>
           </div>
 
           <figure class="hero-invoice" id="invoice">
-            <img src="/assets/screenshots/invoice-day-rate.png" width="1836" height="1380" alt="A one-page invoice made in Freelance Easy for a string session: engineer day rate $600 and kit fee $150, balance due $750." fetchpriority="high" />
-            <figcaption>An invoice for a session day, made in Freelance Easy — sample client and project. <a href="/assets/sample-invoice.pdf">View a full invoice (PDF)</a></figcaption>
+            <a href="/assets/sample-invoice.pdf" aria-label="Open the sample invoice as a PDF">
+              <img src="/assets/screenshots/invoice-day-rate.png" width="1836" height="1470" alt="A one-page invoice made in Freelance Easy for a string session: engineer day rate $600 and kit fee $150, balance due $750." fetchpriority="high" />
+            </a>
+            <figcaption>A session-day invoice made in the app. The client is fictional. <a href="/assets/sample-invoice.pdf">Open the PDF</a></figcaption>
           </figure>
         </div>
       </section>
 
       <section class="section" id="how">
         <div class="shell">
-          <h2>From your line items to a finished PDF.</h2>
-          <div class="walk">
-            <figure class="figure">
-              <img src="/assets/screenshots/editor.png" width="2880" height="1800" alt="The invoice editor with a five-song mix invoice: invoice title, client, and line items with rate, quantity and amount." loading="lazy" />
-              <figcaption>The invoice editor, mid-way through a five-song mix invoice.</figcaption>
-            </figure>
-            <ol class="steps">
-              <li>
-                <h3>Install and sign in with Google.</h3>
-                <p>Choose the folder where your invoice data will live. That folder is the whole database.</p>
-              </li>
-              <li>
-                <h3>Add the work you're billing for.</h3>
-                <p>Your client and the line items — "Mix — 'Slow Water'", "Engineer day rate", "Kit fee — preamps + mics". Pick one of four templates, add your logo, save the PDF. Your first invoice is free.</p>
-              </li>
-              <li>
-                <h3>Send it to the artist, label or producer.</h3>
-                <p>Attach the PDF to an email yourself, or set up your own email account in the app and send from there. Nothing is sent unless you send it.</p>
-              </li>
-            </ol>
+          <h2>Making an invoice</h2>
+          <figure class="figure shot">
+            <picture class="shot-dark">
+              <source media="(max-width: 640px)" srcset="/assets/screenshots/editor-items-dark.png" width="1693" height="789" />
+              <img src="/assets/screenshots/editor.png" width="2880" height="1744" alt="The Freelance Easy editor showing the same invoice: two line items, engineer day rate and kit fee, with rate, quantity and amount, the balance due, a notes field, and the Update Invoice button." loading="lazy" />
+            </picture>
+            <picture class="shot-light">
+              <source media="(max-width: 640px)" srcset="/assets/screenshots/editor-items-light.png" width="1693" height="789" />
+              <img src="/assets/screenshots/editor-light.png" width="2880" height="1744" alt="The Freelance Easy editor in the light theme, showing the same invoice: two line items, engineer day rate and kit fee, with rate, quantity and amount, the balance due, a notes field, and the Update Invoice button." loading="lazy" />
+            </picture>
+            <figcaption>The invoice above, open in the editor.</figcaption>
+          </figure>
+          <div class="product-copy">
+            <p>
+              Add the artist, label or studio you're billing and the work: a day
+              rate, a kit fee, a mix per song, each with a rate and a quantity.
+              Choose one of four templates, add your logo and accent color, and
+              save the PDF.
+            </p>
+            <p>
+              Attach it to an email, or connect your own email account in the app
+              (its outgoing-mail settings, SMTP) and send from there. Either way the
+              message comes from your address.
+            </p>
           </div>
-          <p class="walk-foot">The 60 seconds is the invoice itself, after installation and sign-in. Setting up email sending is a separate, optional step.</p>
         </div>
       </section>
 
       <section class="section" id="track">
         <div class="shell">
-          <h2>Retainers, overdue clients, and the invoices you've already sent.</h2>
-          <div class="track">
-            <ul class="plain-list">
-              <li><strong>Monthly retainers</strong> generate themselves on the day you set — a podcast network's four episodes a month, say. You review the invoice and send it; nothing sends by itself.</li>
-              <li><strong>Overdue reminders.</strong> See who's late and open a drafted follow-up email to review before sending.</li>
-              <li><strong>Collected, outstanding, overdue</strong> — the totals and a revenue chart for the last twelve months.</li>
-              <li><strong>Your old invoices.</strong> Import the PDFs you sent before so your numbering carries on.</li>
-            </ul>
-            <figure class="figure">
-              <img src="/assets/screenshots/dashboard-dark.png" width="2880" height="1800" alt="The dashboard: collected, outstanding and overdue totals, a revenue chart, and studio clients who need a follow-up." loading="lazy" />
-              <figcaption>The dashboard, with sample data.</figcaption>
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="maker">
-        <div class="shell">
-          <div class="maker">
-            <h2>Made by Daniel, a working mix engineer in Nashville.</h2>
+          <h2>Keeping track</h2>
+          <figure class="figure shot">
+            <picture class="shot-dark">
+              <source media="(max-width: 640px)" srcset="/assets/screenshots/dashboard-attention-dark.png" width="875" height="503" />
+              <img src="/assets/screenshots/dashboard-dark.png" width="2880" height="1800" alt="The dashboard: collected, outstanding and overdue totals, a revenue chart for the last twelve months, three overdue studio invoices that need attention, and recent invoices." loading="lazy" />
+            </picture>
+            <picture class="shot-light">
+              <source media="(max-width: 640px)" srcset="/assets/screenshots/dashboard-attention-light.png" width="875" height="503" />
+              <img src="/assets/screenshots/dashboard-light.png" width="2880" height="1800" alt="The dashboard in the light theme: collected, outstanding and overdue totals, a revenue chart for the last twelve months, three overdue studio invoices that need attention, and recent invoices." loading="lazy" />
+            </picture>
+            <figcaption>The dashboard, with fictional data.</figcaption>
+          </figure>
+          <div class="product-copy">
             <p>
-              I bill for mixes, session days and kit fees, and I used a web app
-              for my invoices before this. I built Freelance Easy because I
-              wanted my clients and invoices in a folder on my own machine, in a
-              tool that does one job well. I make it myself, alongside the
-              audio work.
+              The dashboard shows what's been collected, what's outstanding and
+              what's overdue, with a revenue chart for the last twelve months. An
+              overdue invoice comes with a drafted follow-up email that you review
+              before it goes anywhere.
             </p>
             <p>
-              Your first invoice is free so you can use it on a real job before
-              deciding whether to subscribe. Questions before you download?
-              <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a>
+              For a retainer, set up a recurring invoice. It's generated on
+              schedule and waits for you to review and send it; nothing is sent by
+              itself. You can also keep client records and import the invoices you
+              sent before from their PDFs, so your numbering carries on.
             </p>
-            <p class="sig">— Daniel</p>
           </div>
         </div>
       </section>
 
       <section class="section" id="pricing">
         <div class="shell">
-          <h2>Your first invoice is free. Subscribe when you need another.</h2>
-          <div class="pricing-panel">
-            <p class="lead"><strong>Make and send one invoice with no card and no time limit.</strong> To make more, choose how you'd like to pay:</p>
+          <h2>Pricing</h2>
+          <div class="pricing">
+            <p class="lead">Your first invoice is free. No card, no time limit.</p>
             <ul class="bill">
-              <li><span class="price">$5<small>/ month</small></span><span class="desc">Billed monthly. Unlimited invoices.</span></li>
-              <li><span class="price">$50<small>/ year</small></span><span class="desc">Billed once a year. Unlimited invoices. $10 less than twelve monthly payments.</span></li>
+              <li><span class="price">$5</span><span class="per">a month</span></li>
+              <li><span class="price">$50</span><span class="per">a year</span></li>
             </ul>
-            <p class="fine">
-              Both include everything: the four templates, your logo and color, client records, recurring invoices, overdue reminders and PDF imports.
-              Subscriptions renew until you cancel — cancel any time through the Stripe billing portal in the app's Settings, and you keep access to the end of the period you paid for.
-              Everything you made stays on your Mac whether or not you subscribe.
+            <p>
+              Both include unlimited invoices and everything in the app. The
+              subscription renews until you cancel. Cancel any time through the
+              Stripe billing portal in the app's Settings; you keep access to the
+              end of the period you paid for.
             </p>
-            <p class="fine">Payments go through Stripe (card, Apple Pay or Link). Have a promotion code? There's a field for it at checkout.</p>
-            <div class="dl" data-dl data-placement="pricing" data-single-platform>
-              <div class="dl-desktop">
-                <div class="dl-actions">
-                  <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac">
-                    <svg class="platform-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-icon="mac"><path d="M11.18 8.43c-.02-2.04 1.66-3.02 1.74-3.07-.95-1.39-2.43-1.58-2.95-1.6-1.26-.13-2.45.74-3.09.74-.65 0-1.63-.72-2.68-.7-1.38.02-2.65.8-3.36 2.04C-.6 8.4.43 12 1.85 13.97c.7.97 1.52 2.06 2.6 2.02 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.62.68 2.73.66 1.13-.02 1.84-.99 2.53-1.97.8-1.13 1.13-2.23 1.15-2.29-.03-.01-2.2-.84-2.22-3.32-.02-2.07 1.69-3.07 1.77-3.12-.97-1.42-2.47-1.58-2.99-1.62zM9.27 2.42c.57-.7.96-1.66.85-2.62-.83.04-1.83.55-2.42 1.24-.53.62-1 1.6-.87 2.54.93.07 1.87-.46 2.44-1.16z" /></svg>
-                    <span data-label>Download for Mac</span>
-                  </a>
-                  <a class="dl-alt" data-role="alt" href="/"><span data-label>Need the Windows version?</span></a>
-                </div>
-                <div class="dl-support" data-support="mac">Apple Silicon Macs (M1 or later). Intel Macs aren't supported. Signed and notarized by Apple.</div>
-                <div class="dl-support" data-support="win" hidden>This page is for the Mac version. <a href="/">The Windows download is on the main page.</a></div>
-                <p class="dl-note">Google sign-in required. Your first invoice is free, with no time limit.</p>
-              </div>
-              <div class="dl-mobile">
-                <button type="button" class="btn btn-primary" data-share><span data-label>Share this page</span></button>
-                <p>This download is for Apple Silicon Macs. Save this page to open it on your Mac.</p>
-                <p class="dl-status" data-share-status aria-live="polite"></p>
-              </div>
-            </div>
+            <p>Everything you made stays on your Mac whether or not you subscribe.</p>
+            <details class="disclosure">
+              <summary>Payment details</summary>
+              <p>Checkout is handled by Stripe: card, Apple Pay or Link. There's a field for promotion codes at checkout.</p>
+            </details>
+            <p class="pricing-action"><a class="text-link" href="#download">Back to the download</a></p>
           </div>
         </div>
       </section>
 
-      <section class="section" id="before">
+      <section class="section" id="details">
         <div class="shell">
-          <h2>Before you download.</h2>
+          <h2>A few things to know</h2>
           <dl class="qa">
-            <div class="qa-row"><dt>Where are my invoices stored?</dt><dd>In a database file on your Mac, in a folder you choose. Freelance Easy doesn't receive or host it, so back that folder up the way you back up your sessions. There's no cloud sync.</dd></div>
-            <div class="qa-row"><dt>Why do I sign in with Google?</dt><dd>Google sign-in identifies your account (your email and name). The app checks your subscription with our server once each time it starts. Your invoice database stays on your Mac.</dd></div>
-            <div class="qa-row"><dt>How do I email an invoice?</dt><dd>Save the PDF and attach it to any email, or set up your own email account's outgoing-mail settings (SMTP) in the app and send from there. Either way the message comes from your address.</dd></div>
-            <div class="qa-row"><dt>Can clients pay through it?</dt><dd>No. There are no online payment links. Your clients pay you the way they do now and you mark the invoice paid. US dollars only.</dd></div>
-            <div class="qa-row"><dt>How do I stop using it?</dt><dd>Cancel through the Stripe billing portal in Settings; your files stay on your Mac. To close your account entirely, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.</dd></div>
+            <div class="qa-row">
+              <dt>Where is my data?</dt>
+              <dd>In a database file on your Mac, in a folder you choose. Freelance Easy doesn't receive or host it, so back that folder up with your sessions. There's no cloud sync.</dd>
+            </div>
+            <div class="qa-row">
+              <dt>Why Google sign-in?</dt>
+              <dd>It identifies your account by your name and email. The app checks your subscription with our server each time it starts; the invoices themselves stay on your Mac.</dd>
+            </div>
+            <div class="qa-row">
+              <dt>Can clients pay through it?</dt>
+              <dd>No. There are no online payment links. Clients pay you the way they do now, and you mark the invoice paid.</dd>
+            </div>
           </dl>
+          <p class="limits">
+            Freelance Easy is a desktop app for one person, in US dollars. There's
+            no mobile app, no sync between computers and no team features. To close
+            your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.
+          </p>
         </div>
       </section>
 
-      <section class="final" id="get">
+      <section class="section maker" id="maker">
         <div class="shell">
-          <h2>Make your first invoice free.</h2>
-          <p class="lede">No card, no time limit. If you need more invoices, it's $5 a month or $50 a year.</p>
-          <div class="dl" data-dl data-placement="final" data-single-platform>
-            <div class="dl-desktop">
-              <div class="dl-actions">
-                <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac">
-                  <svg class="platform-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-icon="mac"><path d="M11.18 8.43c-.02-2.04 1.66-3.02 1.74-3.07-.95-1.39-2.43-1.58-2.95-1.6-1.26-.13-2.45.74-3.09.74-.65 0-1.63-.72-2.68-.7-1.38.02-2.65.8-3.36 2.04C-.6 8.4.43 12 1.85 13.97c.7.97 1.52 2.06 2.6 2.02 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.62.68 2.73.66 1.13-.02 1.84-.99 2.53-1.97.8-1.13 1.13-2.23 1.15-2.29-.03-.01-2.2-.84-2.22-3.32-.02-2.07 1.69-3.07 1.77-3.12-.97-1.42-2.47-1.58-2.99-1.62zM9.27 2.42c.57-.7.96-1.66.85-2.62-.83.04-1.83.55-2.42 1.24-.53.62-1 1.6-.87 2.54.93.07 1.87-.46 2.44-1.16z" /></svg>
-                  <span data-label>Download for Mac</span>
-                </a>
-                <a class="dl-alt" data-role="alt" href="/"><span data-label>Need the Windows version?</span></a>
-              </div>
-              <div class="dl-support" data-support="mac">Apple Silicon Macs (M1 or later). Intel Macs aren't supported. Signed and notarized by Apple.</div>
-              <div class="dl-support" data-support="win" hidden>This page is for the Mac version. <a href="/">The Windows download is on the main page.</a></div>
-              <p class="dl-note">Google sign-in required.</p>
-            </div>
-            <div class="dl-mobile">
-              <button type="button" class="btn btn-primary" data-share><span data-label>Share this page</span></button>
-              <p>This download is for Apple Silicon Macs. Save this page to open it on your Mac.</p>
-              <p class="dl-status" data-share-status aria-live="polite"></p>
-            </div>
-          </div>
+          <h2>A note from Daniel</h2>
+          <p>
+            I'm a mix engineer in Nashville. I bill for mixes, session days and kit
+            fees, and I used a web invoicing app before this. I built Freelance
+            Easy because I wanted my clients and invoices in a folder on my own
+            computer, and I work on it myself alongside the audio work.
+          </p>
+          <p class="contact"><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></p>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
       <div class="shell">
-        <div class="row">
-          <span class="made">Made by Daniel, a mix engineer in Nashville. Questions? <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></span>
-          <span>© 2026 Freelance Easy LLC</span>
-        </div>
-        <div class="row">
-          <ul class="links">
-            <li><a href="/releases">Release files on GitHub</a></li>
-            <li><a href="/install">Installation help</a></li>
-            <li><a href="/privacy">Privacy</a></li>
-            <li><a href="/terms">Terms</a></li>
-          </ul>
-        </div>
+        <ul class="links">
+          <li><a href="#download">Download</a></li>
+          <li><a href="/install">Installation help</a></li>
+          <li><a href="/releases">v0.2.18-beta on GitHub</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms</a></li>
+        </ul>
+        <p class="copyright">© 2026 Freelance Easy LLC</p>
       </div>
     </footer>
 

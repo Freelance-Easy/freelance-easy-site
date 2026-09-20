@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Derive audio.html (Reddit; Mac + Windows) from mac-audio.html (Google ads; Mac only).
+
+The two campaign pages are the same page with a different platform story, so
+audio.html is generated rather than maintained by hand. Every substitution
+below must match exactly once, or the script stops — a silent miss would ship
+Mac-only wording on the two-platform page.
+
+Usage (from the repo root):
+  python3 scripts/derive-audio-page.py
+"""
+from __future__ import annotations
+
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SRC = ROOT / "mac-audio.html"
+DST = ROOT / "audio.html"
+
+WIN_NOTE = (
+    '<div class="dl-support" data-support="win" hidden>'
+    "For Windows 10 and 11, 64-bit. The installer isn't code-signed yet, so Windows shows a security warning "
+    'the first time you open it. <a href="/install#windows">Installation help</a></div>'
+)
+
+SUBS: list[tuple[str, str]] = [
+    (
+        "<title>Freelance Easy for audio pros on Mac — make your first invoice in 60 seconds</title>",
+        "<title>Freelance Easy for audio pros — make your first invoice in 60 seconds</title>",
+    ),
+    (
+        "on your own Mac. Your first invoice is free, no card.",
+        "on your own Mac or PC. Your first invoice is free, no card.",
+    ),
+    (
+        "<!-- Campaign landing page (Google ads, Mac-only). Not for search. -->",
+        "<!-- Campaign landing page (Reddit; Mac + Windows). Not for search. -->",
+    ),
+    ('<body data-page="mac-audio" data-campaign="mac-audio">', '<body data-page="audio" data-campaign="audio">'),
+    (
+        "Invoicing for mix engineers, producers and studios, on your Mac.",
+        "Invoicing for mix engineers, producers and studios, on Mac and Windows.",
+    ),
+    ("per-song mix. Your invoice database stays on your Mac.", "per-song mix. Your invoice database stays on your computer."),
+    ('<div class="dl" data-dl data-placement="hero" data-single-platform="mac">', '<div class="dl" data-dl data-placement="hero">'),
+    (
+        '<a class="dl-alt" data-role="alt" href="/"><span data-label>Need the Windows version?</span></a>',
+        '<a class="dl-alt" data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>',
+    ),
+    (
+        '<div class="dl-support" data-support="win" hidden>This page is for the Mac version. <a href="/">The Windows download is on the main page.</a></div>',
+        WIN_NOTE,
+    ),
+    (
+        "There's no mobile app. Send yourself the link and open it on your Mac.",
+        "There's no mobile app. Send yourself the link and open it on your Mac or PC.",
+    ),
+    (
+        "Everything you made stays on your Mac whether or not you subscribe.",
+        "Everything you made stays on your computer whether or not you subscribe.",
+    ),
+    (
+        "Checkout is handled by Stripe: card, Apple Pay or Link.",
+        "Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link.",
+    ),
+    ("In a database file on your Mac, in a folder you choose.", "In a database file on your computer, in a folder you choose."),
+    ("the invoices themselves stay on your Mac.", "the invoices themselves stay on your computer."),
+]
+
+
+def main() -> int:
+    html = SRC.read_text(encoding="utf-8")
+    for old, new in SUBS:
+        n = html.count(old)
+        if n != 1:
+            print(f"expected exactly one match, found {n}:\n  {old[:90]}", file=sys.stderr)
+            return 1
+        html = html.replace(old, new)
+    # "Check which chip your Mac has" is the Mac visitor's note and stays on both
+    # pages; "on your Mac or PC" is the two-platform wording this script writes.
+    for leftover in (r"on your Mac(?! or PC)", r"Mac-only", r"single-platform"):
+        if re.search(leftover, html):
+            print(f"Mac-only wording survived: {leftover!r}", file=sys.stderr)
+            return 1
+    DST.write_text(html, encoding="utf-8")
+    print("wrote", DST)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

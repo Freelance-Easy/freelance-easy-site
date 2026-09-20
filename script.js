@@ -1,9 +1,12 @@
-/* Freelance Easy — landing page behaviour (v2.1, 2026-09)
-   1. Theme toggle (dark default, persisted in localStorage).
-   2. Platform detection — mac / win / mobile / other. Each download block
+/* Freelance Easy — landing page behaviour (v2.2, 2026-09)
+   1. Theme toggle (dark default, persisted in localStorage). The product
+      screenshots follow the theme in CSS (.shot-dark / .shot-light pairs).
+   2. Platform detection — mac / win / mobile / other. The download block
       ([data-dl]) gets one filled button for the visitor's OS and a plain link
-      for the other; the matching compatibility text is shown. Phones get a
-      share / copy-link handoff instead of installers.
+      for the other; the matching compatibility text is shown. A block marked
+      data-single-platform="mac" (the Mac campaign page) keeps its Mac button
+      whatever the visitor runs. Phones get a share / copy-link handoff
+      instead of installers.
    3. Campaign download paths — buttons link to /dl/<os>/<campaign>; the
       campaign id comes from ?utm_campaign (letters, digits, dashes) or the
       page's default. `_redirects` resolves the path to the GitHub asset.
@@ -88,27 +91,30 @@
 
     // The visitor's OS gets the filled button; the other becomes the plain link.
     // Mac stays primary for unknown desktops (the majority audience) — the link
-    // for the other platform is always one click away.
-    var primOs = os === "win" ? "win" : "mac";
+    // for the other platform is always one click away. A single-platform block
+    // (the Mac campaign page) never changes its button; it only changes the
+    // note, so a Windows visitor is told where the Windows download lives.
+    var visitorOs = os === "win" ? "win" : "mac";
+    var single = block.getAttribute("data-single-platform"); // "mac" on campaign pages, else null
+    var primOs = single ? single : visitorOs;
     var altOs = primOs === "mac" ? "win" : "mac";
-    var single = block.hasAttribute("data-single-platform"); // campaign pages: one platform only
 
-    function setLink(a, targetOs, isPrimary) {
+    function setLink(a, targetOs) {
       a.setAttribute("data-platform", targetOs);
       a.setAttribute("href", "/dl/" + targetOs + "/" + campaign);
       var label = a.querySelector("[data-label]");
-      if (label) label.textContent = isPrimary ? "Download for " + NAMES[targetOs] : NAMES[targetOs] + " download";
+      if (label) label.textContent = "Download for " + NAMES[targetOs];
       var icon = a.querySelector("[data-icon]");
       if (icon) {
         icon.innerHTML = ICONS[targetOs];
         icon.setAttribute("data-icon", targetOs);
       }
     }
-    setLink(primary, primOs, true);
-    if (!single) setLink(alt, altOs, false);
+    setLink(primary, primOs);
+    if (!single) setLink(alt, altOs);
 
     block.querySelectorAll("[data-support]").forEach(function (el) {
-      el.hidden = el.getAttribute("data-support") !== primOs;
+      el.hidden = el.getAttribute("data-support") !== visitorOs;
     });
 
     [primary, alt].forEach(function (a) {
@@ -142,7 +148,7 @@
         };
         if (canShare) {
           navigator
-            .share({ title: "Freelance Easy", text: "Invoicing app for freelancers — open this on your computer:", url: url })
+            .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: url })
             .then(function () { done("share"); })
             .catch(function () {});
           return;
@@ -150,15 +156,15 @@
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(url).then(
             function () {
-              if (status) status.textContent = "Link copied. Open it on your computer to download the app.";
+              if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
               done("copy");
             },
             function () {
-              if (status) status.textContent = "Couldn't copy the link — it's " + url;
+              if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
             }
           );
         } else if (status) {
-          status.textContent = "Copy this address on your computer: " + url;
+          status.textContent = "Copy this address: " + url;
         }
       });
     }
