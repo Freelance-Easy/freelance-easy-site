@@ -141,29 +141,62 @@
       <section class="section" id="how">
         <div class="shell">
           <h2>Making an invoice</h2>
-          <figure class="figure shot">
-            <picture class="shot-dark">
-              <source media="(max-width: 640px)" srcset="/assets/screenshots/editor-items-dark.png" width="1693" height="789" />
-              <img src="/assets/screenshots/editor.png" width="2880" height="1744" alt="The Freelance Easy editor showing the same invoice: two line items with description, rate, quantity and amount, the subtotal and balance due, a notes field, and the Update Invoice button." loading="lazy" />
-            </picture>
-            <picture class="shot-light">
-              <source media="(max-width: 640px)" srcset="/assets/screenshots/editor-items-light.png" width="1693" height="789" />
-              <img src="/assets/screenshots/editor-light.png" width="2880" height="1744" alt="The Freelance Easy editor in the light theme, showing the same invoice: two line items with description, rate, quantity and amount, the subtotal and balance due, a notes field, and the Update Invoice button." loading="lazy" />
-            </picture>
-            <figcaption>The invoice above, open in the editor.</figcaption>
+          <ol class="process">
+            <li class="step">
+              <div class="step-text">
+                <h3><span class="step-num">1</span>New invoice</h3>
+                <p>The number and the date are filled in for you. Add a title, pick the payment terms, and choose the client, or add a new one right there.</p>
+              </div>
+              <figure class="figure shot">
+                <picture class="shot-dark">
+                  <source media="(max-width: 640px)" srcset="/assets/screenshots/create-1-details-m-dark.png" width="1104" height="729" />
+                  <img src="/assets/screenshots/create-1-details-dark.png" width="2880" height="1800" alt="A new invoice in the editor: the number INV1054 and today's date filled in, the title 'Mix — Tall Grass (single)', payment terms Net 30, and the client Cedar Lane Records chosen with its details filled in." loading="lazy" />
+                </picture>
+                <picture class="shot-light">
+                  <source media="(max-width: 640px)" srcset="/assets/screenshots/create-1-details-m-light.png" width="1104" height="729" />
+                  <img src="/assets/screenshots/create-1-details-light.png" width="2880" height="1800" alt="The same new invoice in the light theme: number and date filled in, the title, payment terms Net 30, and the client Cedar Lane Records chosen." loading="lazy" />
+                </picture>
+              </figure>
+            </li>
+            <li class="step">
+              <div class="step-text">
+                <h3><span class="step-num">2</span>The work</h3>
+                <p>One line for each thing you're billing: description, rate, quantity. Descriptions you've used before are suggested as you type, and the totals update as you go. Add a note if you want one.</p>
+              </div>
+              <figure class="figure shot">
+                <picture class="shot-dark">
+                  <source media="(max-width: 640px)" srcset="/assets/screenshots/create-2-items-m-dark.png" width="1693" height="789" />
+                  <img src="/assets/screenshots/create-2-items-dark.png" width="2880" height="1840" alt="The line items of the new invoice: Mix — Tall Grass at $450 and Instrumental + TV mix at $75, a subtotal and balance due of $525, a note, and the Create Invoice button." loading="lazy" />
+                </picture>
+                <picture class="shot-light">
+                  <source media="(max-width: 640px)" srcset="/assets/screenshots/create-2-items-m-light.png" width="1693" height="789" />
+                  <img src="/assets/screenshots/create-2-items-light.png" width="2880" height="1840" alt="The same line items in the light theme: two lines totalling $525, a note, and the Create Invoice button." loading="lazy" />
+                </picture>
+              </figure>
+            </li>
+            <li class="step">
+              <div class="step-text">
+                <h3><span class="step-num">3</span>Done</h3>
+                <p>Create Invoice opens the finished invoice in the template and accent color you chose, with your logo. Save the PDF, or email it from your own address.</p>
+              </div>
+              <figure class="figure shot">
+                <picture class="shot-dark">
+                  <source media="(max-width: 640px)" srcset="/assets/screenshots/create-3-preview-m-dark.png" width="1452" height="501" />
+                  <img src="/assets/screenshots/create-3-preview-dark.png" width="2880" height="1800" alt="The finished invoice open in the app: INV1054 for Cedar Lane Records with two line items and a balance due of $525, the status Outstanding, and the PDF and Email Invoice buttons." loading="lazy" />
+                </picture>
+                <picture class="shot-light">
+                  <source media="(max-width: 640px)" srcset="/assets/screenshots/create-3-preview-m-light.png" width="1452" height="501" />
+                  <img src="/assets/screenshots/create-3-preview-light.png" width="2880" height="1800" alt="The same finished invoice in the light theme, with the PDF and Email Invoice buttons." loading="lazy" />
+                </picture>
+              </figure>
+            </li>
+          </ol>
+          <figure class="figure demo">
+            <video controls preload="none" playsinline poster="/assets/video/make-an-invoice-poster.jpg" width="1280" height="800" data-demo aria-label="Screen recording: making an invoice in Freelance Easy, 25 seconds">
+              <source src="/assets/video/make-an-invoice.mp4" type="video/mp4" />
+            </video>
+            <figcaption>The whole thing in real time: 25 seconds from New invoice to the finished preview. The client and the job are fictional.</figcaption>
           </figure>
-          <div class="product-copy">
-            <p>
-              Add your client and the work you're billing for, with a rate and a
-              quantity on each line. Choose one of four templates, add your logo
-              and accent color, and save the PDF.
-            </p>
-            <p>
-              Attach it to an email, or connect your own email account in the app
-              (its outgoing-mail settings, SMTP) and send from there. Either way the
-              message comes from your address.
-            </p>
-          </div>
         </div>
       </section>
 

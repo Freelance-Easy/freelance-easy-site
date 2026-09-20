@@ -170,6 +170,18 @@
     }
   }
 
+  // ---- The recording (opt-in: poster + play, never autoplay) ----
+  function wireDemo() {
+    document.querySelectorAll("video[data-demo]").forEach(function (v) {
+      var counted = false;
+      v.addEventListener("play", function () {
+        if (counted) return;
+        counted = true;
+        track("Demo Played", { page: pageId() });
+      });
+    });
+  }
+
   function init() {
     bindToggle();
     var os = detectPlatform();
@@ -179,6 +191,7 @@
     document.querySelectorAll("[data-dl]").forEach(function (block) {
       wireDownloadBlock(block, os, campaign);
     });
+    wireDemo();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

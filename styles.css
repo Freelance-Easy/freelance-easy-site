@@ -525,6 +525,55 @@ body[data-os="mobile"] .dl-mobile {
   margin-top: 12px;
 }
 
+/* Making an invoice: three real frames, a short note beside each, then the recording */
+.process {
+  list-style: none;
+  display: grid;
+  gap: 44px;
+  margin-top: 24px;
+}
+.step {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.step .figure {
+  margin: 0;
+}
+.step-text h3 {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.step-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.step-text p {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-1);
+}
+.demo {
+  margin-top: 44px;
+}
+.demo video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--bg-1);
+}
+
 /* Pricing: two prices, a few sentences, no box */
 .pricing {
   max-width: 62ch;
@@ -796,6 +845,13 @@ body[data-os="mobile"] .dl-mobile {
     justify-self: start;
     max-width: 528px;
     margin-top: 0;
+  }
+  .step {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .process {
+    gap: 36px;
   }
 }
 
