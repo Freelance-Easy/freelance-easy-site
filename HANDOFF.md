@@ -100,3 +100,18 @@ The page targets modern evergreen browsers and degrades gracefully without JS (t
 - **Legal:** `privacy.html` and `terms.html` are now real pages built from the vault's Privacy Policy Draft + the 2026-09-19 required additions, restricted to what the product verifiably does today (no data-export claim — that route is a stub; account closure by email; Sentry is server-side only). Two visible placeholders remain until Daniel supplies them: the publication date and the LLC mailing address.
 - **Assets:** `scripts/capture-screenshots.py` (Playwright) regenerates the dashboard screenshots from the DEV app seeded with fictional demo data — run after any UI release. `scripts/generate-og-image.py` now finds the fonts on either machine and carries the v2 headline.
 - **Local preview:** `python3 -m http.server 8765` from the repo root; `_redirects` does not apply locally, so download buttons 404 there — expected.
+
+### v2.1 (2026-09-20, same branch) — after four design reviews
+
+Daniel's verdict on v2.0: "looks so AI sloppy." Four independent GPT-6 Astra reviews (conversion, UI craft, copy/voice, trust — verbatim in the vault: `05 - Reference/GTM Research 2026-09/13-landing-v2-design-reviews.md`) converged; v2.1 applies them:
+
+- **`styles.css` rewritten from scratch** (no dashboard-mock CSS, no card grids, no eyebrows; Playfair italic only in the H1 and wordmark; `--text-3` now ≥ 4.5:1). **Fonts self-hosted** in `assets/fonts/` (Lato, Montserrat, Playfair TTFs; Inter files removed) — every page makes zero third-party requests.
+- **Hero** = offer + one download block left, **rendered invoice PDF** right (`assets/screenshots/invoice-day-rate.png`; full PDF at `assets/sample-invoice.pdf`).
+- **One download component** (`[data-dl]`, see `script.js`) reused in hero / pricing / close: filled button for the detected OS, plain link for the other, 14 px compatibility text, "Google sign-in required", version · release files · install help; phones get "Share this page" / "Copy page link" with an `aria-live` status. `data-single-platform` keeps the Mac campaign page Mac-only.
+- **Sections:** editor screenshot + three plain steps · dashboard + plain list · first-person maker note (**first name only until Daniel decides**; the note's wording is his to confirm) · one pricing panel (free first invoice → $5/mo → $50/yr) · "Before you download" `<dl>` · short close · two-row footer.
+- **New `install.html`** (`/install`): Gatekeeper, SmartScreen incl. Smart App Control, data folder, uninstall. Added to the sitemap.
+- **Legal:** privacy's Plausible paragraph matches Plausible's data policy (daily-rotating hash of IP + UA); narrowed claims; terms say "made and run by one person".
+- **Demo data:** fictional persona **Jordan Reyes / jordan@example.com** (never a real name or email). `scripts/capture-screenshots.py --profile <.dev-profile>` regenerates all five images + the sample PDF and rewrites the mock session's display name; it asserts the persona is on screen. Requires `playwright pymupdf pillow`.
+- **`script.js`:** per-block wiring; events `Download Click {os, campaign, page, placement}`, `Compatibility Help Opened`, `Share To Computer {how}`; clipboard failure shows the URL.
+
+Still to do before merging #6 (besides the publish gate): the two orange placeholders on `/privacy` and `/terms`, Daniel's read-through, his credit-line choice, and the Plausible script id in `worker.js`.
