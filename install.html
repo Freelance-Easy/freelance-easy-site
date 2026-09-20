@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Installation help — Freelance Easy</title>
+    <meta name="description" content="How to install Freelance Easy on a Mac or a Windows PC, what the first-open prompts mean, and where your data goes." />
+    <link rel="canonical" href="https://freelance-easy.com/install" />
+    <link rel="icon" href="/favicon.ico" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("fe-theme");
+          if (t === "light") document.documentElement.setAttribute("data-theme", "light");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
+    <script async src="/js/script.js"></script>
+    <script>
+      window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+      plausible.init = plausible.init || function (i) { plausible.o = i || {}; };
+      plausible.init({ endpoint: "/api/event" });
+    </script>
+  </head>
+  <body data-page="install">
+    <main class="doc">
+      <a class="back" href="/">← Back to Freelance Easy</a>
+      <h1>Installation <em>help.</em></h1>
+      <p class="updated">Current version v0.2.18-beta · <a href="/releases">Release files and notes on GitHub</a></p>
+
+      <p>
+        Freelance Easy is a desktop app. The installers are hosted on GitHub;
+        the download buttons on this site point straight at the current release.
+        Both versions ask you to sign in with Google the first time and to
+        choose a folder for your invoice data.
+      </p>
+
+      <h2 id="mac">Mac</h2>
+      <ul>
+        <li><strong>Requirements:</strong> a Mac with an Apple chip (M1 or later). Intel Macs aren't supported. To check: Apple menu → About This Mac.</li>
+        <li><strong>Download:</strong> <code>Freelance-Easy.dmg</code>, about 154 MB. Open it and drag Freelance Easy into Applications.</li>
+        <li><strong>First open:</strong> the app is signed and notarized by Apple, so macOS may only show its usual "downloaded from the internet — are you sure you want to open it?" dialog. Click Open.</li>
+        <li><strong>Updates:</strong> the app checks GitHub for new versions and offers to install them.</li>
+      </ul>
+
+      <h2 id="windows">Windows</h2>
+      <ul>
+        <li><strong>Requirements:</strong> Windows 10 or 11, 64-bit.</li>
+        <li><strong>Download:</strong> <code>Freelance-Easy-Setup.exe</code>, about 134 MB.</li>
+        <li><strong>The warning you'll see:</strong> the installer isn't code-signed yet, so Windows doesn't recognise the publisher and shows a blue <em>Windows protected your PC</em> screen when you run it. If you want to continue, click <em>More info</em>, then <em>Run anyway</em>. This is Windows SmartScreen doing its job with an unknown publisher; we're working on signing.</li>
+        <li><strong>If there is no "Run anyway":</strong> some Windows 11 PCs have <em>Smart App Control</em> turned on, which blocks unsigned apps outright rather than warning. Until the installer is signed, Freelance Easy can't run on those PCs unless Smart App Control is turned off — a decision we'd rather you make deliberately than for us.</li>
+        <li><strong>Updates:</strong> the app checks GitHub for new versions and offers to install them.</li>
+      </ul>
+
+      <h2>Where your data goes</h2>
+      <p>
+        During setup you choose a folder. Everything the app stores — your
+        clients, invoices, PDFs, attachments — lives inside it. Back up that
+        folder the way you back up your other work. If you ever want to leave,
+        the folder is yours: the database is an ordinary SQLite file and the
+        invoices are ordinary PDFs.
+      </p>
+
+      <h2>Uninstalling</h2>
+      <p>
+        Mac: drag the app to the Trash. Windows: Settings → Apps → Freelance
+        Easy → Uninstall. Neither removes your data folder; delete it yourself
+        if you want it gone.
+      </p>
+
+      <h2>Stuck?</h2>
+      <p>Email <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a> and say which computer you're on and what you saw.</p>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>
