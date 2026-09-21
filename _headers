@@ -1,5 +1,5 @@
-# Cloudflare Pages headers
-# https://developers.cloudflare.com/pages/configuration/headers/
+# Cloudflare headers (Workers Static Assets honours the Pages format)
+# https://developers.cloudflare.com/workers/static-assets/headers/
 
 /*
   X-Content-Type-Options: nosniff
@@ -11,16 +11,31 @@
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Long-cache images in assets/
+# Product imagery and the loop keep their filenames across refinements, so a
+# day, then revalidate (an ETag 304 when unchanged), not a month.
+/assets/screenshots/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/assets/video/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# Everything else in assets/ (logo, OG image, sample PDFs): a month
 /assets/*
   Cache-Control: public, max-age=2592000
 
-# Short-cache CSS/JS so updates ship same-day
+# CSS/JS revalidate on every load (an ETag 304 when unchanged), so a deploy
+# shows on a plain reload. An hour of max-age left returning visitors on the
+# old stylesheet against new HTML.
 /styles.css
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 /script.js
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Short-cache favicon so logo updates ship within a day
 /favicon.ico
   Cache-Control: public, max-age=86400, must-revalidate
+
+# Campaign landing pages are for ads, not search.
+/mac-audio
+  X-Robots-Tag: noindex
+/audio
+  X-Robots-Tag: noindex

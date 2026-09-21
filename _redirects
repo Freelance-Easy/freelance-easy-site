@@ -1,30 +1,30 @@
-# Cloudflare Pages redirects
+# Cloudflare redirects (Workers Static Assets honours the Pages format)
 # Format: <source> <destination> <status>
 #
 # This file is the SINGLE source of truth for download URLs.
-# index.html buttons point at /download/win and /download/mac (relative);
-# Cloudflare resolves them here. When a new version ships, edit ONLY
-# the lines below — never the HTML.
+# The HTML never links to GitHub directly. When a new version ships, nothing
+# here changes — the GitHub "latest" alias and the version-less asset names
+# (electron/package.json artifactName) keep every URL below stable.
 
-# === Windows ===
-# Stable filename — IG's electron-builder artifactName is now version-less
-# (set in electron/package.json), so this URL never needs updating per
-# release. New releases just become the new "latest" on GitHub Releases.
+# === Direct downloads (site buttons without a campaign) ===
 /download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
+/download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg         302
 
-# === Mac ===
-# Apple Silicon arm64 .dmg, signed + notarized via Apple Developer Program
-# (approved 2026-05-08, first DMG shipped v0.2.13-beta on 2026-05-09).
-# Stable filename via electron/package.json artifactName "${productName}.${ext}"
-# — same convention as Windows. URL never moves per release; new versions
-# become the new "latest" on GitHub Releases.
-/download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg   302
+# === Campaign download paths ===
+# Ads and campaign pages link to /dl/<os>/<campaign> so a download click can be
+# attributed to a campaign without query strings (this file drops them) and
+# without any tracking pixel. The trailing splat is the campaign id, e.g.
+# /dl/mac/mac-audio-f1. Same files as above.
+/dl/mac/*   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg         302
+/dl/win/*   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
 
 # === General ===
 /download       https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302
 /releases       https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases   302
 
-# Pretty URLs for the placeholder pages (Cloudflare Pages serves /privacy.html
-# automatically, but this catches /privacy/ with a trailing slash).
-/privacy/   /privacy   301
-/terms/     /terms     301
+# Pretty URLs (Cloudflare serves /privacy.html for /privacy automatically;
+# these catch the trailing-slash variants).
+/privacy/     /privacy     301
+/terms/       /terms       301
+/mac-audio/   /mac-audio   301
+/audio/       /audio       301

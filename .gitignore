@@ -8,6 +8,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Python bytecode from the capture scripts
+__pycache__/
+
 # Node (in case a framework is added later)
 node_modules/
 dist/
