@@ -313,8 +313,9 @@
   // slot it occupies sets its x offset and tilt. Picking a template (the names
   // under the pile, or a click on a sheet in the pile) re-arranges the values
   // and the sheets glide; the chosen one rides above the others on the way.
-  // The front sheet is a link to its PDF. Without JS the caption's names are
-  // plain links to the PDFs and the pile stays as the HTML laid it out.
+  // Clicking the front sheet flips to the next template. Without JS the sheets
+  // and the caption's names are plain links to the PDFs and the pile stays as
+  // the HTML laid it out.
   var TEMPLATES = ["modern", "bold", "classic", "minimal"];
   var TEMPLATE_NAMES = { modern: "Modern", bold: "Bold", classic: "Classic", minimal: "Minimal" };
   var PILE = {
@@ -362,7 +363,8 @@
         if (i === 0) {
           el.removeAttribute("aria-hidden");
           el.removeAttribute("tabindex");
-          el.setAttribute("aria-label", "Open the " + TEMPLATE_NAMES[t] + " invoice as a PDF");
+          el.setAttribute("role", "button");
+          el.setAttribute("aria-label", TEMPLATE_NAMES[t] + " template in front. Show the next template.");
           if (img) img.alt = SHEET_ALT[t];
         } else {
           el.setAttribute("aria-hidden", "true");
@@ -408,11 +410,13 @@
         }
       });
     });
+    // Clicking a sheet in the pile brings it forward; clicking the front sheet
+    // flips to the next template (people click around a pile; the PDF is the
+    // "Open the … PDF" link, never a surprise navigation).
     TEMPLATES.forEach(function (t) {
       sheets[t].addEventListener("click", function (e) {
-        if (t === current) return; // the front sheet is the link to its PDF
         e.preventDefault();
-        show(t);
+        show(t === current ? TEMPLATES[(TEMPLATES.indexOf(t) + 1) % TEMPLATES.length] : t);
       });
     });
     if (open) open.hidden = false;

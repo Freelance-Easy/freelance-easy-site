@@ -399,11 +399,15 @@ p {
   height: auto;
   transition: transform 0.25s var(--ease-swift);
 }
-/* A sheet in the pile is an invitation: it nudges up under the pointer. */
-.sheet:not(.is-front):hover img {
+/* Every sheet is an invitation: it nudges up under the pointer (the ones in
+   the pile come forward on a click; the front one flips to the next). */
+.sheet:hover img {
   transform: translateY(-4px);
 }
-.sheet.is-front {
+.sheet.is-front:hover img {
+  transform: translateY(-2px);
+}
+.sheet {
   cursor: pointer;
 }
 .sheet.is-moving {
@@ -1147,7 +1151,7 @@ body[data-os="mobile"] .dl-mobile {
   }
   .btn:hover,
   .btn:active,
-  .sheet:not(.is-front):hover img {
+  .sheet:hover img {
     transform: none; /* no lifts either; they would jump without the transition */
   }
 }
