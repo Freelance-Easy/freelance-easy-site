@@ -6,5 +6,6 @@ wrangler.toml
 README.md
 HANDOFF.md
 scripts/
+references/
 .git/
 .DS_Store

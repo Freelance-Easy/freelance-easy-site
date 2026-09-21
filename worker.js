@@ -11,8 +11,9 @@
  *      anything is forwarded (there are none on this site, but belt and braces).
  *
  * Until the Plausible site exists, SCRIPT_UPSTREAM is a placeholder and the
- * script route answers 404 — the page's snippet loads async, so a 404 is
- * invisible to visitors and no events are sent anywhere.
+ * script route answers an empty script (a 200, cached briefly) — no console
+ * error on any page, and no events are sent anywhere because the queue in the
+ * page's snippet is never drained.
  */
 
 const SCRIPT_PATH = "/js/script.js";
@@ -25,7 +26,13 @@ const EVENT_UPSTREAM = "https://plausible.io/api/event";
 
 async function proxyScript(request, ctx) {
   if (SCRIPT_UPSTREAM.includes("REPLACE_ME")) {
-    return new Response("analytics not configured", { status: 404 });
+    return new Response("/* analytics not configured */\n", {
+      status: 200,
+      headers: {
+        "content-type": "application/javascript; charset=utf-8",
+        "cache-control": "public, max-age=300",
+      },
+    });
   }
   const cache = caches.default;
   const cacheKey = new Request(new URL(request.url).origin + SCRIPT_PATH, {
