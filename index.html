@@ -85,13 +85,12 @@
       <section class="hero" id="download">
         <div class="shell hero-grid">
           <div class="hero-copy">
-            <p class="hero-kicker">A desktop invoicing app for Mac and Windows.</p>
             <h1>Make your first invoice in 60 seconds</h1>
             <p class="offer">Your first invoice is free. No card, no time limit. When you need more, it's $5 a month or $50 a year.</p>
             <p class="lede">
-              After installing and signing in with Google, a new invoice is a
-              client, a few line items and a PDF. Your invoice database stays on
-              your computer.
+              A desktop app for Mac and Windows. After installing and signing in
+              with Google, a new invoice is a client, a few line items and a PDF.
+              Your invoice database stays on your computer.
             </p>
 
             <div class="dl" data-dl data-placement="hero">
@@ -147,6 +146,12 @@
       <section class="section" id="how">
         <div class="shell">
           <h2>Making an invoice</h2>
+          <figure class="figure demo">
+            <video controls preload="none" playsinline poster="/assets/video/make-an-invoice-poster.jpg" width="1280" height="800" data-demo aria-label="Screen recording: making an invoice in Freelance Easy, 25 seconds">
+              <source src="/assets/video/make-an-invoice.mp4" type="video/mp4" />
+            </video>
+            <figcaption>The whole thing in real time: 25 seconds from New invoice to the finished preview. The client and the job are fictional. The three screens, step by step:</figcaption>
+          </figure>
           <ol class="process">
             <li class="step">
               <div class="step-text">
@@ -197,12 +202,6 @@
               </figure>
             </li>
           </ol>
-          <figure class="figure demo">
-            <video controls preload="none" playsinline poster="/assets/video/make-an-invoice-poster.jpg" width="1280" height="800" data-demo aria-label="Screen recording: making an invoice in Freelance Easy, 25 seconds">
-              <source src="/assets/video/make-an-invoice.mp4" type="video/mp4" />
-            </video>
-            <figcaption>The whole thing in real time: 25 seconds from New invoice to the finished preview. The client and the job are fictional.</figcaption>
-          </figure>
         </div>
       </section>
 
@@ -239,68 +238,70 @@
       </section>
 
       <!-- ============ PRICING ============ -->
-      <section class="section" id="pricing">
+      <section class="section band" id="pricing">
         <div class="shell">
           <h2>Pricing</h2>
           <div class="pricing">
-            <p class="lead">Your first invoice is free. No card, no time limit.</p>
-            <ul class="bill">
-              <li><span class="price">$5</span><span class="per">a month</span></li>
-              <li><span class="price">$50</span><span class="per">a year</span></li>
-            </ul>
-            <p>
-              Both include unlimited invoices and everything in the app. The
-              subscription renews until you cancel. Cancel any time through the
-              Stripe billing portal in the app's Settings; you keep access to the
-              end of the period you paid for.
-            </p>
-            <p>Everything you made stays on your computer whether or not you subscribe.</p>
-            <details class="disclosure">
-              <summary>Payment details</summary>
-              <p>Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link. There's a field for promotion codes at checkout.</p>
-            </details>
-            <p class="pricing-action"><a class="text-link" href="#download">Back to the download</a></p>
+            <div class="prices">
+              <p class="lead">Your first invoice is free. No card, no time limit.</p>
+              <ul class="bill">
+                <li><span class="price">$5</span><span class="per">a month</span></li>
+                <li><span class="price">$50</span><span class="per">a year</span></li>
+              </ul>
+              <p class="pricing-action"><a class="text-link" href="#download">Back to the download</a></p>
+            </div>
+            <div class="terms">
+              <p>
+                Both include unlimited invoices and everything in the app. The
+                subscription renews until you cancel. Cancel any time through the
+                Stripe billing portal in the app's Settings; you keep access to the
+                end of the period you paid for.
+              </p>
+              <p>Everything you made stays on your computer whether or not you subscribe.</p>
+              <details class="disclosure">
+                <summary>Payment details</summary>
+                <p>Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link. There's a field for promotion codes at checkout.</p>
+              </details>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- ============ A FEW THINGS TO KNOW ============ -->
+      <!-- ============ A FEW THINGS TO KNOW + THE MAKER ============ -->
       <section class="section" id="details">
-        <div class="shell">
-          <h2>A few things to know</h2>
-          <dl class="qa">
-            <div class="qa-row">
-              <dt>Where is my data?</dt>
-              <dd>In a database file on your computer, in a folder you choose. Freelance Easy doesn't receive or host it, so back that folder up with the rest of your work. There's no cloud sync.</dd>
-            </div>
-            <div class="qa-row">
-              <dt>Why Google sign-in?</dt>
-              <dd>It identifies your account by your name and email. The app checks your subscription with our server each time it starts; the invoices themselves stay on your computer.</dd>
-            </div>
-            <div class="qa-row">
-              <dt>Can clients pay through it?</dt>
-              <dd>No. There are no online payment links. Clients pay you the way they do now, and you mark the invoice paid.</dd>
-            </div>
-          </dl>
-          <p class="limits">
-            Freelance Easy is a desktop app for one person, in US dollars. There's
-            no mobile app, no sync between computers and no team features. To close
-            your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.
-          </p>
-        </div>
-      </section>
-
-      <!-- ============ MAKER ============ -->
-      <section class="section maker" id="maker">
-        <div class="shell">
-          <h2>A note from Daniel</h2>
-          <p>
-            I'm a mix engineer in Nashville. I bill for mixes, session days and kit
-            fees, and I used a web invoicing app before this. I built Freelance
-            Easy because I wanted my clients and invoices in a folder on my own
-            computer, and I work on it myself alongside the audio work.
-          </p>
-          <p class="contact"><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></p>
+        <div class="shell two-col">
+          <div class="col-know">
+            <h2>A few things to know</h2>
+            <dl class="qa">
+              <div class="qa-row">
+                <dt>Where is my data?</dt>
+                <dd>In a database file on your computer, in a folder you choose. Freelance Easy doesn't receive or host it, so back that folder up with the rest of your work. There's no cloud sync.</dd>
+              </div>
+              <div class="qa-row">
+                <dt>Why Google sign-in?</dt>
+                <dd>It identifies your account by your name and email. The app checks your subscription with our server each time it starts; the invoices themselves stay on your computer.</dd>
+              </div>
+              <div class="qa-row">
+                <dt>Can clients pay through it?</dt>
+                <dd>No. There are no online payment links. Clients pay you the way they do now, and you mark the invoice paid.</dd>
+              </div>
+            </dl>
+            <p class="limits">
+              Freelance Easy is a desktop app for one person, in US dollars. There's
+              no mobile app, no sync between computers and no team features. To close
+              your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.
+            </p>
+          </div>
+          <div class="col-note maker" id="maker">
+            <h2>A note from Daniel</h2>
+            <p>
+              I'm a mix engineer in Nashville. I bill for mixes, session days and kit
+              fees, and I used a web invoicing app before this. I built Freelance
+              Easy because I wanted my clients and invoices in a folder on my own
+              computer, and I work on it myself alongside the audio work.
+            </p>
+            <p class="contact"><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></p>
+          </div>
         </div>
       </section>
 

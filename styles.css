@@ -324,15 +324,14 @@ p {
   text-wrap: balance; /* three even lines rather than an orphaned "seconds" */
 }
 .hero .offer {
-  margin-top: 16px;
-  font-size: 18px;
-  line-height: 1.5;
+  margin-top: 20px;
+  font-size: 20px;
+  line-height: 1.45;
   color: var(--text-0);
-  font-weight: 700;
-  max-width: 42ch;
+  max-width: 40ch;
 }
 .hero .lede {
-  margin-top: 12px;
+  margin-top: 14px;
   max-width: 46ch;
 }
 
@@ -481,6 +480,17 @@ body[data-os="mobile"] .dl-mobile {
 .section h2 + .lede {
   margin-top: 12px;
 }
+/* A full-bleed band in the same theme, one shade up, to mark a stop on the page. */
+.band {
+  margin-top: 72px;
+  padding: 64px 0;
+  background: var(--bg-1);
+  border-top: 1px solid var(--line-1);
+  border-bottom: 1px solid var(--line-1);
+}
+.band + .section {
+  padding-top: 64px;
+}
 
 /* Product screenshots: full content width, theme-matched, phone detail crops */
 .figure {
@@ -523,12 +533,23 @@ body[data-os="mobile"] .dl-mobile {
   margin-top: 12px;
 }
 
-/* Making an invoice: three real frames, a short note beside each, then the recording */
+/* Making an invoice: the recording first (opt-in), then three real frames with a note beside each */
+.demo {
+  margin-top: 24px;
+}
+.demo video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--bg-1);
+}
 .process {
   list-style: none;
   display: grid;
-  gap: 44px;
-  margin-top: 24px;
+  gap: 48px;
+  margin-top: 40px;
 }
 .step {
   display: grid;
@@ -545,37 +566,31 @@ body[data-os="mobile"] .dl-mobile {
   line-height: 1.4;
   letter-spacing: 0;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: baseline;
 }
 .step-num {
   font-family: var(--font-display);
   font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 .step-text p {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 16px;
   line-height: 1.55;
   color: var(--text-1);
 }
-.demo {
-  margin-top: 44px;
-}
-.demo video {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--line-2);
-  border-radius: 6px;
-  background: var(--bg-1);
-}
 
-/* Pricing: two prices, a few sentences, no box */
+/* Pricing: the two prices on the left, the terms on the right, on a band */
 .pricing {
-  max-width: 62ch;
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 40px 64px;
+  align-items: start;
+  margin-top: 20px;
   font-size: 17px;
   line-height: 1.6;
   color: var(--text-1);
@@ -583,14 +598,15 @@ body[data-os="mobile"] .dl-mobile {
 .pricing .lead {
   color: var(--text-0);
   font-weight: 700;
+  max-width: 30ch;
 }
 .bill {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  margin: 20px 0 20px;
-  padding-top: 20px;
+  grid-template-columns: repeat(2, max-content);
+  gap: 16px 40px;
+  margin: 22px 0 0;
+  padding-top: 22px;
   border-top: 1px solid var(--line-2);
 }
 .bill li {
@@ -600,17 +616,17 @@ body[data-os="mobile"] .dl-mobile {
 }
 .bill .price {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 40px;
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
   color: var(--text-0);
 }
 .bill .per {
   font-size: 16px;
   color: var(--text-2);
 }
-.pricing p + p {
+.terms p + p {
   margin-top: 12px;
 }
 .disclosure {
@@ -634,6 +650,14 @@ body[data-os="mobile"] .dl-mobile {
 .pricing-action {
   margin-top: 18px;
   font-size: 16px;
+}
+
+/* The close: things to know on the left, the maker's note on the right */
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 40px 72px;
+  align-items: start;
 }
 
 /* A few things to know: three real questions, then one plain paragraph */
@@ -674,12 +698,12 @@ body[data-os="mobile"] .dl-mobile {
 
 /* Maker: one paragraph and the support address */
 .maker h2 {
-  font-size: 22px;
-  line-height: 1.25;
+  font-size: clamp(24px, 2.6vw, 28px);
+  line-height: 1.2;
 }
 .maker p {
-  max-width: 62ch;
-  margin-top: 12px;
+  max-width: 52ch;
+  margin-top: 14px;
   font-size: 17px;
   line-height: 1.65;
   color: var(--text-1);
@@ -851,6 +875,14 @@ body[data-os="mobile"] .dl-mobile {
   .process {
     gap: 36px;
   }
+  .pricing {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .two-col {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -881,14 +913,24 @@ body[data-os="mobile"] .dl-mobile {
   #how {
     padding-top: 32px;
   }
+  .band {
+    margin-top: 56px;
+    padding: 48px 0;
+  }
+  .band + .section {
+    padding-top: 48px;
+  }
   h2 {
     font-size: 25px;
   }
   .maker h2 {
-    font-size: 22px;
+    font-size: 25px;
   }
   .bill {
-    gap: 16px;
+    gap: 12px 28px;
+  }
+  .bill .price {
+    font-size: 34px;
   }
   .qa-row {
     grid-template-columns: 1fr;
