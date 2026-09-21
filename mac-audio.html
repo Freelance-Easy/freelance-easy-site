@@ -46,12 +46,13 @@
     </header>
 
     <main>
+      <div data-header-sentinel aria-hidden="true"></div>
       <section class="hero" id="download">
         <div class="shell hero-grid">
           <div class="hero-copy">
             <p class="hero-kicker">Invoicing for mix engineers, producers and studios, on your Mac.</p>
             <h1>Make your first invoice in 60 seconds</h1>
-            <p class="offer">Your first invoice is free. No card, no time limit. When you need more, it's $5 a month or $50 a year.</p>
+            <p class="offer">Your first invoice is free. No card, no time limit. When you need more, it's $5 a month or $50 a year, everything included.</p>
             <p class="lede">
               A desktop invoicing app for audio work, on your Mac: day rates, kit
               fees, per-song mixes. Your clients and invoices live in a folder on
@@ -85,22 +86,31 @@
             </div>
           </div>
 
+          <!-- The stack exists once per template in front (scripts/build-hero-collage.py);
+               script.js lets the visitor bring one forward, as in the app. -->
           <figure class="hero-invoice" id="invoice">
-            <a href="/assets/samples/invoice-modern.pdf" aria-label="Open the front invoice as a PDF">
+            <a class="stack-link" href="/assets/samples/invoice-modern.pdf" data-stack aria-label="Open the front invoice, the Modern template, as a PDF">
               <img
-                src="/assets/screenshots/invoice-stack.png"
+                class="stack-img is-front"
+                src="/assets/screenshots/invoice-stack-modern.png"
                 width="1398"
-                height="1695"
-                alt="Four versions of the same invoice, stacked: the front one, a session-day invoice for Westbrook Sound with an engineer day rate and a kit fee totalling $750, in a clean template with a teal rule and totals box; behind it the same invoice in a bold navy template, a classic template with a green bar, and a minimal grey one."
+                height="1719"
+                alt="Four versions of the same invoice, stacked, the Modern template in front: a session-day invoice for Westbrook Sound with an engineer day rate and a kit fee totalling $750, with a teal rule and totals box; behind it the same invoice in the Bold, Classic and Minimal templates."
                 fetchpriority="high"
+                data-stack-img
               />
+              <img class="stack-img" width="1398" height="1719" alt="" aria-hidden="true" data-stack-ghost />
             </a>
             <figcaption>
-              One invoice, the four templates. The client is fictional. Open a PDF:
-              <a href="/assets/samples/invoice-modern.pdf">Modern</a>,
-              <a href="/assets/samples/invoice-bold.pdf">Bold</a>,
-              <a href="/assets/samples/invoice-classic.pdf">Classic</a> or
-              <a href="/assets/samples/invoice-minimal.pdf">Minimal</a>.
+              One invoice, the four templates. The client is fictional.
+              <span data-stack-hint>Open a PDF:</span>
+              <span class="stack-picker">
+                <a href="/assets/samples/invoice-modern.pdf" data-pick="modern">Modern</a>,
+                <a href="/assets/samples/invoice-bold.pdf" data-pick="bold">Bold</a>,
+                <a href="/assets/samples/invoice-classic.pdf" data-pick="classic">Classic</a> or
+                <a href="/assets/samples/invoice-minimal.pdf" data-pick="minimal">Minimal</a>.
+              </span>
+              <span data-stack-after hidden>Click the invoice to open it as a PDF.</span>
             </figcaption>
           </figure>
         </div>
@@ -142,14 +152,10 @@
           </figure>
           <div class="product-copy">
             <p>
-              An overdue invoice comes with a drafted follow-up email that you
-              review before it goes anywhere. A retainer can be a recurring
-              invoice: it's generated on schedule and waits for you to send it;
-              nothing goes out by itself.
-            </p>
-            <p>
-              If you're moving from another tool, import the invoices you've
-              already sent from their PDFs, so your numbering carries on.
+              An overdue invoice comes with a drafted follow-up email. A retainer
+              can be a recurring invoice, generated on schedule. If you're moving
+              from another tool, import the invoices you've already sent from
+              their PDFs, so your numbering carries on.
             </p>
           </div>
         </div>
@@ -157,24 +163,33 @@
 
       <section class="section band" id="pricing">
         <div class="shell">
-          <h2>Pricing</h2>
+          <h2>One price</h2>
           <div class="pricing">
             <div class="prices">
-              <p class="lead">Your first invoice is free. No card, no time limit.</p>
+              <p class="lead">Everything in the app, unlimited invoices, nothing paywalled.</p>
               <ul class="bill">
                 <li><span class="price">$5</span><span class="per">a month</span></li>
                 <li><span class="price">$50</span><span class="per">a year</span></li>
               </ul>
+              <p class="pricing-note">Your first invoice is free. No card, no time limit.</p>
               <p class="pricing-action"><a class="text-link" href="#download">Back to the download</a></p>
             </div>
             <div class="terms">
+              <p class="included-label">Included</p>
+              <ul class="included">
+                <li>Unlimited invoices and clients</li>
+                <li>All four templates, with your logo and accent color</li>
+                <li>Dashboard, reports and drafted overdue follow-ups</li>
+                <li>Recurring invoices for retainers</li>
+                <li>Import of past invoices from their PDFs</li>
+                <li>Email from your own address</li>
+              </ul>
               <p>
-                Both include unlimited invoices and everything in the app. The
-                subscription renews until you cancel. Cancel any time through the
-                Stripe billing portal in the app's Settings; you keep access to the
-                end of the period you paid for.
+                The subscription renews until you cancel. Cancel any time through
+                the Stripe billing portal in the app's Settings; you keep access to
+                the end of the period you paid for, and everything you made stays
+                on your Mac whether or not you subscribe.
               </p>
-              <p>Everything you made stays on your Mac whether or not you subscribe.</p>
               <details class="disclosure">
                 <summary>Payment details</summary>
                 <p>Checkout is handled by Stripe: card, Apple Pay or Link. There's a field for promotion codes at checkout.</p>
@@ -187,19 +202,19 @@
       <section class="section" id="details">
         <div class="shell two-col">
           <div class="col-know">
-            <h2>Why it's built this way</h2>
+            <h2>You're in control</h2>
             <dl class="qa">
               <div class="qa-row">
-                <dt>It lives on your Mac.</dt>
-                <dd>Your clients and invoices are a database file on your Mac, in a folder you choose. Freelance Easy doesn't receive or host it, so back that folder up with your sessions. There's no cloud sync and no sync between computers. Signing in with Google identifies your account, and the app checks your subscription with our server when it starts; the invoices themselves stay on your Mac.</dd>
+                <dt>Your data stays on your Mac.</dt>
+                <dd>Your clients and invoices are a database file on your Mac, in a folder you choose. Freelance Easy doesn't receive or host it, so back that folder up with your sessions; there's no cloud sync and no sync between computers. Signing in with Google identifies your account, and the app checks your subscription with our server when it starts. The invoices themselves stay on your Mac.</dd>
               </div>
               <div class="qa-row">
-                <dt>It does one thing.</dt>
-                <dd>Invoices, clients, a dashboard, recurring invoices for retainers, and importing the invoices you sent before. No online payment links: clients pay you the way they do now, and you mark the invoice paid. No team features, no mobile app, in US dollars.</dd>
+                <dt>One price covers everything.</dt>
+                <dd>No tiers, no paywalled features, no invoice or client limits. The price above is the whole price list. Cancel from the app's Settings whenever you like; to close the account itself, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>. It's a desktop app for one person, in US dollars: no team features, no mobile app.</dd>
               </div>
               <div class="qa-row">
-                <dt>One person makes it.</dt>
-                <dd>Freelance Easy is built and supported by one freelancer who bills with it, so a question gets answered by the person who wrote the app. To close your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.</dd>
+                <dt>Nothing goes out without you.</dt>
+                <dd>Invoices are emailed from your own address when you press send. Anything the app drafts for you, a recurring invoice or an overdue follow-up, waits for your OK. There are no online payment links: clients pay you the way they do now, and you mark the invoice paid.</dd>
               </div>
             </dl>
           </div>

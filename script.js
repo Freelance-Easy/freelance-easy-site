@@ -15,6 +15,8 @@
    4. Analytics events (Plausible, cookieless, proxied through this domain):
       "Download Click", "Compatibility Help Opened", "Share To Computer".
       No personal data — which button, on which page, from which campaign.
+   5. The hero stack's template picker (wireStack) and the header's scrolled
+      hairline (wireHeader).
    The no-JS state is the plain /download/<os> href already in the HTML. */
 
 (function () {
@@ -242,6 +244,97 @@
     });
   }
 
+  // ---- The hero stack: bring a template to the front ----
+  // One PNG per template in front (invoice-stack-<template>.png, all the same
+  // size). Two image layers crossfade; the link under them opens the front
+  // template's PDF. Without JS the caption's names are plain links to the PDFs.
+  var TEMPLATES = ["modern", "bold", "classic", "minimal"];
+  var TEMPLATE_NAMES = { modern: "Modern", bold: "Bold", classic: "Classic", minimal: "Minimal" };
+  var STACK_ALT = {
+    modern: "Four versions of the same invoice, stacked, the Modern template in front: a session-day invoice for Westbrook Sound with an engineer day rate and a kit fee totalling $750, with a teal rule and totals box; behind it the same invoice in the Bold, Classic and Minimal templates.",
+    bold: "The same stack with the Bold template in front: a navy 'Invoice #INV1045' title over a black rule and a navy table header, the other three templates behind it.",
+    classic: "The same stack with the Classic template in front: a forest-green bar across the top and the name and job in a serif, the other three templates behind it.",
+    minimal: "The same stack with the Minimal template in front: a centred grey INVOICE title and hairline rules, the other three templates behind it.",
+  };
+
+  function wireStack() {
+    var link = document.querySelector("[data-stack]");
+    if (!link) return;
+    var front = link.querySelector("[data-stack-img]");
+    var ghost = link.querySelector("[data-stack-ghost]");
+    var picks = document.querySelectorAll("[data-pick]");
+    if (!front || !ghost || !picks.length) return;
+    var current = "modern";
+    var busy = false;
+
+    function stackSrc(t) {
+      return "/assets/screenshots/invoice-stack-" + t + ".png";
+    }
+    function pdfHref(t) {
+      return "/assets/samples/invoice-" + t + ".pdf";
+    }
+    function mark(t) {
+      picks.forEach(function (p) {
+        p.setAttribute("aria-pressed", String(p.getAttribute("data-pick") === t));
+      });
+      link.setAttribute("href", pdfHref(t));
+      link.setAttribute("aria-label", "Open the front invoice, the " + TEMPLATE_NAMES[t] + " template, as a PDF");
+    }
+    function show(t) {
+      if (t === current || busy || TEMPLATES.indexOf(t) < 0) return;
+      busy = true;
+      ghost.onload = function () {
+        ghost.alt = STACK_ALT[t];
+        ghost.removeAttribute("aria-hidden");
+        ghost.classList.add("is-front");
+        front.classList.remove("is-front");
+        front.setAttribute("aria-hidden", "true");
+        front.alt = "";
+        var was = front;
+        front = ghost;
+        ghost = was;
+        current = t;
+        busy = false;
+        mark(t);
+      };
+      ghost.onerror = function () {
+        busy = false;
+      };
+      ghost.src = stackSrc(t);
+    }
+
+    picks.forEach(function (p) {
+      p.setAttribute("role", "button");
+      p.addEventListener("click", function (e) {
+        e.preventDefault();
+        show(p.getAttribute("data-pick"));
+      });
+    });
+    mark(current);
+    var hint = document.querySelector("[data-stack-hint]");
+    if (hint) hint.textContent = "Bring one to the front:";
+    var after = document.querySelector("[data-stack-after]");
+    if (after) after.hidden = false;
+
+    // Fetch the other three stacks once the page is idle, so the first switch is instant.
+    var idle = window.requestIdleCallback || function (f) { setTimeout(f, 1500); };
+    idle(function () {
+      TEMPLATES.forEach(function (t) {
+        if (t !== current) new Image().src = stackSrc(t);
+      });
+    });
+  }
+
+  // ---- Header: a hairline once the page has scrolled under it ----
+  function wireHeader() {
+    var header = document.querySelector(".site-header");
+    var sentinel = document.querySelector("[data-header-sentinel]");
+    if (!header || !sentinel || !("IntersectionObserver" in window)) return;
+    new IntersectionObserver(function (entries) {
+      header.classList.toggle("is-stuck", !entries[0].isIntersecting);
+    }).observe(sentinel);
+  }
+
   function init() {
     bindToggle();
     var os = detectPlatform();
@@ -252,6 +345,8 @@
       wireDownloadBlock(block, os, campaign);
     });
     wireDemo();
+    wireStack();
+    wireHeader();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

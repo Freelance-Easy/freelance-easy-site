@@ -138,6 +138,8 @@ body {
   background: var(--bg-0);
   color: var(--text-0);
   min-height: 100vh;
+  /* the theme toggle fades instead of snapping (off under reduced motion, below) */
+  transition: background-color 0.3s var(--ease-swift), color 0.3s var(--ease-swift);
 }
 
 img,
@@ -181,13 +183,28 @@ button {
   padding: 0 var(--shell-pad);
 }
 
-/* ---------- Header ---------- */
+/* ---------- Header (sticky, so the download is one click away from anywhere;
+   translucent over the page, a hairline appears once it has scrolled) ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-0);
+  background: color-mix(in srgb, var(--bg-0) 84%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, background-color 0.3s var(--ease-swift);
+}
+.site-header.is-stuck {
+  border-bottom-color: var(--line-1);
+}
 .site-header .shell {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
 }
 
 .brand {
@@ -343,14 +360,28 @@ p {
   justify-self: end;
   margin: 4px 0 0;
 }
-.hero-invoice > a {
-  display: block; /* the image link only; the caption link stays inline */
+/* The stack: one transparent PNG per template in front, with its own paper
+   edges and shadows (scripts/build-hero-collage.py), so no frame here. Two
+   layers crossfade when the visitor brings another template forward. */
+.stack-link {
+  position: relative;
+  display: block;
+  aspect-ratio: 1398 / 1719;
+  transition: transform 0.25s var(--ease-swift);
 }
-.hero-invoice img {
+.stack-link:hover {
+  transform: translateY(-2px);
+}
+.stack-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: auto;
-  /* The stack is a transparent PNG with its own paper edges and shadows
-     (scripts/build-hero-collage.py), so no frame here. */
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-swift);
+}
+.stack-img.is-front {
+  opacity: 1;
 }
 .hero-invoice figcaption {
   margin-top: 10px;
@@ -361,6 +392,20 @@ p {
 .hero-invoice figcaption a {
   color: var(--text-1);
   border-bottom: 1px solid var(--line-3);
+  transition: color 0.15s, border-color 0.15s;
+}
+.hero-invoice figcaption a:hover {
+  color: var(--text-0);
+  border-color: var(--text-2);
+}
+/* Once script.js has wired the picker, the four names are buttons; the front
+   one is marked, in the accent. */
+.stack-picker a[aria-pressed] {
+  cursor: pointer;
+}
+.stack-picker a[aria-pressed="true"] {
+  color: var(--text-0);
+  border-bottom: 2px solid var(--accent);
 }
 
 /* ---------- Download block (one instance, in the hero) ---------- */
@@ -388,6 +433,9 @@ p {
   border: 1px solid transparent;
   transition: background 0.18s var(--ease-swift), border-color 0.18s var(--ease-swift), transform 0.18s var(--ease-swift);
   white-space: nowrap;
+}
+.btn:hover {
+  transform: translateY(-1px);
 }
 .btn:active {
   transform: translateY(1px);
@@ -489,6 +537,7 @@ body[data-os="mobile"] .dl-mobile {
   background: var(--bg-1);
   border-top: 1px solid var(--line-1);
   border-bottom: 1px solid var(--line-1);
+  transition: background-color 0.3s var(--ease-swift), border-color 0.3s var(--ease-swift);
 }
 .band + .section {
   padding-top: 64px;
@@ -504,6 +553,11 @@ body[data-os="mobile"] .dl-mobile {
   border: 1px solid var(--line-2);
   border-radius: 6px;
   background: var(--bg-1);
+  box-shadow: 0 32px 64px -32px rgba(0, 0, 0, 0.6); /* the window sits on the page, not in it */
+  transition: background-color 0.3s var(--ease-swift), border-color 0.3s var(--ease-swift);
+}
+[data-theme="light"] .figure img {
+  box-shadow: 0 32px 64px -32px rgba(20, 20, 24, 0.3);
 }
 .figure figcaption {
   margin-top: 10px;
@@ -548,6 +602,10 @@ body[data-os="mobile"] .dl-mobile {
   border: 1px solid var(--line-2);
   border-radius: 6px;
   background: var(--bg-1);
+  box-shadow: 0 32px 64px -32px rgba(0, 0, 0, 0.6);
+}
+[data-theme="light"] .demo video {
+  box-shadow: 0 32px 64px -32px rgba(20, 20, 24, 0.3);
 }
 .process {
   list-style: none;
@@ -623,6 +681,42 @@ body[data-os="mobile"] .dl-mobile {
   font-size: 16px;
   color: var(--text-2);
 }
+.pricing-note {
+  margin-top: 18px;
+  font-size: 16px;
+  color: var(--text-1);
+}
+/* What the price includes: a plain two-column list with a small accent dot */
+.included-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.included {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 28px;
+  margin: 10px 0 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.included li {
+  position: relative;
+  padding-left: 16px;
+}
+.included li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
 .terms p + p {
   margin-top: 12px;
 }
@@ -645,7 +739,7 @@ body[data-os="mobile"] .dl-mobile {
   color: var(--text-1);
 }
 .pricing-action {
-  margin-top: 18px;
+  margin-top: 14px;
   font-size: 16px;
 }
 
@@ -657,14 +751,14 @@ body[data-os="mobile"] .dl-mobile {
   align-items: start;
 }
 
-/* Why it's built this way: three statements, each with its plain explanation */
+/* You're in control: three statements, each with its plain explanation */
 .qa {
   max-width: 720px;
   margin-top: 8px;
 }
 .qa-row {
   display: grid;
-  grid-template-columns: 184px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
   gap: 6px 32px;
   padding: 20px 0;
   border-bottom: 1px solid var(--line-1);
@@ -918,6 +1012,9 @@ body[data-os="mobile"] .dl-mobile {
   }
   .bill .price {
     font-size: 34px;
+  }
+  .included {
+    grid-template-columns: 1fr;
   }
   .qa-row {
     grid-template-columns: 1fr;

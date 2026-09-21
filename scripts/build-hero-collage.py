@@ -11,7 +11,8 @@ Two stages, because they need different interpreters:
 
   compose  — uses a venv with pymupdf + pillow. Rasterises the top of each PDF and
              lays the four sheets as a fanned stack on a transparent canvas:
-             assets/screenshots/invoice-stack.png (and the per-style top crops).
+             assets/screenshots/invoice-stack-<front>.png, one per template in
+             front, all the same size (and the per-style top crops).
                python scripts/build-hero-collage.py compose
 
 No fake documents: every sheet is the app's real output for the same fictional
@@ -80,21 +81,24 @@ CROP_H = 1470            # px at 3× — the same crop as the previous hero (top
 SHEET_W = 1120           # each sheet's width on the canvas (page 1836 → 1120, so 1470 → 897 tall)
 PAD = 28                 # canvas margin; the shadows need a little room
 
-# Each sheet behind the front one is placed so that the band it reveals holds
-# that template's signature: the offsets are per sheet, not a uniform step.
-# (dx to the right of the front sheet, band = how much of its top stays visible,
-# tilt in degrees; small alternating tilts so the pile reads as paper, not a grid)
-PLACEMENT = {
-    "modern": dict(dx=0, band=0, tilt=0.0),        # front: fully visible
-    "bold": dict(dx=64, band=360, tilt=1.1),       # navy "Invoice #INV1045" title (~230px down) + the navy table header (~330px)
-    "classic": dict(dx=128, band=176, tilt=-1.3),  # forest bar + the big name are the top 176px
-    "minimal": dict(dx=192, band=176, tilt=0.8),   # centred grey INVOICE title + names
+# Each sheet behind the front one rises by the band that holds that template's
+# signature, so the reveal is per template, not a uniform step:
+BAND = {
+    "modern": 200,   # "INVOICE", the number and title, the teal rule
+    "bold": 360,     # navy "Invoice #INV1045" title (~230px down) + the navy table header (~330px)
+    "classic": 176,  # forest bar + the big name are the top 176px
+    "minimal": 176,  # centred grey INVOICE title + names
 }
-# dx stays within the page's own right margin (~100px at this scale), so the
-# strips showing on the right are blank paper edges, not sliced numbers.
+# The slot a sheet occupies (front → back) sets its x offset and tilt: dx stays
+# within the page's own right margin (~100px at this scale), so the strips on
+# the right are blank paper edges, not sliced numbers; small alternating tilts
+# so the pile reads as paper, not a grid.
+SLOTS = [dict(dx=0, tilt=0.0), dict(dx=64, tilt=1.1), dict(dx=128, tilt=-1.3), dict(dx=192, tilt=0.8)]
 
 
 def compose() -> int:
+    """One stack per template in front (the page lets the visitor pick), all on
+    the same canvas size so swapping them doesn't move the layout."""
     import pymupdf
     from PIL import Image, ImageFilter
 
@@ -109,40 +113,39 @@ def compose() -> int:
         scale = SHEET_W / im.width
         sheets[style] = im.resize((SHEET_W, round(im.height * scale)), Image.LANCZOS)
 
+    styles = [s for s, _ in SHEETS]
     sheet_h = sheets["modern"].height
-    order = [s for s, _ in SHEETS]  # front → back
-    # y of each sheet: the front sits lowest; every sheet behind rises by the
-    # band of the sheet in front of it, so exactly that band stays visible.
-    ys = {}
-    y = 0
-    for style in order:
-        if style != "modern":
-            y -= PLACEMENT[style]["band"]  # this sheet rises by the band it must keep visible
-        ys[style] = y
-    # shift so the topmost sheet starts at PAD
-    top = min(ys.values())
-    for style in ys:
-        ys[style] = ys[style] - top + PAD
-    xs = {style: PAD + PLACEMENT[style]["dx"] for style in order}
-    width = max(xs[s] for s in order) + SHEET_W + PAD + 30
-    height = ys["modern"] + sheet_h + PAD + 30
-    canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    # The front sheet sits at the same y in every variant: below the tallest
+    # possible pile of bands (every template but the shortest-banded one).
+    tallest = sum(sorted(BAND.values(), reverse=True)[: len(styles) - 1])
+    front_y = PAD + tallest
+    width = SLOTS[len(styles) - 1]["dx"] + SHEET_W + 2 * PAD + 30
+    height = front_y + sheet_h + PAD + 30
 
-    for style in reversed(order):  # back to front
-        im = sheets[style]
-        framed = Image.new("RGBA", (im.width + 2, im.height + 2), (214, 214, 214, 255))  # hairline edge for the light theme
-        framed.paste(im, (1, 1))
-        rotated = framed.rotate(PLACEMENT[style]["tilt"], resample=Image.BICUBIC, expand=True)
-        shadow = Image.new("RGBA", rotated.size, (0, 0, 0, 0))
-        shadow.putalpha(rotated.split()[3].point(lambda a: int(a * 0.26)))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(16))
-        x, y = xs[style], ys[style]
-        canvas.alpha_composite(shadow, (x - 4, y + 12))
-        canvas.alpha_composite(rotated, (x, y))
-
-    out = SHOTS / "invoice-stack.png"
-    canvas.save(out, optimize=True)
-    print("wrote", out, canvas.size, out.stat().st_size // 1024, "KB")
+    for front in styles:
+        order = [front] + [s for s in styles if s != front]  # front → back, the rest in canonical order
+        ys, y = {}, front_y
+        for style in order:
+            if style != front:
+                y -= BAND[style]  # this sheet rises by the band it must keep visible
+            ys[style] = y
+        xs = {style: PAD + SLOTS[i]["dx"] for i, style in enumerate(order)}
+        tilts = {style: SLOTS[i]["tilt"] for i, style in enumerate(order)}
+        canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        for style in reversed(order):  # back to front
+            im = sheets[style]
+            framed = Image.new("RGBA", (im.width + 2, im.height + 2), (214, 214, 214, 255))  # hairline edge for the light theme
+            framed.paste(im, (1, 1))
+            rotated = framed.rotate(tilts[style], resample=Image.BICUBIC, expand=True)
+            shadow = Image.new("RGBA", rotated.size, (0, 0, 0, 0))
+            shadow.putalpha(rotated.split()[3].point(lambda a: int(a * 0.26)))
+            shadow = shadow.filter(ImageFilter.GaussianBlur(16))
+            x, y = xs[style], ys[style]
+            canvas.alpha_composite(shadow, (x - 4, y + 12))
+            canvas.alpha_composite(rotated, (x, y))
+        out = SHOTS / f"invoice-stack-{front}.png"
+        canvas.save(out, optimize=True)
+        print("wrote", out, canvas.size, out.stat().st_size // 1024, "KB")
     return 0
 
 
