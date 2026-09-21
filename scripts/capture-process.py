@@ -4,14 +4,17 @@
 
 The script signs in as the mock user, rewrites the session to the fictional
 persona, then makes a REAL invoice through the UI — new invoice, title, client,
-two line items, a note, Create — capturing a frame at each stage, in both
-themes, plus phone-width detail crops. Afterwards it deletes the invoice
+two line items, a note, Create. Afterwards it deletes the invoice
 (POST /invoices/<id>/delete) so the demo data set is unchanged.
 
-With --video it instead records one dark-theme pass with a drawn cursor and
-human typing speed (Playwright records no cursor of its own) and writes the raw
-.webm plus the second offsets of the useful segment; encode-process-video.py
-trims and converts it.
+--video (what the page uses since v2.3) records one dark-theme pass with a
+drawn cursor and human typing speed (Playwright records no cursor of its own)
+and writes the raw .webm plus the second offsets of the useful segment;
+encode-process-video.py cuts the loop and the real-time file from it.
+
+Without --video it captures a still at each stage, in both themes, plus
+phone-width detail crops. The page stopped using those frames in v2.3 (the
+loop replaced them); the stage is kept for a future still.
 
 Prerequisites: the same as capture-screenshots.py (mock LicenseServer on :5001,
 the app in DEV mode on :50505 with the fictional demo data, `playwright pillow`).
@@ -248,6 +251,7 @@ def main() -> int:
     ap.add_argument("--profile", required=True)
     ap.add_argument("--user", default="Daniel (Google, active)")
     ap.add_argument("--video", default=None, help="directory for the raw .webm recording (video pass instead of stills)")
+    ap.add_argument("--theme", choices=("dark", "light"), default="dark", help="app theme for the video pass (stills always do both)")
     args = ap.parse_args()
 
     out = pathlib.Path(args.out)
@@ -259,7 +263,7 @@ def main() -> int:
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        ctx_kwargs = dict(viewport=VIEWPORT, device_scale_factor=2, color_scheme="dark")
+        ctx_kwargs = dict(viewport=VIEWPORT, device_scale_factor=2, color_scheme=args.theme)
         if video_dir:
             ctx_kwargs.update(record_video_dir=str(video_dir), record_video_size={"width": 1440, "height": 900}, device_scale_factor=1)
         ctx = browser.new_context(**ctx_kwargs)
@@ -281,7 +285,10 @@ def main() -> int:
         page.goto(f"{args.app}/", wait_until="domcontentloaded")
         page.get_by_text("Recent invoices").wait_for(timeout=15000)
         assert PERSONA["display_name"] in page.content(), "persona not shown — session patch failed"
-        if page.locator("html[data-theme='light']").count():
+        # The app remembers its theme per user; start from the one this pass wants
+        # (dark for stills, which then toggle to light for their second frame).
+        is_light = page.locator("html[data-theme='light']").count() > 0
+        if is_light != (args.theme == "light"):
             page.get_by_role("button", name="Toggle theme").click()
             page.wait_for_timeout(300)
 

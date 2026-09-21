@@ -1,6 +1,8 @@
-/* Freelance Easy — landing page behaviour (v2.2, 2026-09)
+/* Freelance Easy — landing page behaviour (v2.3, 2026-09)
    1. Theme toggle (dark default, persisted in localStorage). The product
       screenshots follow the theme in CSS (.shot-dark / .shot-light pairs).
+      The making-an-invoice loop autoplays muted; see wireDemo for the
+      reduced-motion and autoplay-refused fallbacks.
    2. Platform detection — mac / win / mobile / other. The download block
       ([data-dl]) gets one filled button for the visitor's OS and a plain link
       for the other; the matching compatibility text is shown. A block marked
@@ -39,6 +41,9 @@
       try {
         localStorage.setItem(STORAGE_KEY, next);
       } catch (e) {}
+      syncDemoTheme(next).forEach(function (v) {
+        if (!reduceMotion) playDemo(v);
+      });
     });
   }
 
@@ -170,15 +175,70 @@
     }
   }
 
-  // ---- The recording (opt-in: poster + play, never autoplay) ----
-  function wireDemo() {
-    document.querySelectorAll("video[data-demo]").forEach(function (v) {
-      var counted = false;
-      v.addEventListener("play", function () {
-        if (counted) return;
-        counted = true;
-        track("Demo Played", { page: pageId() });
+  // ---- The loop (silent, autoplays like a GIF) ----
+  // The recording exists in both app themes: …-dark.mp4 / …-light.mp4, the
+  // same for the posters and the real-time files. The page's theme picks the
+  // set (the HTML carries the dark one for no-JS).
+  // Reduced motion: no autoplay; the poster stays and the controls appear, so
+  // it plays only on request. Autoplay refused (iOS Low Power Mode, a strict
+  // browser setting): same fallback, so the poster is never a dead end.
+  var reduceMotion = false;
+  try {
+    reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch (e) {}
+
+  function currentTheme() {
+    return root.getAttribute("data-theme") === "light" ? "light" : "dark";
+  }
+
+  function swapThemeIn(el, attr, theme) {
+    var v = el.getAttribute(attr);
+    if (!v) return false;
+    var next = v.replace(/-(dark|light)(?=[-.])/, "-" + theme);
+    if (next === v) return false;
+    el.setAttribute(attr, next);
+    return true;
+  }
+
+  function playDemo(v) {
+    var p = v.play();
+    if (p && typeof p.catch === "function") {
+      p.catch(function (err) {
+        if (!err || err.name !== "AbortError") v.controls = true;
       });
+    }
+  }
+
+  // Point the loop (and the real-time link) at the theme's files; returns the
+  // videos whose source changed, already reloaded.
+  function syncDemoTheme(theme) {
+    var changed = [];
+    document.querySelectorAll("video[data-demo]").forEach(function (v) {
+      var did = swapThemeIn(v, "poster", theme);
+      v.querySelectorAll("source").forEach(function (s) {
+        did = swapThemeIn(s, "src", theme) || did;
+      });
+      if (did) {
+        v.load();
+        changed.push(v);
+      }
+    });
+    document.querySelectorAll("a[data-demo-realtime]").forEach(function (a) {
+      swapThemeIn(a, "href", theme);
+    });
+    return changed;
+  }
+
+  function wireDemo() {
+    syncDemoTheme(currentTheme());
+    document.querySelectorAll("video[data-demo]").forEach(function (v) {
+      if (reduceMotion) {
+        v.removeAttribute("autoplay");
+        v.pause();
+        v.controls = true;
+        return;
+      }
+      playDemo(v);
     });
   }
 

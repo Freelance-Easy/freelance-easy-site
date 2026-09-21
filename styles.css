@@ -1,9 +1,11 @@
 /* =============================================================
-   Freelance Easy — landing page (v2.2, 2026-09)
+   Freelance Easy — landing page (v2.3, 2026-09)
    Dark default. Tokens mirror the app's own design system so the page feels
-   like the product, not marketing chrome. The product screenshots run the full
-   content width and follow the page theme; headings are short; the serif
-   italic lives in the wordmark only; each fact is said once.
+   like the product, not marketing chrome. Each section is one moment of use:
+   a one-line lede, one product image (the making-an-invoice loop, the
+   dashboard) at full content width following the page theme, a little prose.
+   Headings are short; the serif italic lives in the wordmark only; each fact
+   is said once.
    ============================================================= */
 
 /* ---------- Fonts (self-hosted; no third-party request before sign-in) ---------- */
@@ -533,9 +535,11 @@ body[data-os="mobile"] .dl-mobile {
   margin-top: 12px;
 }
 
-/* Making an invoice: the recording first (opt-in), then three real frames with a note beside each */
+/* Making an invoice: the silent loop (autoplays; script.js falls back to controls
+   under prefers-reduced-motion or when autoplay is refused), then the three
+   moments in one row under a rule, like a caption */
 .demo {
-  margin-top: 24px;
+  margin-top: 28px;
 }
 .demo video {
   display: block;
@@ -548,40 +552,33 @@ body[data-os="mobile"] .dl-mobile {
 .process {
   list-style: none;
   display: grid;
-  gap: 48px;
-  margin-top: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 40px;
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-2);
 }
-.step {
+.process li {
   display: grid;
-  grid-template-columns: 236px minmax(0, 1fr);
-  gap: 28px;
-  align-items: start;
-}
-.step .figure {
-  margin: 0;
-}
-.step-text h3 {
-  font-family: var(--font-sans);
-  font-size: 17px;
-  line-height: 1.4;
-  letter-spacing: 0;
-  display: flex;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
   align-items: baseline;
 }
 .step-num {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
-.step-text p {
-  margin-top: 10px;
-  font-size: 16px;
+.process p {
+  font-size: 15px;
   line-height: 1.55;
   color: var(--text-1);
+}
+.process b {
+  color: var(--text-0);
 }
 
 /* Pricing: the two prices on the left, the terms on the right, on a band */
@@ -868,12 +865,9 @@ body[data-os="mobile"] .dl-mobile {
     max-width: 528px;
     margin-top: 0;
   }
-  .step {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
   .process {
-    gap: 36px;
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
   .pricing {
     grid-template-columns: 1fr;
