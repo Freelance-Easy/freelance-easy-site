@@ -309,23 +309,28 @@
   // Four real sheets (one <a> per template, see index.html) in four fixed
   // slots, front to back. A slot sets x, y and a slight scale (percent of the
   // deck's width, via container-query units, so the geometry follows the
-  // column); the same geometry is printed by scripts/build-hero-collage.py.
-  // The deck's silhouette never changes: a pick moves sheets between slots.
-  //   pull(k): the sheet in slot k slides out sideways, lifts, and lands in
-  //   front; only the sheets that were ahead of it shift back one slot, a beat
-  //   later, under it. Nothing crosses in the stacking order mid-flight.
-  //   next: the back sheet (the top band) comes down to the front, so repeated
-  //   clicks on the front sheet, a swipe, or the arrow keys rotate through all
-  //   four.
-  // Without JS the sheets and the caption's names are plain links to the PDFs
-  // and the deck stays as the HTML laid it out.
+  // column). The deck's silhouette never changes: a pick moves sheets between
+  // slots, one pull at a time.
+  //   pull(k): the sheet in slot k emerges from under the sheets ahead of it
+  //   (it starts clipped to the band that was already showing and the clip
+  //   opens as it slides down and out), lifts, and lands in front; only the
+  //   sheets that were ahead of it shift back one slot, a beat later, under
+  //   it. Nothing crosses in the stacking order mid-flight.
+  //   next / previous follow the template order (Modern, Bold, Classic,
+  //   Minimal), whatever the deck's current arrangement: the front click, a
+  //   sideways swipe or drag, and the arrow keys.
+  // A pick made while a pull is in flight waits for it and then runs (the
+  // latest request wins). Without JS the sheets and the caption's names are
+  // plain links to the PDFs and the deck stays as the HTML laid it out.
   var TEMPLATES = ["modern", "bold", "classic", "minimal"];
   var TEMPLATE_NAMES = { modern: "Modern", bold: "Bold", classic: "Classic", minimal: "Minimal" };
   var DECK = {
     x: [0, 4.878, 9.756, 14.634], // slot → offset to the right, % of the deck's width
     y: [36, 24, 12, 0], // slot → offset down; each sheet behind shows a 12% band of its top
     s: [1, 0.985, 0.97, 0.955], // slot → scale, a little smaller the further back
-    pullOut: 7, // how far a pulled sheet slides out sideways before it comes forward
+    band: 12, // the band a sheet behind shows, % of the deck's width
+    sheetH: 68.37, // a sheet's height at scale 1, % of the deck's width (897 / 1120 × 85.366)
+    pullOut: 4, // how far a pulled sheet drifts sideways on its way forward
   };
   var SHEET_ALT = {
     modern: "A session-day invoice for Westbrook Sound in the Modern template: an engineer day rate and a kit fee totalling $750, with a teal rule and totals box.",
@@ -344,8 +349,11 @@
     if (TEMPLATES.some(function (t) { return !sheets[t]; })) return;
     var picks = document.querySelectorAll("[data-pick]");
     var open = document.querySelector("[data-stack-open]");
+    var status = document.querySelector("[data-stack-status]");
+    var hint = document.querySelector("[data-stack-hint]");
     var order = TEMPLATES.slice(); // slot 0 (front) → slot 3 (back)
-    var moving = null;
+    var moving = null; // the sheet in flight
+    var pending = null; // a pick made during a pull
     var settleTimer = null;
 
     function place(slot) {
@@ -382,40 +390,73 @@
         open.setAttribute("href", "/assets/samples/invoice-" + front + ".pdf");
         open.textContent = "Open the " + TEMPLATE_NAMES[front] + " PDF";
       }
+      if (status) status.textContent = TEMPLATE_NAMES[front] + " template, " + (TEMPLATES.indexOf(front) + 1) + " of " + TEMPLATES.length;
+    }
+    function finishPull(el) {
+      if (moving !== el) return;
+      clearTimeout(settleTimer);
+      el.classList.remove("is-moving");
+      deck.classList.remove("is-shuffling");
+      moving = null;
+      var queued = pending;
+      pending = null;
+      if (queued && queued !== order[0]) {
+        window.requestAnimationFrame(function () {
+          show(queued);
+        });
+      }
     }
     // Pull the sheet in slot k to the front.
     function pull(k) {
       if (k <= 0 || k >= order.length) return;
       var t = order[k];
       var el = sheets[t];
-      if (moving) {
-        moving.classList.remove("is-moving");
-        deck.classList.remove("is-shuffling");
-      }
-      // The path: out sideways from where it was, then forward and down to the front.
+      var keepFocus = deck.contains(document.activeElement);
+      // The path: from its slot, a little sideways and forward, then down into
+      // the front slot; hidden below its band at first, fully shown by mid-way.
+      var hidden = 100 - (DECK.band / (DECK.sheetH * DECK.s[k])) * 100;
       el.style.setProperty("--from", place(k));
-      el.style.setProperty("--mid", "translate(" + (DECK.x[k] + DECK.pullOut) + "cqw, " + (DECK.y[k] - 1.5) + "cqw) scale(" + (DECK.s[k] + 0.02) + ")");
+      el.style.setProperty("--mid", "translate(" + (DECK.x[k] + DECK.pullOut) + "cqw, " + (DECK.y[k] + (DECK.y[0] - DECK.y[k]) * 0.45) + "cqw) scale(" + (DECK.s[k] + 0.012) + ")");
       el.style.setProperty("--to", place(0));
+      el.style.setProperty("--hidden", hidden.toFixed(2) + "%");
       order.splice(k, 1);
       order.unshift(t);
       moving = el;
-      el.classList.remove("is-moving");
-      void el.offsetWidth; // restart the pull animation if it was already running
-      el.classList.add("is-moving");
-      deck.classList.add("is-shuffling"); // the others wait a beat before they shift back
-      lay();
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(function () {
-        el.classList.remove("is-moving");
-        deck.classList.remove("is-shuffling");
-        moving = null;
-      }, 620);
+      if (reduceMotion) {
+        lay();
+        finishPull(el);
+      } else {
+        el.classList.add("is-moving");
+        deck.classList.add("is-shuffling");
+        el.addEventListener("animationend", function onEnd(e) {
+          if (e.animationName !== "sheet-pull") return;
+          el.removeEventListener("animationend", onEnd);
+          finishPull(el);
+        });
+        settleTimer = setTimeout(function () {
+          finishPull(el);
+        }, 520);
+        lay();
+      }
+      if (keepFocus) sheets[order[0]].focus({ preventScroll: true });
     }
     function show(t) {
+      if (TEMPLATES.indexOf(t) < 0 || t === order[0]) return;
+      if (moving) {
+        pending = t; // the latest request runs when the pull in flight has landed
+        return;
+      }
       pull(order.indexOf(t));
     }
+    function step(delta) {
+      var i = TEMPLATES.indexOf(order[0]);
+      show(TEMPLATES[(i + delta + TEMPLATES.length) % TEMPLATES.length]);
+    }
     function next() {
-      pull(order.length - 1);
+      step(1);
+    }
+    function previous() {
+      step(-1);
     }
 
     picks.forEach(function (p) {
@@ -432,17 +473,28 @@
       });
     });
 
-    // Clicks: a sheet in the deck comes forward; the front sheet shows the next
-    // one. A horizontal swipe (or drag) does the same as the front click, and
-    // the click that follows a swipe is swallowed. The sheets are links, so
-    // the browser's own link-drag has to be switched off for the drag to be
-    // ours.
-    var swiped = false;
-    var startX = null;
-    var startY = null;
+    // Pointer: a click on a sheet in the deck brings it forward, a click on
+    // the front sheet shows the next template. A sideways drag on the deck
+    // (the front sheet follows the finger a little) shows the next or the
+    // previous one on release, and the click that follows a drag is
+    // swallowed. One primary pointer at a time; the browser's own link-drag
+    // is off so the drag is ours.
+    var activeId = null;
+    var startX = 0;
+    var startY = 0;
     var downSheet = null; // the sheet under the pointer when it went down (capture retargets the click to the deck)
+    var dragging = false;
+    var swiped = false;
     function sheetOf(node) {
       return node && node.closest ? node.closest("[data-sheet]") : null;
+    }
+    function clearDrag() {
+      // downSheet stays: the click that follows a pointerup still needs it
+      var f = sheets[order[0]];
+      f.classList.remove("is-dragging");
+      f.style.removeProperty("--drag-x");
+      activeId = null;
+      dragging = false;
     }
     TEMPLATES.forEach(function (t) {
       sheets[t].setAttribute("draggable", "false");
@@ -464,38 +516,61 @@
       else show(t);
     });
     deck.addEventListener("pointerdown", function (e) {
-      if (e.button !== 0) return;
+      if (!e.isPrimary || e.button !== 0 || activeId !== null) return;
+      activeId = e.pointerId;
       swiped = false;
+      dragging = false;
       startX = e.clientX;
       startY = e.clientY;
       downSheet = sheetOf(e.target);
       try {
-        deck.setPointerCapture(e.pointerId); // the swipe may end outside the deck
+        deck.setPointerCapture(e.pointerId); // the drag may end outside the deck
       } catch (err) {}
     });
-    deck.addEventListener("pointerup", function (e) {
-      if (startX === null) return;
+    deck.addEventListener("pointermove", function (e) {
+      if (e.pointerId !== activeId) return;
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
-      startX = startY = null;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-        swiped = true;
-        next();
+      if (!dragging && Math.abs(dx) > 12 && Math.abs(dx) > 1.5 * Math.abs(dy)) dragging = true;
+      if (dragging && !moving) {
+        var f = sheets[order[0]];
+        f.classList.add("is-dragging");
+        f.style.setProperty("--drag-x", Math.max(-32, Math.min(32, dx * 0.35)) + "px");
       }
     });
-    deck.addEventListener("pointercancel", function () {
-      startX = startY = null;
+    deck.addEventListener("pointerup", function (e) {
+      if (e.pointerId !== activeId) return;
+      var dx = e.clientX - startX;
+      var wasDragging = dragging;
+      clearDrag();
+      if (wasDragging) {
+        swiped = true; // the click that follows is not a pick
+        if (dx < -40) next();
+        else if (dx > 40) previous();
+      }
+    });
+    deck.addEventListener("pointercancel", function (e) {
+      if (e.pointerId !== activeId) return;
+      clearDrag();
+      downSheet = null;
+    });
+    deck.addEventListener("lostpointercapture", function (e) {
+      if (e.pointerId !== activeId) return; // after a pointerup this is already over
+      clearDrag();
+      downSheet = null;
     });
     deck.addEventListener("keydown", function (e) {
+      if (e.repeat) return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
         next();
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        pull(1); // the sheet just behind comes forward
+        previous();
       }
     });
     if (open) open.hidden = false;
+    if (hint) hint.hidden = false;
     lay();
   }
 

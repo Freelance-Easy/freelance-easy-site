@@ -12,9 +12,9 @@ Two stages, because they need different interpreters:
   sheets   — uses a venv with pymupdf + pillow. Rasterises the top of each PDF to
              assets/screenshots/sheet-<style>.webp (1120 px wide, no edge or
              shadow: the page draws those). The page lays the four sheets as a
-             pile with CSS transforms and animates the shuffle when the visitor
-             brings one to the front; the pile geometry (BAND, SLOTS, FRONT_Y)
-             is mirrored in script.js and the sheets' inline --x/--y/--r/--z.
+             deck with CSS transforms and animates the pull when the visitor
+             brings one to the front; the deck's geometry lives in the HTML
+             (the sheets' inline --x/--y/--s/--z), styles.css and script.js.
                python scripts/build-hero-collage.py sheets
 
 No fake documents: every sheet is the app's real output for the same fictional
@@ -82,27 +82,15 @@ def render(app_dir: pathlib.Path, profile: pathlib.Path) -> int:
 CROP_H = 1470            # px at 3× — the top of the page through the totals
 SHEET_W = 1120           # each sheet's width (page 1836 → 1120, so 1470 → 897 tall); 2× its size on the page
 
-# The pile's geometry, in units of the pile's width (1312 = a sheet plus the
-# widest offset), mirrored in script.js and the sheets' inline custom
-# properties in the HTML. Each sheet behind the front one rises by the band
-# that holds that template's signature, so the reveal is per template:
-PILE_W = 1312
-BAND = {
-    "modern": 200,   # "INVOICE", the number and title, the teal rule
-    "bold": 360,     # navy "Invoice #INV1045" title (~230px down) + the navy table header (~330px)
-    "classic": 176,  # forest bar + the big name are the top 176px
-    "minimal": 176,  # centred grey INVOICE title + names
-}
-# The slot a sheet occupies (front → back) sets its x offset and tilt: dx stays
-# within the page's own right margin (~100px at this scale), so the strips on
-# the right are blank paper edges, not sliced numbers; small alternating tilts
-# so the pile reads as paper, not a grid.
-SLOTS = [dict(dx=0, tilt=0.0), dict(dx=64, tilt=1.1), dict(dx=128, tilt=-1.3), dict(dx=192, tilt=0.8)]
+# This stage emits the four honest PDF rasters only. The deck's geometry
+# (four fixed slots: x 0 / 4.878 / 9.756 / 14.634 % of the deck's width,
+# y 36 / 24 / 12 / 0 %, scale 1 / .985 / .97 / .955, a 12 % band per sheet
+# behind) lives in index.html / mac-audio.html (the sheets' inline custom
+# properties), styles.css (.stack / .sheet) and script.js (DECK).
 
 
 def sheets() -> int:
-    """Raster the top of each template's PDF to a WebP sheet, and print the
-    pile geometry for the page (front sheet at the same y whatever is in front)."""
+    """Raster the top of each template's PDF to a WebP sheet."""
     import pymupdf
     from PIL import Image
 
@@ -117,20 +105,6 @@ def sheets() -> int:
         out = SHOTS / f"sheet-{style}.webp"
         im.save(out, "WEBP", quality=90, method=6)
         print("wrote", out, im.size, out.stat().st_size // 1024, "KB")
-
-    styles = [s for s, _ in SHEETS]
-    tallest = sum(sorted(BAND.values(), reverse=True)[: len(styles) - 1])
-    pct = lambda v: round(v * 100 / PILE_W, 3)  # noqa: E731 — % of the pile's width (CSS cqw)
-    print(f"sheet width {pct(SHEET_W)}cqw; front y {pct(tallest)}cqw; bands", {s: pct(BAND[s]) for s in styles})
-    print("slots x", [pct(s["dx"]) for s in SLOTS], "tilts", [s["tilt"] for s in SLOTS])
-    for front in styles:
-        order = [front] + [s for s in styles if s != front]
-        y, ys = tallest, {}
-        for style in order:
-            if style != front:
-                y -= BAND[style]
-            ys[style] = pct(y)
-        print(f"{front} in front:", " ".join(f"{s}@{ys[s]}" for s in order))
     return 0
 
 

@@ -177,6 +177,20 @@ button {
   display: none !important;
 }
 
+/* Read by assistive tech, not seen */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- Shell ---------- */
 .shell {
   max-width: var(--max-w);
@@ -390,57 +404,74 @@ p {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.14),
     0 14px 28px -14px rgba(0, 0, 0, 0.45);
+  /* the slot (transform) and, on top of it, the hover lift or the drag follow
+     (translate), so the whole sheet moves: paper, edge and shadow together */
   transform: translate(calc(var(--x) * 1cqw), calc(var(--y) * 1cqw)) scale(var(--s));
-  transform-origin: 50% 0;
+  transform-origin: 0 0;
+  translate: var(--drag-x, 0px) var(--lift-y, 0px);
   z-index: var(--z);
   cursor: pointer;
   -webkit-user-drag: none;
   transition:
-    transform 0.44s cubic-bezier(0.22, 0.61, 0.36, 1),
-    box-shadow 0.44s cubic-bezier(0.22, 0.61, 0.36, 1);
-  will-change: transform;
+    translate 0.18s var(--ease-swift),
+    transform 0.34s cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 0.34s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .sheet img {
   display: block;
   width: 100%;
   height: auto;
   pointer-events: none;
-  transition: transform 0.22s var(--ease-swift);
 }
 /* A sheet is an invitation: it nudges up under the pointer (the ones behind
    come forward on a click; the front one shows the next). */
-.sheet:hover img {
-  transform: translateY(-4px);
+.sheet:hover {
+  --lift-y: -4px;
 }
-.sheet.is-front:hover img {
-  transform: translateY(-2px);
+.sheet.is-front:hover {
+  --lift-y: -2px;
 }
 .sheet.is-front {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.14),
     0 24px 48px -20px rgba(0, 0, 0, 0.55);
 }
-/* While a pull is in flight the other sheets wait a beat before they shift,
-   so the lift reads first and the deck reflows under the moving sheet. */
-.stack.is-shuffling .sheet:not(.is-moving) {
-  transition-delay: 0.12s;
+/* The front sheet follows a sideways drag a little; no easing while it does. */
+.sheet.is-dragging {
+  transition-duration: 0s, 0.34s, 0.34s;
 }
+/* While a pull is in flight the other sheets wait a beat before they shift,
+   so the emergence reads first and the deck reflows under the moving sheet. */
+.stack.is-shuffling .sheet {
+  will-change: transform;
+}
+.stack.is-shuffling .sheet:not(.is-moving) {
+  transition-delay: 0s, 0.07s, 0.07s;
+}
+/* The pulled sheet: above everything, first clipped to the band that was
+   already showing (so nothing pops), the clip opening as it comes forward. */
 .sheet.is-moving {
   z-index: 9;
-  animation: sheet-pull 0.56s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform, clip-path;
+  animation: sheet-pull 0.44s cubic-bezier(0.22, 0.61, 0.36, 1);
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.16),
-    0 40px 64px -22px rgba(0, 0, 0, 0.6);
+    0 32px 52px -22px rgba(0, 0, 0, 0.58);
 }
 @keyframes sheet-pull {
   0% {
     transform: var(--from);
+    clip-path: inset(0 0 var(--hidden) 0);
   }
-  38% {
+  35% {
     transform: var(--mid);
+  }
+  55% {
+    clip-path: inset(0 0 0 0);
   }
   100% {
     transform: var(--to);
+    clip-path: inset(0 0 0 0);
   }
 }
 .hero-invoice figcaption {
@@ -483,8 +514,7 @@ p {
 }
 .stack-picker a[aria-pressed="true"] {
   color: var(--text-0);
-  font-weight: 700;
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent); /* colour only: a weight change would re-flow the row */
 }
 .stack-picker .stack-open {
   margin-left: auto;
@@ -1166,9 +1196,12 @@ body[data-os="mobile"] .dl-mobile {
     scroll-behavior: auto;
   }
   .btn:hover,
-  .btn:active,
-  .sheet:hover img {
+  .btn:active {
     transform: none; /* no lifts either; they would jump without the transition */
+  }
+  .sheet:hover,
+  .sheet.is-front:hover {
+    --lift-y: 0px;
   }
 }
 

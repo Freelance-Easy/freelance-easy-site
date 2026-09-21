@@ -109,9 +109,11 @@
             </div>
             <figcaption>
               One invoice, the four templates so far. The client is fictional.
+              <span data-stack-hint hidden>Click the invoice to flip through them, or pick one:</span>
+              <span class="visually-hidden" data-stack-status aria-live="polite"></span>
               <!-- Without JS these are the four PDFs; with it, the names bring
                    that template to the front and the link below opens its PDF. -->
-              <span class="stack-picker" data-stack-picker>
+              <span class="stack-picker" data-stack-picker role="group" aria-label="Invoice template">
                 <a href="/assets/samples/invoice-modern.pdf" data-pick="modern">Modern</a>
                 <a href="/assets/samples/invoice-bold.pdf" data-pick="bold">Bold</a>
                 <a href="/assets/samples/invoice-classic.pdf" data-pick="classic">Classic</a>
