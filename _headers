@@ -7,20 +7,28 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
 
+# Rules STACK: every matching rule contributes, in file order, and a header set
+# twice is sent twice (seen live: "max-age=2592000, ..., max-age=86400"). So the
+# broad assets/ rule comes first and each narrower rule detaches ("! Header")
+# its Cache-Control before setting its own.
+
+# Everything in assets/ (logo, OG image, sample PDFs): a month
+/assets/*
+  Cache-Control: public, max-age=2592000
+
 # Long-cache fonts (filenames are immutable enough for a year)
 /assets/fonts/*
+  ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
 
 # Product imagery and the loop keep their filenames across refinements, so a
 # day, then revalidate (an ETag 304 when unchanged), not a month.
 /assets/screenshots/*
+  ! Cache-Control
   Cache-Control: public, max-age=86400, must-revalidate
 /assets/video/*
+  ! Cache-Control
   Cache-Control: public, max-age=86400, must-revalidate
-
-# Everything else in assets/ (logo, OG image, sample PDFs): a month
-/assets/*
-  Cache-Control: public, max-age=2592000
 
 # CSS/JS revalidate on every load (an ETag 304 when unchanged), so a deploy
 # shows on a plain reload. An hour of max-age left returning visitors on the
