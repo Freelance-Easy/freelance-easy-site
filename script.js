@@ -305,24 +305,27 @@
     });
   }
 
-  // ---- The hero pile: bring a template to the front ----
-  // Four real sheets (one <a> per template, see index.html) laid out by the
-  // custom properties --x / --y (percent of the pile's width), --r (degrees)
-  // and --z. The geometry mirrors scripts/build-hero-collage.py: a sheet behind
-  // the front one rises by the band that holds its template's signature; the
-  // slot it occupies sets its x offset and tilt. Picking a template (the names
-  // under the pile, or a click on a sheet in the pile) re-arranges the values
-  // and the sheets glide; the chosen one rides above the others on the way.
-  // Clicking the front sheet flips to the next template. Without JS the sheets
-  // and the caption's names are plain links to the PDFs and the pile stays as
-  // the HTML laid it out.
+  // ---- The hero deck: bring a template to the front ----
+  // Four real sheets (one <a> per template, see index.html) in four fixed
+  // slots, front to back. A slot sets x, y and a slight scale (percent of the
+  // deck's width, via container-query units, so the geometry follows the
+  // column); the same geometry is printed by scripts/build-hero-collage.py.
+  // The deck's silhouette never changes: a pick moves sheets between slots.
+  //   pull(k): the sheet in slot k slides out sideways, lifts, and lands in
+  //   front; only the sheets that were ahead of it shift back one slot, a beat
+  //   later, under it. Nothing crosses in the stacking order mid-flight.
+  //   next: the back sheet (the top band) comes down to the front, so repeated
+  //   clicks on the front sheet, a swipe, or the arrow keys rotate through all
+  //   four.
+  // Without JS the sheets and the caption's names are plain links to the PDFs
+  // and the deck stays as the HTML laid it out.
   var TEMPLATES = ["modern", "bold", "classic", "minimal"];
   var TEMPLATE_NAMES = { modern: "Modern", bold: "Bold", classic: "Classic", minimal: "Minimal" };
-  var PILE = {
-    frontY: 56.098,
-    band: { modern: 15.244, bold: 27.439, classic: 13.415, minimal: 13.415 },
-    slotX: [0, 4.878, 9.756, 14.634],
-    slotR: [0, 1.1, -1.3, 0.8],
+  var DECK = {
+    x: [0, 4.878, 9.756, 14.634], // slot → offset to the right, % of the deck's width
+    y: [36, 24, 12, 0], // slot → offset down; each sheet behind shows a 12% band of its top
+    s: [1, 0.985, 0.97, 0.955], // slot → scale, a little smaller the further back
+    pullOut: 7, // how far a pulled sheet slides out sideways before it comes forward
   };
   var SHEET_ALT = {
     modern: "A session-day invoice for Westbrook Sound in the Modern template: an engineer day rate and a kit fee totalling $750, with a teal rule and totals box.",
@@ -332,35 +335,32 @@
   };
 
   function wireStack() {
-    var pile = document.querySelector("[data-stack]");
-    if (!pile) return;
+    var deck = document.querySelector("[data-stack]");
+    if (!deck) return;
     var sheets = {};
     TEMPLATES.forEach(function (t) {
-      sheets[t] = pile.querySelector('[data-sheet="' + t + '"]');
+      sheets[t] = deck.querySelector('[data-sheet="' + t + '"]');
     });
     if (TEMPLATES.some(function (t) { return !sheets[t]; })) return;
     var picks = document.querySelectorAll("[data-pick]");
     var open = document.querySelector("[data-stack-open]");
-    var current = "modern";
+    var order = TEMPLATES.slice(); // slot 0 (front) → slot 3 (back)
     var moving = null;
     var settleTimer = null;
 
-    function pdfHref(t) {
-      return "/assets/samples/invoice-" + t + ".pdf";
+    function place(slot) {
+      return "translate(" + DECK.x[slot] + "cqw, " + DECK.y[slot] + "cqw) scale(" + DECK.s[slot] + ")";
     }
-    function arrange(front) {
-      var order = [front].concat(TEMPLATES.filter(function (t) { return t !== front; }));
-      var y = PILE.frontY;
-      order.forEach(function (t, i) {
+    function lay() {
+      order.forEach(function (t, slot) {
         var el = sheets[t];
         var img = el.querySelector("img");
-        if (i > 0) y -= PILE.band[t];
-        el.style.setProperty("--x", String(PILE.slotX[i]));
-        el.style.setProperty("--y", y.toFixed(3));
-        el.style.setProperty("--r", String(PILE.slotR[i]));
-        el.style.setProperty("--z", String(TEMPLATES.length - i));
-        el.classList.toggle("is-front", i === 0);
-        if (i === 0) {
+        el.style.setProperty("--x", String(DECK.x[slot]));
+        el.style.setProperty("--y", String(DECK.y[slot]));
+        el.style.setProperty("--s", String(DECK.s[slot]));
+        el.style.setProperty("--z", String(TEMPLATES.length - slot));
+        el.classList.toggle("is-front", slot === 0);
+        if (slot === 0) {
           el.removeAttribute("aria-hidden");
           el.removeAttribute("tabindex");
           el.setAttribute("role", "button");
@@ -369,32 +369,53 @@
         } else {
           el.setAttribute("aria-hidden", "true");
           el.setAttribute("tabindex", "-1");
+          el.removeAttribute("role");
+          el.removeAttribute("aria-label");
           if (img) img.alt = "";
         }
       });
-    }
-    function mark(t) {
+      var front = order[0];
       picks.forEach(function (p) {
-        p.setAttribute("aria-pressed", String(p.getAttribute("data-pick") === t));
+        p.setAttribute("aria-pressed", String(p.getAttribute("data-pick") === front));
       });
       if (open) {
-        open.setAttribute("href", pdfHref(t));
-        open.textContent = "Open the " + TEMPLATE_NAMES[t] + " PDF";
+        open.setAttribute("href", "/assets/samples/invoice-" + front + ".pdf");
+        open.textContent = "Open the " + TEMPLATE_NAMES[front] + " PDF";
       }
     }
-    function show(t) {
-      if (t === current || TEMPLATES.indexOf(t) < 0) return;
-      if (moving) moving.classList.remove("is-moving");
-      moving = sheets[t];
-      moving.classList.add("is-moving");
+    // Pull the sheet in slot k to the front.
+    function pull(k) {
+      if (k <= 0 || k >= order.length) return;
+      var t = order[k];
+      var el = sheets[t];
+      if (moving) {
+        moving.classList.remove("is-moving");
+        deck.classList.remove("is-shuffling");
+      }
+      // The path: out sideways from where it was, then forward and down to the front.
+      el.style.setProperty("--from", place(k));
+      el.style.setProperty("--mid", "translate(" + (DECK.x[k] + DECK.pullOut) + "cqw, " + (DECK.y[k] - 1.5) + "cqw) scale(" + (DECK.s[k] + 0.02) + ")");
+      el.style.setProperty("--to", place(0));
+      order.splice(k, 1);
+      order.unshift(t);
+      moving = el;
+      el.classList.remove("is-moving");
+      void el.offsetWidth; // restart the pull animation if it was already running
+      el.classList.add("is-moving");
+      deck.classList.add("is-shuffling"); // the others wait a beat before they shift back
+      lay();
       clearTimeout(settleTimer);
       settleTimer = setTimeout(function () {
-        if (moving) moving.classList.remove("is-moving");
+        el.classList.remove("is-moving");
+        deck.classList.remove("is-shuffling");
         moving = null;
-      }, 700);
-      current = t;
-      arrange(t);
-      mark(t);
+      }, 620);
+    }
+    function show(t) {
+      pull(order.indexOf(t));
+    }
+    function next() {
+      pull(order.length - 1);
     }
 
     picks.forEach(function (p) {
@@ -410,18 +431,72 @@
         }
       });
     });
-    // Clicking a sheet in the pile brings it forward; clicking the front sheet
-    // flips to the next template (people click around a pile; the PDF is the
-    // "Open the … PDF" link, never a surprise navigation).
+
+    // Clicks: a sheet in the deck comes forward; the front sheet shows the next
+    // one. A horizontal swipe (or drag) does the same as the front click, and
+    // the click that follows a swipe is swallowed. The sheets are links, so
+    // the browser's own link-drag has to be switched off for the drag to be
+    // ours.
+    var swiped = false;
+    var startX = null;
+    var startY = null;
+    var downSheet = null; // the sheet under the pointer when it went down (capture retargets the click to the deck)
+    function sheetOf(node) {
+      return node && node.closest ? node.closest("[data-sheet]") : null;
+    }
     TEMPLATES.forEach(function (t) {
-      sheets[t].addEventListener("click", function (e) {
+      sheets[t].setAttribute("draggable", "false");
+    });
+    deck.addEventListener("dragstart", function (e) {
+      e.preventDefault();
+    });
+    deck.addEventListener("click", function (e) {
+      var sheet = sheetOf(e.target) || downSheet;
+      downSheet = null;
+      if (!sheet) return;
+      e.preventDefault();
+      if (swiped) {
+        swiped = false;
+        return;
+      }
+      var t = sheet.getAttribute("data-sheet");
+      if (t === order[0]) next();
+      else show(t);
+    });
+    deck.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      swiped = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      downSheet = sheetOf(e.target);
+      try {
+        deck.setPointerCapture(e.pointerId); // the swipe may end outside the deck
+      } catch (err) {}
+    });
+    deck.addEventListener("pointerup", function (e) {
+      if (startX === null) return;
+      var dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      startX = startY = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        swiped = true;
+        next();
+      }
+    });
+    deck.addEventListener("pointercancel", function () {
+      startX = startY = null;
+    });
+    deck.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
-        show(t === current ? TEMPLATES[(TEMPLATES.indexOf(t) + 1) % TEMPLATES.length] : t);
-      });
+        next();
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        pull(1); // the sheet just behind comes forward
+      }
     });
     if (open) open.hidden = false;
-    arrange(current);
-    mark(current);
+    lay();
   }
 
   // ---- Header: a hairline once the page has scrolled under it ----

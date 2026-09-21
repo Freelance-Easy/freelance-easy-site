@@ -361,18 +361,22 @@ p {
   justify-self: end;
   margin: 4px 0 0;
 }
-/* The pile: four real sheets, each an <a> holding one template's raster
-   (scripts/build-hero-collage.py sheets). The pile is 1312 units wide (a
-   sheet plus the widest offset); each sheet's place comes from --x / --y
-   (percent of that width, so container-query units), --r (degrees) and --z.
-   Bringing a template forward changes those values and the sheets glide;
-   the one moving gets .is-moving: it rides above the others, lifts a
-   little and casts a deeper shadow on the way. */
+/* The deck: four real sheets, each an <a> holding one template's raster
+   (scripts/build-hero-collage.py sheets), in four fixed slots. The deck is
+   1312 units wide (a sheet plus the widest offset); a slot sets --x / --y
+   (percent of that width, so container-query units), --s (a slight
+   scale-down the further back) and --z. The silhouette never changes: a
+   pick moves sheets between slots. The pulled sheet runs the sheet-pull
+   keyframes (out sideways, lift, land in front) above everything; the
+   sheets that shift back one slot transition a beat later, under it. */
 .stack {
   position: relative;
   width: 100%;
   container-type: inline-size;
-  aspect-ratio: 1312 / 1665;
+  aspect-ratio: 1312 / 1400;
+  touch-action: pan-y; /* vertical scrolling stays the browser's; a sideways swipe is ours */
+  user-select: none;
+  -webkit-user-select: none;
 }
 .sheet {
   position: absolute;
@@ -382,52 +386,61 @@ p {
   width: 85.366cqw;
   background: #fff;
   border: 1px solid rgba(20, 20, 24, 0.16);
+  border-radius: 2px;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 18px 36px -16px rgba(0, 0, 0, 0.5);
-  transform: translate(calc(var(--x) * 1cqw), calc(var(--y) * 1cqw)) rotate(calc(var(--r) * 1deg));
-  transform-origin: 50% 50%;
+    0 1px 2px rgba(0, 0, 0, 0.14),
+    0 14px 28px -14px rgba(0, 0, 0, 0.45);
+  transform: translate(calc(var(--x) * 1cqw), calc(var(--y) * 1cqw)) scale(var(--s));
+  transform-origin: 50% 0;
   z-index: var(--z);
+  cursor: pointer;
+  -webkit-user-drag: none;
   transition:
-    transform 0.62s cubic-bezier(0.3, 0.7, 0.15, 1),
-    box-shadow 0.62s cubic-bezier(0.3, 0.7, 0.15, 1);
+    transform 0.44s cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 0.44s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform;
 }
 .sheet img {
   display: block;
   width: 100%;
   height: auto;
-  transition: transform 0.25s var(--ease-swift);
+  pointer-events: none;
+  transition: transform 0.22s var(--ease-swift);
 }
-/* Every sheet is an invitation: it nudges up under the pointer (the ones in
-   the pile come forward on a click; the front one flips to the next). */
+/* A sheet is an invitation: it nudges up under the pointer (the ones behind
+   come forward on a click; the front one shows the next). */
 .sheet:hover img {
   transform: translateY(-4px);
 }
 .sheet.is-front:hover img {
   transform: translateY(-2px);
 }
-.sheet {
-  cursor: pointer;
+.sheet.is-front {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.14),
+    0 24px 48px -20px rgba(0, 0, 0, 0.55);
+}
+/* While a pull is in flight the other sheets wait a beat before they shift,
+   so the lift reads first and the deck reflows under the moving sheet. */
+.stack.is-shuffling .sheet:not(.is-moving) {
+  transition-delay: 0.12s;
 }
 .sheet.is-moving {
   z-index: 9;
+  animation: sheet-pull 0.56s cubic-bezier(0.22, 0.61, 0.36, 1);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.14),
-    0 40px 64px -20px rgba(0, 0, 0, 0.6);
+    0 2px 4px rgba(0, 0, 0, 0.16),
+    0 40px 64px -22px rgba(0, 0, 0, 0.6);
 }
-.sheet.is-moving img {
-  animation: sheet-lift 0.62s cubic-bezier(0.3, 0.7, 0.15, 1);
-}
-@keyframes sheet-lift {
+@keyframes sheet-pull {
   0% {
-    transform: scale(1);
+    transform: var(--from);
   }
-  45% {
-    transform: scale(1.025);
+  38% {
+    transform: var(--mid);
   }
   100% {
-    transform: scale(1);
+    transform: var(--to);
   }
 }
 .hero-invoice figcaption {
