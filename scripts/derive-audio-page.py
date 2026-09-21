@@ -60,7 +60,10 @@ SUBS: list[tuple[str, str]] = [
     ),
     ("your files stay on your Mac either way.", "your files stay on your computer either way."),
     ("In US dollars, for one person, on your Mac.", "In US dollars, for one person, on your Mac or PC."),
-    # (The Stripe sentence names no wallets until Daniel confirms the Dashboard toggles, so it is the same on both pages.)
+    (
+        "Checkout is handled by Stripe: card, Apple Pay or Link.",
+        "Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link.",
+    ),
     ("invoices themselves stay on your Mac.", "invoices themselves stay on your computer."),
 ]
 
