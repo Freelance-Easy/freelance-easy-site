@@ -86,23 +86,29 @@
             </div>
           </div>
 
-          <!-- The stack exists once per template in front (scripts/build-hero-collage.py);
-               script.js lets the visitor bring one forward, as in the app. -->
+          <!-- The pile: one real sheet per template (scripts/build-hero-collage.py sheets),
+               laid out by the --x/--y/--r/--z custom properties (percent of the pile's
+               width, degrees, stacking order; Modern in front here). script.js re-arranges
+               them when the visitor brings another template forward and the sheets glide
+               to their new places. The front sheet links to its PDF; the others are
+               decorative until clicked. -->
           <figure class="hero-invoice" id="invoice">
-            <a class="stack-link" href="/assets/samples/invoice-modern.pdf" data-stack aria-label="Open the front invoice, the Modern template, as a PDF">
-              <img
-                class="stack-img is-front"
-                src="/assets/screenshots/invoice-stack-modern.png"
-                width="1398"
-                height="1719"
-                alt="Four versions of the same invoice, stacked, the Modern template in front: a session-day invoice for Westbrook Sound with an engineer day rate and a kit fee totalling $750, with a teal rule and totals box; behind it the same invoice in the Bold, Classic and Minimal templates."
-                fetchpriority="high"
-                data-stack-img
-              />
-              <img class="stack-img" width="1398" height="1719" alt="" aria-hidden="true" data-stack-ghost />
-            </a>
+            <div class="stack" data-stack>
+              <a class="sheet is-front" href="/assets/samples/invoice-modern.pdf" data-sheet="modern" style="--x: 0; --y: 56.098; --r: 0; --z: 4" aria-label="Open the Modern invoice as a PDF">
+                <img src="/assets/screenshots/sheet-modern.webp" width="1120" height="897" alt="A session-day invoice for Westbrook Sound in the Modern template: an engineer day rate and a kit fee totalling $750, with a teal rule and totals box." fetchpriority="high" />
+              </a>
+              <a class="sheet" href="/assets/samples/invoice-bold.pdf" data-sheet="bold" style="--x: 4.878; --y: 28.659; --r: 1.1; --z: 3" aria-hidden="true" tabindex="-1">
+                <img src="/assets/screenshots/sheet-bold.webp" width="1120" height="897" alt="" />
+              </a>
+              <a class="sheet" href="/assets/samples/invoice-classic.pdf" data-sheet="classic" style="--x: 9.756; --y: 15.244; --r: -1.3; --z: 2" aria-hidden="true" tabindex="-1">
+                <img src="/assets/screenshots/sheet-classic.webp" width="1120" height="897" alt="" />
+              </a>
+              <a class="sheet" href="/assets/samples/invoice-minimal.pdf" data-sheet="minimal" style="--x: 14.634; --y: 1.829; --r: 0.8; --z: 1" aria-hidden="true" tabindex="-1">
+                <img src="/assets/screenshots/sheet-minimal.webp" width="1120" height="897" alt="" />
+              </a>
+            </div>
             <figcaption>
-              One invoice, the four templates. The client is fictional.
+              One invoice, the four templates so far. The client is fictional.
               <!-- Without JS these are the four PDFs; with it, the names bring
                    that template to the front and the link below opens its PDF. -->
               <span class="stack-picker" data-stack-picker>
@@ -185,7 +191,8 @@
               <p class="included-label">Included</p>
               <ul class="included">
                 <li>Unlimited invoices and clients</li>
-                <li>Four templates, your logo and color</li>
+                <li>Four templates, with more to come</li>
+                <li>Your logo and accent color</li>
                 <li>Dashboard and reports</li>
                 <li>Recurring invoices</li>
                 <li>Import of past invoices (PDF)</li>

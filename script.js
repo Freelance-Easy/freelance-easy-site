@@ -305,77 +305,94 @@
     });
   }
 
-  // ---- The hero stack: bring a template to the front ----
-  // One PNG per template in front (invoice-stack-<template>.png, all the same
-  // size). Two image layers crossfade; the link under them opens the front
-  // template's PDF. Without JS the caption's names are plain links to the PDFs.
+  // ---- The hero pile: bring a template to the front ----
+  // Four real sheets (one <a> per template, see index.html) laid out by the
+  // custom properties --x / --y (percent of the pile's width), --r (degrees)
+  // and --z. The geometry mirrors scripts/build-hero-collage.py: a sheet behind
+  // the front one rises by the band that holds its template's signature; the
+  // slot it occupies sets its x offset and tilt. Picking a template (the names
+  // under the pile, or a click on a sheet in the pile) re-arranges the values
+  // and the sheets glide; the chosen one rides above the others on the way.
+  // The front sheet is a link to its PDF. Without JS the caption's names are
+  // plain links to the PDFs and the pile stays as the HTML laid it out.
   var TEMPLATES = ["modern", "bold", "classic", "minimal"];
   var TEMPLATE_NAMES = { modern: "Modern", bold: "Bold", classic: "Classic", minimal: "Minimal" };
-  var STACK_ALT = {
-    modern: "Four versions of the same invoice, stacked, the Modern template in front: a session-day invoice for Westbrook Sound with an engineer day rate and a kit fee totalling $750, with a teal rule and totals box; behind it the same invoice in the Bold, Classic and Minimal templates.",
-    bold: "The same stack with the Bold template in front: a navy 'Invoice #INV1045' title over a black rule and a navy table header, the other three templates behind it.",
-    classic: "The same stack with the Classic template in front: a forest-green bar across the top and the name and job in a serif, the other three templates behind it.",
-    minimal: "The same stack with the Minimal template in front: a centred grey INVOICE title and hairline rules, the other three templates behind it.",
+  var PILE = {
+    frontY: 56.098,
+    band: { modern: 15.244, bold: 27.439, classic: 13.415, minimal: 13.415 },
+    slotX: [0, 4.878, 9.756, 14.634],
+    slotR: [0, 1.1, -1.3, 0.8],
+  };
+  var SHEET_ALT = {
+    modern: "A session-day invoice for Westbrook Sound in the Modern template: an engineer day rate and a kit fee totalling $750, with a teal rule and totals box.",
+    bold: "The same invoice in the Bold template: a navy 'Invoice #INV1045' title over a black rule, a navy table header and balance box.",
+    classic: "The same invoice in the Classic template: a forest-green bar across the top and the name and job in a serif.",
+    minimal: "The same invoice in the Minimal template: a centred grey INVOICE title and hairline rules.",
   };
 
   function wireStack() {
-    var link = document.querySelector("[data-stack]");
-    if (!link) return;
-    var front = link.querySelector("[data-stack-img]");
-    var ghost = link.querySelector("[data-stack-ghost]");
+    var pile = document.querySelector("[data-stack]");
+    if (!pile) return;
+    var sheets = {};
+    TEMPLATES.forEach(function (t) {
+      sheets[t] = pile.querySelector('[data-sheet="' + t + '"]');
+    });
+    if (TEMPLATES.some(function (t) { return !sheets[t]; })) return;
     var picks = document.querySelectorAll("[data-pick]");
-    if (!front || !ghost || !picks.length) return;
     var open = document.querySelector("[data-stack-open]");
     var current = "modern";
-    var busy = false;
-    var pending = null; // the latest pick made while a switch was loading
+    var moving = null;
+    var settleTimer = null;
 
-    function stackSrc(t) {
-      return "/assets/screenshots/invoice-stack-" + t + ".png";
-    }
     function pdfHref(t) {
       return "/assets/samples/invoice-" + t + ".pdf";
+    }
+    function arrange(front) {
+      var order = [front].concat(TEMPLATES.filter(function (t) { return t !== front; }));
+      var y = PILE.frontY;
+      order.forEach(function (t, i) {
+        var el = sheets[t];
+        var img = el.querySelector("img");
+        if (i > 0) y -= PILE.band[t];
+        el.style.setProperty("--x", String(PILE.slotX[i]));
+        el.style.setProperty("--y", y.toFixed(3));
+        el.style.setProperty("--r", String(PILE.slotR[i]));
+        el.style.setProperty("--z", String(TEMPLATES.length - i));
+        el.classList.toggle("is-front", i === 0);
+        if (i === 0) {
+          el.removeAttribute("aria-hidden");
+          el.removeAttribute("tabindex");
+          el.setAttribute("aria-label", "Open the " + TEMPLATE_NAMES[t] + " invoice as a PDF");
+          if (img) img.alt = SHEET_ALT[t];
+        } else {
+          el.setAttribute("aria-hidden", "true");
+          el.setAttribute("tabindex", "-1");
+          if (img) img.alt = "";
+        }
+      });
     }
     function mark(t) {
       picks.forEach(function (p) {
         p.setAttribute("aria-pressed", String(p.getAttribute("data-pick") === t));
       });
-      link.setAttribute("href", pdfHref(t));
-      link.setAttribute("aria-label", "Open the front invoice, the " + TEMPLATE_NAMES[t] + " template, as a PDF");
       if (open) {
         open.setAttribute("href", pdfHref(t));
         open.textContent = "Open the " + TEMPLATE_NAMES[t] + " PDF";
       }
     }
-    function settle() {
-      busy = false;
-      var next = pending;
-      pending = null;
-      if (next && next !== current) show(next);
-    }
     function show(t) {
       if (t === current || TEMPLATES.indexOf(t) < 0) return;
-      if (busy) {
-        pending = t; // the visitor's last choice wins once the current load finishes
-        return;
-      }
-      busy = true;
-      ghost.onload = function () {
-        ghost.alt = STACK_ALT[t];
-        ghost.removeAttribute("aria-hidden");
-        ghost.classList.add("is-front");
-        front.classList.remove("is-front");
-        front.setAttribute("aria-hidden", "true");
-        front.alt = "";
-        var was = front;
-        front = ghost;
-        ghost = was;
-        current = t;
-        mark(t);
-        settle();
-      };
-      ghost.onerror = settle;
-      ghost.src = stackSrc(t);
+      if (moving) moving.classList.remove("is-moving");
+      moving = sheets[t];
+      moving.classList.add("is-moving");
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(function () {
+        if (moving) moving.classList.remove("is-moving");
+        moving = null;
+      }, 700);
+      current = t;
+      arrange(t);
+      mark(t);
     }
 
     picks.forEach(function (p) {
@@ -391,26 +408,16 @@
         }
       });
     });
-    if (open) open.hidden = false;
-    mark(current);
-
-    // Fetch the other three stacks once the page is idle, so the first switch
-    // is instant; only where a pointer will use them and data isn't metered.
-    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    var canPreload = true;
-    try {
-      canPreload =
-        window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
-        !(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")));
-    } catch (e) {}
-    if (canPreload) {
-      var idle = window.requestIdleCallback || function (f) { setTimeout(f, 1500); };
-      idle(function () {
-        TEMPLATES.forEach(function (t) {
-          if (t !== current) new Image().src = stackSrc(t);
-        });
+    TEMPLATES.forEach(function (t) {
+      sheets[t].addEventListener("click", function (e) {
+        if (t === current) return; // the front sheet is the link to its PDF
+        e.preventDefault();
+        show(t);
       });
-    }
+    });
+    if (open) open.hidden = false;
+    arrange(current);
+    mark(current);
   }
 
   // ---- Header: a hairline once the page has scrolled under it ----
