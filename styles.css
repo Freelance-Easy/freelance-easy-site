@@ -657,7 +657,7 @@ body[data-os="mobile"] .dl-mobile {
   align-items: start;
 }
 
-/* A few things to know: three real questions, then one plain paragraph */
+/* Why it's built this way: three statements, each with its plain explanation */
 .qa {
   max-width: 720px;
   margin-top: 8px;
@@ -680,14 +680,7 @@ body[data-os="mobile"] .dl-mobile {
   line-height: 1.6;
   color: var(--text-1);
 }
-.limits {
-  max-width: 62ch;
-  margin-top: 20px;
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--text-1);
-}
-.limits a,
+.qa-row dd a,
 .maker a {
   color: var(--text-0);
   border-bottom: 1px solid var(--line-3);

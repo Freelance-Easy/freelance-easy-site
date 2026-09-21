@@ -19,11 +19,13 @@
 /assets/*
   Cache-Control: public, max-age=2592000
 
-# Short-cache CSS/JS so updates ship same-day
+# CSS/JS revalidate on every load (an ETag 304 when unchanged), so a deploy
+# shows on a plain reload. An hour of max-age left returning visitors on the
+# old stylesheet against new HTML.
 /styles.css
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 /script.js
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Short-cache favicon so logo updates ship within a day
 /favicon.ico

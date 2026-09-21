@@ -43,7 +43,9 @@ SUBS: list[tuple[str, str]] = [
         "Invoicing for mix engineers, producers and studios, on your Mac.",
         "Invoicing for mix engineers, producers and studios, on Mac and Windows.",
     ),
-    ("per-song mix. Your invoice database stays on your Mac.", "per-song mix. Your invoice database stays on your computer."),
+    ("A desktop invoicing app for audio work, on your Mac: day rates", "A desktop invoicing app for audio work, on your Mac or PC: day rates"),
+    ("live in a folder on\n              your own Mac, not on a web app's servers.", "live in a folder on\n              your own computer, not on a web app's servers."),
+    ("<dt>It lives on your Mac.</dt>", "<dt>It lives on your computer.</dt>"),
     ('<div class="dl" data-dl data-placement="hero" data-single-platform="mac">', '<div class="dl" data-dl data-placement="hero">'),
     (
         '<a class="dl-alt" data-role="alt" href="/"><span data-label>Need the Windows version?</span></a>',
@@ -65,7 +67,7 @@ SUBS: list[tuple[str, str]] = [
         "Checkout is handled by Stripe: card, Apple Pay or Link.",
         "Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link.",
     ),
-    ("In a database file on your Mac, in a folder you choose.", "In a database file on your computer, in a folder you choose."),
+    ("are a database file on your Mac, in a folder you choose.", "are a database file on your computer, in a folder you choose."),
     ("the invoices themselves stay on your Mac.", "the invoices themselves stay on your computer."),
 ]
 
