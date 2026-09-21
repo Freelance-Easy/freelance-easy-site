@@ -338,9 +338,9 @@ p {
 
 .hero-invoice {
   width: 100%;
-  max-width: 528px;
+  max-width: 548px;
   justify-self: end;
-  margin: 40px 0 0;
+  margin: 4px 0 0;
 }
 .hero-invoice > a {
   display: block; /* the image link only; the caption link stays inline */
@@ -348,10 +348,8 @@ p {
 .hero-invoice img {
   width: 100%;
   height: auto;
-  background: var(--paper);
-  border: 1px solid var(--line-2);
-  border-radius: 2px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  /* The stack is a transparent PNG with its own paper edges and shadows
+     (scripts/build-hero-collage.py), so no frame here. */
 }
 .hero-invoice figcaption {
   margin-top: 10px;

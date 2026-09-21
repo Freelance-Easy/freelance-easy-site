@@ -11,7 +11,7 @@ Prerequisites (InvoiceGenerator's dev setup):
   2. The app in DEV mode on :50505     — InvoiceGenerator/rundev.command
      with the isolated .dev-profile seeded with FICTIONAL demo data
      (clients, invoices, business name/email of the persona below).
-  3. pip install playwright pymupdf && playwright install chromium
+  3. pip install playwright pillow && playwright install chromium
 
 Usage:
   python scripts/capture-screenshots.py --out assets/screenshots \
@@ -20,29 +20,23 @@ Usage:
 Outputs (PNG; app shots at 2× device pixels, 1440×900 CSS px):
   dashboard-dark.png, dashboard-light.png,
   dashboard-attention-dark.png, dashboard-attention-light.png (phone detail:
-    the "Needs attention" panel),
-  invoice-day-rate.png (the hero: top of the hero invoice's rendered PDF),
-  ../sample-invoice.pdf (the full PDF of the hero invoice, linked from its caption)
+    the "Needs attention" panel)
 
-The "Making an invoice" frames and the recording come from capture-process.py,
-which makes (and then deletes) a real invoice through the UI.
+The other product images have their own scripts: the hero stack (one invoice
+in the four templates, plus the four PDFs) is build-hero-collage.py; the
+"Making an invoice" frames and the recording are capture-process.py.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import pathlib
-import re
 import sys
 
-import pymupdf
 from playwright.sync_api import sync_playwright
 
 VIEWPORT = {"width": 1440, "height": 900}
 PERSONA = {"display_name": "Jordan Reyes", "email": "jordan@example.com"}
-HERO_INVOICE_NUMBER = "INV1045"   # "Kit fee + day rate — string session", balance due $750
-SAMPLE_PDF_INVOICE_NUMBER = HERO_INVOICE_NUMBER  # the caption says "this invoice"; keep it true
-HERO_CROP_HEIGHT = 1470  # px at 3× — keep in sync with the <img height> in the HTML
 
 
 def patch_session(profile: pathlib.Path) -> None:
@@ -54,13 +48,6 @@ def patch_session(profile: pathlib.Path) -> None:
     data = json.loads(path.read_text())
     data.update(PERSONA)
     path.write_text(json.dumps(data))
-
-
-def invoice_ids(page, app: str) -> dict[str, int]:
-    page.goto(f"{app}/invoices", wait_until="domcontentloaded")
-    page.wait_for_timeout(600)
-    html = page.content()
-    return {m.group(2): int(m.group(1)) for m in re.finditer(r'href="/invoices/(\d+)[^"]*"[^>]*>\s*(INV\d{4})', html)}
 
 
 def viewport_box(locator) -> tuple[float, float, float, float]:
@@ -136,25 +123,6 @@ def main() -> int:
         crop_png(out / "dashboard-light.png", attention, out / "dashboard-attention-light.png", pad=0)
         toggle_theme()
 
-        ids = invoice_ids(page, args.app)
-
-        # --- the PDFs: hero crop + full sample ---
-        hero_pdf = ctx.request.get(f"{args.app}/invoices/{ids[HERO_INVOICE_NUMBER]}/pdf").body()
-        doc = pymupdf.open(stream=hero_pdf, filetype="pdf")
-        pix = doc[0].get_pixmap(matrix=pymupdf.Matrix(3, 3), alpha=False)
-        full = out / "_hero-full.png"
-        pix.save(str(full))
-        from PIL import Image  # Pillow comes with pymupdf's optional deps; pip install pillow if missing
-
-        im = Image.open(full)
-        w, _h = im.size
-        # Top of the page through the totals box and the notes line (1836×1470 at 3×).
-        im.crop((0, 0, w, HERO_CROP_HEIGHT)).save(out / "invoice-day-rate.png", optimize=True)
-        full.unlink()
-
-        sample_pdf = ctx.request.get(f"{args.app}/invoices/{ids[SAMPLE_PDF_INVOICE_NUMBER]}/pdf").body()
-        (out.parent / "sample-invoice.pdf").write_bytes(sample_pdf)
-
         browser.close()
 
     for name in (
@@ -162,10 +130,8 @@ def main() -> int:
         "dashboard-light.png",
         "dashboard-attention-dark.png",
         "dashboard-attention-light.png",
-        "invoice-day-rate.png",
     ):
         print("wrote", out / name)
-    print("wrote", out.parent / "sample-invoice.pdf")
     return 0
 
 
