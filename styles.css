@@ -11,42 +11,42 @@
 /* ---------- Fonts (self-hosted; no third-party request before sign-in) ---------- */
 @font-face {
   font-family: "Lato";
-  src: url("/assets/fonts/Lato-Regular.ttf") format("truetype");
+  src: url("/assets/fonts/Lato-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Lato";
-  src: url("/assets/fonts/Lato-Bold.ttf") format("truetype");
+  src: url("/assets/fonts/Lato-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Montserrat";
-  src: url("/assets/fonts/Montserrat-Regular.ttf") format("truetype");
+  src: url("/assets/fonts/Montserrat-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Montserrat";
-  src: url("/assets/fonts/Montserrat-Bold.ttf") format("truetype");
+  src: url("/assets/fonts/Montserrat-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Playfair Display";
-  src: url("/assets/fonts/PlayfairDisplay-Regular.ttf") format("truetype");
+  src: url("/assets/fonts/PlayfairDisplay-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Playfair Display";
-  src: url("/assets/fonts/PlayfairDisplay-Bold.ttf") format("truetype");
+  src: url("/assets/fonts/PlayfairDisplay-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -129,6 +129,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* anchors land below the sticky header */
 }
 
 body {
@@ -398,14 +399,43 @@ p {
   color: var(--text-0);
   border-color: var(--text-2);
 }
-/* Once script.js has wired the picker, the four names are buttons; the front
-   one is marked, in the accent. */
+/* The picker is its own row under the caption. Without JS the names are the
+   four PDF links; once script.js has wired it they act as buttons, the front
+   template is marked in the accent, and the "Open the … PDF" link follows. */
+.stack-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 18px;
+  margin-top: 8px;
+}
+.stack-picker a {
+  display: inline-block;
+  padding: 6px 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text-1);
+}
 .stack-picker a[aria-pressed] {
   cursor: pointer;
 }
+.stack-picker a:hover {
+  color: var(--text-0);
+  border-bottom-color: var(--line-3);
+}
 .stack-picker a[aria-pressed="true"] {
   color: var(--text-0);
-  border-bottom: 2px solid var(--accent);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+.stack-picker .stack-open {
+  margin-left: auto;
+  border-bottom: 1px solid var(--line-3);
+  padding: 6px 0 5px;
+}
+@media (hover: none) {
+  .stack-picker a {
+    padding: 10px 0; /* a finger-sized target on touch screens */
+  }
 }
 
 /* ---------- Download block (one instance, in the hero) ---------- */
@@ -595,6 +625,18 @@ body[data-os="mobile"] .dl-mobile {
 .demo {
   margin-top: 28px;
 }
+/* The caption's Pause / Play button (shown by script.js in place of the native controls) */
+.demo-toggle {
+  margin-left: 8px;
+  padding: 2px 0;
+  color: var(--text-1);
+  border-bottom: 1px solid var(--line-3);
+  transition: color 0.15s, border-color 0.15s;
+}
+.demo-toggle:hover {
+  color: var(--text-0);
+  border-color: var(--text-2);
+}
 .demo video {
   display: block;
   width: 100%;
@@ -653,16 +695,15 @@ body[data-os="mobile"] .dl-mobile {
 .pricing .lead {
   color: var(--text-0);
   font-weight: 700;
-  max-width: 30ch;
+  max-width: 34ch;
+  margin-top: 18px;
 }
 .bill {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(2, max-content);
   gap: 16px 40px;
-  margin: 22px 0 0;
-  padding-top: 22px;
-  border-top: 1px solid var(--line-2);
+  margin: 6px 0 0;
 }
 .bill li {
   display: flex;
@@ -682,9 +723,10 @@ body[data-os="mobile"] .dl-mobile {
   color: var(--text-2);
 }
 .pricing-note {
-  margin-top: 18px;
+  margin-top: 12px;
   font-size: 16px;
   color: var(--text-1);
+  max-width: 40ch;
 }
 /* What the price includes: a plain two-column list with a small accent dot */
 .included-label {
@@ -774,7 +816,11 @@ body[data-os="mobile"] .dl-mobile {
   line-height: 1.6;
   color: var(--text-1);
 }
+.col-know .disclosure {
+  margin-top: 18px;
+}
 .qa-row dd a,
+.col-know .disclosure a,
 .maker a {
   color: var(--text-0);
   border-bottom: 1px solid var(--line-3);
@@ -1037,6 +1083,13 @@ body[data-os="mobile"] .dl-mobile {
     grid-template-columns: 1fr;
     gap: 8px;
   }
+  /* The narrowest phones: the logo alone (the link keeps its aria-label). */
+  .site-header .brand > span {
+    display: none;
+  }
+  .site-header .brand {
+    gap: 0;
+  }
 }
 
 /* ---------- Reduced motion ---------- */
@@ -1049,6 +1102,11 @@ body[data-os="mobile"] .dl-mobile {
   }
   html {
     scroll-behavior: auto;
+  }
+  .btn:hover,
+  .btn:active,
+  .stack-link:hover {
+    transform: none; /* no lifts either; they would jump without the transition */
   }
 }
 

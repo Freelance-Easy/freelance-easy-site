@@ -43,9 +43,7 @@
       try {
         localStorage.setItem(STORAGE_KEY, next);
       } catch (e) {}
-      syncDemoTheme(next).forEach(function (v) {
-        if (!reduceMotion) playDemo(v);
-      });
+      restartDemos(syncDemoTheme(next));
     });
   }
 
@@ -153,40 +151,51 @@
         var done = function (how) {
           track("Share To Computer", { page: pageId(), placement: placement, how: how });
         };
+        function copyPageUrl() {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(
+              function () {
+                if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
+                done("copy");
+              },
+              function () {
+                if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
+              }
+            );
+          } else if (status) {
+            status.textContent = "Copy this address: " + url;
+          }
+        }
         if (canShare) {
           navigator
             .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: url })
             .then(function () { done("share"); })
-            .catch(function () {});
+            .catch(function (err) {
+              // Cancelling the share sheet is silent; a real failure falls back to the copy path.
+              if (!err || err.name !== "AbortError") copyPageUrl();
+            });
           return;
         }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(url).then(
-            function () {
-              if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
-              done("copy");
-            },
-            function () {
-              if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
-            }
-          );
-        } else if (status) {
-          status.textContent = "Copy this address: " + url;
-        }
+        copyPageUrl();
       });
     }
   }
 
-  // ---- The loop (silent, autoplays like a GIF) ----
+  // ---- The loop (silent, plays like a GIF, with a Pause button) ----
   // The recording exists in both app themes: …-dark.mp4 / …-light.mp4, the
   // same for the posters and the real-time files. The page's theme picks the
-  // set (the HTML carries the dark one for no-JS).
-  // Reduced motion: no autoplay; the poster stays and the controls appear, so
-  // it plays only on request. Autoplay refused (iOS Low Power Mode, a strict
-  // browser setting): same fallback, so the poster is never a dead end.
+  // set before anything loads (the HTML carries the dark one, preload="none",
+  // with native controls for no-JS). Here the native controls give way to the
+  // caption's Pause / Play button and the loop starts, unless the visitor
+  // prefers reduced motion (then it waits, with the native controls). Autoplay
+  // refused (iOS Low Power Mode, a strict browser setting): the native controls
+  // come back, so the poster is never a dead end. A visitor's pause survives a
+  // theme switch.
+  var motionQuery = null;
   var reduceMotion = false;
   try {
-    reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    reduceMotion = motionQuery.matches;
   } catch (e) {}
 
   function currentTheme() {
@@ -231,16 +240,68 @@
     return changed;
   }
 
+  var demoPausedByVisitor = false;
+
   function wireDemo() {
     syncDemoTheme(currentTheme());
-    document.querySelectorAll("video[data-demo]").forEach(function (v) {
-      if (reduceMotion) {
-        v.removeAttribute("autoplay");
-        v.pause();
-        v.controls = true;
-        return;
-      }
+    var videos = document.querySelectorAll("video[data-demo]");
+    var toggle = document.querySelector("[data-demo-toggle]");
+
+    function reflect() {
+      if (!toggle || !videos.length) return;
+      var playing = !videos[0].paused;
+      toggle.textContent = playing ? "Pause" : "Play";
+      toggle.setAttribute("aria-pressed", String(!playing));
+      toggle.setAttribute("aria-label", (playing ? "Pause" : "Play") + " the recording");
+    }
+    function start(v) {
+      if (reduceMotion || demoPausedByVisitor) return;
       playDemo(v);
+    }
+
+    videos.forEach(function (v) {
+      v.addEventListener("play", reflect);
+      v.addEventListener("pause", reflect);
+      if (reduceMotion) return; // poster + the native controls, plays on request
+      v.controls = false;
+      start(v);
+    });
+    if (toggle && !reduceMotion && videos.length) {
+      toggle.hidden = false;
+      toggle.addEventListener("click", function () {
+        var v = videos[0];
+        if (v.paused) {
+          demoPausedByVisitor = false;
+          playDemo(v);
+        } else {
+          demoPausedByVisitor = true;
+          v.pause();
+        }
+      });
+      reflect();
+    }
+    if (motionQuery) {
+      var onChange = function (e) {
+        reduceMotion = e.matches;
+        videos.forEach(function (v) {
+          if (reduceMotion) {
+            v.pause();
+            v.controls = true;
+            if (toggle) toggle.hidden = true;
+          } else {
+            v.controls = false;
+            if (toggle) toggle.hidden = false;
+            start(v);
+          }
+        });
+      };
+      if (motionQuery.addEventListener) motionQuery.addEventListener("change", onChange);
+      else if (motionQuery.addListener) motionQuery.addListener(onChange);
+    }
+  }
+  function restartDemos(videos) {
+    videos.forEach(function (v) {
+      if (!reduceMotion && !demoPausedByVisitor) playDemo(v);
     });
   }
 
@@ -264,8 +325,10 @@
     var ghost = link.querySelector("[data-stack-ghost]");
     var picks = document.querySelectorAll("[data-pick]");
     if (!front || !ghost || !picks.length) return;
+    var open = document.querySelector("[data-stack-open]");
     var current = "modern";
     var busy = false;
+    var pending = null; // the latest pick made while a switch was loading
 
     function stackSrc(t) {
       return "/assets/screenshots/invoice-stack-" + t + ".png";
@@ -279,9 +342,23 @@
       });
       link.setAttribute("href", pdfHref(t));
       link.setAttribute("aria-label", "Open the front invoice, the " + TEMPLATE_NAMES[t] + " template, as a PDF");
+      if (open) {
+        open.setAttribute("href", pdfHref(t));
+        open.textContent = "Open the " + TEMPLATE_NAMES[t] + " PDF";
+      }
+    }
+    function settle() {
+      busy = false;
+      var next = pending;
+      pending = null;
+      if (next && next !== current) show(next);
     }
     function show(t) {
-      if (t === current || busy || TEMPLATES.indexOf(t) < 0) return;
+      if (t === current || TEMPLATES.indexOf(t) < 0) return;
+      if (busy) {
+        pending = t; // the visitor's last choice wins once the current load finishes
+        return;
+      }
       busy = true;
       ghost.onload = function () {
         ghost.alt = STACK_ALT[t];
@@ -294,12 +371,10 @@
         front = ghost;
         ghost = was;
         current = t;
-        busy = false;
         mark(t);
+        settle();
       };
-      ghost.onerror = function () {
-        busy = false;
-      };
+      ghost.onerror = settle;
       ghost.src = stackSrc(t);
     }
 
@@ -309,20 +384,33 @@
         e.preventDefault();
         show(p.getAttribute("data-pick"));
       });
-    });
-    mark(current);
-    var hint = document.querySelector("[data-stack-hint]");
-    if (hint) hint.textContent = "Bring one to the front:";
-    var after = document.querySelector("[data-stack-after]");
-    if (after) after.hidden = false;
-
-    // Fetch the other three stacks once the page is idle, so the first switch is instant.
-    var idle = window.requestIdleCallback || function (f) { setTimeout(f, 1500); };
-    idle(function () {
-      TEMPLATES.forEach(function (t) {
-        if (t !== current) new Image().src = stackSrc(t);
+      p.addEventListener("keydown", function (e) {
+        if (e.key === " " || e.key === "Spacebar") {
+          e.preventDefault(); // a button answers to Space as well as Enter
+          show(p.getAttribute("data-pick"));
+        }
       });
     });
+    if (open) open.hidden = false;
+    mark(current);
+
+    // Fetch the other three stacks once the page is idle, so the first switch
+    // is instant; only where a pointer will use them and data isn't metered.
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    var canPreload = true;
+    try {
+      canPreload =
+        window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+        !(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")));
+    } catch (e) {}
+    if (canPreload) {
+      var idle = window.requestIdleCallback || function (f) { setTimeout(f, 1500); };
+      idle(function () {
+        TEMPLATES.forEach(function (t) {
+          if (t !== current) new Image().src = stackSrc(t);
+        });
+      });
+    }
   }
 
   // ---- Header: a hairline once the page has scrolled under it ----

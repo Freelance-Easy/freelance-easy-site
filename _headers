@@ -11,11 +11,14 @@
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Screenshots change only with a release; a month is fine.
+# Product imagery and the loop keep their filenames across refinements, so a
+# day, then revalidate (an ETag 304 when unchanged), not a month.
 /assets/screenshots/*
-  Cache-Control: public, max-age=2592000
+  Cache-Control: public, max-age=86400, must-revalidate
+/assets/video/*
+  Cache-Control: public, max-age=86400, must-revalidate
 
-# Long-cache images in assets/
+# Everything else in assets/ (logo, OG image, sample PDFs): a month
 /assets/*
   Cache-Control: public, max-age=2592000
 
