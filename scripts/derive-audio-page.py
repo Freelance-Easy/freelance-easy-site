@@ -31,8 +31,8 @@ SUBS: list[tuple[str, str]] = [
         "<title>Freelance Easy for audio pros — make your first invoice in 60 seconds</title>",
     ),
     (
-        "on your own Mac. Your first invoice is free, no card.",
-        "on your own Mac or PC. Your first invoice is free, no card.",
+        "on your own Mac. Free for seven days, then $5 a month",
+        "on your own Mac or PC. Free for seven days, then $5 a month",
     ),
     (
         "<!-- Campaign landing page (Google ads, Mac-only). Not for search. -->",
@@ -60,10 +60,7 @@ SUBS: list[tuple[str, str]] = [
     ),
     ("your files stay on your Mac either way.", "your files stay on your computer either way."),
     ("In US dollars, for one person, on your Mac.", "In US dollars, for one person, on your Mac or PC."),
-    (
-        "Checkout is handled by Stripe: card, Apple Pay or Link.",
-        "Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link.",
-    ),
+    # (The Stripe sentence names no wallets until Daniel confirms the Dashboard toggles, so it is the same on both pages.)
     ("invoices themselves stay on your Mac.", "invoices themselves stay on your computer."),
 ]
 

@@ -1057,10 +1057,6 @@ body[data-os="mobile"] .dl-mobile {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.doc .placeholder {
-  color: #efb461;
-  font-weight: 700;
-}
 .doc details {
   margin: 16px 0 24px;
   border: 1px solid var(--line-2);
