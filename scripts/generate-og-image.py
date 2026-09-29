@@ -130,8 +130,8 @@ def _draw_headline(draw: ImageDraw.ImageDraw) -> None:
 
 def _draw_subtitle(draw: ImageDraw.ImageDraw) -> None:
     font = _load_font(F_LATO_REGULAR, 28)
-    line1 = "Your first invoice is free. No card, no time limit."
-    line2 = "$5 a month or $50 a year when you need more."
+    line1 = "Every feature free for seven days. No card."
+    line2 = "$5 a month or $50 a year after that."
     x, y = 80, 470
     draw.text((x, y), line1, font=font, fill=TEXT_MUTED)
     bbox = draw.textbbox((x, y), line1, font=font)
