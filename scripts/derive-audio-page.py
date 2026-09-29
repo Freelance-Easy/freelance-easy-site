@@ -76,7 +76,7 @@ def main() -> int:
             print(f"expected exactly one match, found {n}:\n  {old[:90]}", file=sys.stderr)
             return 1
         html = html.replace(old, new)
-    # "Check which chip your Mac has" is the Mac visitor's note and stays on both
+    # "Check your Mac's chip and macOS version" is the Mac visitor's note and stays on both
     # pages; "on your Mac or PC" is the two-platform wording this script writes.
     for leftover in (r"on your Mac(?! or PC)", r"Mac-only", r"single-platform"):
         if re.search(leftover, html):
