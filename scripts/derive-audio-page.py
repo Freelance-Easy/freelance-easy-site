@@ -31,8 +31,8 @@ SUBS: list[tuple[str, str]] = [
         "<title>Freelance Easy for audio pros — make your first invoice in 60 seconds</title>",
     ),
     (
-        "on your own Mac. Free for seven days, then $5 a month",
-        "on your own Mac or PC. Free for seven days, then $5 a month",
+        "on your own Mac. Every feature free for seven days, no card.",
+        "on your own Mac or PC. Every feature free for seven days, no card.",
     ),
     (
         "<!-- Campaign landing page (Google ads, Mac-only). Not for search. -->",
@@ -76,7 +76,7 @@ def main() -> int:
             print(f"expected exactly one match, found {n}:\n  {old[:90]}", file=sys.stderr)
             return 1
         html = html.replace(old, new)
-    # "Check which chip your Mac has" is the Mac visitor's note and stays on both
+    # "Check your Mac's chip and macOS version" is the Mac visitor's note and stays on both
     # pages; "on your Mac or PC" is the two-platform wording this script writes.
     for leftover in (r"on your Mac(?! or PC)", r"Mac-only", r"single-platform"):
         if re.search(leftover, html):

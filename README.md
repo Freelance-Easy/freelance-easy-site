@@ -45,7 +45,7 @@ freelance-easy-site/
 ├── _headers                cache + security headers
 ├── assets/
 │   ├── logo.svg
-│   ├── og-image.png        1200×630 social card
+│   ├── og-image-2026-09-29.png  1200×630 social card (dated name: new card, new name)
 │   └── fonts/              vendored Inter + Playfair (Inter currently inert; see HANDOFF)
 ├── HANDOFF.md              ← read this before deploying
 └── README.md
@@ -64,7 +64,7 @@ freelance-easy-site/
 
 - `<!-- ANALYTICS: insert tracking script here when ready -->` in `<head>` of every HTML file — drop Plausible or Cloudflare Web Analytics here.
 - Real privacy & terms copy — currently honest placeholders.
-- Real OG image — current is a generated text card; replace with a richer screenshot when one is ready (`assets/og-image.png`, 1200×630).
+- Real OG image — current is a generated text card; replace with a richer screenshot when one is ready (`assets/og-image-2026-09-29.png`, 1200×630; a changed card gets a new dated filename, see `scripts/generate-og-image.py`).
 - **Universal Mac binary** — current Mac build is arm64-only (Apple Silicon). When Intel Mac support becomes a need, expand the electron-builder `mac.target.arch` from `["arm64"]` to `["universal"]` in `electron/package.json` of the InvoiceGenerator repo, plus the corresponding PyInstaller universal2 merge step. URL stays the same.
 
 ## Browser support

@@ -1,6 +1,11 @@
 """Generate the OG image for the Freelance Easy landing page.
 
-Output: assets/og-image.png at 1200×630, the standard OG/Twitter Card size.
+Output: assets/og-image-2026-09-29.png at 1200×630, the standard OG/Twitter Card size.
+
+The filename carries the date of the card's content. /assets/* is cached for
+30 days (_headers) and share previews cache by URL, so a changed card needs a
+new dated filename: change OUT_PATH below and the og:image / twitter:image
+tags in index.html (absolute URLs) together.
 
 Composition (v2.2 — matches the page: no pill, no serif headline):
     Top-left:    small wordmark "FREELANCE EASY" + accent bar
@@ -32,7 +37,7 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = Path(__file__).resolve().parent
 SITE_ROOT = HERE.parent
 ASSETS = SITE_ROOT / "assets"
-OUT_PATH = ASSETS / "og-image.png"
+OUT_PATH = ASSETS / "og-image-2026-09-29.png"
 BRAND_TILE = ASSETS / "logo.png"
 
 # Use the bundled fonts from the InvoiceGenerator project (canonical brand
@@ -130,8 +135,8 @@ def _draw_headline(draw: ImageDraw.ImageDraw) -> None:
 
 def _draw_subtitle(draw: ImageDraw.ImageDraw) -> None:
     font = _load_font(F_LATO_REGULAR, 28)
-    line1 = "Your first invoice is free. No card, no time limit."
-    line2 = "$5 a month or $50 a year when you need more."
+    line1 = "Every feature free for seven days. No card."
+    line2 = "$5 a month or $50 a year after that."
     x, y = 80, 470
     draw.text((x, y), line1, font=font, fill=TEXT_MUTED)
     bbox = draw.textbbox((x, y), line1, font=font)
