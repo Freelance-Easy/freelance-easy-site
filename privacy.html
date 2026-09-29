@@ -36,8 +36,8 @@
           invoice database. What we keep is what your account needs: the email
           and name from your Google sign-in, your subscription and payment
           records, and a few technical details — plus how you heard about us
-          and whether you want tips by email, if you tell us. Our website uses
-          cookieless analytics. We don't sell personal information, and we
+          and whether you want tips by email, if you tell us. Our website runs
+          no analytics today. We don't sell personal information, and we
           share it only with the providers listed below that we need to run
           the service.
         </p>
@@ -65,7 +65,7 @@
         <li>All invoices, line items, payment terms, notes and PDFs</li>
         <li>All client information (names, emails, addresses, phone numbers)</li>
         <li>Attachments, documents, logos and imported invoices</li>
-        <li>Your email settings and the SMTP password you enter to send invoices from your own email account (stored encrypted on your machine)</li>
+        <li>Your email settings and the SMTP password you enter to send invoices from your own email account (kept in the app's database on your computer, not encrypted)</li>
         <li>Your recurring schedules and, if you turned it on, your backup folder</li>
       </ul>
       <h3>On our servers</h3>
@@ -83,24 +83,25 @@
       </ul>
       <p>
         The app checks your subscription with our server <strong>when it starts
-        and after you sign in</strong>, and every few seconds while a subscribe or
-        payment screen is open, so it notices when a payment goes through. Each
-        check is tied to your account: it carries your account identifier and the
-        app version, and it does not carry your invoices, your clients or how many
-        invoices you've made — the free plan is counted on your own computer.
+        and after you sign in</strong>, and every few seconds while it waits for
+        a payment to go through. Each check is tied to your account: it carries
+        your account identifier and the app version, and it does not carry your
+        invoices, your clients or how many invoices you've made — the free plan
+        is counted on your own computer.
       </p>
 
       <h2>3. Our website</h2>
       <p>
-        freelance-easy.com uses <strong>Plausible Analytics</strong>, a
-        cookieless, privacy-focused service. It counts which pages are viewed,
+        freelance-easy.com runs no analytics today. When we turn them on, we
+        will use <strong>Plausible Analytics</strong>, a cookieless,
+        privacy-focused service. It counts which pages are viewed,
         the referring site or campaign, the browser, operating system and
         country, and which download button was clicked — in aggregate, so we
         can see which campaigns bring visitors. It sets no cookies. To tell
         visits apart within a day it hashes your IP address and browser details
         into an identifier that is discarded every day; the IP address itself is
         not stored (see <a href="https://plausible.io/data-policy">Plausible's data policy</a>).
-        The analytics script is served through our own domain. We do not use
+        The analytics script will be served through our own domain. We do not use
         advertising pixels, retargeting, or any third-party tracker, and nothing
         on this website is linked to what you do inside the app.
       </p>
@@ -128,7 +129,7 @@
           <tr><td>Stripe</td><td>Subscription payments — handles your card data directly. Receives your email address and account identifier and, with each checkout, the plan you chose, the week your account was created, which plan the app showed you first, how you heard about us (if you answered) and the app version</td><td>United States</td></tr>
           <tr><td>Railway</td><td>Hosting and database for our server</td><td>United States</td></tr>
           <tr><td>Cloudflare</td><td>DNS and hosting for this website</td><td>Global</td></tr>
-          <tr><td>Plausible</td><td>Cookieless website analytics (no personal data)</td><td>European Union</td></tr>
+          <tr><td>Plausible</td><td>Cookieless website analytics, once we turn them on (not in use today; no personal data)</td><td>European Union</td></tr>
           <tr><td>Sentry</td><td>Crash reports from our server, with email addresses and names removed first</td><td>United States</td></tr>
           <tr><td>GitHub</td><td>Hosts the app installers you download</td><td>United States</td></tr>
         </tbody>
