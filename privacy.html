@@ -27,17 +27,19 @@
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Privacy policy</h1>
-      <p class="updated">Last updated: September 22, 2026 · Effective the same day.</p>
+      <p class="updated">Last updated: September 29, 2026 · Effective the same day.</p>
 
       <div class="tldr">
         <p>
           <strong>The short version.</strong> Your invoices, clients and PDFs
           are stored on your own computer. We don't receive or host your
           invoice database. What we keep is what your account needs: the email
-          and name from your Google sign-in, your subscription status, and a
-          few technical details. Our website uses cookieless analytics. We
-          don't sell personal information, and we share it only with the
-          providers listed below that we need to run the service.
+          and name from your Google sign-in, your subscription and payment
+          records, and a few technical details — plus how you heard about us
+          and whether you want tips by email, if you tell us. Our website uses
+          cookieless analytics. We don't sell personal information, and we
+          share it only with the providers listed below that we need to run
+          the service.
         </p>
       </div>
 
@@ -69,23 +71,23 @@
       <h3>On our servers</h3>
       <ul>
         <li>Your email address, display name and account identifier from Google, received when you sign in</li>
-        <li>Your subscription status and its expiry date, plus your Stripe customer identifier, the promotion code if you used one at checkout, and the notifications Stripe sends us about your subscription (started, renewed, failed, cancelled)</li>
+        <li>Your subscription status and its expiry date, kept up to date from the notifications Stripe sends us (started, renewed, failed, cancelled); your Stripe customer and subscription identifiers; and the promotion code, if you used one at checkout</li>
+        <li>A record of each checkout you open (the date, the plan and the app version) and of each payment that goes through (the amount, currency, plan and date), with Stripe's references for them. Each record also carries the week your account was created and your answer to "how did you hear about us", if you gave one.</li>
         <li>The date your account was created</li>
-        <li>The date your free trial started, so the app can tell when it ends (one trial per account)</li>
-        <li>The plan you chose, which plan the app showed you first, and — if you answered it — how you heard about us (from a fixed list); we use these, with the week your account was created, only in aggregate to see which channels work</li>
-        <li>Whether you ticked the box for tips and product news, and when (it reaches us with your first checkout)</li>
+        <li>When your free trial started, so the app can tell when it ends (one trial per account)</li>
+        <li>Your answers from setting up the app, if you gave them: how you heard about us (one choice from a fixed list) and whether you ticked the box for occasional tips by email. They reach us only when you open checkout, together with which plan the app showed you first. We keep the first answers we receive, and the date the tips box reached us; an unticked box sends nothing.</li>
         <li>A secret used to verify that requests come from your copy of the app</li>
-        <li>Standard server request logs (IP address, request path, time), kept briefly by our hosting provider</li>
-        <li>Crash reports from <em>our server</em> (not from the app on your computer), with personal information removed before they are sent to our error-tracking service</li>
-        <li>A bug report, only if you choose to send one from inside the app. One sent before you sign in carries no account, only the email address you type into it, if you type one.</li>
+        <li>Server logs, kept briefly by our hosting provider: the request log (IP address, request path, time) and our server's own log, which notes your account identifier with events such as signing in, subscription checks, checkouts and payments</li>
+        <li>Crash reports from <em>our server</em> (not from the app on your computer). Your email address and name are removed before a report is sent to our error-tracking service, but it can still include your account identifier and the request that failed — for a bug report, its text.</li>
+        <li>A bug report, only if you choose to send one from inside the app. It holds the subject and description you type, the app and operating-system versions and the screen you were on, plus two lines the app adds: one about your data folder (how quickly it responds, and whether it sits in Dropbox, OneDrive, Google Drive, iCloud Drive or another sync service) and one counting the sign-ins started and finished on that computer. A report sent while you're signed in is linked to your account. One sent while you're signed out carries no account, only the reply address you type, if you type one; our server uses your IP address, in memory only, to limit how many of those can be sent.</li>
       </ul>
       <p>
         The app checks your subscription with our server <strong>when it starts
-        and after you sign in</strong>, and every few seconds while its subscribe
-        page is open, so it notices a payment go through. Each check is tied to
-        your account and carries your account identifier and the app version; it
-        does not carry your invoices, your clients or how many invoices you've
-        made — the free plan is counted on your own computer.
+        and after you sign in</strong>, and every few seconds while a subscribe or
+        payment screen is open, so it notices when a payment goes through. Each
+        check is tied to your account: it carries your account identifier and the
+        app version, and it does not carry your invoices, your clients or how many
+        invoices you've made — the free plan is counted on your own computer.
       </p>
 
       <h2>3. Our website</h2>
@@ -106,10 +108,10 @@
       <h2>4. Why we collect what we collect</h2>
       <ul>
         <li><strong>To let you sign in.</strong> Google handles the password; we receive your email and name after you authorize it. The app requests only your basic profile (name, email).</li>
-        <li><strong>To charge your subscription.</strong> Stripe handles the payment and your card details; we receive a customer identifier and a notification when your subscription changes. We never see your full card number.</li>
+        <li><strong>To charge your subscription.</strong> Stripe handles the payment and your card details; we receive a customer identifier, the promotion code if you used one, and a notification when your subscription changes or a payment goes through. We never see your full card number.</li>
         <li><strong>To run the service securely.</strong> Server logs and server-side crash reports help us find and fix problems and detect abuse.</li>
-        <li><strong>To communicate about your account.</strong> Receipts, payment failures, security notices and service announcements go to your account email. <strong>Tips or product news only if you ticked the box</strong> at sign-in (it is unticked by default). Nothing of the kind is sent today; if it ever is, every such email will tell you how to stop them.</li>
-        <li><strong>To understand which channels work.</strong> The optional "how did you hear about us" answer and the campaign parameters on our website are used only as aggregate counts.</li>
+        <li><strong>To communicate about your account.</strong> Receipts, payment failures, security notices and service announcements go to your account email. <strong>Tips or product news only if you opt in</strong>: the tips box you see when you set up the app starts unticked. Nothing of the kind is sent today, and every such email would have a one-click unsubscribe.</li>
+        <li><strong>To understand which channels work.</strong> Your optional "how did you hear about us" answer, which plan the app showed you first, the checkout and payment records, and the campaign parameters on our website are used only as aggregate counts.</li>
       </ul>
       <p>
         Under the GDPR our lawful bases are performance of contract (Art. 6(1)(b))
@@ -127,7 +129,7 @@
           <tr><td>Railway</td><td>Hosting and database for our server</td><td>United States</td></tr>
           <tr><td>Cloudflare</td><td>DNS and hosting for this website</td><td>Global</td></tr>
           <tr><td>Plausible</td><td>Cookieless website analytics (no personal data)</td><td>European Union</td></tr>
-          <tr><td>Sentry</td><td>Crash reports from our server, personal information removed first</td><td>United States</td></tr>
+          <tr><td>Sentry</td><td>Crash reports from our server, with email addresses and names removed first</td><td>United States</td></tr>
           <tr><td>GitHub</td><td>Hosts the app installers you download</td><td>United States</td></tr>
         </tbody>
       </table>
