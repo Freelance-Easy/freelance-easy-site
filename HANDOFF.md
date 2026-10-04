@@ -321,6 +321,6 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
    - don't click a download button on production (it would add a fake download to the baseline). The `Download Click` wiring is checked on the preview, where events are queued but never sent.
 4. Tell the data chat the baseline start (date and time, Chicago). The data chat's rule: the clean baseline starts the day after, so the check visit doesn't count in it.
 
-*Daniel, after Claude's production check:* **Shields → IP addresses**: add your own IP so your visits don't count. If Shields also offers hostnames, allow only `freelance-easy.com` and `www.freelance-easy.com`; that's optional, because the Worker already enforces it.
+*Daniel, after BOTH Claude's production check and the data chat's fresh-Mac funnel test* (playbook step **6c**; the funnel test also runs from this Mac and checks Plausible's realtime view): **Shields → IP addresses**: add your own IP so your visits don't count. If Shields also offers hostnames, allow only `freelance-easy.com` and `www.freelance-easy.com`; that's optional, because the Worker already enforces it.
 
 *Later, when the weekly report moves off hand entry:* a **Stats API key**. Plausible → your account → Settings → API Keys → New API Key → **Stats API**. It is team-scoped and Business-plan only, limited to 600 requests an hour, and queried with `POST https://plausible.io/api/v2/query` and `Authorization: Bearer …`. It goes to the report's owner as a secret, never into the vault or git.
