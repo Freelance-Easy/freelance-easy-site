@@ -268,3 +268,42 @@ The legal audit (vault `03 - Operations/Legal & Compliance Audit — 2026-10-03`
   - **The caption's number is gone:** "Sped up. In real time it took 25 seconds." → "Sped up." on `/`, `/mac-audio` and `/audio`, and the link to the real-time file is gone too. The recording's typing is scripted at 38 ms a keystroke (about 316 words a minute), so 25 s read as a person's pace. The lede's "in about a minute" stays: at 25–40 words a minute the same steps take about 43–56 s (the evidence note). The real-time files stay in `assets/video/` as evidence; to show a number again, re-record with human-speed typing and caption the true length. `script.js`'s `a[data-demo-realtime]` swap now finds nothing, which is harmless.
   - **"The app is signed and notarized by Apple"** → "The app is signed with an Apple Developer ID and notarized by Apple." (the LLC signs it, Apple notarizes it; the old line read as if Apple signed or vouched for it). Changed under the download button on `/`, `/mac-audio`, `/audio`. `/install` carries the same sentence beside a line legal v2 edits, so it is left to v2.
 - **A third ruling (2026-10-04, approved in advance):** the pricing band's "No tiers, no add-ons." → "**No paid tiers**, no add-ons." on `/`, `/mac-audio`, `/audio`. After the trial a limited free plan exists, so "no tiers" overstated it; there is one paid plan, monthly or yearly.
+
+### 2026-10-04 — analytics ready to switch on in one step (branch `feat/analytics-switch`, off `fix/g1-speed-claim`)
+
+Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it); the two-week baseline before flight 1 starts then. This branch is everything that can live in the repo beforehand. **It is inert: merging it switches nothing on.** A sibling of `feat/mac-landing`, so the switch never waits for `/mac`'s renders. The two share the `script.js` and `_redirects` changes below (identical text, so they merge cleanly in either order).
+
+- **`worker.js` — the one switch.** `SCRIPT_UPSTREAM` still holds `pa-REPLACE_ME.js` (off). While it does, the script route answers an empty script and the event route **drops** events (202, nothing forwarded); before, it forwarded any POST to Plausible. **Switching on means putting the site's own script URL there** (Plausible → Site settings → General → Site installation).
+  - Even when on, only `freelance-easy.com` and `www.freelance-easy.com` load the real script or forward events. Branch previews (`*.workers.dev`) and local servers stay silent, so our own checks never reach the statistics.
+  - An offline test (Node, mocked fetch) passed all 13 cases. Off: nothing forwarded. On: production loads the script and forwards events with `x-forwarded-for` and `user-agent`, never a cookie; a preview or localhost forwards nothing; pages still go to the assets.
+- **`script.js`:**
+  - **The campaign allowlist.** `CAMPAIGNS = ["f1"]`: a download path (`/dl/<os>/<label>`) and the `campaign` property carry `?utm_campaign` only when its value is on the list (any case); otherwise they carry the page's own label (`site`, `mac-audio`, `audio`, `mac`). Before, any value sanitised to `[a-z0-9-]` went through. Add each flight's label before its ads run.
+  - **The Windows link isn't a download.** On Mac-only pages the "Need the Windows version?" link (a link to `/`) no longer sends `Download Click`, so the Mac goal is simply `os=mac`.
+  - The deck's `data-alt` / `href` reading, which `/mac` needs.
+  - **Two events removed:** "Compatibility Help Opened" and "Share To Computer". v2's `/privacy` §3 says the site counts pages, referrer or campaign, browser, OS, rough location and "which download button was clicked". It doesn't cover those two, and the weekly report doesn't use them. A new event needs a §3 line first; the file's header says so.
+- **`_redirects`:** the corrected `/dl/` comment (it passes query strings on; ads land on `/mac` only).
+- **What the site sends once on:** pageviews; `Download Click` `{os, campaign, page, placement}`; and Plausible's own automatic engagement event (time on page, scroll depth; Plausible's docs say the script sends it when a visitor leaves or switches tabs). v2 §3 doesn't mention that last one yet: raised with the legal chat 2026-10-04.
+
+**The v2-day checklist:**
+
+*Daniel, in Plausible (before the switch; about 25 minutes):*
+1. Create the account on the **Business** plan (30-day free trial). Custom properties, funnels and the Stats API are Business features. Accept the data processing agreement (https://plausible.io/dpa).
+2. Add the site `freelance-easy.com`, timezone **America/Chicago** (the Ads account's and the report's).
+3. **Site settings → General → Site installation:** copy the script URL (`https://plausible.io/js/pa-….js`) and send it to Claude. Leave every optional measurement **off**: outbound links, file downloads, form submissions, 404 pages, revenue, hash-based routing. The site only sends pageviews and `Download Click`; anything more needs a `/privacy` line first.
+4. **Site settings → Goals → + Add goal**, all before the switch (Plausible doesn't backfill goals):
+   - a pageview goal for `/mac`;
+   - custom event `Download Click`, narrowed to the property `os` = `mac` (name it "Mac download");
+   - the same narrowed to `os` = `win` ("Windows download").
+5. **Funnels:** `/mac` pageview → "Mac download".
+6. **Shields → IP addresses:** add your own IP so your visits don't count. Optional: if Shields also offers hostnames, allow only `freelance-easy.com` and `www.freelance-easy.com`. The Worker already enforces that.
+
+*Claude, the one step (same day, right after v2 is live):*
+1. On `feat/analytics-switch` (or a branch off `main` once it has merged), replace `REPLACE_ME`: `SCRIPT_UPSTREAM = "https://plausible.io/js/pa-<id>.js"`. Push.
+2. The preview must still answer `/* analytics off here */` at `/js/script.js` (previews never count). Then merge to `main` on Daniel's word.
+3. **Production check:**
+   - `curl -s https://freelance-easy.com/js/script.js` returns Plausible's script, not the empty one;
+   - one visit to `/` shows in Plausible's realtime view;
+   - don't click a download button on production (it would add a fake download to the baseline). The `Download Click` wiring is checked on the preview, where events are queued but never sent.
+4. Tell the data chat the baseline start (date and time, Chicago).
+
+*Later, when the weekly report moves off hand entry:* a **Stats API key**. Plausible → your account → Settings → API Keys → New API Key → **Stats API**. It is team-scoped and Business-plan only, limited to 600 requests an hour, and queried with `POST https://plausible.io/api/v2/query` and `Authorization: Bearer …`. It goes to the report's owner as a secret, never into the vault or git.

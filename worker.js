@@ -7,26 +7,38 @@
  *   2. Proxy Plausible Analytics through our own domain — the script at
  *      /js/script.js and the event endpoint at /api/event. Plausible is
  *      cookieless and records no personal data; proxying is disclosed in
- *      /privacy ("served from our own domain"). Cookies are stripped before
- *      anything is forwarded (there are none on this site, but belt and braces).
+ *      /privacy ("served through our own domain"). Only the headers Plausible
+ *      needs are forwarded (no cookies; there are none on this site anyway).
  *
- * Until the Plausible site exists, SCRIPT_UPSTREAM is a placeholder and the
- * script route answers an empty script (a 200, cached briefly) — no console
- * error on any page, and no events are sent anywhere because the queue in the
- * page's snippet is never drained.
+ * THE SWITCH is SCRIPT_UPSTREAM. While it holds "REPLACE_ME", analytics is
+ * off: the script route answers an empty script (a 200, cached briefly, so no
+ * page logs an error) and the event route drops anything sent to it, so
+ * nothing leaves the site. Switching on = putting the site's own script URL
+ * from Plausible (Site settings → General → Site installation) here, the same
+ * day /privacy describes the analytics (legal v2). Even then, only the
+ * production hostnames count: a branch preview (*.workers.dev) or a local
+ * server gets the empty script and its events are dropped, so our own test
+ * visits never reach the statistics.
  */
 
 const SCRIPT_PATH = "/js/script.js";
 const EVENT_PATH = "/api/event";
 
 // Plausible issues a per-site script (https://plausible.io/js/pa-<id>.js).
-// Set this once the site is added in Plausible; keep "REPLACE_ME" until then.
+// Keep "REPLACE_ME" until the day analytics is switched on.
 const SCRIPT_UPSTREAM = "https://plausible.io/js/pa-REPLACE_ME.js";
 const EVENT_UPSTREAM = "https://plausible.io/api/event";
 
-async function proxyScript(request, ctx) {
-  if (SCRIPT_UPSTREAM.includes("REPLACE_ME")) {
-    return new Response("/* analytics not configured */\n", {
+// The only hostnames whose visits are counted.
+const COUNTED_HOSTS = new Set(["freelance-easy.com", "www.freelance-easy.com"]);
+
+function counted(url) {
+  return !SCRIPT_UPSTREAM.includes("REPLACE_ME") && COUNTED_HOSTS.has(url.hostname);
+}
+
+async function proxyScript(request, ctx, url) {
+  if (!counted(url)) {
+    return new Response("/* analytics off here */\n", {
       status: 200,
       headers: {
         "content-type": "application/javascript; charset=utf-8",
@@ -35,7 +47,7 @@ async function proxyScript(request, ctx) {
     });
   }
   const cache = caches.default;
-  const cacheKey = new Request(new URL(request.url).origin + SCRIPT_PATH, {
+  const cacheKey = new Request(url.origin + SCRIPT_PATH, {
     method: "GET",
   });
   let response = await cache.match(cacheKey);
@@ -56,7 +68,11 @@ async function proxyScript(request, ctx) {
   return response;
 }
 
-async function proxyEvent(request) {
+async function proxyEvent(request, url) {
+  if (!counted(url)) {
+    // Dropped, not forwarded: analytics is off, or this isn't production.
+    return new Response(null, { status: 202, headers: { "cache-control": "no-store" } });
+  }
   const headers = new Headers();
   headers.set("content-type", request.headers.get("content-type") || "text/plain");
   headers.set("user-agent", request.headers.get("user-agent") || "");
@@ -79,10 +95,10 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === SCRIPT_PATH && request.method === "GET") {
-      return proxyScript(request, ctx);
+      return proxyScript(request, ctx, url);
     }
     if (url.pathname === EVENT_PATH && request.method === "POST") {
-      return proxyEvent(request);
+      return proxyEvent(request, url);
     }
     return env.ASSETS.fetch(request);
   },
