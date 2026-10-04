@@ -27,7 +27,7 @@
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Installation help</h1>
-      <p class="updated">Current version v0.2.19-beta · <a href="/releases">Release files and notes on GitHub</a></p>
+      <p class="updated">Current version v0.3.0-beta · <a href="/releases">Release files and notes on GitHub</a></p>
 
       <p>
         Freelance Easy is a desktop app. The installers are hosted on GitHub;
@@ -41,7 +41,7 @@
         <li><strong>Requirements:</strong> a Mac with an Apple chip (M1 or later) on macOS 12 Monterey or later. Intel Macs aren't supported. To check both: Apple menu → About This Mac.</li>
         <li><strong>Download:</strong> <code>Freelance-Easy.dmg</code>, about 154 MB. Open it and drag Freelance Easy into Applications.</li>
         <li><strong>First open:</strong> the app is signed and notarized by Apple, so macOS may only show its usual "downloaded from the internet — are you sure you want to open it?" dialog. Click Open.</li>
-        <li><strong>Updates:</strong> the app checks GitHub for new versions and offers to install them.</li>
+        <li><strong>Updates:</strong> each time it starts, the app checks GitHub for a new version and downloads it automatically; the update installs when you choose to restart.</li>
       </ul>
 
       <h2 id="windows">Windows</h2>
@@ -50,16 +50,19 @@
         <li><strong>Download:</strong> <code>Freelance-Easy-Setup.exe</code>, about 134 MB.</li>
         <li><strong>The warning you'll see:</strong> the installer isn't code-signed yet, so Windows doesn't recognise the publisher and shows a blue <em>Windows protected your PC</em> screen when you run it. If you want to continue, click <em>More info</em>, then <em>Run anyway</em>. This is Windows SmartScreen doing its job with an unknown publisher; we're working on signing.</li>
         <li><strong>If there is no "Run anyway":</strong> some Windows 11 PCs have <em>Smart App Control</em> turned on, which blocks unsigned apps outright rather than warning. Until the installer is signed, Freelance Easy can't run on those PCs unless Smart App Control is turned off — a decision we'd rather you make deliberately than for us.</li>
-        <li><strong>Updates:</strong> the app checks GitHub for new versions and offers to install them.</li>
+        <li><strong>Updates:</strong> each time it starts, the app checks GitHub for a new version and downloads it automatically; the update installs when you choose to restart.</li>
       </ul>
 
       <h2>Where your data goes</h2>
       <p>
-        During setup you choose a folder. Everything the app stores — your
-        clients, invoices, PDFs, attachments — lives inside it. Back up that
-        folder the way you back up your other work. If you ever want to leave,
-        the folder is yours: the database is an ordinary SQLite file and the
-        invoices are ordinary PDFs.
+        During setup you choose a folder. Your clients, invoices, attachments
+        and logos live inside it, and the app regenerates invoice PDFs on each
+        computer whenever you need them. Back up that folder the way you back
+        up your other work. The app also keeps recent copies of its database in
+        that folder (and restore points on the computer itself), so if the
+        folder is in Dropbox or Google Drive, those copies sync too. If you ever
+        want to leave, the folder is yours: the database is an ordinary SQLite
+        file, and you can export your invoices as ordinary PDFs.
       </p>
 
       <h2>Uninstalling</h2>

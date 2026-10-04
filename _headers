@@ -6,6 +6,7 @@
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Strict-Transport-Security: max-age=31536000
 
 # Rules STACK: every matching rule contributes, in file order, and a header set
 # twice is sent twice (seen live: "max-age=2592000, ..., max-age=86400"). So the
@@ -46,4 +47,11 @@
 /mac-audio
   X-Robots-Tag: noindex
 /audio
+  X-Robots-Tag: noindex
+
+# Earlier versions of the legal pages stay reachable (evidence of what users
+# agreed to) but out of search results.
+/terms-2026-09-29
+  X-Robots-Tag: noindex
+/privacy-2026-09-29
   X-Robots-Tag: noindex
