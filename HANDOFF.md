@@ -373,8 +373,8 @@ Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §
   - the install disclosure Google's software policy asks for (A24 item 6): drag to Applications, Google sign-in, a folder you choose on your Mac, the subscription check and the update check at each start, and an update installing when you choose to restart.
   - Each clause was checked against v0.3.0-beta: the arm64-only DMG (`electron/package.json`); `LSMinimumSystemVersion` 12.0 (the built app's Info.plist); `/check-license` at launch; `electron/main.js` (`autoDownload = true`, `autoInstallOnAppQuit = false`, the banner's "Restart now").
 - **The hero deck is the ads' invoice:** INV1056 for Marlow & Finch (the invoice-film chat's `invoice-film/data/inv1056.json`, a draft until Daniel's styleframe OK).
-  - Today `assets/samples/inv1056-<style>.pdf` and `assets/screenshots/inv1056-<style>.webp` are **labelled placeholders**. **Never merge with them.**
-  - When the app's own PDFs arrive: put them in `assets/samples/`, then run `python scripts/build-hero-collage.py sheets --set inv1056`.
+  - `assets/samples/inv1056-<style>.pdf` are the invoice-film chat's **draft** renders (2026-10-04). They're the app's own `pdf_gen` output from `invoice-film/data/inv1056.json`: title "October work", accent `#4a7c7e` in all four templates, fictional persona and client. `assets/screenshots/inv1056-<style>.webp` are rastered from them. They replaced the labelled placeholders the same day. **Don't merge before Daniel's styleframe OK.**
+  - If the data or template changes at that OK: copy the new `invoice-film/kit/pdf/INV1056-<style>.pdf` over `assets/samples/inv1056-<style>.pdf` (lowercase), then run `uv run --with pymupdf --with pillow python3 scripts/build-hero-collage.py sheets --set inv1056`.
   - Check that the front template matches the ad's. The deck starts Modern-front; another front means changing the sheets' inline geometry and script.js's starting order.
   - Update the `data-alt` text if the content changed.
 - **A24, item by item:**
