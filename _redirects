@@ -12,9 +12,14 @@
 
 # === Campaign download paths ===
 # Ads and campaign pages link to /dl/<os>/<campaign> so a download click can be
-# attributed to a campaign without query strings (this file drops them) and
-# without any tracking pixel. The trailing splat is the campaign id, e.g.
-# /dl/mac/mac-audio-f1. Same files as above.
+# attributed to a campaign without query strings and without any tracking
+# pixel. The trailing splat is the campaign label: a flight's label from the
+# allowlist in script.js (CAMPAIGNS, e.g. /dl/mac/f1) or the page's own
+# (/dl/mac/mac). Same files as above; the file name never carries the label.
+# These redirects do NOT drop a query string: Cloudflare passes it on to
+# GitHub (seen 2026-10-04: /dl/mac/f1?probe=1 -> ...Freelance-Easy.dmg?probe=1).
+# So never link a /dl/ path with one. The site's buttons never add one, and
+# GitHub sees only our origin as the referrer (Referrer-Policy in _headers).
 /dl/mac/*   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg         302
 /dl/win/*   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
 

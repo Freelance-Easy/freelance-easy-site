@@ -268,3 +268,94 @@ The legal audit (vault `03 - Operations/Legal & Compliance Audit — 2026-10-03`
   - **The caption's number is gone:** "Sped up. In real time it took 25 seconds." → "Sped up." on `/`, `/mac-audio` and `/audio`, and the link to the real-time file is gone too. The recording's typing is scripted at 38 ms a keystroke (about 316 words a minute), so 25 s read as a person's pace. The lede's "in about a minute" stays: at 25–40 words a minute the same steps take about 43–56 s (the evidence note). The real-time files stay in `assets/video/` as evidence; to show a number again, re-record with human-speed typing and caption the true length. `script.js`'s `a[data-demo-realtime]` swap now finds nothing, which is harmless.
   - **"The app is signed and notarized by Apple"** → "The app is signed with an Apple Developer ID and notarized by Apple." (the LLC signs it, Apple notarizes it; the old line read as if Apple signed or vouched for it). Changed under the download button on `/`, `/mac-audio`, `/audio`. `/install` carries the same sentence beside a line legal v2 edits, so it is left to v2.
 - **A third ruling (2026-10-04, approved in advance):** the pricing band's "No tiers, no add-ons." → "**No paid tiers**, no add-ons." on `/`, `/mac-audio`, `/audio`. After the trial a limited free plan exists, so "no tiers" overstated it; there is one paid plan, monthly or yearly.
+
+### 2026-10-04 — analytics ready to switch on in one step (branch `feat/analytics-switch`, off `fix/g1-speed-claim`)
+
+Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it); the two-week baseline before flight 1 starts then. This branch is everything that can live in the repo beforehand. **It is inert: merging it switches nothing on.** `feat/mac-landing` stacks on it, so the switch never waits for `/mac`'s renders: this branch can merge first, any time after G1.
+
+- **`worker.js` — the one switch.** `SCRIPT_UPSTREAM` still holds `pa-REPLACE_ME.js` (off). While it does, the script route answers an empty script and the event route **drops** events (202, nothing forwarded); before, it forwarded any POST to Plausible. **Switching on means putting the site's own script URL there** (Plausible → Site settings → General → Site installation).
+  - Even when on, only `freelance-easy.com` and `www.freelance-easy.com` load the real script or forward events. Branch previews (`*.workers.dev`) and local servers stay silent, so our own checks never reach the statistics.
+  - **The event contract (`FORWARDED_EVENTS`):** only what `/privacy` §3 lists is forwarded:
+    - `pageview` with no properties;
+    - Plausible's own `engagement` event (time on page, scroll depth) with no properties;
+    - `Download Click` with only `os`, `campaign`, `page`, `placement` (strings of up to 64 characters).
+    - Anything else is dropped (202): another event (outbound links, file downloads, forms, a future event), extra or non-string properties. Adding one means a §3 line first, then an entry here.
+  - **How it's enforced: Plausible gets a rebuilt copy, never the raw body.**
+    - The body is read only if its content type is `text/plain` or `application/json` (what Plausible's script sends), up to 8,192 bytes (a declared larger size is refused before reading; a stream is cut off at the cap), and must be strict UTF-8 JSON.
+    - The event must name our domain (`d`) and a page on `freelance-easy.com` or `www` (`u`).
+    - The page URL goes on in its canonical form, the WHATWG parser's `href` (http(s) only, no credentials), so Plausible's own parser reads the host that was checked: `https://freelance-easy.com\@evil.example/x` goes on as `https://freelance-easy.com/@evil.example/x`.
+    - A referrer that isn't an http(s) URL goes on as `null`, and one longer than 2,048 characters is cut to its origin and path. A referrer never drops its event.
+    - It's then rebuilt from the browser format's known fields only (`n u d r v h i`, `sd e` for engagement, `p` checked against the list) and sent on as `text/plain`.
+    - So a field nobody listed (a legacy property field `m`, `meta` or `props`, revenue `$`) never reaches Plausible, a form-encoded body can't make Plausible read different fields, and what Plausible parses is exactly what was checked.
+  - **`scripts/test-worker.mjs`** (`node scripts/test-worker.mjs`, Node 20+, offline with a mocked fetch): 46 checks, all passing.
+    - Beyond the switch and the hostnames, they cover each attack Sol found: the legacy property fields, form-encoded and multipart bodies, a missing content type, a 9,000-byte Unicode body under 8,192 characters, a streamed 2 MiB body (cut off after 3 chunks), invalid UTF-8, duplicate keys, `__proto__` properties, another host or domain, the backslash-userinfo URL, credentials, `javascript:`, a long and a non-http referrer.
+    - The suite expects `worker.js` to be off.
+    - `--payloads <file>` replays captured real events through the same code. It runs switched on (as the file is, or with a test id), so it also works after the switch. Each event is replayed with its own content type. Its domain is kept unless `--substitute-domain` is given.
+- **`script.js`:**
+  - **The campaign allowlist.** `CAMPAIGNS = ["f1"]`: a download path (`/dl/<os>/<label>`) and the `campaign` property carry `?utm_campaign` only when its value is on the list (any case); otherwise they carry the page's own label (`site`, `mac-audio`, `audio`, `mac`). Before, any value sanitised to `[a-z0-9-]` went through. Add each flight's label before its ads run.
+  - **The Windows link isn't a download.** On Mac-only pages the "Need the Windows version?" link (a link to `/`) no longer sends `Download Click`, so the Mac goal is simply `os=mac`.
+  - The deck's `data-alt` / `href` reading, which `/mac` needs.
+  - **Two events removed:** "Compatibility Help Opened" and "Share To Computer". v2's `/privacy` §3 says the site counts pages, referrer or campaign, browser, OS, rough location and "which download button was clicked". It doesn't cover those two, and the weekly report doesn't use them. A new event needs a §3 line first; the file's header says so.
+- **`_redirects`:** the corrected `/dl/` comment (it passes query strings on; ads land on `/mac` only).
+- **`scripts/check-download-wiring.py`** (new): the repeatable check of the download links and events, described in the one-step list below.
+  - With `--tracker <pa-….js URL>` it also loads `/mac` with a REAL Plausible script. Events are answered locally, and anything addressed to plausible.io is blocked.
+  - It captures what that script sends, with each event's content type; clicks the Mac button; simulates a tab switch; and replays every captured event through `worker.js`'s contract.
+  - A pageview, a `Download Click` and an engagement event must all be captured, and each must be forwarded, so a change in Plausible's event format can't silently drop our counts.
+  - With the site's own script the events must already name `freelance-easy.com`. `--public-tracker` lets Plausible's own public script stand in by substituting our domain; without that flag its events are dropped (checked: 4 of 4).
+  - 2026-10-04, with Plausible's own public build (`pa-6_srOGVV9SLMWJ1ZpUAbG.js`, script version 36): all 4 real events were forwarded intact.
+    - pageview `{n, v, u, d, r}`;
+    - `Download Click` `{n, v, u, d, r, p}` with exactly our four properties;
+    - engagement `{n, sd, d, u, e, v}`;
+    - a second pageview.
+  - The script masks `navigator.webdriver` in that run only: Plausible's script ignores automated browsers.
+- **What the site sends once on:**
+  - pageviews;
+  - `Download Click` `{os, campaign, page, placement}`;
+  - Plausible's own engagement event (time on page, scroll depth), which the script sends when a visitor leaves or switches tabs. v2's §3 lists it since legal commit `7fd949a` ("how long they stay open and how far they're scrolled").
+  - The Worker forwards nothing else.
+- **Independent review (GPT-6.1 Sol, read-only, 2026-10-04): FIX FIRST, two findings, both fixed.**
+  - P1: activation would forward the undisclosed engagement event. Now it's disclosed in §3, and the Worker enforces the whole list above.
+  - P2: the production check expected Daniel's realtime visit after his IP shield excluded it. The shield now comes after the check.
+  - Everything else passed (89 checks): the inert state, the one-line switch, the hostname guard (resists Host-header spoofing; runs before the cache), the forwarded headers, the single `Download Click` call, the allowlist (case, whitespace, encoding, empty and repeated parameters), the Windows link, the deck fallback.
+- **Sol's re-check of the filter (same day): both fixes confirmed, four new findings, all fixed** in the rebuilt-copy design above.
+  - P1: the legacy property fields (`m`, `meta`) passed. Plausible reads them before `p`.
+  - P1: a form-encoded content type would make Plausible read different fields.
+  - P2: the size cap counted characters, not bytes, and read the whole body first.
+  - P2: this check script only printed the `/js/script.js` result. It now asserts it: on a preview a 200 with the exact empty script, on a local server a 404.
+  - While fixing that last one: Cloudflare answers a top-level *navigation* to `/js/script.js` with the 404 page without running the Worker. Script loads (what visitors do) and plain requests reach it, so the check uses a plain request.
+- **Sol's third pass: the four re-check fixes confirmed, and the rebuilt-field design judged sound. Four narrower findings, all fixed.**
+  - P1: the page URL was checked with one URL parser and parsed by Plausible with another. It now goes on in its canonical form.
+  - P2: the replay refused an activated Worker. It no longer does.
+  - P2: a long referrer dropped its event. It's now cut.
+  - P2: the real-tracker replay ignored the content type and the domain and didn't require engagement. It now checks all three.
+  - Verified after the fixes: the suite (46), the real-tracker check (4 of 4 forwarded with `--public-tracker`, 4 of 4 dropped without it), and a replay of own-domain events through a switched-on copy of `worker.js` (3 of 3 forwarded).
+- **Sol's fourth and final pass (`a0b8611..e98ae8e`): VERDICT MERGE (inert), no findings.** All four fixes check out, with no regression or new bypass in the edge cases asked about: canonical URLs past the limit, IDN hosts, `www`, the referrer cut, the domain flags and the replay's URL rewrite.
+
+**The v2-day checklist:**
+
+*Daniel, in Plausible (before the switch; about 25 minutes):*
+1. Create the account on the **Business** plan (30-day free trial). Custom properties, funnels and the Stats API are Business features. Accept the data processing agreement (https://plausible.io/dpa).
+2. Add the site `freelance-easy.com`, timezone **America/Chicago** (the Ads account's and the report's).
+3. **Site settings → General → Site installation:** copy the script URL (`https://plausible.io/js/pa-….js`) and send it to Claude. Leave every optional measurement **off**: outbound links, file downloads, form submissions, 404 pages, revenue, hash-based routing. The site sends only pageviews, Plausible's engagement event and `Download Click`, and the Worker drops anything else; adding more needs a `/privacy` line first.
+4. **Site settings → Goals → + Add goal**, all before the switch (Plausible doesn't backfill goals):
+   - a pageview goal for `/mac`;
+   - custom event `Download Click`, narrowed to the property `os` = `mac` (name it "Mac download");
+   - the same narrowed to `os` = `win` ("Windows download").
+5. **Funnels:** `/mac` pageview → "Mac download".
+
+*Claude, the one step (same day, right after v2 is live):*
+1. On `feat/analytics-switch` (or a branch off `main` once it has merged), replace `REPLACE_ME`: `SCRIPT_UPSTREAM = "https://plausible.io/js/pa-<id>.js"`. Push.
+2. Run `uv run --with playwright python3 scripts/check-download-wiring.py <preview URL> --tracker https://plausible.io/js/pa-<id>.js` on the switch branch's preview, with the site's OWN script and without `--public-tracker`: its events must name `freelance-easy.com`, which catches a site added under another name. It needs the installed Chromium, and it refuses production, where a click would count as a real download. Run the full suite `node scripts/test-worker.mjs` before putting the id in (it expects `worker.js` to be off); the replay inside the check works after.
+   - It checks 8 cases; the `/js/script.js` route, which must still answer `/* analytics off here */` on a preview (previews never count); and that every event the site's real script sends passes the Worker's contract.
+   - Then merge to `main` on Daniel's word.
+   - It checks: the two flight-1 ad URLs (`/mac?utm_campaign=f1…`, `ta` and `tb`) wire the button to `/dl/mac/f1`; a value not on the allowlist falls back to the page label; `Download Click` carries exactly `{os, campaign, page, placement}`; the Windows link on Mac-only pages sends nothing; nothing else fires.
+   - Proven both ways on 2026-10-04: ALL PASS on the `feat/mac-landing` preview, and 4 FAILED on the G1 preview's old `script.js` (the extra event, leaked campaign values, the Windows link counted).
+3. **Production check:**
+   - `curl -s https://freelance-easy.com/js/script.js` returns Plausible's script, not the empty one;
+   - one visit to `/` from this Mac shows in Plausible's realtime view. Do this before Daniel's IP shield below: this Mac shares his IP, so after the shield its visits don't count;
+   - don't click a download button on production (it would add a fake download to the baseline). The `Download Click` wiring is checked on the preview, where events are queued but never sent.
+4. Tell the data chat the baseline start (date and time, Chicago). The data chat's rule: the clean baseline starts the day after, so the check visit doesn't count in it.
+
+*Daniel, after BOTH Claude's production check and the data chat's fresh-Mac funnel test* (playbook step **6c**; the funnel test also runs from this Mac and checks Plausible's realtime view): **Shields → IP addresses**: add your own IP so your visits don't count. If Shields also offers hostnames, allow only `freelance-easy.com` and `www.freelance-easy.com`; that's optional, because the Worker already enforces it.
+
+*Later, when the weekly report moves off hand entry:* a **Stats API key**. Plausible → your account → Settings → API Keys → New API Key → **Stats API**. It is team-scoped and Business-plan only, limited to 600 requests an hour, and queried with `POST https://plausible.io/api/v2/query` and `Authorization: Bearer …`. It goes to the report's owner as a secret, never into the vault or git.

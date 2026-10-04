@@ -10,11 +10,14 @@
       whatever the visitor runs. Phones get a share / copy-link handoff
       instead of installers.
    3. Campaign download paths — buttons link to /dl/<os>/<campaign>; the
-      campaign id comes from ?utm_campaign (letters, digits, dashes) or the
-      page's default. `_redirects` resolves the path to the GitHub asset.
-   4. Analytics events (Plausible, cookieless, proxied through this domain):
-      "Download Click", "Compatibility Help Opened", "Share To Computer".
-      No personal data — which button, on which page, from which campaign.
+      campaign id is ?utm_campaign only when it is on the CAMPAIGNS allowlist,
+      else the page's own label. `_redirects` resolves the path to the GitHub
+      asset.
+   4. Analytics (Plausible, cookieless, proxied through this domain; worker.js
+      decides whether anything is sent): pageviews, and one custom event,
+      "Download Click" {os, campaign, page, placement} — which button, on
+      which page, from which campaign. Nothing else: /privacy §3 lists what
+      the site counts, so a new event needs a line there first.
    5. The hero stack's template picker (wireStack) and the header's scrolled
       hairline (wireHeader).
    The no-JS state is the plain /download/<os> href already in the HTML. */
@@ -67,13 +70,22 @@
     return "other";
   }
 
+  // The ad flights' campaign labels. A download path (and the analytics
+  // property) carries ?utm_campaign only when it is one of these, so it only
+  // ever holds a fixed label, never whatever a link put there (a click id, a
+  // name); any other value falls back to the page's own label. Add a flight's
+  // label here before its ads run.
+  var CAMPAIGNS = ["f1"];
+
   function campaignId() {
     var fromQuery = null;
     try {
       fromQuery = new URLSearchParams(location.search).get("utm_campaign");
     } catch (e) {}
-    var raw = fromQuery || document.body.getAttribute("data-campaign") || "site";
-    var clean = String(raw).toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+    var wanted = String(fromQuery || "").toLowerCase();
+    if (CAMPAIGNS.indexOf(wanted) >= 0) return wanted;
+    var page = document.body.getAttribute("data-campaign") || "site";
+    var clean = String(page).toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
     return clean || "site";
   }
 
@@ -122,7 +134,9 @@
       el.hidden = el.getAttribute("data-support") !== visitorOs;
     });
 
-    [primary, alt].forEach(function (a) {
+    // On a single-platform page the alt link ("Need the Windows version?")
+    // goes to the main page, not to a download, so it isn't counted as one.
+    (single ? [primary] : [primary, alt]).forEach(function (a) {
       a.addEventListener("click", function () {
         track("Download Click", {
           os: a.getAttribute("data-platform"),
@@ -130,12 +144,6 @@
           page: pageId(),
           placement: placement,
         });
-      });
-    });
-
-    block.querySelectorAll("[data-compat-help]").forEach(function (d) {
-      d.addEventListener("toggle", function () {
-        if (d.open) track("Compatibility Help Opened", { page: pageId(), placement: placement });
       });
     });
 
@@ -148,15 +156,11 @@
       if (label) label.textContent = canShare ? "Share this page" : "Copy page link";
       shareBtn.addEventListener("click", function () {
         var url = location.origin + location.pathname;
-        var done = function (how) {
-          track("Share To Computer", { page: pageId(), placement: placement, how: how });
-        };
         function copyPageUrl() {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(
               function () {
                 if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
-                done("copy");
               },
               function () {
                 if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
@@ -169,7 +173,6 @@
         if (canShare) {
           navigator
             .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: url })
-            .then(function () { done("share"); })
             .catch(function (err) {
               // Cancelling the share sheet is silent; a real failure falls back to the copy path.
               if (!err || err.name !== "AbortError") copyPageUrl();
@@ -373,7 +376,7 @@
           el.removeAttribute("tabindex");
           el.setAttribute("role", "button");
           el.setAttribute("aria-label", TEMPLATE_NAMES[t] + " template in front. Show the next template.");
-          if (img) img.alt = SHEET_ALT[t];
+          if (img) img.alt = el.getAttribute("data-alt") || SHEET_ALT[t];
         } else {
           el.setAttribute("aria-hidden", "true");
           el.setAttribute("tabindex", "-1");
@@ -387,7 +390,7 @@
         p.setAttribute("aria-pressed", String(p.getAttribute("data-pick") === front));
       });
       if (open) {
-        open.setAttribute("href", "/assets/samples/invoice-" + front + ".pdf");
+        open.setAttribute("href", sheets[front].getAttribute("href"));
         open.textContent = "Open the " + TEMPLATE_NAMES[front] + " PDF";
       }
       if (status) status.textContent = TEMPLATE_NAMES[front] + " template, " + (TEMPLATES.indexOf(front) + 1) + " of " + TEMPLATES.length;
