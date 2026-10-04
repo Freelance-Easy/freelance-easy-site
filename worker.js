@@ -31,8 +31,10 @@ const EVENT_PATH = "/api/event";
 const SCRIPT_UPSTREAM = "https://plausible.io/js/pa-REPLACE_ME.js";
 const EVENT_UPSTREAM = "https://plausible.io/api/event";
 
-// The only hostnames whose visits are counted.
+// The only hostnames whose visits are counted, and the site's domain as
+// Plausible knows it (the `d` its script sends).
 const COUNTED_HOSTS = new Set(["freelance-easy.com", "www.freelance-easy.com"]);
+const SITE_DOMAIN = "freelance-easy.com";
 
 // The only events forwarded, with the only properties each may carry: what
 // /privacy §3 lists (legal v2: the pages viewed, how long they stay open and
@@ -51,23 +53,96 @@ function counted(url) {
   return !SCRIPT_UPSTREAM.includes("REPLACE_ME") && COUNTED_HOSTS.has(url.hostname);
 }
 
-// The body Plausible's script sends: {n: name, u, d, r, p: props, …}. True
-// only for a listed event whose properties are all listed for it.
-function forwardable(body) {
-  if (body.length > MAX_EVENT_BYTES) return false;
-  let payload;
+// At most `max` bytes of the body, decoded as strict UTF-8; null when it is
+// larger (a declared Content-Length over the cap is refused before reading;
+// an undeclared one is cut off at the cap), not UTF-8, or unreadable.
+async function readCapped(request, max) {
+  const declared = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > max) return null;
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks = [];
+  let total = 0;
   try {
-    payload = JSON.parse(body);
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > max) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(total);
+    let at = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, at);
+      at += chunk.byteLength;
+    }
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch (e) {
-    return false;
+    return null;
   }
-  if (!payload || typeof payload !== "object") return false;
-  const allowed = FORWARDED_EVENTS.get(payload.n ?? payload.name);
-  if (!allowed) return false;
-  const props = payload.p ?? payload.props;
-  if (props === undefined || props === null) return true;
-  if (typeof props !== "object" || Array.isArray(props)) return false;
-  return Object.keys(props).every((k) => allowed.has(k));
+}
+
+const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+const isText = (v, max) => typeof v === "string" && v.length <= max;
+const isCount = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0;
+
+// The event the page sent, in the browser format of Plausible's script
+// ({n: name, u: page URL, d: domain, r: referrer, v: script version, p: props,
+// and for engagement sd: scroll depth, e: time}), rebuilt from those known
+// fields only; null to drop it. Plausible gets the rebuilt copy, never the
+// raw body, so a field nobody listed here (a legacy property field such as
+// `m`, `meta` or `props`, revenue `$`, anything new) can't reach it, and what
+// it parses is exactly what was checked.
+function rebuild(text) {
+  let e;
+  try {
+    e = JSON.parse(text);
+  } catch (err) {
+    return null;
+  }
+  if (!isObject(e)) return null;
+  const allowedProps = typeof e.n === "string" ? FORWARDED_EVENTS.get(e.n) : undefined;
+  if (!allowedProps || e.d !== SITE_DOMAIN || !isText(e.u, 2048)) return null;
+  let page;
+  try {
+    page = new URL(e.u);
+  } catch (err) {
+    return null;
+  }
+  if (!COUNTED_HOSTS.has(page.hostname)) return null;
+  const out = { n: e.n, u: e.u, d: e.d };
+  if (e.r !== undefined) {
+    if (e.r !== null && !isText(e.r, 2048)) return null;
+    out.r = e.r;
+  }
+  if (e.v !== undefined) {
+    if (!isCount(e.v) && !isText(e.v, 32)) return null;
+    out.v = e.v;
+  }
+  if (e.h !== undefined) {
+    if (![0, 1, true, false].includes(e.h)) return null;
+    out.h = e.h;
+  }
+  if (e.i !== undefined) {
+    if (typeof e.i !== "boolean") return null;
+    out.i = e.i;
+  }
+  if (e.n === "engagement") {
+    if (!isCount(e.sd) || !isCount(e.e)) return null;
+    out.sd = e.sd;
+    out.e = e.e;
+  }
+  if (e.p !== undefined && e.p !== null) {
+    if (!isObject(e.p)) return null;
+    const keys = Object.keys(e.p);
+    if (!keys.every((k) => allowedProps.has(k) && isText(e.p[k], 64))) return null;
+    if (keys.length) out.p = Object.fromEntries(keys.map((k) => [k, e.p[k]]));
+  }
+  return out;
 }
 
 function dropped() {
@@ -109,10 +184,17 @@ async function proxyScript(request, ctx, url) {
 async function proxyEvent(request, url) {
   // Dropped, not forwarded: analytics is off, or this isn't production.
   if (!counted(url)) return dropped();
-  const body = await request.text();
-  if (!forwardable(body)) return dropped();
+  // Only the content types Plausible's script sends, and the rebuilt event
+  // goes on as text/plain, so Plausible reads the JSON this Worker checked
+  // (a form-encoded body would be read as form fields instead).
+  const type = (request.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+  if (type !== "text/plain" && type !== "application/json") return dropped();
+  const text = await readCapped(request, MAX_EVENT_BYTES);
+  const event = text === null ? null : rebuild(text);
+  if (!event) return dropped();
+  const body = JSON.stringify(event);
   const headers = new Headers();
-  headers.set("content-type", request.headers.get("content-type") || "text/plain");
+  headers.set("content-type", "text/plain");
   headers.set("user-agent", request.headers.get("user-agent") || "");
   // Plausible derives country/visitor hash from the client IP and discards it;
   // without this header it would see Cloudflare's edge IP instead.

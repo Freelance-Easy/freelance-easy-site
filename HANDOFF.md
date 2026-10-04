@@ -278,9 +278,14 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
   - **The event contract (`FORWARDED_EVENTS`):** only what `/privacy` §3 lists is forwarded:
     - `pageview` with no properties;
     - Plausible's own `engagement` event (time on page, scroll depth) with no properties;
-    - `Download Click` with only `os`, `campaign`, `page`, `placement`.
-    - Anything else is dropped (202): another event (outbound links, file downloads, forms, a future event), extra properties, a malformed or oversized body. Adding one means a §3 line first, then an entry here.
-  - **`scripts/test-worker.mjs`** (`node scripts/test-worker.mjs`, Node 20+, offline with a mocked fetch): 26 checks, all passing. Off, nothing is forwarded. On, production loads the script and forwards the listed events with `x-forwarded-for` and `user-agent`, never a cookie, body unchanged; a preview or localhost forwards nothing; off-contract events are dropped; pages still go to the assets.
+    - `Download Click` with only `os`, `campaign`, `page`, `placement` (strings of up to 64 characters).
+    - Anything else is dropped (202): another event (outbound links, file downloads, forms, a future event), extra or non-string properties. Adding one means a §3 line first, then an entry here.
+  - **How it's enforced: Plausible gets a rebuilt copy, never the raw body.**
+    - The body is read only if its content type is `text/plain` or `application/json` (what Plausible's script sends), up to 8,192 bytes (a declared larger size is refused before reading; a stream is cut off at the cap), and must be strict UTF-8 JSON.
+    - The event must name our domain (`d`) and a page on `freelance-easy.com` or `www` (`u`).
+    - It's then rebuilt from the browser format's known fields only (`n u d r v h i`, `sd e` for engagement, `p` checked against the list) and sent on as `text/plain`.
+    - So a field nobody listed (a legacy property field `m`, `meta` or `props`, revenue `$`) never reaches Plausible, a form-encoded body can't make Plausible read different fields, and what Plausible parses is exactly what was checked.
+  - **`scripts/test-worker.mjs`** (`node scripts/test-worker.mjs`, Node 20+, offline with a mocked fetch): 38 checks, all passing. Beyond the switch and the hostnames, they cover each attack Sol found: the legacy property fields, form-encoded and multipart bodies, a missing content type, a 9,000-byte Unicode body under 8,192 characters, a streamed 2 MiB body (cut off after 3 chunks), invalid UTF-8, duplicate keys, `__proto__` properties, another host or domain. `--payloads <file>` runs captured real events through the same code (below).
 - **`script.js`:**
   - **The campaign allowlist.** `CAMPAIGNS = ["f1"]`: a download path (`/dl/<os>/<label>`) and the `campaign` property carry `?utm_campaign` only when its value is on the list (any case); otherwise they carry the page's own label (`site`, `mac-audio`, `audio`, `mac`). Before, any value sanitised to `[a-z0-9-]` went through. Add each flight's label before its ads run.
   - **The Windows link isn't a download.** On Mac-only pages the "Need the Windows version?" link (a link to `/`) no longer sends `Download Click`, so the Mac goal is simply `os=mac`.
@@ -288,6 +293,14 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
   - **Two events removed:** "Compatibility Help Opened" and "Share To Computer". v2's `/privacy` §3 says the site counts pages, referrer or campaign, browser, OS, rough location and "which download button was clicked". It doesn't cover those two, and the weekly report doesn't use them. A new event needs a §3 line first; the file's header says so.
 - **`_redirects`:** the corrected `/dl/` comment (it passes query strings on; ads land on `/mac` only).
 - **`scripts/check-download-wiring.py`** (new): the repeatable check of the download links and events, described in the one-step list below.
+  - With `--tracker <pa-….js URL>` it also loads `/mac` with a REAL Plausible script. Events are answered locally, and anything addressed to plausible.io is blocked.
+  - It captures what that script sends, clicks the Mac button, simulates a tab switch, and runs every captured event through `worker.js`'s contract. Each one must be forwarded, so a change in Plausible's event format can't silently drop our counts.
+  - 2026-10-04, with Plausible's own public build (`pa-6_srOGVV9SLMWJ1ZpUAbG.js`, script version 36): all 4 real events were forwarded intact.
+    - pageview `{n, v, u, d, r}`;
+    - `Download Click` `{n, v, u, d, r, p}` with exactly our four properties;
+    - engagement `{n, sd, d, u, e, v}`;
+    - a second pageview.
+  - The script masks `navigator.webdriver` in that run only: Plausible's script ignores automated browsers.
 - **What the site sends once on:**
   - pageviews;
   - `Download Click` `{os, campaign, page, placement}`;
@@ -297,6 +310,12 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
   - P1: activation would forward the undisclosed engagement event. Now it's disclosed in §3, and the Worker enforces the whole list above.
   - P2: the production check expected Daniel's realtime visit after his IP shield excluded it. The shield now comes after the check.
   - Everything else passed (89 checks): the inert state, the one-line switch, the hostname guard (resists Host-header spoofing; runs before the cache), the forwarded headers, the single `Download Click` call, the allowlist (case, whitespace, encoding, empty and repeated parameters), the Windows link, the deck fallback.
+- **Sol's re-check of the filter (same day): both fixes confirmed, four new findings, all fixed** in the rebuilt-copy design above.
+  - P1: the legacy property fields (`m`, `meta`) passed. Plausible reads them before `p`.
+  - P1: a form-encoded content type would make Plausible read different fields.
+  - P2: the size cap counted characters, not bytes, and read the whole body first.
+  - P2: this check script only printed the `/js/script.js` result. It now asserts it: on a preview a 200 with the exact empty script, on a local server a 404.
+  - While fixing that last one: Cloudflare answers a top-level *navigation* to `/js/script.js` with the 404 page without running the Worker. Script loads (what visitors do) and plain requests reach it, so the check uses a plain request.
 
 **The v2-day checklist:**
 
@@ -312,7 +331,9 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
 
 *Claude, the one step (same day, right after v2 is live):*
 1. On `feat/analytics-switch` (or a branch off `main` once it has merged), replace `REPLACE_ME`: `SCRIPT_UPSTREAM = "https://plausible.io/js/pa-<id>.js"`. Push.
-2. Run `uv run --with playwright python3 scripts/check-download-wiring.py <preview URL>` on the switch branch's preview. It needs the installed Chromium; it refuses production, where a click would count as a real download. It checks 8 cases and the `/js/script.js` route, which must still answer `/* analytics off here */` on a preview (previews never count). Then merge to `main` on Daniel's word.
+2. Run `uv run --with playwright python3 scripts/check-download-wiring.py <preview URL> --tracker https://plausible.io/js/pa-<id>.js` on the switch branch's preview, with the site's OWN script. It needs the installed Chromium, and it refuses production, where a click would count as a real download. Run `node scripts/test-worker.mjs` before putting the id in (it expects the shipped `worker.js` to be off).
+   - It checks 8 cases; the `/js/script.js` route, which must still answer `/* analytics off here */` on a preview (previews never count); and that every event the site's real script sends passes the Worker's contract.
+   - Then merge to `main` on Daniel's word.
    - It checks: the two flight-1 ad URLs (`/mac?utm_campaign=f1…`, `ta` and `tb`) wire the button to `/dl/mac/f1`; a value not on the allowlist falls back to the page label; `Download Click` carries exactly `{os, campaign, page, placement}`; the Windows link on Mac-only pages sends nothing; nothing else fires.
    - Proven both ways on 2026-10-04: ALL PASS on the `feat/mac-landing` preview, and 4 FAILED on the G1 preview's old `script.js` (the extra event, leaked campaign values, the Windows link counted).
 3. **Production check:**
