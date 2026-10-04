@@ -89,6 +89,31 @@ async function readCapped(request, max) {
 const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const isText = (v, max) => typeof v === "string" && v.length <= max;
 const isCount = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0;
+const MAX_URL = 2048;
+
+// An http(s) URL without credentials, parsed by the WHATWG parser, or null.
+// Plausible is sent its canonical form (href), so Plausible's own URL parser
+// reads the same host that was checked here: an input such as
+// "https://freelance-easy.com\\@evil.example/x" parses differently elsewhere,
+// its canonical form doesn't.
+function httpUrl(value) {
+  try {
+    const url = new URL(value);
+    const ok = (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password;
+    return ok ? url : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+// The referrer the script sends (document.referrer, or null), canonical; null
+// when it isn't an http(s) URL; cut to its origin and path when it's too long.
+// A referrer never drops the event it came with.
+function referrer(value) {
+  const url = typeof value === "string" && value ? httpUrl(value) : null;
+  if (!url) return null;
+  return url.href.length <= MAX_URL ? url.href : (url.origin + url.pathname).slice(0, MAX_URL);
+}
 
 // The event the page sent, in the browser format of Plausible's script
 // ({n: name, u: page URL, d: domain, r: referrer, v: script version, p: props,
@@ -106,19 +131,11 @@ function rebuild(text) {
   }
   if (!isObject(e)) return null;
   const allowedProps = typeof e.n === "string" ? FORWARDED_EVENTS.get(e.n) : undefined;
-  if (!allowedProps || e.d !== SITE_DOMAIN || !isText(e.u, 2048)) return null;
-  let page;
-  try {
-    page = new URL(e.u);
-  } catch (err) {
-    return null;
-  }
-  if (!COUNTED_HOSTS.has(page.hostname)) return null;
-  const out = { n: e.n, u: e.u, d: e.d };
-  if (e.r !== undefined) {
-    if (e.r !== null && !isText(e.r, 2048)) return null;
-    out.r = e.r;
-  }
+  if (!allowedProps || e.d !== SITE_DOMAIN) return null;
+  const page = isText(e.u, MAX_URL) ? httpUrl(e.u) : null;
+  if (!page || !COUNTED_HOSTS.has(page.hostname) || page.href.length > MAX_URL) return null;
+  const out = { n: e.n, u: page.href, d: e.d };
+  if (e.r !== undefined) out.r = referrer(e.r);
   if (e.v !== undefined) {
     if (!isCount(e.v) && !isText(e.v, 32)) return null;
     out.v = e.v;

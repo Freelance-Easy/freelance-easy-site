@@ -3,12 +3,16 @@
 // mocks fetch/caches/ASSETS, and checks what would leave the site. Nothing
 // touches the network. Run from the repo root (Node 20+):
 //   node scripts/test-worker.mjs
-//   node scripts/test-worker.mjs --payloads <captured.json>
-// The second form runs events captured from Plausible's real browser script
-// (scripts/check-download-wiring.py --tracker) through the Worker as if they
-// came from production, and fails if any is dropped. Expects the shipped
-// worker.js to be OFF (REPLACE_ME): on the switch day, run it before putting
-// the real id in.
+//   node scripts/test-worker.mjs --payloads <captured.json> [--substitute-domain]
+// The first form is the full suite; it expects the shipped worker.js to be
+// OFF (REPLACE_ME), so on the switch day run it before putting the real id in.
+// The second runs events captured from a real Plausible script
+// (scripts/check-download-wiring.py --tracker) through the Worker, switched on
+// (as it is, or with a test id while it's still off), as if they came from
+// production, and fails if any is dropped. Each captured event is replayed
+// with its own content type; its page URL moves to production (the capture
+// ran on a preview) but its domain (d) is kept, unless --substitute-domain
+// says the script was another site's (Plausible's own public one).
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,10 +22,11 @@ import assert from "node:assert/strict";
 const args = process.argv.slice(2);
 const payloadsAt = args.indexOf("--payloads");
 const payloadFile = payloadsAt >= 0 ? args[payloadsAt + 1] : null;
+const substituteDomain = args.includes("--substitute-domain");
 const SRC = args.find((a, i) => !a.startsWith("--") && i !== payloadsAt + 1) || fileURLToPath(new URL("../worker.js", import.meta.url));
 const dir = mkdtempSync(join(tmpdir(), "fe-worker-"));
 const src = readFileSync(SRC, "utf8");
-assert.ok(src.includes("pa-REPLACE_ME.js"), "shipped worker must be OFF");
+if (!payloadFile) assert.ok(src.includes("pa-REPLACE_ME.js"), "shipped worker must be OFF");
 writeFileSync(join(dir, "worker-off.mjs"), src);
 writeFileSync(join(dir, "worker-on.mjs"), src.replace("pa-REPLACE_ME.js", "pa-TESTID123.js"));
 
@@ -58,17 +63,18 @@ async function run(worker, request) {
 if (payloadFile) {
   const payloads = JSON.parse(readFileSync(payloadFile, "utf8"));
   let failed = 0;
-  for (const raw of payloads) {
-    // As if sent from production: the page URL on our host, our domain.
-    const p = JSON.parse(raw);
+  for (const item of payloads) {
+    const captured = typeof item === "string" ? { body: item, content_type: "text/plain" } : item;
+    // As if sent from production: the page URL moves to our host.
+    const p = JSON.parse(captured.body);
     const u = new URL(p.u);
     p.u = PROD + u.pathname + u.search;
-    p.d = "freelance-easy.com";
-    const r = await run(on, post(E, JSON.stringify(p)));
+    if (substituteDomain) p.d = "freelance-easy.com";
+    const r = await run(on, post(E, JSON.stringify(p), { "content-type": captured.content_type || "" }));
     const ok = r.sent.length === 1;
     if (!ok) failed++;
     const fwd = ok ? JSON.parse(r.sent[0].init.body) : null;
-    console.log(`${ok ? "ok  " : "DROP"} ${p.n}  sent keys: ${JSON.stringify(Object.keys(p))}  forwarded: ${JSON.stringify(fwd)}`);
+    console.log(`${ok ? "ok  " : "DROP"} ${p.n}  (${captured.content_type})  sent keys: ${JSON.stringify(Object.keys(p))}  forwarded: ${JSON.stringify(fwd)}`);
   }
   console.log(failed ? `${failed} of ${payloads.length} real events DROPPED` : `ALL ${payloads.length} real events forwarded`);
   process.exit(failed ? 1 : 0);
@@ -125,6 +131,20 @@ await check("ON 'name' instead of 'n' dropped", on, post(E, JSON.stringify({ nam
 await check("ON duplicate n (last wins: unknown) dropped", on, post(E, '{"n":"pageview","u":"' + PROD + '/","d":"freelance-easy.com","n":"Share To Computer"}'), DROP);
 await check("ON other page host dropped", on, post(E, pv({ u: "https://evil.example/x" })), DROP);
 await check("ON other domain dropped", on, post(E, pv({ d: "evil.example" })), DROP);
+// Sol third pass P1: what Plausible parses is the canonical URL that was checked.
+const r4 = await check("ON backslash-userinfo URL sent canonical", on, post(E, pv({ u: "https://freelance-easy.com\\@evil.example/x" })), FWD);
+assert.equal(JSON.parse(r4.sent[0].init.body).u, "https://freelance-easy.com/@evil.example/x");
+results.push("ok  that URL goes on as https://freelance-easy.com/@evil.example/x (host checked = host sent)");
+await check("ON URL with credentials dropped", on, post(E, pv({ u: "https://a:b@freelance-easy.com/" })), DROP);
+await check("ON javascript: URL dropped", on, post(E, pv({ u: "javascript:alert(1)//freelance-easy.com" })), DROP);
+await check("ON http URL accepted", on, post(E, pv({ u: "http://freelance-easy.com/mac" })), FWD);
+// Sol third pass P2: a referrer never drops its event.
+const longRef = "https://news.example/story?" + "q=1&".repeat(600);
+const r5 = await check("ON long referrer kept (cut to origin + path)", on, post(E, pv({ r: longRef })), FWD);
+assert.equal(JSON.parse(r5.sent[0].init.body).r, "https://news.example/story");
+const r6 = await check("ON app referrer sent as null", on, post(E, pv({ r: "android-app://com.example" })), FWD);
+assert.equal(JSON.parse(r6.sent[0].init.body).r, null);
+results.push("ok  long and non-http referrers: event kept, referrer cut or nulled");
 await check("ON revenue dropped from copy", on, post(E, dl(DLP, { $: { amount: 5 } })), FWD);
 // Sol re-check P1: legacy property aliases never reach Plausible.
 const r3 = await check("ON legacy m/meta/props aliases stripped", on, post(E, pv({ p: {}, m: { email: "x@y.z" }, meta: { email: "x@y.z" }, props: { email: "x@y.z" } })), FWD);
