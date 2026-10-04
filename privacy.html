@@ -27,7 +27,7 @@
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Privacy policy</h1>
-      <p class="updated">Effective October __, 2026. This version describes how Freelance Easy works at launch, including where our server runs, the app's update checks and font downloads, the copies the app keeps in your data folder, AI-assisted handling of support email, Stripe's Link as the seller of new subscriptions (which collects a billing address for tax), and how we close accounts and handle security incidents. It doesn't reduce any right you had under the earlier version. <a href="/privacy-2026-09-29">Previous version (September 29, 2026)</a>.</p>
+      <p class="updated">Effective October __, 2026. This version describes how Freelance Easy works at launch, including where our server runs, the app's update checks and font downloads, the copies the app keeps in your data folder, AI-assisted handling of support email, Stripe's Link as the seller of new subscriptions (which collects a billing address for tax), our cookieless website analytics and the campaign and usage statistics we count, and how we close accounts and handle security incidents. It doesn't reduce any right you had under the earlier version. <a href="/privacy-2026-09-29">Previous version (September 29, 2026)</a>.</p>
 
       <div class="tldr">
         <p>
@@ -37,8 +37,14 @@
           your account needs: the email and name from your Google sign-in, your
           subscription and payment records, and a few technical details, plus how
           you heard about us and whether you want tips by email, if you tell us,
-          and anything you choose to send us in a support message. Our website
-          runs no analytics today. We don't sell personal information, and we
+          which of our ad campaigns your download came from (if it came from
+          one), two dates if usage stats are on (when we first heard that you'd
+          made an invoice, and when the app last checked your account at
+          startup), and anything you choose to send us in a support message. We
+          use the campaign and the dates to count totals, not to follow one
+          person. Our website counts visits with cookieless analytics that
+          doesn't store raw IP addresses or use persistent visitor identifiers.
+          We don't sell personal information, and we
           share it only with the providers listed below that we need to run the
           service.
         </p>
@@ -99,6 +105,13 @@
         <li>A record, linked to your account, of each checkout you open (the date, the plan, its price, which version of the renewal terms it showed and the app version), of your agreement when you complete one (the plan and price you agreed to and that you accepted our Terms), of each payment (the amount, currency, plan and date) and of each refund or dispute (the amount, currency, its status and the date we recorded it), with Stripe's references for them. Checkout and payment records also carry the week your account was created and your answer to "how did you hear about us", if you gave one.</li>
         <li>The date your account was created</li>
         <li>When your free trial started, so the app can tell when it ends (one trial per account)</li>
+        <li><strong>The campaign your download came from</strong>, if you downloaded the app from a link in one of our ads: a short label such as <code>g-oct-a</code>, the same for everyone who used that link. The label identifies a campaign, and we store it alongside your account details. Your copy of the app sends it once, the first time it checks your account. We use it to count how many people from each campaign create an account, make a first invoice and subscribe. We don't send it to Stripe or anyone else.</li>
+        <li><strong>Two usage dates</strong>, in versions of the app that have the "Share usage stats" setting (in Settings), unless you turn it off:
+          <ul>
+            <li>the date our server first receives the app's report that you made an invoice. The report says only that it happened: never the invoice, its amount, the client, or how many invoices you've made. Imported invoices and sample data don't count;</li>
+            <li>the date of the latest account check the app makes when it starts. We keep only that one date. Our operational request logs are kept as described in §6 and aren't used to rebuild a history of when you use the app.</li>
+          </ul>
+        </li>
         <li>Your answers from setting up the app, if you gave them: how you heard about us (one choice from a fixed list) and whether you ticked the box for occasional tips by email. They reach us only when you open checkout, together with which plan the app showed you first. We keep the first answers we receive, and the date the tips box reached us; an unticked box sends nothing.</li>
         <li>A secret used to verify that requests come from your copy of the app</li>
         <li>A record of each version of our Terms you accept in the app: the version, when you accepted it, and the app version and screen you accepted it on</li>
@@ -110,7 +123,7 @@
       </ul>
       <h3>Connections the app makes</h3>
       <ul>
-        <li><strong>Our server</strong> — the app checks your account <strong>when it starts and after you sign in</strong>, and repeats checks on payment and lapsed-subscription screens. Each check carries your account identifier and the app version; it does not carry your invoices, your clients or how many invoices you've made — the free plan is counted on your own computer.</li>
+        <li><strong>Our server</strong> — the app checks your account <strong>when it starts and after you sign in</strong>, and repeats checks on payment and lapsed-subscription screens. Each check carries your account identifier and the app version. In versions of the app that have the "Share usage stats" setting, it also carries whether it's the check made at startup and your usage-stats setting and, until our server confirms it has them, the campaign label your download came from (if any) and, unless you've turned usage stats off, the report that you've made an invoice (yes or no). Checks never carry your invoices, your clients or how many invoices you've made; the free plan is counted on your own computer.</li>
         <li><strong>GitHub</strong> — every time the app starts, it asks GitHub whether an update is available, and downloads any update automatically; an update installs when you choose to restart the app. GitHub receives your IP address and a random install identifier the update system creates once on your computer (it is not linked to your account, and we can't see it).</li>
         <li><strong>Google Fonts</strong> — current versions download three typefaces from Google when you open an invoice or the Theme page, so Google receives your IP address and browser details. We'll update this page when that changes.</li>
         <li><strong>Your email provider</strong> — when you send an invoice, the app connects to your own email account's server with the details you entered. We never see those emails.</li>
@@ -119,18 +132,27 @@
 
       <h2>3. Our website</h2>
       <p>
-        freelance-easy.com runs no analytics today. When we turn them on, we
-        will use <strong>Plausible Analytics</strong>, a cookieless,
-        privacy-focused service. It counts which pages are viewed,
+        freelance-easy.com uses <strong>Plausible Analytics</strong>, a
+        cookieless, privacy-focused service. It counts which pages are viewed,
         the referring site or campaign, the browser, operating system and
-        country, and which download button was clicked — in aggregate, so we
-        can see which campaigns bring visitors. It sets no cookies. To tell
-        visits apart within a day it processes your IP address and browser
-        details into an identifier that is discarded every day; the IP address
-        itself is not stored (see <a href="https://plausible.io/data-policy">Plausible's data policy</a>).
-        The analytics script will be served through our own domain. We don't use
-        advertising pixels, retargeting or cross-site advertising tracking, and
-        nothing on this website is linked to what you do inside the app.
+        approximate location (country, region and city, derived from your IP
+        address), and which download button was clicked. We look at these only
+        in aggregate, to see which campaigns bring visitors. It sets no cookies
+        and doesn't store raw IP addresses. To tell visits apart within a day,
+        it combines your IP address and browser details with a salt that
+        Plausible deletes every 24 hours, so a visit can't be connected to
+        later days. Plausible keeps the resulting event and session records to
+        calculate its statistics (see <a href="https://plausible.io/data-policy">Plausible's data policy</a>,
+        and §6 for how long). The analytics script is served through our own
+        domain.
+      </p>
+      <p>
+        We don't use advertising pixels, retargeting, conversion tracking for
+        ad networks or cross-site advertising tracking. We don't tell Google or
+        any other ad network who downloads or subscribes, and our ad links don't
+        carry ad-network click identifiers. The only thing that carries from our
+        website into the app is the campaign label on a download link from one
+        of our ads, which is the same for everyone who used that link (see §2).
       </p>
       <p>
         <strong>Do Not Track and Global Privacy Control.</strong> Our website and
@@ -150,14 +172,14 @@
         <li><strong>To run the service securely and keep the app up to date.</strong> Server logs, server-side error reports, performance traces and update checks help us find and fix problems, detect abuse and deliver updates.</li>
         <li><strong>To answer you.</strong> When you email us or send a bug report, we use what you send to help you and to fix problems. We use an AI assistant to help us read and sort support email and bug reports (see Anthropic in §5); a person decides what to do about them.</li>
         <li><strong>To communicate about your account.</strong> Stripe or Link emails your receipts, renewal reminders and any payment problems. Service announcements appear in the app; we email your account address only about security, these policies or important account matters. <strong>Tips or product news only if you opt in</strong>: the tips box you see when you set up the app starts unticked. No marketing email is sent today; any future one will identify Freelance Easy LLC, include our postal address and have a working unsubscribe link.</li>
-        <li><strong>To understand which channels work.</strong> Your optional "how did you hear about us" answer, which plan the app showed you first, the checkout and payment records, and the campaign parameters on our website are used only as aggregate counts. How you heard about us and tips are optional and don't affect your ability to subscribe.</li>
+        <li><strong>To understand which channels work and how far new users get.</strong> We use your optional "how did you hear about us" answer, which plan the app showed you first, the campaign label on your download, your usage dates, and the campaign parameters on our website to produce aggregate statistics per campaign and per period. Statistics we share outside our company, including with tools that help us analyze them, hide very small groups. Account, checkout and payment records also serve the operational and legal purposes described here. How you heard about us, tips and usage stats are optional and don't affect your ability to use the app or subscribe.</li>
         <li><strong>To keep records the law requires.</strong> Payment records for tax and accounting, and the record of your agreement to automatic renewal.</li>
       </ul>
       <p>
         Under the GDPR our lawful bases are: performance of contract (Art. 6(1)(b))
         for your account, subscription and the support you ask for; legitimate
         interests (Art. 6(1)(f)) in keeping the service secure and up to date,
-        knowing which channels bring customers, keeping payment and
+        knowing which channels bring customers and how far new users get, keeping payment and
         renewal-consent records, and helping you when you send us other people's
         information in a support request; and your consent (Art. 6(1)(a)) for
         tips by email, which you can withdraw at any time.
@@ -169,10 +191,10 @@
         <thead><tr><th>Provider</th><th>What they handle</th><th>Location</th></tr></thead>
         <tbody>
           <tr><td>Google</td><td>Sign-in — receives your email and name when you authorize it. Also hosts our company email (so it holds what you send to our addresses) and serves the fonts described in §2</td><td>United States</td></tr>
-          <tr><td>Stripe (including Link)</td><td>Subscription payments — handles your card data directly. Link, Stripe's merchant-of-record service, sells new subscriptions, calculates and pays sales tax or VAT, sends receipts and handles billing support and refunds under its own privacy policy. Receives your email address, name, billing address and account identifier and, with each checkout, the plan you chose, the week your account was created, which plan the app showed you first, how you heard about us (if you answered) and the app version</td><td>United States</td></tr>
+          <tr><td>Stripe (including Link)</td><td>Subscription payments — handles your card data directly. Link, Stripe's merchant-of-record service, sells new subscriptions, calculates and pays sales tax or VAT, sends receipts and handles billing support and refunds under its own privacy policy. Receives your email address, name, billing address and account identifier and, with each checkout, the plan you chose, the week your account was created, which plan the app showed you first, how you heard about us (if you answered), the app version, and internal references (the price, the version of the renewal terms shown and a random account reference)</td><td>United States</td></tr>
           <tr><td>Railway</td><td>Hosting and database for our server</td><td>Netherlands (European Union)</td></tr>
           <tr><td>Cloudflare</td><td>DNS and hosting for this website</td><td>Global</td></tr>
-          <tr><td>Plausible</td><td>Cookieless website analytics, not enabled today; would process visitors' connection details to produce aggregate statistics (§3)</td><td>European Union</td></tr>
+          <tr><td>Plausible</td><td>Cookieless website analytics. Processes visitors' connection details to produce aggregate statistics (§3)</td><td>European Union</td></tr>
           <tr><td>Sentry</td><td>Server error reports and sampled performance traces, rebuilt from allowed technical fields; no request bodies or IP addresses; may include Stripe references and coded account references</td><td>United States</td></tr>
           <tr><td>GitHub</td><td>Hosts the app installers you download and answers the app's update checks and downloads (§2)</td><td>United States</td></tr>
           <tr><td>Anthropic</td><td>AI assistant (Claude) that helps us read and sort support email and bug reports; it receives the contents of what you send us</td><td>United States</td></tr>
@@ -188,10 +210,12 @@
       </p>
       <ul>
         <li><strong>Your account data:</strong> for as long as you have an account.</li>
-        <li><strong>Closing your account:</strong> use Delete my account in the app's Settings, where your version offers it, or email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a> from the address you signed in with. When we receive your request (for an email, once we've confirmed it came from that address), your account closes at once: your paid access ends, we cancel any active subscription immediately (if Stripe can't be reached, we keep retrying until it's done) and close any checkout you have open, and the account can no longer sign in or start a subscription. If you change your mind, email <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a> within 7 days: until your account is deleted, we can reopen it (a cancelled subscription stays cancelled; you can subscribe again). Within 30 days of your request we delete, from our live systems, your account record (your email, name, account identifier, subscription details and your answers from setting up the app), the records of checkouts Stripe confirms you didn't complete, your bug reports (including any you sent signed out with that reply address), the record of the Terms versions you accepted and any messages addressed to you, and we delete your customer record at Stripe. We keep only: the payment, refund and dispute records that tax and accounting law require (for a payment, its amount, currency, plan and date; for a refund or dispute, its amount, currency, status and the date we recorded it; with Stripe's references for each), until the end of the seventh year after the year of the payment or, for a refund or dispute, the year we last recorded a change to it; the records of checkouts you completed — and of any whose outcome Stripe can't confirm — as the record of your agreement to automatic renewal, which auto-renewal laws require us to keep for 3 years (or 1 year after your subscription ends, if that's longer); the log entry for your request, under its coded reference, for 24 months; and anything we need to honor an email opt-out or deal with a legal claim. These records no longer carry your email, name or account identifier; access to them is restricted, we use them only for those purposes, and we delete them when their period ends. A payment record that reaches us after your account is deleted is kept the same way, and if a payment is taken after your request, we refund it. Our deletion also covers copies of your messages in our support tools and working files, including AI-assisted support sessions, where we control them. Stripe keeps its own records of your payments under its privacy policy. The periods below describe our hosting provider's logs and scheduled backups and our error-tracking service's reports; how long other providers keep copies depends on their products and on legal or security exceptions.</li>
+        <li><strong>Closing your account:</strong> use Delete my account in the app's Settings, where your version offers it, or email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a> from the address you signed in with. When we receive your request (for an email, once we've confirmed it came from that address), your account closes at once: your paid access ends, we cancel any active subscription immediately (if Stripe can't be reached, we keep retrying until it's done) and close any checkout you have open, and the account can no longer sign in or start a subscription. If you change your mind, email <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a> within 7 days: until your account is deleted, we can reopen it (a cancelled subscription stays cancelled; you can subscribe again). Within 30 days of your request we delete, from our live systems, your account record (your email, name, account identifier, subscription details, your answers from setting up the app, and your campaign label and usage dates), the records of checkouts Stripe confirms you didn't complete, your bug reports (including any you sent signed out with that reply address), the record of the Terms versions you accepted and any messages addressed to you, and we delete your customer record at Stripe. We keep only: the payment, refund and dispute records that tax and accounting law require (for a payment, its amount, currency, plan and date; for a refund or dispute, its amount, currency, status and the date we recorded it; with Stripe's references for each), until the end of the seventh year after the year of the payment or, for a refund or dispute, the year we last recorded a change to it; the records of checkouts you completed — and of any whose outcome Stripe can't confirm — as the record of your agreement to automatic renewal, which auto-renewal laws require us to keep for 3 years (or 1 year after your subscription ends, if that's longer); the log entry for your request, under its coded reference, for 24 months; and anything we need to honor an email opt-out or deal with a legal claim. These records no longer carry your email, name or account identifier; access to them is restricted, we use them only for those purposes, and we delete them when their period ends. A payment record that reaches us after your account is deleted is kept the same way, and if a payment is taken after your request, we refund it. Our deletion also covers copies of your messages in our support tools and working files, including AI-assisted support sessions, where we control them. Stripe keeps its own records of your payments under its privacy policy. The periods below describe our hosting provider's logs and scheduled backups and our error-tracking service's reports; how long other providers keep copies depends on their products and on legal or security exceptions.</li>
         <li><strong>Bug reports:</strong> deleted within 120 days after we close them, and in any case within 13 months after you send them.</li>
         <li><strong>Export and deletion requests:</strong> the log entry for each request, under its coded reference, for 24 months.</li>
+        <li><strong>Campaign label and usage dates:</strong> kept with your account until you close it. Turning off "Share usage stats" stops the invoice report on that computer straight away. When our server receives the change, it stops recording usage dates for your account and deletes both dates. Turning it back on doesn't bring back dates we deleted. Totals we've already counted, and your campaign label, stay. Counted totals can't be traced back to you.</li>
         <li><strong>Server logs and error reports:</strong> our hosting provider keeps request logs for up to 30 days, our error-tracking service keeps error reports for up to 90 days, and our hosting provider's scheduled database backups expire within 3 months. These copies expire automatically under those settings, and we delete any database backup we make by hand within 3 months.</li>
+        <li><strong>Website analytics:</strong> Plausible keeps its event and session records, which contain no raw IP address or persistent visitor identifier, for as long as we use Plausible, and deletes them when we close our Plausible account.</li>
         <li><strong>Support email:</strong> kept in our mailbox while we help you and afterwards as our record of your support history. Ask us and we'll delete your messages, unless the law requires us to keep them.</li>
         <li><strong>Your local data</strong> (invoices, clients, attachments, data folder, backup folder): under your control. We don't delete your invoices, clients or files; the app only clears its own older database copies and trash, as described in §2.</li>
       </ul>
@@ -225,6 +249,7 @@
         <li><strong>Correction</strong> — edit your invoices, clients and settings in the app while your account permits editing; for account fields you can't edit, email us.</li>
         <li><strong>Deletion</strong> — you can delete invoices and clients in the app while your account permits editing, subject to linked records and recurring schedules. A lapsed subscription is read-only; your local files remain under your control. To delete your server account, see §6.</li>
         <li><strong>Restriction and objection</strong> — ask us to pause using your data while a question about it is resolved, or object to processing based on our legitimate interests, by emailing <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.</li>
+        <li><strong>Usage stats</strong> — turn off "Share usage stats" in the app's Settings at any time, in versions of the app that have it (see §6 for what happens to the dates we hold). The setting follows your account, so it applies on every computer you sign in on.</li>
         <li><strong>Consent</strong> — withdraw consent to tips by email at any time by emailing us (and, once such emails exist, with the unsubscribe link in any of them). Withdrawing doesn't affect what was done before.</li>
       </ul>
       <p>
