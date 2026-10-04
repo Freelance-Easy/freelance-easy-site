@@ -27,8 +27,8 @@ WIN_NOTE = (
 
 SUBS: list[tuple[str, str]] = [
     (
-        "<title>Freelance Easy for audio pros on Mac — make your first invoice in 60 seconds</title>",
-        "<title>Freelance Easy for audio pros — make your first invoice in 60 seconds</title>",
+        "<title>Freelance Easy for audio pros on Mac — invoice your next client for $5 a month</title>",
+        "<title>Freelance Easy for audio pros — invoice your next client for $5 a month</title>",
     ),
     (
         "on your own Mac. Every feature free for seven days, no card.",
