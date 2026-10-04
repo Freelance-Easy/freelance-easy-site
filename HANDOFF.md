@@ -391,7 +391,7 @@ Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §
   - The making-an-invoice recording and the dashboard screenshots still show the audio demo data (mixes, mastering, studios).
   - The light recording's invoice is also numbered INV1056, a different invoice.
   - A general re-capture, or the invoice film's `?cut=film`, would replace them.
-- **`script.js`:**
+- **`script.js`** (built here, now carried by `feat/analytics-switch`, which this branch stacks on; that branch also removed the two events `/privacy` doesn't list):
   - **The campaign allowlist.** `CAMPAIGNS = ["f1"]`: a download path carries `?utm_campaign` only when its value is on this list (any case); otherwise the page's own label is used (`/dl/mac/mac` on `/mac`, `site` on `/`). Before, any value sanitised to `[a-z0-9-]` went into the path and the `campaign` property. Add each flight's label before its ads run.
     - The legal rule behind it: the path carries only the campaign label, with no other query value and no per-visitor id. The DMG's name never changes.
     - **`_redirects` does not drop a query string:** Cloudflare passes it on to GitHub (checked on the branch preview, `/dl/mac/f1?probe=1` → `…/Freelance-Easy.dmg?probe=1`). The old comment saying it did was wrong. The rule holds because no link we make adds one: the buttons' paths come from script.js, the ads land on `/mac`, and GitHub gets only our origin as the referrer (`Referrer-Policy: strict-origin-when-cross-origin`). If a hard guarantee is ever wanted, `worker.js` can answer `/dl/*` itself and drop the query (the redirect lines then leave `_redirects`).
