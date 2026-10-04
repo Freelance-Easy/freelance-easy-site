@@ -365,9 +365,11 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
 Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §8, the A24 list in `04 - Future/GTM Decision Register`, and the ad text v3 (`_creative-raw/2026-09/spike/price-drop/out/infeed/ad-copy.txt`). Flight 1's ads land here: `/mac?utm_source=google&utm_medium=demandgen&utm_campaign=f1&utm_content=ta` (and `tb`). It goes live only after legal v2 (flight 1 needs v2 and Plausible).
 
 - **The page** (`mac.html`, `noindex`): `/mac-audio`'s structure with the homepage's general copy.
-  - Hero: kicker "Desktop invoicing for freelancers, on your Mac."; the H1 is the ads' LEAD, "Invoice your next client for $5 a month"; the offer line is "$5 a month is less than a cup of coffee, and it includes every feature and unlimited invoices. The first seven days are free, with no card." (A25: the coffee line on the same line as the $5); the homepage's lede, saying "Mac".
+  - Hero: kicker "For Mac, M1 or later." (the ads' long headline ends "Mac M1 or later."); the H1 is the ads' LEAD, "Invoice your next client for $5 a month"; the offer line is "$5 a month is less than a cup of coffee, and it includes every feature and unlimited invoices. The first seven days are free, with no card." (A25: the coffee line on the same line as the $5); the homepage's lede, saying "Mac" and "Made by a freelancer who bills with it" (the homepage says "a mix engineer"; Daniel's note further down still does).
+  - The making-an-invoice caption is "Sped up." with no real-time number (the legal ruling on G1, above).
 - **The download block** (Mac only, `data-single-platform="mac"`):
-  - under the button: Apple Silicon, macOS 12, "Beta, version 0.3.0";
+  - under the button: Apple Silicon, macOS 12, "signed with an Apple Developer ID and notarized by Apple", "Freelance Easy is in beta." (no version number to go stale; the footer has it);
+  - the button's no-JS `href` is `/dl/mac/mac`, the page's own label (script.js replaces it);
   - the install disclosure Google's software policy asks for (A24 item 6): drag to Applications, Google sign-in, a folder you choose on your Mac, the subscription check and the update check at each start, and an update installing when you choose to restart.
   - Each clause was checked against v0.3.0-beta: the arm64-only DMG (`electron/package.json`); `LSMinimumSystemVersion` 12.0 (the built app's Info.plist); `/check-license` at launch; `electron/main.js` (`autoDownload = true`, `autoInstallOnAppQuit = false`, the banner's "Restart now").
 - **The hero deck is the ads' invoice:** INV1056 for Marlow & Finch (the invoice-film chat's `invoice-film/data/inv1056.json`, a draft until Daniel's styleframe OK).
@@ -380,7 +382,7 @@ Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §
   2. the ad's invoice ✓ (placeholder until the renders arrive);
   3. macOS 12 under the button ✓;
   4. the sending explanation, as step 3: "Set up your email account in Settings to send it from your own address, or save the PDF and send it yourself." ✓;
-  5. the beta version beside the download ✓;
+  5. the beta beside the download ✓ (the version number is in the footer);
   6. the install disclosure ✓;
   7. no crossed-out price ✓;
   8. the tagged link in the YouTube description is the ad chat's.
@@ -396,9 +398,12 @@ Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §
   - **The Windows link isn't a download.** On a single-platform page, "Need the Windows version?" (a link to `/`) no longer sends `Download Click`. The Mac goal is `Download Click` with `os=mac`.
   - **The deck reads its data from the HTML.** It takes each sheet's PDF from its `href`, and the front sheet's description from `data-alt`. The homepage's deck (no `data-alt`) falls back to `SHEET_ALT` and is unchanged.
 - **`_redirects`:** `/mac/` → `/mac` (301); the campaign comment updated. **`_headers`:** `X-Robots-Tag: noindex` on `/mac`.
-- **Bump at each release:** `/mac`'s "Beta, version 0.3.0" and its footer's "v0.3.0-beta".
+- **Bump at each release:** `/mac`'s footer "v0.3.0-beta", like every page's.
 - **Verified locally** (`python3 -m http.server`, the in-app browser):
   - **Campaign resolution in 10 cases** across `/`, `/mac`, `/mac-audio`, `/audio`: `f1` and `F1` pass; a name, a click-id-like value, `f1x` and an empty value fall back to the page label.
   - **Events:** on `/mac`, one `Download Click {os: mac, campaign: f1, page: mac, placement: hero}`, and nothing for the Windows link. The homepage still sends both of its clicks.
   - **The deck:** Modern in front with its `data-alt`; Bold from the picker gets its own description, and "Open the Bold PDF" points at `inv1056-bold.pdf`. The homepage's deck is unchanged (`SHEET_ALT`, `invoice-bold.pdf`). All eight INV1056 files answer 200.
   - **Layout:** at 800 px the hero column ends level with the deck; at 375 px phones get "Copy page link".
+- **Reviews (2026-10-04):**
+  - **GPT-6.1 Sol (read-only): FIX FIRST, two findings, both fixed.** The no-JS button went to `/download/mac`, skipping the page label (now `/dl/mac/mac`); "Made by a mix engineer" was audio wording in the general hero (now "a freelancer"). Its checks otherwise passed: 336 routing and event cases, the deck on four pages, and `sheets` byte-identical to before for the homepage set.
+  - **Legal chat: approved,** with "signed with an Apple Developer ID and notarized by Apple" (applied here and, via G1, on `/`, `/mac-audio`, `/audio`) and no version number beside the button. Its conditions: the hero must be the app's real render (fictional data) before the merge, and any later claim-bearing change goes back to it. The `/dl/` rule stays "by construction"; if a link ever has to point straight at `/dl/`, do the Worker version first.
