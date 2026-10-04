@@ -329,6 +329,7 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
   - P2: a long referrer dropped its event. It's now cut.
   - P2: the real-tracker replay ignored the content type and the domain and didn't require engagement. It now checks all three.
   - Verified after the fixes: the suite (46), the real-tracker check (4 of 4 forwarded with `--public-tracker`, 4 of 4 dropped without it), and a replay of own-domain events through a switched-on copy of `worker.js` (3 of 3 forwarded).
+- **Sol's fourth and final pass (`a0b8611..e98ae8e`): VERDICT MERGE (inert), no findings.** All four fixes check out, with no regression or new bypass in the edge cases asked about: canonical URLs past the limit, IDN hosts, `www`, the referrer cut, the domain flags and the replay's URL rewrite.
 
 **The v2-day checklist:**
 
