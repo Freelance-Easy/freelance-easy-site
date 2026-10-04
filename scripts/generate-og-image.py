@@ -1,6 +1,6 @@
 """Generate the OG image for the Freelance Easy landing page.
 
-Output: assets/og-image-2026-09-29.png at 1200×630, the standard OG/Twitter Card size.
+Output: assets/og-image-2026-10-04.png at 1200×630, the standard OG/Twitter Card size.
 
 The filename carries the date of the card's content. /assets/* is cached for
 30 days (_headers) and share previews cache by URL, so a changed card needs a
@@ -10,8 +10,8 @@ tags in index.html (absolute URLs) together.
 Composition (v2.2 — matches the page: no pill, no serif headline):
     Top-left:    small wordmark "FREELANCE EASY" + accent bar
     Top-left:    plain kicker "A desktop invoicing app for Mac and Windows"
-    Center-left: Montserrat Bold headline "Make your first invoice"
-                 / "in 60 seconds"
+    Center-left: Montserrat Bold headline "Invoice your next client"
+                 / "for $5 a month" (the page's H1; no speed claim, legal G1)
     Below:       Lato Regular offer lines in muted color
     Top-right:   brand tile; bottom-right: freelance-easy.com
 
@@ -37,7 +37,7 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = Path(__file__).resolve().parent
 SITE_ROOT = HERE.parent
 ASSETS = SITE_ROOT / "assets"
-OUT_PATH = ASSETS / "og-image-2026-09-29.png"
+OUT_PATH = ASSETS / "og-image-2026-10-04.png"
 BRAND_TILE = ASSETS / "logo.png"
 
 # Use the bundled fonts from the InvoiceGenerator project (canonical brand
@@ -124,8 +124,8 @@ def _draw_headline(draw: ImageDraw.ImageDraw) -> None:
     """Two-line headline in the page's own heading face (Montserrat Bold); the
     serif italic stays in the wordmark, as on the page."""
     font = _load_font(F_MONTSERRAT_BOLD, 78)
-    line1 = "Make your first invoice"
-    line2 = "in 60 seconds"
+    line1 = "Invoice your next client"
+    line2 = "for $5 a month"
     y = 236
     draw.text((80, y), line1, font=font, fill=TEXT_PRIMARY)
     bbox = draw.textbbox((80, y), line1, font=font)
