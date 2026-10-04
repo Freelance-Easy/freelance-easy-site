@@ -43,6 +43,8 @@
   Cache-Control: public, max-age=86400, must-revalidate
 
 # Campaign landing pages are for ads, not search.
+/mac
+  X-Robots-Tag: noindex
 /mac-audio
   X-Robots-Tag: noindex
 /audio

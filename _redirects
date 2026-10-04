@@ -31,5 +31,6 @@
 # these catch the trailing-slash variants).
 /privacy/     /privacy     301
 /terms/       /terms       301
+/mac/         /mac         301
 /mac-audio/   /mac-audio   301
 /audio/       /audio       301
