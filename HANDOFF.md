@@ -386,7 +386,7 @@ Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §
   6. the install disclosure ✓;
   7. no crossed-out price ✓;
   8. the tagged link in the YouTube description is the ad chat's.
-- **Legal v2's wording, taken now** (the page ships after v2): the pricing note's "Where sales tax applies, it's added at checkout."; "doesn't host it, and the app never uploads it to us"; v0.3.0-beta in the footer.
+- **Legal v2's wording, taken now** (the page ships after v2): the pricing note's "Where sales tax applies, it's added at checkout."; "doesn't host it, and the app never uploads it to us"; v0.3.0-beta in the footer. The band's lead line says "No paid tiers, no add-ons." like the other pages (the third G1 ruling above).
 - **Kept from the homepage, flagged as later options for Daniel:**
   - The making-an-invoice recording and the dashboard screenshots still show the audio demo data (mixes, mastering, studios).
   - The light recording's invoice is also numbered INV1056, a different invoice.
