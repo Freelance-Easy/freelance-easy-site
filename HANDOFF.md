@@ -359,3 +359,45 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
 *Daniel, after BOTH Claude's production check and the data chat's fresh-Mac funnel test* (playbook step **6c**; the funnel test also runs from this Mac and checks Plausible's realtime view): **Shields → IP addresses**: add your own IP so your visits don't count. If Shields also offers hostnames, allow only `freelance-easy.com` and `www.freelance-easy.com`; that's optional, because the Worker already enforces it.
 
 *Later, when the weekly report moves off hand entry:* a **Stats API key**. Plausible → your account → Settings → API Keys → New API Key → **Stats API**. It is team-scoped and Business-plan only, limited to 600 requests an hour, and queried with `POST https://plausible.io/api/v2/query` and `Authorization: Bearer …`. It goes to the report's owner as a secret, never into the vault or git.
+
+### 2026-10-04 — `/mac`: the general Mac landing page for the ads (branch `feat/mac-landing`, stacked on `feat/analytics-switch`)
+
+Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §8, the A24 list in `04 - Future/GTM Decision Register`, and the ad text v3 (`_creative-raw/2026-09/spike/price-drop/out/infeed/ad-copy.txt`). Flight 1's ads land here: `/mac?utm_source=google&utm_medium=demandgen&utm_campaign=f1&utm_content=ta` (and `tb`). It goes live only after legal v2 (flight 1 needs v2 and Plausible).
+
+- **The page** (`mac.html`, `noindex`): `/mac-audio`'s structure with the homepage's general copy.
+  - Hero: kicker "Desktop invoicing for freelancers, on your Mac."; the H1 is the ads' LEAD, "Invoice your next client for $5 a month"; the offer line is "$5 a month is less than a cup of coffee, and it includes every feature and unlimited invoices. The first seven days are free, with no card." (A25: the coffee line on the same line as the $5); the homepage's lede, saying "Mac".
+- **The download block** (Mac only, `data-single-platform="mac"`):
+  - under the button: Apple Silicon, macOS 12, "Beta, version 0.3.0";
+  - the install disclosure Google's software policy asks for (A24 item 6): drag to Applications, Google sign-in, a folder you choose on your Mac, the subscription check and the update check at each start, and an update installing when you choose to restart.
+  - Each clause was checked against v0.3.0-beta: the arm64-only DMG (`electron/package.json`); `LSMinimumSystemVersion` 12.0 (the built app's Info.plist); `/check-license` at launch; `electron/main.js` (`autoDownload = true`, `autoInstallOnAppQuit = false`, the banner's "Restart now").
+- **The hero deck is the ads' invoice:** INV1056 for Marlow & Finch (the invoice-film chat's `invoice-film/data/inv1056.json`, a draft until Daniel's styleframe OK).
+  - Today `assets/samples/inv1056-<style>.pdf` and `assets/screenshots/inv1056-<style>.webp` are **labelled placeholders**. **Never merge with them.**
+  - When the app's own PDFs arrive: put them in `assets/samples/`, then run `python scripts/build-hero-collage.py sheets --set inv1056`.
+  - Check that the front template matches the ad's. The deck starts Modern-front; another front means changing the sheets' inline geometry and script.js's starting order.
+  - Update the `data-alt` text if the content changed.
+- **A24, item by item:**
+  1. the H1 ✓;
+  2. the ad's invoice ✓ (placeholder until the renders arrive);
+  3. macOS 12 under the button ✓;
+  4. the sending explanation, as step 3: "Set up your email account in Settings to send it from your own address, or save the PDF and send it yourself." ✓;
+  5. the beta version beside the download ✓;
+  6. the install disclosure ✓;
+  7. no crossed-out price ✓;
+  8. the tagged link in the YouTube description is the ad chat's.
+- **Legal v2's wording, taken now** (the page ships after v2): the pricing note's "Where sales tax applies, it's added at checkout."; "doesn't host it, and the app never uploads it to us"; v0.3.0-beta in the footer.
+- **Kept from the homepage, flagged as later options for Daniel:**
+  - The making-an-invoice recording and the dashboard screenshots still show the audio demo data (mixes, mastering, studios).
+  - The light recording's invoice is also numbered INV1056, a different invoice.
+  - A general re-capture, or the invoice film's `?cut=film`, would replace them.
+- **`script.js`:**
+  - **The campaign allowlist.** `CAMPAIGNS = ["f1"]`: a download path carries `?utm_campaign` only when its value is on this list (any case); otherwise the page's own label is used (`/dl/mac/mac` on `/mac`, `site` on `/`). Before, any value sanitised to `[a-z0-9-]` went into the path and the `campaign` property. Add each flight's label before its ads run.
+    - The legal rule behind it: the path carries only the campaign label, with no other query value and no per-visitor id. The DMG's name never changes.
+  - **The Windows link isn't a download.** On a single-platform page, "Need the Windows version?" (a link to `/`) no longer sends `Download Click`. The Mac goal is `Download Click` with `os=mac`.
+  - **The deck reads its data from the HTML.** It takes each sheet's PDF from its `href`, and the front sheet's description from `data-alt`. The homepage's deck (no `data-alt`) falls back to `SHEET_ALT` and is unchanged.
+- **`_redirects`:** `/mac/` → `/mac` (301); the campaign comment updated. **`_headers`:** `X-Robots-Tag: noindex` on `/mac`.
+- **Bump at each release:** `/mac`'s "Beta, version 0.3.0" and its footer's "v0.3.0-beta".
+- **Verified locally** (`python3 -m http.server`, the in-app browser):
+  - **Campaign resolution in 10 cases** across `/`, `/mac`, `/mac-audio`, `/audio`: `f1` and `F1` pass; a name, a click-id-like value, `f1x` and an empty value fall back to the page label.
+  - **Events:** on `/mac`, one `Download Click {os: mac, campaign: f1, page: mac, placement: hero}`, and nothing for the Windows link. The homepage still sends both of its clicks.
+  - **The deck:** Modern in front with its `data-alt`; Bold from the picker gets its own description, and "Open the Bold PDF" points at `inv1056-bold.pdf`. The homepage's deck is unchanged (`SHEET_ALT`, `invoice-bold.pdf`). All eight INV1056 files answer 200.
+  - **Layout:** at 800 px the hero column ends level with the deck; at 375 px phones get "Copy page link".
