@@ -8,9 +8,9 @@ sample PDFs (build-hero-collage.py render), the making-an-invoice recording
 (the invoice-film chat's dashboard kit, DASH-KIT.md), so the site, /mac and the
 ads show one world:
 
-  - the persona Jordan Wexcombe, jordan@example.com, Nashville. Renamed from
-    "Jordan Reyes" on 2026-10-04 (legal G11: that name belongs to public
-    figures in music);
+  - the persona Jordan Wexcombe, jordan@example.com, Nashville (renamed on
+    2026-10-04 under legal G11; the earlier demo names, all retired, are
+    listed in the private NAMES-LOG below, never in this public repo);
   - four clients, each invented and web-searched before use (G11 rule 1; the
     log, query and date: _creative-raw/2026-09/spike/invoice-film/data/NAMES-LOG.md);
   - 26 invoices, INV1031–INV1056, Nov 2025 – Oct 2026, $75 an hour, monthly
@@ -21,12 +21,15 @@ ads show one world:
     example.com, no phone numbers, city-only addresses. Notes and line items
     name no payment service, bank or software (rule 2).
 
-Safety: it refuses a profile inside Dropbox, Application Support, iCloud or a
-checkout's .dev-profile, and an account that already has data. The app's own
-dev-profile guards run before any write, every write goes through the app's db
-API, and the data dir must resolve inside the profile. Folder sync is off in
-this process, so the rows land in the account's pre-sync users/<id>/invoices.db,
-which the app brings up (imports) at its first sign-in.
+Safety: it creates the profile directory itself and refuses one that already
+exists, so nothing inside it (a symlink into real data, say) can predate the
+run. It refuses a path inside Dropbox, Application Support, iCloud or any
+.dev-profile. The app's own dev-profile guards run before the data folder is
+made, and the data root, the account folder and the database file must all
+resolve inside the profile before the first database write; every write goes
+through the app's db API. Folder sync is off in this process, so the rows land
+in the account's pre-sync users/<id>/invoices.db, which the app brings up
+(imports) at its first sign-in.
 
 Run it with the InvoiceGenerator venv against a checkout of the RELEASED app
 (the screenshots must show what ships):
@@ -129,6 +132,8 @@ def check_dataset() -> None:
 
 
 def refuse_real_storage(profile: pathlib.Path, app_dir: pathlib.Path) -> None:
+    if any(part.startswith(".dev-profile") for part in profile.parts):
+        sys.exit(f"refusing: the profile must not be inside a .dev-profile: {profile}")
     home = pathlib.Path.home()
     real = [home / "Library" / "Application Support", home / "Library" / "CloudStorage",
             home / "Library" / "Mobile Documents", app_dir / ".dev-profile"]
@@ -139,16 +144,26 @@ def refuse_real_storage(profile: pathlib.Path, app_dir: pathlib.Path) -> None:
             sys.exit(f"refusing: the profile must be a throwaway directory, not under {r}: {profile}")
 
 
+def require_inside(path: str | None, profile: pathlib.Path, what: str) -> None:
+    """`path`, with every symlink resolved, lies inside the profile."""
+    real = pathlib.Path(os.path.realpath(path)) if path else None
+    if real is None or (real != profile and profile not in real.parents):
+        sys.exit(f"refusing: the {what} {path!r} resolves outside the profile {profile}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--profile", required=True, help="a throwaway directory (created if missing)")
+    ap.add_argument("--profile", required=True, help="a throwaway directory that doesn't exist yet")
     ap.add_argument("--app-dir", required=True, help="an InvoiceGenerator checkout at the release tag")
     args = ap.parse_args()
     profile = pathlib.Path(args.profile).expanduser().resolve()
     app_dir = pathlib.Path(args.app_dir).expanduser().resolve()
     refuse_real_storage(profile, app_dir)
     check_dataset()
-    profile.mkdir(parents=True, exist_ok=True)
+    try:
+        profile.mkdir(parents=True)  # exclusive: nothing inside it predates this run
+    except FileExistsError:
+        sys.exit(f"refusing: {profile} already exists (seed into a new directory)")
 
     os.environ["FE_DEV_PROFILE"] = str(profile)
     os.environ["INVOICEGEN_LICENSE_DEV_MODE"] = "1"
@@ -160,6 +175,7 @@ def main() -> int:
 
     config.ensure_dev_profile_configured()
     config.assert_dev_profile_isolation()
+    require_inside(config.get_data_dir(), profile, "data root")
 
     import db  # noqa: E402
     import folder_sync  # noqa: E402
@@ -169,8 +185,8 @@ def main() -> int:
     config.ensure_data_dirs()
     config.ensure_user_data_dirs()
     data_dir = pathlib.Path(config.get_user_data_dir() or "").resolve()
-    if profile not in data_dir.parents:
-        sys.exit(f"refusing: the data dir {data_dir} is not inside the profile {profile}")
+    require_inside(str(data_dir), profile, "account folder")
+    require_inside(config.get_db_path(), profile, "database")
     db.init_db()
     if db.get_clients() or db.get_invoices():
         sys.exit("refusing: this account already has data (seed a fresh profile)")

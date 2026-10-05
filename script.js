@@ -337,8 +337,8 @@
   };
   var SHEET_ALT = {
     modern: "An invoice for Halvard & Wren in the Modern template: project work and revisions at a $75 rate, totalling $1,500, with a teal rule and totals box.",
-    bold: "The same invoice in the Bold template: a navy 'Invoice #INV1056' title over a black rule, a navy table header and balance box.",
-    classic: "The same invoice in the Classic template: a forest-green bar across the top and the name and job in a serif.",
+    bold: "The same invoice in the Bold template: a large black 'Invoice' with its number in navy over a black rule, a navy table header and a navy balance bar.",
+    classic: "The same invoice in the Classic template: a forest-green bar across the top, green rules and the balance due in US dollars.",
     minimal: "The same invoice in the Minimal template: a centred grey INVOICE title and hairline rules.",
   };
 
