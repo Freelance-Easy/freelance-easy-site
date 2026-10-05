@@ -4,10 +4,11 @@
 Two stages, because they need different interpreters:
 
   render   — uses the InvoiceGenerator venv (reportlab + the app's own pdf_gen)
-             against the DEV profile's data. Renders the hero invoice once per
+             against a demo profile seeded by seed-demo-profile.py (a checkout
+             at the release tag as --app-dir). Renders the hero invoice once per
              template with a restrained accent each, to assets/samples/invoice-<style>.pdf.
                InvoiceGenerator/venv/bin/python scripts/build-hero-collage.py render \
-                   --app-dir ../InvoiceGenerator --profile ../InvoiceGenerator/.dev-profile
+                   --app-dir /tmp/ig-release --profile /tmp/fe-demo-profile
 
   sheets   — uses a venv with pymupdf + pillow. Rasterises the top of each PDF to
              assets/screenshots/sheet-<style>.webp (1120 px wide, no edge or
@@ -17,15 +18,16 @@ Two stages, because they need different interpreters:
              (the sheets' inline --x/--y/--s/--z), styles.css and script.js.
                python scripts/build-hero-collage.py sheets
 
-             With --set inv1056 it rasterises /mac's deck instead: the ads'
-             invoice (INV1056, Marlow & Finch), from assets/samples/inv1056-<style>.pdf
-             to assets/screenshots/inv1056-<style>.webp. Those PDFs come from the
-             invoice-film chat, rendered by the app's own pdf_gen.
+             With --set inv1056 it rasterises /mac's deck instead: the same
+             invoice as the invoice-film chat renders it (its template and accent),
+             from assets/samples/inv1056-<style>.pdf to
+             assets/screenshots/inv1056-<style>.webp. Those PDFs come from that
+             chat's kit/pdf/, rendered by the app's own pdf_gen.
                python scripts/build-hero-collage.py sheets --set inv1056
 
 No fake documents: every sheet is the app's real output for the same fictional
-invoice (INV1045, Westbrook Sound, on / and the audio pages; INV1056 on /mac).
-Styles and accents are listed in SHEETS.
+invoice (INV1056, Halvard & Wren: the ads' invoice), on / and the audio pages in
+the four accents listed in SHEETS, on /mac in the invoice-film chat's renders.
 """
 from __future__ import annotations
 
@@ -39,7 +41,7 @@ SITE = HERE.parent
 SAMPLES = SITE / "assets" / "samples"
 SHOTS = SITE / "assets" / "screenshots"
 
-HERO_INVOICE_NUMBER = "INV1045"
+HERO_INVOICE_NUMBER = "INV1056"
 USER_ID = "google_oauth_sub_daniel_001"  # the mock dev user whose profile holds the fictional data
 
 # Front to back. Accents are muted and related: the sheets should read as one
@@ -62,6 +64,14 @@ def render(app_dir: pathlib.Path, profile: pathlib.Path) -> int:
     import config  # noqa: E402  (the app's config; resolves the dev profile via the env above)
     import db  # noqa: E402
 
+    try:
+        import folder_sync  # noqa: E402  (0.3.0+)
+    except ImportError:
+        pass
+    else:
+        # Read the account's pre-sync database, where seed-demo-profile.py
+        # writes; the live working copy exists only once the app has run.
+        folder_sync.configure(enabled=False, threads=False)
     config.set_current_user_id_override(USER_ID)
     config.ensure_user_data_dirs()
     db.init_db()
