@@ -18,16 +18,9 @@ Two stages, because they need different interpreters:
              (the sheets' inline --x/--y/--s/--z), styles.css and script.js.
                python scripts/build-hero-collage.py sheets
 
-             With --set inv1056 it rasterises /mac's deck instead: the same
-             invoice as the invoice-film chat renders it (its template and accent),
-             from assets/samples/inv1056-<style>.pdf to
-             assets/screenshots/inv1056-<style>.webp. Those PDFs come from that
-             chat's kit/pdf/, rendered by the app's own pdf_gen.
-               python scripts/build-hero-collage.py sheets --set inv1056
-
 No fake documents: every sheet is the app's real output for the same fictional
-invoice (INV1056, Halvard & Wren: the ads' invoice), on / and the audio pages in
-the four accents listed in SHEETS, on /mac in the invoice-film chat's renders.
+invoice (INV1056, Halvard & Wren: the ads' invoice). Styles and accents are
+listed in SHEETS.
 """
 from __future__ import annotations
 
@@ -106,23 +99,20 @@ SHEET_W = 1120           # each sheet's width (page 1836 → 1120, so 1470 → 8
 # properties), styles.css (.stack / .sheet) and script.js (DECK).
 
 
-def sheets(invoice_set: str | None) -> int:
-    """Raster the top of each template's PDF to a WebP sheet: the homepage's
-    invoice-<style>.pdf → sheet-<style>.webp, or <set>-<style>.pdf →
-    <set>-<style>.webp for a named set (/mac's inv1056)."""
+def sheets() -> int:
+    """Raster the top of each template's PDF to a WebP sheet."""
     import pymupdf
     from PIL import Image
 
-    pdf_stem, sheet_stem = (invoice_set, invoice_set) if invoice_set else ("invoice", "sheet")
     SHOTS.mkdir(parents=True, exist_ok=True)
     for style, _accent in SHEETS:
-        doc = pymupdf.open(SAMPLES / f"{pdf_stem}-{style}.pdf")
+        doc = pymupdf.open(SAMPLES / f"invoice-{style}.pdf")
         pix = doc[0].get_pixmap(matrix=pymupdf.Matrix(3, 3), alpha=False)
         im = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
         im = im.crop((0, 0, im.width, CROP_H))
         scale = SHEET_W / im.width
         im = im.resize((SHEET_W, round(im.height * scale)), Image.LANCZOS)
-        out = SHOTS / f"{sheet_stem}-{style}.webp"
+        out = SHOTS / f"sheet-{style}.webp"
         im.save(out, "WEBP", quality=90, method=6)
         print("wrote", out, im.size, out.stat().st_size // 1024, "KB")
     return 0
@@ -134,12 +124,11 @@ def main() -> int:
     r = sub.add_parser("render")
     r.add_argument("--app-dir", required=True)
     r.add_argument("--profile", required=True)
-    s = sub.add_parser("sheets")
-    s.add_argument("--set", dest="invoice_set", choices=["inv1056"], help="a named invoice set (default: the homepage's)")
+    sub.add_parser("sheets")
     args = ap.parse_args()
     if args.cmd == "render":
         return render(pathlib.Path(args.app_dir).resolve(), pathlib.Path(args.profile).resolve())
-    return sheets(args.invoice_set)
+    return sheets()
 
 
 if __name__ == "__main__":
