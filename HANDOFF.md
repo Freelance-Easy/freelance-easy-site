@@ -462,7 +462,18 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
 
 - **Merged in:** `main` (e9c3a97: G1 + the inert analytics switch) and `fix/demo-data-g11` (above). The conflicts were the HANDOFF appends (all kept, in date order) and the collage script's docstring.
 - **The deck's PDFs are the renamed INV1056:** `assets/samples/inv1056-<style>.pdf` re-copied from the invoice-film chat's `kit/pdf/INV1056-<style>.pdf` after its G11 renames (Jordan Wexcombe, Halvard & Wren, the note without a payment brand; pdfplumber clean), then `build-hero-collage.py sheets --set inv1056`.
-- **The offer line follows legal G10 v2:** "$5 a month is less than a typical café latte, and it includes every feature and unlimited invoices. The first seven days are free, with no card." A regular cup is $3.77 (Toast median, Aug 2026), so "a cup of coffee" read false at $5; a café latte is $5.60 (vault `05 - Reference/Marketing and Video/Claim Substantiation/G10 — less than a cup of coffee — 2026-10-04`). Daniel's OK is pending; if he declines, drop the comparison, never return to "a cup of coffee".
+- **The offer line (Daniel approved it 2026-10-05: "i like it just needs to be formatted aesthetically"; legal G10 v3):** under the h1, "Unlimited invoices for less than a cup of coffee.* / Every feature included. Free for 7 days, no card.", with the note "*vs. a typical café latte" directly beneath.
+  - **Legal's G10 v3 conditions:** the note sits directly under the line and is always visible (no hover, tooltip or collapse; phones too); it is ≥ 15 px in normal body-text colour (not faded), ≥ 4.5:1 in both themes; it reads as part of the line, not fine print; no plain or drip coffee imagery nearby. Why: a regular cup is $3.77 (Toast median, Aug 2026) and a café latte $5.60 (vault `05 - Reference/Marketing and Video/Claim Substantiation/G10 — less than a cup of coffee — 2026-10-04`).
+  - **The layout:**
+    - a `<br>` after the coffee sentence;
+    - a non-breaking space so "coffee.*" never sits alone;
+    - "Free for 7 days, no card." kept on one line (`.keep`, nowrap), so phones break after "included." (four even lines);
+    - `text-wrap: balance`;
+    - the note at 16 px in `--text-1` (the body-text colour in both themes, and Tier 1's offer colour too), 6 px under the line, while the lede starts 14 px below, so it groups with the offer.
+    - The two small rules sit in a page-scoped `<style>` in `mac.html` (`styles.css` belongs to the premium pass); fold them in with Tier 1.
+  - Looked at in both themes at 1280 px and 375 px.
+  - The meta description is tightened to the same voice: "Desktop invoicing for freelancers on your Mac. $5 a month, every feature, unlimited invoices. Free for 7 days, no card." (no coffee claim, so G10 doesn't apply).
+  - Superseded: the G10 v2 line "$5 a month is less than a typical café latte, and it includes …" (Daniel: "too wordy").
 - **The dashboard alt** says one fictional overdue invoice (the re-captured shots).
 - **The hero is theme-matched, on PLACEHOLDERS in the final frame.** The four-template deck is gone from `/mac`. In its place:
   - One figure (`hero-invoice shot`) holds two images of INV1056 as light paper, in the motion chat's frame: 1200×1400, transparent, the page whole with its shadow baked in. `mac-hero-light.webp` has a soft shadow, for the light site; `mac-hero-dark.webp` is the same paper with a deeper shadow and a faint rim, for the dark site. The page theme picks one with the dashboard's `.shot` rules.

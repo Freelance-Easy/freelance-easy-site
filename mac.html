@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Freelance Easy for Mac — invoice your next client for $5 a month</title>
-    <meta name="description" content="Desktop invoicing for freelancers, on your own Mac. $5 a month includes every feature and unlimited invoices. Every feature free for seven days, no card." />
+    <meta name="description" content="Desktop invoicing for freelancers on your Mac. $5 a month, every feature, unlimited invoices. Free for 7 days, no card." />
     <!-- Campaign landing page (Google ads, Mac-only, one general message: the ads'
          LEAD headline). Not for search. The hero invoice is the one the ads show. -->
     <meta name="robots" content="noindex, nofollow" />
@@ -39,6 +39,22 @@
       })();
     </script>
     <link rel="stylesheet" href="./styles.css" />
+    <style>
+      /* /mac only: the offer's two lines wrap evenly, and its G10 note reads as part
+         of it (body-text colour, ≥ 15 px, just under it). Fold into styles.css with Tier 1. */
+      .hero .offer {
+        text-wrap: balance;
+      }
+      .hero .offer .keep {
+        white-space: nowrap; /* phones break after "included.", never before "no card." */
+      }
+      .hero .offer-note {
+        margin-top: 6px;
+        font-size: 16px;
+        line-height: 1.45;
+        color: var(--text-1);
+      }
+    </style>
     <script async src="/js/script.js"></script>
     <script>
       window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
@@ -71,7 +87,10 @@
           <div class="hero-copy">
             <p class="hero-kicker">For Mac, M1 or later.</p>
             <h1>Invoice your next client for $5 a month</h1>
-            <p class="offer">$5 a month is less than a typical café latte, and it includes every feature and unlimited invoices. The first seven days are free, with no card.</p>
+            <!-- Legal G10 v3: the note sits directly under the line, always visible, in
+                 body-text colour at 16 px (both themes, phones too); no drip-coffee imagery nearby. -->
+            <p class="offer">Unlimited invoices for less than a cup of&nbsp;coffee.*<br />Every feature included. <span class="keep">Free for 7 days, no card.</span></p>
+            <p class="offer-note">*vs. a typical café latte</p>
             <p class="lede">
               A desktop invoicing app for freelancers. Your clients and invoices
               live in a folder on your own Mac, not on a web app's servers. Made
