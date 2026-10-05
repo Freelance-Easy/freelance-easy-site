@@ -17,14 +17,17 @@ phone-width detail crops. The page stopped using those frames in v2.3 (the
 loop replaced them); the stage is kept for a future still.
 
 Prerequisites: the same as capture-screenshots.py (mock LicenseServer on :5001,
-the app in DEV mode on :50506 with the fictional demo data, `playwright pillow`).
-Never the installed app on :50505 (real data): --app refuses that port.
+the released app in DEV mode on :50506 with a profile seeded by
+seed-demo-profile.py, `playwright pillow`). Never the installed app on :50505
+(real data): --app refuses that port. The app's invoice counter still advances
+after the delete, so give each theme's pass a freshly seeded profile and both
+recordings show the same number (INV1057).
 
 Usage:
   python scripts/capture-process.py --out assets/screenshots \
-      --profile "/path/to/InvoiceGenerator/.dev-profile"
-  python scripts/capture-process.py --video assets/video/raw \
-      --profile "/path/to/InvoiceGenerator/.dev-profile"
+      --profile /tmp/fe-demo-profile
+  python scripts/capture-process.py --video assets/video/raw --theme dark \
+      --profile /tmp/fe-demo-profile
 
 Outputs (stills): create-1-details-{dark,light}.png, create-2-items-{dark,light}.png,
   create-3-preview-{dark,light}.png and the phone crops create-N-*-m-{dark,light}.png.
@@ -42,20 +45,21 @@ from playwright.sync_api import sync_playwright
 
 VIEWPORT = {"width": 1440, "height": 900}
 ITEMS_VIEWPORT = {"width": 1440, "height": 920}  # the new-invoice page is taller than the edit page (recurring row + Create button)
-PERSONA = {"display_name": "Jordan Reyes", "email": "jordan@example.com"}
+PERSONA = {"display_name": "Jordan Wexcombe", "email": "jordan@example.com"}
 
 # InvoiceGenerator serves dev/mock runs on 50506 (config.DEV_APP_PORT); 50505 is
 # the installed app, with real data. --app must be a plain origin, never on 50505.
 INSTALLED_APP_PORT = 50505
 APP_ORIGIN = re.compile(r"https?://(?:[a-z0-9.-]+|\[[0-9a-f:.]+\])(?::(\d+))?/?", re.I)
 
-# The fictional job being invoiced. Different from the hero invoice (a session
-# day for Westbrook Sound) so the page shows two real jobs, not one twice.
+# The fictional job being invoiced. Different from the hero invoice (INV1056 for
+# Halvard & Wren) so the page shows two real jobs, not one twice. The client is
+# one of the demo account's searched names (seed-demo-profile.py).
 JOB = {
-    "client": "Cedar Lane Records",
-    "title": "Mix — 'Tall Grass' (single)",
-    "items": [("Mix — 'Tall Grass'", "450"), ("Instrumental + TV mix", "75")],
-    "note": "Thanks for the work — payment by bank transfer or Zelle within terms.",
+    "client": "Quillmont Roasters",
+    "title": "Menu board design",
+    "items": [("Menu board design", "450"), ("Print-ready files", "75")],
+    "note": "Thanks for the work — payment by bank transfer within terms.",
 }
 
 CURSOR_JS = """

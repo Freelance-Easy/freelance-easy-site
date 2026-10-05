@@ -359,3 +359,35 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
 *Daniel, after BOTH Claude's production check and the data chat's fresh-Mac funnel test* (playbook step **6c**; the funnel test also runs from this Mac and checks Plausible's realtime view): **Shields → IP addresses**: add your own IP so your visits don't count. If Shields also offers hostnames, allow only `freelance-easy.com` and `www.freelance-easy.com`; that's optional, because the Worker already enforces it.
 
 *Later, when the weekly report moves off hand entry:* a **Stats API key**. Plausible → your account → Settings → API Keys → New API Key → **Stats API**. It is team-scoped and Business-plan only, limited to 600 requests an hour, and queried with `POST https://plausible.io/api/v2/query` and `Authorization: Bearer …`. It goes to the report's owner as a secret, never into the vault or git.
+
+### 2026-10-05 — demo data: the persona and every client cleared (legal G11) (branch `fix/demo-data-g11`, off `fix/capture-scripts-dev-port`)
+
+Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 2026-10-03` §7) found real-business collisions and a payment brand in the site's demo data, and ruled the persona "Jordan Reyes" renamed (public figures in music share it). Every product image now shows the fictional account the ads use (the invoice-film chat's dashboard kit), so `/`, `/mac` and the ads show one world. This branch carries `fix/capture-scripts-dev-port` (the capture scripts default to :50506 and refuse :50505).
+
+- **On the pages** (every product image, re-captured from the released app, v0.3.0-beta, in dev mode on :50506):
+  - **The hero deck and the four sample PDFs:** INV1056 for Halvard & Wren, $1,500 (project work 16 × $75, revisions 4 × $75), the ads' invoice, in the four templates with the same four accents as before. Was INV1045 for Westbrook Sound.
+  - **The dashboard shots** (dark, light and both phone crops): Jordan Wexcombe in the sidebar; one overdue invoice (INV1049, Ostrander & Bell) instead of three on unsearched names; the KPIs, chart and Recent invoices match the ads' dashboard ($19,950 collected YTD).
+  - **The making-an-invoice recording, both themes:** a new invoice INV1057 for Quillmont Roasters ("Menu board design", $450, plus print-ready files, $75 = $525), with the note "…payment by bank transfer within terms." (no payment brand). Was Cedar Lane Records, never searched, with Zelle in the note.
+  - **Alt text only:** the hero sheet (here, `/mac-audio`, `/audio` and the deck alts in `script.js`) and the dashboard ("a fictional overdue invoice"). No other copy changed. `/audio` and `/mac-audio` share these images, so they show the general account too.
+- **The data: `scripts/seed-demo-profile.py` (new).** It seeds a throwaway dev profile and refuses Dropbox, Application Support, iCloud, a checkout's `.dev-profile` or an account that already has data.
+  - Persona Jordan Wexcombe, jordan@example.com, Nashville.
+  - Four clients, each invented and web-searched clean on 2026-10-04: Halvard & Wren, Ostrander & Bell, Quillmont Roasters, Larkhaven Audio (the log, with queries and dates: `_creative-raw/2026-09/spike/invoice-film/data/NAMES-LOG.md`).
+  - INV1031–INV1056 exactly as the kit has them; the script asserts the kit's monthly totals and the $19,950.
+  - Emails on `*.example`, no phone numbers, city-only addresses.
+  - A backup folder is set (no "Set up a backup folder" row, as in the ads' dashboard), and the first PDF is marked long since downloaded (v0.3.0's "Get started" card is complete, as for any account a year in).
+- **Script fixes found on the way:**
+  - `capture-screenshots.py` waited a fixed 800 ms, but v0.3.0's KPI figures count up for about 1.1 s, so the Overdue tile was shot reading $449. It now waits until every figure shows its target and no animation is running.
+  - `build-hero-collage.py render` renders INV1056 and reads the seeded pre-sync database (folder sync off in that process; 0.3.0 keeps the live copy outside the data folder).
+  - The docstrings point at the seed, not the shared `.dev-profile` (the Mac's holds no demo data).
+- **How it ran (2026-10-05, the Mac):**
+  - a detached InvoiceGenerator worktree at `v0.3.0-beta`;
+  - the mock LicenseServer on :5001 with a scratch SQLite database;
+  - the app with `FE_DEV_PROFILE` at a scratch profile and a scratch HOME;
+  - Playwright 1.63.0 (Chromium 1243);
+  - one freshly seeded profile per recording, so both show INV1057;
+  - ffmpeg from the `imageio-ffmpeg` wheel.
+  - Nothing reached :50505, and `lsof` showed nothing left on 5001, 50505 or 50506 afterwards.
+- **Checked:**
+  - pdfplumber on the four PDFs: the persona, the client, INV1056, $1,500.00 and the clean note are present; no Westbrook, Zelle, Reyes, Marlow, Cedar Lane, Bellweather, Northgate or Daniel's name, metadata included;
+  - every image, and frames across both recordings, by eye;
+  - `git grep`: no retired name in any served file.
