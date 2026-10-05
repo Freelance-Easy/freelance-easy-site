@@ -100,40 +100,22 @@
             </div>
           </div>
 
-          <!-- The deck: the ads' invoice (INV1056, Halvard & Wren) in the four
-               templates, one real sheet each, in four fixed slots laid out by the
-               --x/--y/--s/--z custom properties (percent of the deck's width, scale,
-               stacking order; the ads' template in front). script.js moves sheets
-               between slots and takes each sheet's PDF from its href and its
-               description from data-alt. -->
-          <figure class="hero-invoice" id="invoice">
-            <div class="stack" data-stack>
-              <a class="sheet is-front" href="/assets/samples/inv1056-modern.pdf" data-sheet="modern" data-alt="An invoice for Halvard &amp; Wren in the Modern template: project work and revisions, $1,500.00 due." style="--x: 0; --y: 36; --s: 1; --z: 4" aria-label="Open the Modern invoice as a PDF">
-                <img src="/assets/screenshots/inv1056-modern.webp" width="1120" height="897" alt="An invoice for Halvard &amp; Wren in the Modern template: project work and revisions, $1,500.00 due." fetchpriority="high" />
-              </a>
-              <a class="sheet" href="/assets/samples/inv1056-bold.pdf" data-sheet="bold" data-alt="The same invoice in the Bold template." style="--x: 4.878; --y: 24; --s: 0.985; --z: 3" aria-hidden="true" tabindex="-1">
-                <img src="/assets/screenshots/inv1056-bold.webp" width="1120" height="897" alt="" />
-              </a>
-              <a class="sheet" href="/assets/samples/inv1056-classic.pdf" data-sheet="classic" data-alt="The same invoice in the Classic template." style="--x: 9.756; --y: 12; --s: 0.97; --z: 2" aria-hidden="true" tabindex="-1">
-                <img src="/assets/screenshots/inv1056-classic.webp" width="1120" height="897" alt="" />
-              </a>
-              <a class="sheet" href="/assets/samples/inv1056-minimal.pdf" data-sheet="minimal" data-alt="The same invoice in the Minimal template." style="--x: 14.634; --y: 0; --s: 0.955; --z: 1" aria-hidden="true" tabindex="-1">
-                <img src="/assets/screenshots/inv1056-minimal.webp" width="1120" height="897" alt="" />
-              </a>
-            </div>
+          <!-- The hero: the ads' invoice (INV1056, Halvard & Wren) open in the app,
+               in the visitor's theme: the dark image by default, the light one under
+               [data-theme="light"] (the dashboard's .shot pattern, so no new CSS).
+               PLACEHOLDERS: INV1056's page in the dev app (2026-10-05). The invoice
+               film's payoff stills replace these two files; update width/height
+               if their size differs. -->
+          <figure class="hero-invoice figure shot" id="invoice">
+            <picture class="shot-dark">
+              <img src="/assets/screenshots/mac-hero-dark.webp" width="1200" height="1012" alt="An invoice for Halvard &amp; Wren open in Freelance Easy: project work and revisions, $1,500.00 due, with buttons to save the PDF or email it." fetchpriority="high" />
+            </picture>
+            <picture class="shot-light">
+              <img src="/assets/screenshots/mac-hero-light.webp" width="1200" height="1012" alt="An invoice for Halvard &amp; Wren open in Freelance Easy, in the light theme: project work and revisions, $1,500.00 due, with buttons to save the PDF or email it." loading="lazy" />
+            </picture>
             <figcaption>
-              One invoice, the four templates so far. The client is fictional.
-              <span data-stack-hint hidden>Click the invoice to flip through them, or pick one:</span>
-              <span class="visually-hidden" data-stack-status aria-live="polite"></span>
-              <!-- Without JS these are the four PDFs; with it, the names bring
-                   that template to the front and the link below opens its PDF. -->
-              <span class="stack-picker" data-stack-picker role="group" aria-label="Invoice template">
-                <a href="/assets/samples/inv1056-modern.pdf" data-pick="modern">Modern</a>
-                <a href="/assets/samples/inv1056-bold.pdf" data-pick="bold">Bold</a>
-                <a href="/assets/samples/inv1056-classic.pdf" data-pick="classic">Classic</a>
-                <a href="/assets/samples/inv1056-minimal.pdf" data-pick="minimal">Minimal</a>
-                <a class="stack-open" href="/assets/samples/inv1056-modern.pdf" data-stack-open hidden>Open the Modern PDF</a>
-              </span>
+              An invoice in Freelance Easy. The client is fictional.
+              <a href="/assets/samples/inv1056-modern.pdf">Open the PDF</a>
             </figcaption>
           </figure>
         </div>
