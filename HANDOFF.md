@@ -391,3 +391,4 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - pdfplumber on the four PDFs: the persona, the client, INV1056, $1,500.00 and the clean note are present; no Westbrook, Zelle, Reyes, Marlow, Cedar Lane, Bellweather, Northgate or Daniel's name, metadata included;
   - every image, and frames across both recordings, by eye;
   - `git grep`: no retired name in any served file.
+  - The branch preview (`https://fix-demo-data-g11-freelance-easy-site.lively-breeze-6443.workers.dev`) serves all three pages and all 18 files byte-identical to the branch.
