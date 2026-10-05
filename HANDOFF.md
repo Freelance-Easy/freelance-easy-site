@@ -478,6 +478,7 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - The deck's files (`inv1056-{bold,classic,minimal}.pdf`, `inv1056-*.webp`, the collage script's `--set inv1056`) stay until the final stills are in; delete the unused ones then.
 - **Checked on the branch preview (2026-10-05):**
   - before the hero change: `node scripts/test-worker.mjs` 46/46; `check-download-wiring.py` 8/8 plus the inert `/js/script.js`; axe-core 4.12.1 (WCAG 2.1 A/AA, headless Chromium) finds 0 violations on `/mac` and `/` in the dark and the light theme, while the control (`/privacy` with `main`'s styles) still fails on the link issues legal v2 fixes;
-  - after it: see the verification line below.
+  - after it (`1ad2344`): every served file byte-identical to the branch; axe 0 violations on `/mac` in both themes (the `/privacy` control fails as expected); download wiring 8/8 plus the inert analytics route.
+  - Locally: a dark load fetches only `mac-hero-dark.webp` and a light load only `mac-hero-light.webp`, each through the preload; both render at the 6:7 shape (480×560 in an 800 px window).
 - **Legal (2026-10-05): PASS** on the delta and on the first hero placeholder (every visible button a real shipped feature). The merge order: `/mac` merges after v2 AND Stripe's Managed Payments switch-on, because its pricing note says sales tax is added at checkout. The final stills get a 2-minute G11 look.
 - **When Tier 1 lands:** add its two `<head>` lines to `mac.html` (the `js` class and the Inter preload; see the premium pass REPORT), merge `main`, then re-run axe in both themes and the wiring check.
