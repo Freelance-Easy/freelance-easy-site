@@ -44,8 +44,8 @@ freelance-easy-site/
 ├── _redirects              /download/win, /download/mac, etc.
 ├── _headers                cache + security headers
 ├── assets/
-│   ├── logo.svg
-│   ├── og-image-2026-09-29.png  1200×630 social card (dated name: new card, new name)
+│   ├── logo.png            the real mark (canonical source: InvoiceGenerator electron/build/source-master.png, 1024²)
+│   ├── og-image-2026-10-04.png  1200×630 social card (dated name: new card, new name)
 │   └── fonts/              vendored Inter + Playfair (Inter currently inert; see HANDOFF)
 ├── HANDOFF.md              ← read this before deploying
 └── README.md
