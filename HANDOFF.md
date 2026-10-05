@@ -442,3 +442,13 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - pdfplumber on the four PDFs: the persona, the client, INV1056, $1,500.00 and the clean note are present; no Westbrook, Zelle, Reyes, Marlow, Cedar Lane, Bellweather, Northgate or Daniel's name, metadata included;
   - every image, and frames across both recordings, by eye;
   - `git grep`: no retired name in any served file.
+  - The branch preview (`https://fix-demo-data-g11-freelance-easy-site.lively-breeze-6443.workers.dev`) serves all three pages and all 18 files byte-identical to the branch.
+
+### 2026-10-05 — `/mac` caught up: the renamed INV1056, the latte line (branch `feat/mac-landing`)
+
+- **Merged in:** `main` (e9c3a97: G1 + the inert analytics switch) and `fix/demo-data-g11` (above). Two conflicts: the HANDOFF appends (both kept, in date order) and the collage script's docstring.
+- **The deck is the renamed INV1056:** `assets/samples/inv1056-<style>.pdf` re-copied from the invoice-film chat's `kit/pdf/INV1056-<style>.pdf` after its G11 renames (Jordan Wexcombe, Halvard & Wren, the note without a payment brand; pdfplumber clean), then `build-hero-collage.py sheets --set inv1056`. The front sheet's `data-alt` and `alt` name Halvard & Wren.
+- **The offer line follows legal G10 v2:** "$5 a month is less than a typical café latte, and it includes every feature and unlimited invoices. The first seven days are free, with no card." A regular cup is $3.77 (Toast median, Aug 2026), so "a cup of coffee" read false at $5; a café latte is $5.60 (vault `05 - Reference/Marketing and Video/Claim Substantiation/G10 — less than a cup of coffee — 2026-10-04`). Daniel's OK is pending; if he declines, drop the comparison, never return to "a cup of coffee".
+- **The dashboard alt** says one fictional overdue invoice (the re-captured shots).
+- **Checked on the branch preview (2026-10-05):** `node scripts/test-worker.mjs` 46/46; `check-download-wiring.py` 8/8 plus the inert `/js/script.js`; axe-core 4.12.1 (WCAG 2.1 A/AA, headless Chromium) finds 0 violations on `/mac` and `/` in the dark and the light theme, while the control (`/privacy` with `main`'s styles) still fails on the link issues legal v2 fixes.
+- **Next:** the hero moves from the four-template deck to the invoice film's payoff still, a DARK and a LIGHT image matched to the visitor's theme (the motion chat flags them when its finals land). It reuses the dashboard's theme pattern (`figure shot` with `shot-dark` / `shot-light` pictures), so it needs no new CSS and stays compatible with the premium pass's Tier 1.
