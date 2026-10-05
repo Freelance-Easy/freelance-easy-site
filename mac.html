@@ -14,10 +14,19 @@
     <meta name="theme-color" content="#f3f3f0" media="(prefers-color-scheme: light)" />
     <script>
       (function () {
+        var root = document.documentElement;
         try {
           var t = localStorage.getItem("fe-theme");
-          if (t === "light") document.documentElement.setAttribute("data-theme", "light");
+          if (t === "light") root.setAttribute("data-theme", "light");
         } catch (e) {}
+        // The hero has one image per theme, both lazy (the hidden one never
+        // loads): fetch the visible one first.
+        var hero = document.createElement("link");
+        hero.rel = "preload";
+        hero.as = "image";
+        hero.setAttribute("fetchpriority", "high");
+        hero.href = "/assets/screenshots/mac-hero-" + (root.getAttribute("data-theme") === "light" ? "light" : "dark") + ".webp";
+        document.head.appendChild(hero);
       })();
     </script>
     <link rel="stylesheet" href="./styles.css" />
@@ -100,21 +109,22 @@
             </div>
           </div>
 
-          <!-- The hero: the ads' invoice (INV1056, Halvard & Wren) open in the app,
-               in the visitor's theme: the dark image by default, the light one under
-               [data-theme="light"] (the dashboard's .shot pattern, so no new CSS).
-               PLACEHOLDERS: INV1056's page in the dev app (2026-10-05). The invoice
-               film's payoff stills replace these two files; update width/height
-               if their size differs. -->
-          <figure class="hero-invoice figure shot" id="invoice">
+          <!-- The hero: the ads' invoice (INV1056, Halvard & Wren) as light paper
+               in both themes, the shadow baked in; the dark site's image has a
+               deeper shadow and a faint rim. The page theme picks one (the
+               dashboard's .shot rules; no .figure, whose frame would box the
+               transparent image). Both are lazy and the head script preloads the
+               visible one. PLACEHOLDERS (2026-10-05, a render of inv1056-modern.pdf):
+               the invoice film's stills replace these two files at the same 1200×1400. -->
+          <figure class="hero-invoice shot" id="invoice">
             <picture class="shot-dark">
-              <img src="/assets/screenshots/mac-hero-dark.webp" width="1200" height="1012" alt="An invoice for Halvard &amp; Wren open in Freelance Easy: project work and revisions, $1,500.00 due, with buttons to save the PDF or email it." fetchpriority="high" />
+              <img src="/assets/screenshots/mac-hero-dark.webp" width="1200" height="1400" style="width: 100%; height: auto" alt="An invoice for Halvard &amp; Wren from Jordan Wexcombe: project work and revisions at $75, $1,500.00 due." loading="lazy" fetchpriority="high" />
             </picture>
             <picture class="shot-light">
-              <img src="/assets/screenshots/mac-hero-light.webp" width="1200" height="1012" alt="An invoice for Halvard &amp; Wren open in Freelance Easy, in the light theme: project work and revisions, $1,500.00 due, with buttons to save the PDF or email it." loading="lazy" />
+              <img src="/assets/screenshots/mac-hero-light.webp" width="1200" height="1400" style="width: 100%; height: auto" alt="An invoice for Halvard &amp; Wren from Jordan Wexcombe: project work and revisions at $75, $1,500.00 due." loading="lazy" fetchpriority="high" />
             </picture>
             <figcaption>
-              An invoice in Freelance Easy. The client is fictional.
+              An invoice made in Freelance Easy. The client is fictional.
               <a href="/assets/samples/inv1056-modern.pdf">Open the PDF</a>
             </figcaption>
           </figure>
