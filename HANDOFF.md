@@ -379,6 +379,7 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - `capture-screenshots.py` waited a fixed 800 ms, but v0.3.0's KPI figures count up for about 1.1 s, so the Overdue tile was shot reading $449. It now waits until every figure shows its target and no animation is running.
   - `build-hero-collage.py render` renders INV1056 and reads the seeded pre-sync database (folder sync off in that process; 0.3.0 keeps the live copy outside the data folder).
   - The docstrings point at the seed, not the shared `.dev-profile` (the Mac's holds no demo data).
+- **`_headers`: the sample PDFs are cached for a day, then revalidated,** like the screenshots and the video, instead of `/assets/*`'s month. They keep their names across re-renders, so with the month a browser that had opened one could keep showing the old copy. A browser that cached an old PDF before this deploy may still show it until its own month runs out; every new visitor gets the clean one. A hard guarantee would mean new filenames (the OG card's dated-name rule).
 - **How it ran (2026-10-05, the Mac):**
   - a detached InvoiceGenerator worktree at `v0.3.0-beta`;
   - the mock LicenseServer on :5001 with a scratch SQLite database;
