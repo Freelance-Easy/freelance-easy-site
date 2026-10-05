@@ -491,4 +491,6 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
     - the toggle on `/mac` stores dark, and a reload keeps it;
     - a stored dark gives dark on `/mac` (only the dark hero), and a stored light gives light;
     - the homepage is unchanged on a first visit (dark) and with a stored light.
+  - Checked on the branch preview after `8ea92b1`: the same 8 paths pass; axe 0 violations on `/mac` and `/` in both themes (each pass sets its theme explicitly now, since `/mac` opens light); download wiring 8/8.
+  - The privacy page (live or v2) doesn't list browser storage; the theme keys are a display preference (no cookie, nothing sent). Flagged to legal as an FYI.
 - **When Tier 1 lands:** add its two `<head>` lines to `mac.html`: `document.documentElement.classList.add("js");` as the first statement of the theme IIFE, and `<link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />` right before the stylesheet link. Then merge `main` and re-run axe in both themes and the wiring check.
