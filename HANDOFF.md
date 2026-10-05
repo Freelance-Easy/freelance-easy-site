@@ -489,6 +489,10 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
     - **The one difference from the PDF is the date format.** The in-app card shows ISO dates ("2026-10-05", due "2026-11-04"); the PDF prints "Oct 05, 2026" / "Nov 04, 2026". They're the same data in the app's two real formats, so the PDF stays as it is (the motion chat checked the rest of the text matches). Whether "Open the PDF" needs a note went to legal; my recommendation is no note.
     - The alt describes the content, which is the same in both, so it stands.
     - The placeholders before them: a render of `inv1056-classic.pdf` (after the pick), and before that a Modern render, which had itself replaced the app's invoice page with its toolbar (1200×1012).
+  - **Legal (2026-10-05, 17:48Z): PASS on the final stills** (`3263839`, both WebPs checked on the preview).
+    - G11: both names cleared; city only; reserved addresses; generic line items; the note names no payment brand; no cursor, callout or brand. The numbers add up.
+    - **The date format needs no note:** the same invoice and dates, in the app's on-screen and print formats, and nothing claims they're pixel-identical.
+    - The deletions are fine: only `/mac`'s own deck files, which were never on `main`. The caption and alt are unchanged and fine.
   - **Removed with the swap:** the deck's unused files, `inv1056-{bold,modern,minimal}.pdf` and all four `inv1056-*.webp`. The collage script's `--set inv1056` is undone too, so `scripts/build-hero-collage.py` equals `main`'s. `inv1056-classic.pdf` stays: it's the "Open the PDF" link.
 - **Checked on the branch preview (2026-10-05):**
   - before the hero change: `node scripts/test-worker.mjs` 46/46; `check-download-wiring.py` 8/8 plus the inert `/js/script.js`; axe-core 4.12.1 (WCAG 2.1 A/AA, headless Chromium) finds 0 violations on `/mac` and `/` in the dark and the light theme, while the control (`/privacy` with `main`'s styles) still fails on the link issues legal v2 fixes;
@@ -503,6 +507,12 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
     - Daniel's merge yes.
   - The old tax line was the page's only sentence that depended on Managed Payments. Legal checked the rest of `mac.html`: the renewal line ("Cancel in the app's Settings, through the Stripe billing portal…") and "Checkout is handled by Stripe: card, Apple Pay or Link…" are true before and after the switch, since Stripe keeps the Customer Portal for Managed Payments subscriptions.
   - When `/mac` merges `main` after v2, `/`, `/mac-audio` and `/audio` arrive with the same line. If Daniel picks a v2 variant other than before-Link, legal tells the orchestrator, and this line follows it.
+- **v2 day, PRE-CHECKED (2026-10-05, 17:50Z).** The test merge was `git merge-tree` of `3263839` with legal's before-Link branch at `c793c1b`: clean, tree `33a6cb0`. That tree was served locally from a `git archive` copy (its files hash-checked against the tree):
+  - axe 4.12.1: 0 violations on `/mac`, `/`, `/privacy`, `/terms` and `/install` in both themes (v2 clears `/install`'s old link findings);
+  - the 8 theme paths pass;
+  - `node scripts/test-worker.mjs` 46/46;
+  - every pricing note (`/`, `/audio`, `/mac-audio`, `/mac`) carries the before-Link line once, and "Where sales tax applies" appears nowhere.
+  - **So on v2 day:** merge `main` into this branch, push, check the preview (byte-identical, axe, `check-download-wiring.py`), then ask Daniel. If legal's branch moves past `c793c1b` first, re-run the merge-tree.
 - **`/mac` opens LIGHT for a first visit** (Daniel picked a light flight-1 ad; agreed with the premium pass chat, 2026-10-05). A choice made with the toggle (`localStorage` `fe-theme`) still wins; the rest of the site stays dark-first.
   - `mac.html`'s head script sets light unless the stored choice is "dark". With no stored choice it also writes `sessionStorage` `fe-theme-visit=light`, so the light look can carry to other pages for the visit.
   - The read side (a stored choice first, then `fe-theme-visit`, else dark) goes into the head scripts of `/` and `/mac-audio` (so `/audio` too) with the premium pass's Tier 1 head lines; until then those pages ignore the key and open dark. The legal pages don't read it.
