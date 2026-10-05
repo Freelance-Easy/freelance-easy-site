@@ -480,15 +480,19 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - The invoice stays light paper in both themes, as Daniel asked ("the invoice itself should be light mode"), and there's no lifted totals box.
   - No new CSS. `.figure` is left off, because its border and box would frame the transparent image. The two images carry `width: 100%; height: auto` inline, so `styles.css` (the premium pass's file) is untouched.
   - Loading: both images are `loading="lazy"`, so the hidden one never loads, and the head script preloads the visible theme's image at high priority. This is Sol's P2: before, a light-theme visitor downloaded the hidden dark image eagerly and lazy-loaded their own.
-  - The caption: "An invoice made in Freelance Easy; the names on it are fictional. Open the PDF" (`inv1056-modern.pdf`). Legal's wording: "The client is fictional" implied the sender might be real, and the persona shown using the product would read as a real customer (an implied endorsement).
-  - **The placeholders** are a render of `assets/samples/inv1056-modern.pdf` (the motion chat's INV1056 in Modern) in that frame, 2026-10-05. They replaced an earlier placeholder the same day (the app's invoice page with its toolbar, 1200×1012), to match the stills' frame.
-  - **When the motion chat's stills land** (`hero-light.png` / `hero-dark.png`, after Daniel picks the template):
+  - The caption: "An invoice made in Freelance Easy; the names on it are fictional. Open the PDF" (`inv1056-classic.pdf` since Daniel's template pick; `inv1056-modern.pdf` before). Legal's wording: "The client is fictional" implied the sender might be real, and the persona shown using the product would read as a real customer (an implied endorsement).
+  - **Daniel picked CLASSIC** for the film and the hero (the motion chat's Motion Picks, 2026-10-05 17:14Z; its recommendation was Bold).
+  - **The placeholders** are a render of `assets/samples/inv1056-classic.pdf` in that frame (2026-10-05, after the pick). That PDF is byte-identical to the motion chat's `kit/pdf/INV1056-classic.pdf`.
+    - They replaced a Modern render from earlier the same day, which had itself replaced the app's invoice page with its toolbar (1200×1012), to match the stills' frame.
+    - The alt describes the content, not the template's styling, so it holds for Classic.
+  - **When the motion chat's stills land** (`hero-light.png` / `hero-dark.png`, in Classic):
     - convert them to WebP with alpha over these two files (the same 1200×1400, so the markup doesn't change);
-    - point "Open the PDF" at the picked template's `inv1056-<template>.pdf` (copied from its `kit/pdf/`);
-    - update the alt if the template changes what it shows;
+    - "Open the PDF" already points at `inv1056-classic.pdf`. If the kit re-renders its Classic PDF, re-copy it;
+    - re-read the alt against the final stills;
     - re-run axe in both themes;
     - send legal a 2-minute G11 look.
-  - The deck's files (`inv1056-{bold,classic,minimal}.pdf`, `inv1056-*.webp`, the collage script's `--set inv1056`) stay until the final stills are in; delete the unused ones then.
+  - The deck's files (`inv1056-{bold,modern,minimal}.pdf`, all four `inv1056-*.webp`, the collage script's `--set inv1056`) are unused now. Delete them together with the final-stills swap.
+  - **Checked after the Classic swap (local, 2026-10-05):** axe 4.12.1 finds 0 violations on `/mac` in both themes; the 8 theme paths pass (a first visit fetches only `mac-hero-light.webp`, a stored dark fetches only `mac-hero-dark.webp`); screenshots at 1280 px and 375 px in both themes; "Open the PDF" resolves to the Classic PDF.
 - **Checked on the branch preview (2026-10-05):**
   - before the hero change: `node scripts/test-worker.mjs` 46/46; `check-download-wiring.py` 8/8 plus the inert `/js/script.js`; axe-core 4.12.1 (WCAG 2.1 A/AA, headless Chromium) finds 0 violations on `/mac` and `/` in the dark and the light theme, while the control (`/privacy` with `main`'s styles) still fails on the link issues legal v2 fixes;
   - after it (`1ad2344`): every served file byte-identical to the branch; axe 0 violations on `/mac` in both themes (the `/privacy` control fails as expected); download wiring 8/8 plus the inert analytics route.
