@@ -455,6 +455,8 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
 - **Also on this branch (2026-10-05):**
   - the four stale version lines → v0.3.0-beta (the Latest release since 2026-10-03): `install.html` and the footers of `/`, `/mac-audio`, `/audio`. They're identical to legal v2's edits of the same lines, so either merge order is clean;
   - `assets/logo.svg` removed.
+  - Re-checked on the preview after these commits: the changed pages and `script.js` byte-identical to the branch; `/assets/logo.svg` 404. axe 4.12.1: `/` and `/mac-audio` 0 violations in both themes. `/install` keeps two link findings (dark contrast, light link-in-text-block) that production shows identically; they're the doc pages' link styles that legal v2 fixes.
+- **Legal's final pass on the delta (2026-10-05): PASS** (its `git grep` of the tracked files for the retired names and payment brands finds none; no history rewrite, agreed). One fix was applied first: `install.html` had lost the space after the "·" (the edit tool trims trailing whitespace from a replacement). That rendered "v0.3.0-beta ·Release files…" and made `git merge-tree` conflict with v2. The line is byte-identical to v2's now, and `git merge-tree --write-tree` is clean both against `fix/legal-pages-2026-10` and into `origin/main`. **The branch is cleared to merge on Daniel's yes, on its own, ahead of v2.**
 
 ### 2026-10-05 — `/mac` caught up: the renamed INV1056, the latte line, the theme-matched hero (branch `feat/mac-landing`)
 
