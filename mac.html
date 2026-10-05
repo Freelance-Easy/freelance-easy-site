@@ -15,10 +15,19 @@
     <script>
       (function () {
         var root = document.documentElement;
+        // /mac opens LIGHT for a first visit (the flight-1 ad is light); a choice
+        // made with the toggle still wins. sessionStorage carries the light look
+        // to pages whose head script reads "fe-theme-visit" for the rest of the visit.
+        var t = null;
         try {
-          var t = localStorage.getItem("fe-theme");
-          if (t === "light") root.setAttribute("data-theme", "light");
+          t = localStorage.getItem("fe-theme");
         } catch (e) {}
+        if (t !== "dark") root.setAttribute("data-theme", "light");
+        if (t !== "light" && t !== "dark") {
+          try {
+            sessionStorage.setItem("fe-theme-visit", "light");
+          } catch (e) {}
+        }
         // The hero has one image per theme, both lazy (the hidden one never
         // loads): fetch the visible one first.
         var hero = document.createElement("link");

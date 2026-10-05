@@ -481,4 +481,14 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - after it (`1ad2344`): every served file byte-identical to the branch; axe 0 violations on `/mac` in both themes (the `/privacy` control fails as expected); download wiring 8/8 plus the inert analytics route.
   - Locally: a dark load fetches only `mac-hero-dark.webp` and a light load only `mac-hero-light.webp`, each through the preload; both render at the 6:7 shape (480×560 in an 800 px window).
 - **Legal (2026-10-05): PASS** on the delta and on the first hero placeholder (every visible button a real shipped feature). The merge order: `/mac` merges after v2 AND Stripe's Managed Payments switch-on, because its pricing note says sales tax is added at checkout. The final stills get a 2-minute G11 look.
-- **When Tier 1 lands:** add its two `<head>` lines to `mac.html` (the `js` class and the Inter preload; see the premium pass REPORT), merge `main`, then re-run axe in both themes and the wiring check.
+- **`/mac` opens LIGHT for a first visit** (Daniel picked a light flight-1 ad; agreed with the premium pass chat, 2026-10-05). A choice made with the toggle (`localStorage` `fe-theme`) still wins; the rest of the site stays dark-first.
+  - `mac.html`'s head script sets light unless the stored choice is "dark". With no stored choice it also writes `sessionStorage` `fe-theme-visit=light`, so the light look can carry to other pages for the visit.
+  - The read side (a stored choice first, then `fe-theme-visit`, else dark) goes into the head scripts of `/` and `/mac-audio` (so `/audio` too) with the premium pass's Tier 1 head lines; until then those pages ignore the key and open dark. The legal pages don't read it.
+  - `script.js` now keeps the theme each page's head script chose, instead of recomputing it from `localStorage` (which would have flipped `/mac` back to dark after load). It's the same outcome on every other page: each one that loads `script.js` has the head script.
+  - Checked locally (8 paths, Playwright, fresh contexts):
+    - a first visit to `/mac` is light, writes the visit key and fetches only the light hero;
+    - then `/` opens dark (no read side yet);
+    - the toggle on `/mac` stores dark, and a reload keeps it;
+    - a stored dark gives dark on `/mac` (only the dark hero), and a stored light gives light;
+    - the homepage is unchanged on a first visit (dark) and with a stored light.
+- **When Tier 1 lands:** add its two `<head>` lines to `mac.html`: `document.documentElement.classList.add("js");` as the first statement of the theme IIFE, and `<link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />` right before the stylesheet link. Then merge `main` and re-run axe in both themes and the wiring check.

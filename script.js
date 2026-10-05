@@ -1,5 +1,7 @@
 /* Freelance Easy — landing page behaviour (v2.3, 2026-09)
-   1. Theme toggle (dark default, persisted in localStorage). The product
+   1. Theme toggle (dark default, light on /mac for a first visit; the head
+      script decides before the first paint; a toggle choice persists in
+      localStorage). The product
       screenshots follow the theme in CSS (.shot-dark / .shot-light pairs).
       The making-an-invoice loop autoplays muted; see wireDemo for the
       reduced-motion and autoplay-refused fallbacks.
@@ -31,11 +33,10 @@
     if (t === "light") root.setAttribute("data-theme", "light");
     else root.removeAttribute("data-theme");
   }
-  var stored = null;
-  try {
-    stored = localStorage.getItem(STORAGE_KEY);
-  } catch (e) {}
-  applyTheme(stored === "light" ? "light" : "dark");
+  // Each page's head script has already chosen the theme before the first paint
+  // (the visitor's stored choice, else the page's default: dark, or light on
+  // /mac); keep it rather than recomputing.
+  applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
 
   function bindToggle() {
     var btn = document.querySelector("[data-theme-toggle]");
