@@ -13,7 +13,7 @@
 # broad assets/ rule comes first and each narrower rule detaches ("! Header")
 # its Cache-Control before setting its own.
 
-# Everything in assets/ (logo, OG image, sample PDFs): a month
+# Everything in assets/ (logo, OG image): a month
 /assets/*
   Cache-Control: public, max-age=2592000
 
@@ -28,6 +28,11 @@
   ! Cache-Control
   Cache-Control: public, max-age=86400, must-revalidate
 /assets/video/*
+  ! Cache-Control
+  Cache-Control: public, max-age=86400, must-revalidate
+# The sample PDFs are re-rendered with the hero sheets under the same names
+# (they moved to the G11 demo data on 2026-10-05), so the same day.
+/assets/samples/*
   ! Cache-Control
   Cache-Control: public, max-age=86400, must-revalidate
 
