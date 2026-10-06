@@ -72,7 +72,7 @@
         <li>All invoices, line items, payment terms, notes and PDFs</li>
         <li>All client information (names, emails, addresses, phone numbers)</li>
         <li>Attachments, documents, logos and imported invoices</li>
-        <li>Your email settings and the SMTP password you enter to send invoices from your own email account. Starting with version 0.3.1, Freelance Easy stores your email app password encrypted, with a key tied to your account, wherever it syncs — we never see it. Each computer keeps its own copy in its private app folder, which can be unencrypted while the app is still moving a password saved by an earlier version, or while a new one waits to be shared. Files saved by earlier versions (and copies or backups of them) may still hold the old one. Use an app password from your email provider rather than your main email password.</li>
+        <li>Your email settings and the SMTP password you enter to send invoices from your own email account. Starting with version 0.3.1, the database copies the app saves in your data folder hold this password only in encrypted form, locked with a key tied to your account that our server provides when you sign in; the app never sends the password to us on its own. Each computer can still keep it unencrypted in its private app folder: in its working and temporary copies while a password saved by an earlier version is being moved or a new one waits to be shared, and in the restore points and conflict copies it keeps there. Files saved by earlier versions, and copies or backups of them, may still hold it too. Use an app password from your email provider rather than your main email password.</li>
         <li>Your recurring schedules and, if you turned it on, your backup folder</li>
       </ul>
       <h3>Copies the app keeps in your data folder</h3>
@@ -86,9 +86,9 @@
         keeps restore points and conflict copies on the computer itself, and if
         you used a version before 0.3.0, its original database file stays in the
         folder. These copies contain your invoice records, clients and settings,
-        including your SMTP password, which version 0.3.1 and later save to your
-        data folder only in encrypted form; copies saved by earlier versions may
-        still hold it unencrypted. Your
+        including your SMTP password: the copies saved by version 0.3.1 and later
+        hold it only in encrypted form, while older database files and their
+        copies may still hold it unencrypted. Your
         attachments, logos and documents are separate files in the same folder;
         the invoice PDFs the app generates are kept on each computer. Files you
         delete in the app go to a trash folder there and are removed after at
