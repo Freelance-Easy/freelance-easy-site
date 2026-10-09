@@ -45,7 +45,7 @@ h1 { font-size: clamp(32px, 4vw, 46px); line-height: 1.12; font-weight: 550; let
 .caption > span { color: var(--muted); font-size: 10px; letter-spacing: .08em; white-space: nowrap; }
 .caption p { margin: 0; font-size: 14px; }
 .player-note, .example-note { font-size: 10px; color: var(--muted); margin: 9px 0 0; }
-.example-note { opacity: .85; }
+.example-note { opacity: 1; } /* (legal qualifier: full strength, >= 4.5:1 in both themes; axe 2026-10-08) */
 @media (max-width: 600px) {
  .tour-page { width: calc(100% - 28px); padding-top: 19px; }
  .tour-header { gap: 8px; }
