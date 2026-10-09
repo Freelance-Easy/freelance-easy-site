@@ -97,7 +97,8 @@
     var primary = block.querySelector('[data-role="primary"]');
     var alt = block.querySelector('[data-role="alt"]');
     if (!primary || !alt) return;
-    var statusEls = [].slice.call(document.querySelectorAll("[data-share-status]"));
+    // each row's own status line, next to its button (Sol: the pricing row's result used to land in the hero's)
+    var statusEls = [].slice.call(document.querySelectorAll('[data-share-status][data-for="' + placement + '"]'));
 
     if (os === "mobile") {
       var label = primary.querySelector("[data-label]");
@@ -112,7 +113,8 @@
         share(statusEls);
       });
       primary.addEventListener("keydown", function (e) {
-        if (e.key === " " || e.key === "Spacebar") {
+        // a role="button" link: Enter and Space both activate it, as a native button would (an iPad with a keyboard)
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
           e.preventDefault();
           share(statusEls);
         }

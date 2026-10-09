@@ -1798,7 +1798,9 @@ details.disclosure p a {
   background: color-mix(in srgb, var(--bg-1) 78%, transparent);
   box-shadow: inset 0 0 0 1px var(--line-1);
   opacity: 0;
-  transition: opacity 0.24s var(--ease), color 0.24s var(--ease), background-color 0.24s var(--ease);
+  /* legal v-story (2026-10-08): the label never fades; it is fully there whenever records are on stage, at once
+     (only its colours ease, onto and off the Ride's field) */
+  transition: color 0.24s var(--ease), background-color 0.24s var(--ease);
   pointer-events: none;
 }
 .stage-label span {
