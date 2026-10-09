@@ -35,6 +35,22 @@
   ! Cache-Control
   Cache-Control: public, max-age=86400, must-revalidate
 
+# The scroll-story homepage (2026-10-08). Its CSS/JS keep their names across
+# deploys, so they revalidate on every load like styles.css and script.js; the
+# stills and the invoice paper a day, then revalidate; its fonts a year.
+/assets/story/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+/assets/story/static/*
+  ! Cache-Control
+  Cache-Control: public, max-age=86400, must-revalidate
+/assets/story/paper/*
+  ! Cache-Control
+  Cache-Control: public, max-age=86400, must-revalidate
+/assets/story/fonts/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
 # CSS/JS revalidate on every load (an ETag 304 when unchanged), so a deploy
 # shows on a plain reload. An hour of max-age left returning visitors on the
 # old stylesheet against new HTML.
@@ -51,4 +67,13 @@
 /mac-audio
   X-Robots-Tag: noindex
 /audio
+  X-Robots-Tag: noindex
+
+# The tours (2026-10-08). Outside assets/, so their HTML/CSS/JS get the
+# platform default (revalidate every load); only the fonts are long-cached.
+/tour/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+# The 25-second tour is an embed (the homepage's dialog), not a page for search.
+# The splat also matches /tour/quick/ itself.
+/tour/quick/*
   X-Robots-Tag: noindex
