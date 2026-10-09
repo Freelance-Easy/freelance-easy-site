@@ -1,0 +1,2340 @@
+/* =====================================================================================================================
+   Freelance Easy — the scroll-story homepage (premium pass, 2026-10; live since feat/scroll-story-home)
+   Direction A, pushed: one product story, "from job to paid", each section ONE live house-style moment built from the
+   released app's real markup (assets/app.css is the app's own stylesheet, scoped under .fe-app). Tokens are the Tier-1
+   restyle's (premium-pass/site/tier1-files/styles.css); v2 (2026-10-05) opens DARK (Daniel's call), light is one click.
+   ===================================================================================================================== */
+
+/* ---------- Fonts, all self-hosted (no third-party requests): the app's own Inter 4 variable files and Instrument
+   Serif italic (both SIL OFL 1.1; the licences are fonts/OFL-*.txt) ---------- */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/InstrumentSerif-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/Inter-Variable-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/Inter-Variable-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------- Tokens: light (the default), then dark ---------- */
+:root {
+  color-scheme: light;
+  --bg-0: #f3f3f0;
+  --bg-1: #ffffff;
+  --bg-2: #ebebe7;
+  --bg-3: #e2e3de;
+  --line-1: rgba(20, 20, 24, 0.08);
+  --line-2: rgba(20, 20, 24, 0.13);
+  --line-3: rgba(20, 20, 24, 0.26);
+  --text-0: #0f1014;
+  --text-1: #323339;
+  --text-2: #55585f;
+  --text-3: #60646f;
+  --tone: #8b8e96;             /* the softer second line of a tonal headline (large text, >= 3:1) */
+  --ink: #0f1014;              /* the action: the app's light primary, the black pill */
+  --ink-hover: #26282e;
+  --ink-on: #ffffff;
+  --focus: #0f1014;
+  /* the house-style stage: warm grey, lit from the middle, 4 % grain (vault "Motion House Style" § 2) */
+  --stage-bg: radial-gradient(118% 112% at 48% 40%, #eeede9 0%, #e5e4e0 46%, #d2d1cc 100%);
+  --stage-edge: rgba(20, 20, 24, 0.05);
+  --stage-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 30px 60px -40px rgba(0, 0, 0, 0.25);
+  --grain: 0.04;
+  --page-wash:
+    radial-gradient(1100px 680px at 72% 240px, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.3) 45%, rgba(255, 255, 255, 0) 72%),
+    linear-gradient(180deg, #e9e8e3 0px, #efeeea 360px, rgba(243, 243, 240, 0) 900px);
+  /* the Ride's colour field: the paid bar's top (--accent #2c7a7b at its gradient's 95 %), the Chase band after it.
+     site.js re-reads it from the app's own computed bar colour; these are the no-JS values */
+  --ride: #378081;
+  --ride-text: #ffffff;
+  --ride-text-2: rgba(255, 255, 255, 0.8);
+  --ride-line: rgba(255, 255, 255, 0.22);
+  --shadow-card: 0 0 0 1px var(--line-1), 0 1px 2px rgba(0, 0, 0, 0.05), 0 24px 50px -32px rgba(0, 0, 0, 0.22);
+  --r-pill: 999px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --shell: 1240px;
+  --pad: clamp(16px, 3vw, 40px);
+  --nav-room: 56px;            /* desktop: the left gutter the chapter rail needs */
+  --nav-a0: 0.5;               /* the rail's track: >= 3:1 on the page */
+  --header-h: 64px;
+  --fs-h1: clamp(42px, 3.9vw + 14px, 78px);
+  --fs-h2: clamp(32px, 2.2vw + 14px, 50px);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Instrument Serif", "Iowan Old Style", Georgia, "Times New Roman", serif;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-0: #080a0f;
+  --bg-1: #0d1117;
+  --bg-2: #13161e;
+  --bg-3: #1b1f29;
+  --line-1: rgba(255, 255, 255, 0.07);
+  --line-2: rgba(255, 255, 255, 0.11);
+  --line-3: rgba(255, 255, 255, 0.2);
+  --text-0: #f2f3f6;
+  --text-1: #cfd3dc;
+  --text-2: #9aa0ae;
+  --text-3: #8b91a0;
+  --tone: #6f7584;
+  --ink: #f2f3f6;
+  --ink-hover: #ffffff;
+  --ink-on: #0b0d12;
+  --focus: #f2f3f6;
+  --nav-a0: 0.45;
+  /* the dark stage: a soft blue-grey key-light pool on the night stage, a faint top rim (proof.html's recipe) */
+  --stage-bg:
+    radial-gradient(72% 62% at 50% 44%, rgba(112, 146, 204, 0.3) 0%, rgba(112, 146, 204, 0.11) 40%, rgba(112, 146, 204, 0) 72%),
+    #0b0f14;
+  --stage-edge: rgba(160, 190, 240, 0.08);
+  --stage-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 40px 80px -40px rgba(0, 0, 0, 0.8);
+  --grain: 0.035;
+  --page-wash:
+    radial-gradient(1100px 700px at 72% 260px, rgba(120, 150, 205, 0.14) 0%, rgba(120, 150, 205, 0.05) 42%, rgba(120, 150, 205, 0) 72%),
+    radial-gradient(900px 520px at 10% -120px, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+  /* the dark paid bar is the app's dark --accent (#6b9ec2) at 95 % over its card */
+  --ride: #6797bc;
+  --ride-text: #070a10;
+  --ride-text-2: rgba(7, 10, 16, 0.78);
+  --ride-line: rgba(7, 10, 16, 0.2);
+  --shadow-card: 0 0 0 1px var(--line-1), 0 30px 60px -36px rgba(0, 0, 0, 0.7);
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+  overflow-x: clip;
+}
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -0.006em;
+  font-feature-settings: "kern" 1, "calt" 1;
+  color: var(--text-0);
+  background: var(--page-wash), var(--bg-0);
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: clip;
+}
+/* the page's own film grain, static (one tile, behind the content) */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.6 -0.3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+::selection {
+  background: var(--text-0);
+  color: var(--bg-0);
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+.serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  font-size: 1.08em;
+  line-height: 0.9;
+}
+h1,
+h2,
+h3 {
+  font-weight: 560;
+  color: var(--text-0);
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--header-h);
+  border-bottom: 1px solid transparent;
+  background: color-mix(in srgb, var(--bg-0) 84%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  transition: border-color 0.2s, background-color 0.3s var(--ease);
+}
+.js .site-header:not(.is-stuck) {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.site-header.is-stuck {
+  border-bottom-color: var(--line-1);
+}
+/* focus moving into the sticky header (Shift+Tab) must not scroll the page: html's scroll-padding-top (which keeps
+   native anchors clear of the header) put the header's own controls inside the padded zone, so every focus there
+   scrolled up ~460 px and wound the story back. Measured fix, 2026-10-05: 0 px at 1440 and 390, anchors unchanged. */
+.site-header a,
+.site-header button {
+  scroll-margin-top: calc(-1 * (var(--header-h) + 16px));
+}
+.site-header .shell {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 640;
+  letter-spacing: -0.016em;
+  white-space: nowrap;
+}
+.brand img {
+  width: 28px;
+  height: 28px;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav a {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 8px 12px;
+  border-radius: var(--r-pill);
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.nav a:hover {
+  color: var(--text-0);
+}
+.nav a.nav-cta {
+  color: var(--text-0);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  margin-left: 4px;
+}
+.nav a.nav-cta:hover {
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+/* the theme switch: an obvious two-segment control, the raised thumb on the active side */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--text-0) 6%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+}
+.theme-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--text-2);
+  transition: color 0.15s, background 0.2s, box-shadow 0.2s;
+}
+.theme-switch button svg {
+  width: 14px;
+  height: 14px;
+}
+.theme-switch button[aria-pressed="true"] {
+  color: var(--text-0);
+  background: var(--bg-1);
+  box-shadow: 0 0 0 1px var(--line-1), 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+[data-theme="dark"] .theme-switch button[aria-pressed="true"] {
+  background: var(--bg-3);
+  box-shadow: 0 0 0 1px var(--line-2), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.theme-switch button:hover {
+  color: var(--text-0);
+}
+.no-js .theme-switch {
+  display: none;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 12px 26px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--ink-on);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 10px 26px -12px rgba(0, 0, 0, 0.45);
+}
+.btn-primary:hover {
+  background: var(--ink-hover);
+}
+.btn svg {
+  width: 15px;
+  height: 15px;
+  margin-top: -1px;
+}
+.link-quiet {
+  font-size: 15px;
+  font-weight: 520;
+  color: var(--text-1);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.link-quiet:hover {
+  color: var(--text-0);
+  text-decoration-color: var(--line-3);
+}
+.cta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+}
+.fine {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-3);
+}
+.fine strong {
+  color: var(--text-1);
+  font-weight: 560;
+}
+/* Disclosures (legal, 2026-10-05): the trial line, the currency and tax line and the renewal/cancellation sentence
+   are never below 15 px and never below 4.5:1, in either theme, wherever they appear. Quiet, not small. */
+.disclose {
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.008em;
+  color: var(--text-2);
+}
+.disclose.strong {
+  color: var(--text-1);
+  font-weight: 540;
+}
+
+/* ---------- Hero (01 Make) ---------- */
+.hero {
+  padding: clamp(20px, 3vw, 40px) 0 clamp(64px, 7vw, 104px);
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 4.6fr) minmax(0, 7.4fr);
+  gap: clamp(32px, 4vw, 64px);
+  align-items: center;
+}
+.hero-copy {
+  max-width: 34rem;
+}
+.hero-copy h1 {
+  font-size: var(--fs-h1);
+  font-weight: 560;
+  line-height: 0.98;
+  letter-spacing: -0.048em;
+}
+.hero-copy h1 .line {
+  display: block;
+}
+.hero-copy h1 .tone {
+  color: var(--tone);
+}
+.hero-copy .sub {
+  margin-top: 22px;
+  font-size: 18.5px;
+  line-height: 1.5;
+  letter-spacing: -0.014em;
+  color: var(--text-2);
+  max-width: 30em;
+}
+.hero-copy .cta-row {
+  margin-top: 30px;
+}
+.hero-copy .disclose {
+  margin-top: 18px;
+}
+.hero-copy .fine {
+  margin-top: 6px;
+  max-width: 36em;
+}
+[data-support="win"] {
+  display: none;
+}
+[data-os="win"] [data-support="mac"] {
+  display: none;
+}
+[data-os="win"] [data-support="win"] {
+  display: inline;
+}
+/* phones and tablets (site download.js sets data-os="mobile"): no installers; the primary button shares the page
+   and the note says why, the same words as the old homepage */
+[data-support="mobile"] {
+  display: none;
+}
+[data-os="mobile"] [data-support="mac"],
+[data-os="mobile"] [data-support="win"],
+[data-os="mobile"] [data-role="alt"] {
+  display: none;
+}
+[data-os="mobile"] [data-support="mobile"] {
+  display: inline;
+}
+.dl-status:empty {
+  display: none;
+}
+
+
+@media (min-width: 1280px) {
+  .hero-grid { grid-template-columns: 480px minmax(0, 1fr); gap: 48px; }
+  .hero-copy h1 { font-size: 64px; }
+  .hero-copy h1 .line:first-child { max-width: 440px; }
+  .hero-copy h1 .tone { white-space: nowrap; }
+}
+
+/* ---------- The stage (every product moment) ---------- */
+.stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--stage-bg);
+  box-shadow: inset 0 0 0 1px var(--stage-edge), var(--stage-shadow);
+  aspect-ratio: 10 / 9;
+  width: 100%;
+  container-type: inline-size;
+}
+.stage::after {           /* the stage's own grain, above its gradient and under the product */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.6 -0.3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.stage-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.stage-static {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+}
+.stage-static img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* each static final frame comes in both themes; the page shows the one for its theme (no JS needed) */
+[data-theme="dark"] .stage-static .st-light,
+[data-theme="light"] .stage-static .st-dark {
+  display: none;
+}
+.stage-static .st-light,
+.stage-static .st-dark {
+  display: contents;
+}
+/* The no-JS Look ending uses the finished paper itself, with no controls over it (the PDF's SVG has no page fill of
+   its own: the paper is white in both themes, as in the app's Theme page). */
+[data-stage="look"] .stage-static picture {
+  position: absolute;
+  left: 17.85%; top: 2.89%; width: 64.3%; height: 92.44%;
+}
+[data-stage="look"] .stage-static img {
+  background: #fff;
+  border-radius: 8px;            /* v2.1: the paper's corners are softly rounded, as in the live story */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 24px 48px -24px rgba(0, 0, 0, 0.45);
+}
+@media (max-width: 639px) {
+  [data-stage="look"] .stage-static picture { left: 7.25%; top: 1.94%; width: 85.5%; height: 92.22%; }
+}
+.stage-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* ---------- The story: 02 Look, 03 Know, 04 Grow, 05 Chase ---------- */
+.story {
+  position: relative;
+  isolation: isolate;
+}
+.chapter {
+  position: relative;
+  padding: clamp(64px, 8vw, 112px) 0;
+}
+.chapter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 4.6fr) minmax(0, 7.4fr);
+  gap: clamp(32px, 4vw, 64px);
+  align-items: center;
+}
+.chapter-copy {
+  max-width: 30rem;
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.step::after {
+  content: "";
+  width: 36px;
+  height: 1px;
+  background: var(--line-3);
+}
+.chapter-copy h2 {
+  margin-top: 18px;
+  font-size: var(--fs-h2);
+  line-height: 1.02;
+  letter-spacing: -0.042em;
+}
+.chapter-copy p {
+  margin-top: 18px;
+  font-size: 18px;
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  color: var(--text-2);
+}
+.chapter .stage-caption {
+  justify-content: flex-start;
+}
+
+/* ---------- the chapter rail (v2.2, desktop with motion) ----------
+   Daniel (2026-10-05): "checkpoints that they could maybe like click on the left side of the screen … some kind of
+   dynamic animated scroller or animated bars … [Codex's rail] when you hover on it it expands into the more angled bars".
+   One tick per checkpoint, 24 px apart (WCAG 2.5.8's spacing). site.js writes each tick's length and fill (and the
+   fill's brightness) per frame, only while something moves; CSS owns the colours, the entrance and the label. Every
+   tick's track stays >= 3:1 against what's behind it (--nav-a0), on the page and on the band. */
+.story-nav {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .js.motion {
+    /* room for the rail at the narrow desktops: a left gutter of at least --nav-room (wide screens already have it) */
+    --pad-l: max(var(--pad), calc(var(--nav-room) - max(0px, (100vw - var(--shell)) / 2)));
+  }
+  .js.motion .shell {
+    padding-left: var(--pad-l);
+  }
+  .js.motion .story-nav:not([hidden]) {
+    display: block;
+  }
+}
+.story-nav {
+  position: absolute;
+  /* about a third of the way into the left gutter: 16–44 px from the edge */
+  left: clamp(16px, calc((max(0px, (100vw - var(--shell)) / 2) + var(--pad-l, var(--pad))) * 0.32), 44px);
+  top: 50%;
+  z-index: 8;
+  translate: 0 -50%;
+  color: var(--text-0);
+  visibility: hidden;
+  transition: color 0.3s var(--ease);
+}
+.story-nav.is-in {
+  visibility: visible;
+}
+.story-nav ol {
+  list-style: none;
+}
+.story-nav button {
+  position: relative;
+  display: block;
+  width: 60px;
+  height: 24px;
+  margin-left: -10px;                /* the hit area reaches a little left of the ticks */
+  -webkit-tap-highlight-color: transparent;
+}
+.story-nav button:focus-visible {
+  outline: none;
+}
+.story-nav .tk {
+  position: absolute;
+  left: 10px;
+  top: 11px;
+  width: 10px;                       /* site.js: the tick's length */
+  height: 2px;
+  border-radius: 1px;
+  pointer-events: none;
+  transform-origin: 0 50%;
+  scale: 0 1;
+  opacity: 0;
+  transition: scale 0.56s var(--ease), opacity 0.3s var(--ease);
+  transition-delay: calc(var(--i, 0) * 36ms);
+}
+/* the entrance: the ticks draw in from the edge, top to bottom */
+.story-nav.is-in .tk {
+  scale: 1 1;
+  opacity: 1;
+}
+.story-nav .tk i,
+.story-nav .tk b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+}
+.story-nav .tk i {
+  width: 100%;
+  opacity: var(--nav-a0);            /* the track */
+  transition: opacity 0.18s var(--ease);
+}
+.story-nav .tk.is-tip i {
+  opacity: 0.95;                     /* the tick under the pointer (or the focus) */
+}
+.story-nav .tk b {
+  width: 0;                          /* site.js: the fill, and its brightness */
+  opacity: 0.4;
+}
+/* the filling tick's leading edge is soft (the house's feathered edge: the theme circle, the paid sweep) */
+.story-nav .tk.is-filling b {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 6px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 6px), transparent);
+}
+.story-nav .tk::after {
+  content: "";
+  position: absolute;
+  inset: -6px -7px;
+  border-radius: 7px;
+  box-shadow: 0 0 0 2px var(--focus);
+  opacity: 0;
+}
+.story-nav button:focus-visible .tk::after {
+  opacity: 1;
+}
+/* the name of the tick under the pointer (or the focus): a frosted pill beside it */
+.nav-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 11px 0 10px;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  font-weight: 560;
+  line-height: 1;
+  letter-spacing: -0.004em;
+  white-space: nowrap;
+  color: var(--text-0);
+  /* near-opaque: at the narrow desktops it sits over the caption's edge, like a popover */
+  background: color-mix(in srgb, var(--bg-1) 94%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+  box-shadow: inset 0 0 0 1px var(--line-2), 0 12px 30px -16px rgba(0, 0, 0, 0.45);
+  opacity: 0;                        /* site.js: with the rail's open amount */
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.nav-tip .n {
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.nav-tip .n:empty {
+  display: none;
+}
+/* on the Ride's band the rail takes the band's text colour (site.js: once the band has reached it) */
+.story-nav.on-band {
+  color: var(--ride-text);
+  --nav-a0: 0.68;
+}
+.story-nav.on-band .nav-tip {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride) 94%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ride-line), 0 12px 30px -16px rgba(0, 0, 0, 0.3);
+}
+.story-nav.on-band .nav-tip .n {
+  color: var(--ride-text-2);
+}
+
+/* ---------- 05 Chase: the Ride's colour field becomes this chapter's backdrop (a full-bleed band) ---------- */
+.chapter--chase {
+  color: var(--ride-text);
+}
+.chapter--chase::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ride);
+  box-shadow: 0 0 0 100vmax var(--ride);
+  clip-path: inset(0 -100vmax);
+}
+.chapter--chase h2,
+.chapter--chase .step {
+  color: var(--ride-text);
+}
+.chapter--chase .step::after {
+  background: var(--ride-line);
+}
+.chapter--chase p,
+.chapter--chase .stage-caption {
+  color: var(--ride-text-2);
+}
+.chapter--chase .stage {
+  overflow: visible;
+  background: var(--ride);
+  box-shadow: none;
+}
+.chapter--chase .stage::after {
+  opacity: 0;
+}
+
+/* ---------- 06 Yours: a hairline-ruled trust strip ---------- */
+.yours {
+  padding: clamp(80px, 9vw, 128px) 0 0;
+}
+/* its static frame (no JS, reduced motion, phones): the Data storage card on the stage's own themed backdrop */
+.yours-stage {
+  margin: 44px auto 0;
+  max-width: 760px;
+}
+.yours-stage .stage {
+  aspect-ratio: 760 / 340;
+}
+@media (max-width: 639px) {
+  .yours-stage .stage {
+    aspect-ratio: 760 / 340;
+    border-radius: 18px;
+  }
+}
+.section-head h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.02;
+  letter-spacing: -0.042em;
+}
+.section-head h2 .tone {
+  color: var(--tone);
+}
+.trust {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 44px;
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+}
+.trust li {
+  padding: 28px 28px 30px;
+  border-left: 1px solid var(--line-1);
+}
+.trust li:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+.trust .ic {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--text-1);
+  background: var(--bg-1);
+  box-shadow: 0 0 0 1px var(--line-1), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+[data-theme="dark"] .trust .ic {
+  background: var(--bg-2);
+}
+.trust .ic svg {
+  width: 18px;
+  height: 18px;
+}
+.trust h3 {
+  margin-top: 20px;
+  font-size: 16.5px;
+  font-weight: 600;
+  letter-spacing: -0.016em;
+  line-height: 1.35;
+}
+.trust p {
+  margin-top: 8px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.trust-more {
+  margin-top: 18px;
+}
+details.disclosure summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--text-2);
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+details.disclosure summary::-webkit-details-marker {
+  display: none;
+}
+details.disclosure summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin: 0 2px 2px 1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s var(--ease);
+}
+details.disclosure[open] > summary::before {
+  transform: rotate(45deg);
+  margin-bottom: 4px;
+}
+details.disclosure summary:hover {
+  color: var(--text-0);
+}
+details.disclosure p {
+  max-width: 62ch;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+details.disclosure p a {
+  color: var(--text-0);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-3);
+}
+
+/* ---------- 07 Price: one card ---------- */
+.price {
+  padding: clamp(80px, 9vw, 128px) 0 0;
+}
+.price-card {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  border-radius: 24px;
+  background: var(--bg-1);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+[data-theme="dark"] .price-card {
+  background: var(--bg-1);
+}
+.price-main {
+  padding: clamp(28px, 3.4vw, 48px);
+}
+.price-figure {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.price-figure .amount {
+  font-size: clamp(64px, 5vw + 20px, 96px);
+  font-weight: 560;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.price-figure .per {
+  font-size: 17px;
+  color: var(--text-2);
+}
+.price-alt {
+  margin-top: 10px;
+  font-size: 17px;
+  color: var(--text-1);
+}
+.price-alt b {
+  font-weight: 600;
+  color: var(--text-0);
+}
+.price-lead {
+  margin-top: 26px;
+  font-size: 17px;
+  font-weight: 560;
+  letter-spacing: -0.014em;
+  color: var(--text-0);
+  max-width: 28ch;
+}
+.price-main .cta-row {
+  margin-top: 28px;
+}
+.price-main .disclose {
+  margin-top: 16px;
+  max-width: 46ch;
+}
+.price-main .disclose + .disclose {
+  margin-top: 8px;
+}
+.price-side {
+  padding: clamp(28px, 3.4vw, 48px);
+  border-left: 1px solid var(--line-1);
+  background: color-mix(in srgb, var(--bg-0) 55%, var(--bg-1));
+}
+.price-side .label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.included {
+  list-style: none;
+  columns: 2;
+  column-gap: 28px;
+  margin-top: 10px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text-1);
+}
+.included li {
+  padding: 10px 0;
+  border-top: 1px solid var(--line-1);
+  break-inside: avoid;
+}
+.price-side .terms {
+  margin-top: 22px;
+}
+.price-side .disclosure {
+  margin-top: 10px;
+}
+
+/* ---------- 08 A note from Daniel ---------- */
+.note {
+  padding: clamp(80px, 9vw, 128px) 0 0;
+}
+.note-card {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+.note-card h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-2);
+}
+.note-card blockquote p {
+  margin-top: 18px;
+  font-size: clamp(22px, 1.1vw + 16px, 28px);
+  line-height: 1.42;
+  letter-spacing: -0.022em;
+  font-weight: 450;
+  color: var(--text-0);
+}
+.note-card .sig {
+  margin-top: 22px;
+  font-size: 15px;
+  color: var(--text-2);
+}
+.note-card .sig a {
+  color: var(--text-1);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-3);
+}
+
+/* ---------- 09 The brand ending: the last shape resolves into the mark ---------- */
+.brand-end {
+  padding: clamp(96px, 10vw, 152px) 0 clamp(72px, 8vw, 112px);
+  text-align: center;
+}
+.brand-stage {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  margin: 0 auto;
+}
+.brand-stage .stage-world {
+  width: 168px;
+  height: 168px;
+}
+.brand-stage .stage-static img {
+  width: 128px;
+  height: 128px;
+}
+.brand-word {
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 640;
+  letter-spacing: -0.024em;
+}
+.end-copy h2 {
+  margin: 30px auto 0;
+  font-size: var(--fs-h2);
+  line-height: 1.02;
+  letter-spacing: -0.042em;
+  max-width: 16ch;
+}
+.end-copy h2 .tone {
+  color: var(--tone);
+}
+.end-copy .cta-row {
+  margin-top: 30px;
+  justify-content: center;
+}
+.end-copy .disclose {
+  margin: 18px auto 0;
+  max-width: 54ch;
+}
+.end-copy .fine {
+  margin: 8px auto 0;
+  max-width: 60ch;
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  border-top: 1px solid var(--line-1);
+  padding: 34px 0 44px;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+.site-footer .shell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 32px;
+}
+.site-footer .brand {
+  font-size: 14px;
+  color: var(--text-1);
+}
+.site-footer .brand img {
+  width: 22px;
+  height: 22px;
+}
+.foot-links {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+.foot-links a {
+  color: var(--text-2);
+  padding: 4px 0;
+  display: inline-block;
+  transition: color 0.15s;
+}
+.foot-links a:hover {
+  color: var(--text-0);
+}
+.foot-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.version {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- The engine's layers (assets/engine.js) ---------- */
+.fx-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.fx-root .fe-app {
+  position: absolute;
+  inset: 0;
+  background: transparent !important;
+  font-family: var(--font-sans);
+}
+.fe-app *,
+.fe-app *::before,
+.fe-app *::after {
+  transition: none !important;
+  animation: none !important;
+  caret-color: transparent !important;
+}
+.fx-shape {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: clip;
+  contain: layout paint;
+}
+.fx-ink {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.fx-st {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-block;
+  z-index: 1;
+}
+.fx-free {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.fx-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 36px;
+  height: 52px;
+  overflow: visible;
+  z-index: 50;
+  filter: drop-shadow(0 2.4px 4px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+}
+.fx-paper {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #fff;
+  overflow: clip;
+}
+.fx-paper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.skinless,
+.skinless:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Scene states: the released app's markup, laid out for the stage ----------
+   Presentation simplifications only (as proof.html and b15.html): hidden table columns, the line-item remove x, the
+   qty spinner and the details line, the compose's empty Cc/Bcc rows and its dropzone. Nothing that changes meaning. */
+.fx-root .d-new .btn,
+.fx-root .d-create .btn,
+.fx-root .d-pdfbtn .btn {
+  white-space: nowrap;
+  margin: 0;
+}
+.fx-root .d-pick .custom-select-wrap {
+  display: inline-block;
+  width: auto !important;
+}
+.fx-root .d-pick .custom-select-trigger {
+  width: 204px !important;
+}
+.fx-root .sw {
+  display: inline-grid;
+}
+.fx-root .sw > span {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+}
+.fx-root .d-dd .custom-select-dropdown {
+  position: static !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  width: 204px;
+  max-height: none !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fx-root .d-rows .card {
+  margin: 0;
+  width: 520px;
+}
+.fx-root.tall .d-rows .card {
+  width: 400px;
+}
+.fx-root .d-rows .line-items-table {
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+}
+.fx-root .d-rows .col-actions,
+.fx-root .d-rows .desc-details,
+.fx-root .d-rows .desc-details-count,
+.fx-root .d-rows .qty-spinner {
+  display: none !important;
+}
+/* (Daniel, 2026-10-06: "the 16 is kinda cut off on the bounds": at 14% the qty field was 1.4 px short of "16"; the
+   description had 44 px to spare) */
+.fx-root .d-rows .col-desc { width: 34%; }
+.fx-root .d-rows .col-rate { width: 22%; }
+.fx-root .d-rows .col-qty { width: 18%; }
+.fx-root .d-rows .col-amount { width: 26%; }
+.fx-root.tall .d-rows .col-desc { width: 36%; }
+.fx-root.tall .d-rows .col-rate { width: 22%; }
+.fx-root.tall .d-rows .col-qty { width: 13%; }
+.fx-root.tall .d-rows .col-amount { width: 29%; }
+.fx-root .d-rows .qty-wrapper input {
+  padding-right: 8px !important;
+}
+/* a narrow frame: the cells' sides tightened (the Delivery Contract's narrow-table practice) */
+.fx-root.tall .d-rows .line-items-table th,
+.fx-root.tall .d-rows .line-items-table td {
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+}
+.fx-root.tall .d-rows .line-items-table input {
+  padding-left: 7px !important;
+  padding-right: 6px !important;
+}
+.fx-root .d-total .card {
+  display: inline-block;
+  margin: 0;
+}
+.fx-root .d-total .total-row.grand-total {
+  border-top: none;
+  margin: 0;
+  padding: 0;
+  gap: 56px;
+  align-items: baseline;
+}
+.fx-root .d-total .total-label,
+.fx-root .d-total .total-value {
+  white-space: nowrap;
+}
+.fx-root .d-page .invoice-preview {
+  width: 612px;
+  margin: 0;
+}
+.fx-root .fx-paperbox {
+  position: relative;
+  width: 612px;
+  height: 792px;
+  background: #fff;
+}
+.fx-root .fx-paperbox img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Look: the Theme page's real cards */
+.fx-root .d-theme .card {
+  display: inline-block;
+  margin: 0;
+}
+.fx-root .d-theme .card.picker-card {
+  width: 800px;
+}
+.fx-root.tall .d-theme .card.picker-card {
+  width: 760px;
+}
+.fx-root .d-theme .style-picker {
+  position: relative;
+  margin: 0;
+  flex-wrap: nowrap;
+}
+.fx-root .d-theme .style-card {
+  transform-origin: 50% 50%;
+}
+.fx-root .d-theme .color-presets {
+  margin: 0;
+  flex-wrap: nowrap;
+}
+.fx-root .d-theme .logo-pool {
+  display: flex;
+}
+.fx-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+/* Know + Chase: the invoices list, its columns shared out for the stage */
+.fx-root .d-list .card {
+  margin: 0;
+  display: inline-block;
+  width: 740px;
+}
+.fx-root .d-list:not(.no-actions) .card {
+  width: 640px;
+}
+.fx-root.tall .d-list .card {
+  width: 330px;
+}
+.fx-root.tall .d-list:not(.no-actions) .card {
+  width: 400px;
+}
+.fx-root .d-list .table-scroll {
+  overflow: visible;
+  container-type: normal;
+}
+.fx-root .d-list table {
+  width: auto;
+  min-width: 0 !important;
+}
+.fx-root .d-list .col-project,
+.fx-root .d-list .year-spacer,
+.fx-root .d-list th:first-child,
+.fx-root .d-list td:first-child {
+  display: none;
+}
+.fx-root .d-list.no-actions th:last-child,
+.fx-root .d-list.no-actions tr:not(.year-header) > td:last-child {
+  display: none;
+}
+.fx-root .d-list.no-date .col-date {
+  display: none;
+}
+.fx-root .d-list.client-status .invoice-num-cell,
+.fx-root .d-list.client-status th:nth-child(2),
+.fx-root .d-list.client-status tr.year-header {
+  display: none;
+}
+.fx-root .d-list td.cell-truncate {
+  max-width: none;
+}
+.fx-root .d-list .icon-actions .icon-btn:not(.fx-email) {
+  display: none;
+}
+.fx-root .d-list:not(.no-actions) th:last-child {
+  width: 52px !important;
+}
+.fx-root .d-list th.text-right {
+  width: 130px !important;
+}
+.fx-root .d-list.all-actions .icon-actions .icon-btn {
+  display: inline-grid;
+}
+.fx-root .d-tabs .tabs {
+  margin: 0;
+  display: inline-flex;
+}
+.fx-root .d-tabs .tab-ink {
+  opacity: 1;
+  transition: none;
+}
+/* phones: the four real tabs at a legible size (their count pills hidden, as b15.html hid the KPI feet) */
+.fx-root.tall .d-tabs .tab .count {
+  display: none;
+}
+/* Grow: the dashboard's real KPI row and Revenue card */
+.fx-root .d-kpis .kpi-row {
+  margin: 0;
+  width: 960px;
+}
+.fx-root.tall .d-kpis .kpi-row {
+  grid-template-columns: 1fr;
+  width: 400px;
+  gap: 10px;
+}
+.fx-root.tall .d-kpis .kpi-row .kpi {
+  padding: 10px 14px;
+}
+.fx-root.tall .d-kpis .kpi-label { margin-bottom: 6px; }
+.fx-root.tall .d-kpis .kpi-foot { margin-top: 4px; }
+.fx-root .d-kpis .kpi .spark {
+  clip-path: none;
+}
+.fx-root .d-chart .chart-card {
+  margin: 0;
+  width: 562px;
+}
+.fx-root .bar-stack {
+  transform-box: view-box;
+  transform-origin: 0 190px;
+}
+/* Chase: compose, toast, the dashboard's Recent invoices */
+.fx-root .d-compose .email-compose-modal {
+  width: 600px;
+  max-width: none;
+  max-height: none;
+  box-shadow: none;
+}
+.fx-root.tall .d-compose .email-compose-modal {
+  width: 440px;
+}
+.fx-root .d-compose .email-compose-body {
+  overflow: visible;
+  max-height: none;
+}
+.fx-root .d-compose .email-compose-field.fx-hide,
+.fx-root .d-compose .email-compose-dropzone {
+  display: none;
+}
+.fx-root .d-compose .email-compose-textarea {
+  resize: none;
+  height: 132px;
+}
+.fx-root .d-toast .flash {
+  display: inline-flex;
+  white-space: nowrap;
+  box-shadow: none;
+  margin: 0;
+}
+.fx-root .d-recent .card {
+  margin: 0;
+  display: inline-block;
+  width: 720px;
+}
+.fx-root .d-recent .table-scroll {
+  overflow: visible;
+  container-type: normal;
+}
+.fx-root .d-recent .recent-table {
+  min-width: 0 !important;
+  table-layout: fixed;
+  width: 100%;
+}
+/* the five real columns shared out so no client name truncates (b15.html's recipe) */
+.fx-root .d-recent .recent-table th:nth-child(1) { width: 15% !important; }
+.fx-root .d-recent .recent-table th:nth-child(2) { width: 27% !important; }
+.fx-root .d-recent .recent-table th:nth-child(3) { width: 17% !important; }
+.fx-root .d-recent .recent-table th:nth-child(4) { width: 19% !important; }
+.fx-root .d-recent .recent-table th:nth-child(5) { width: 22% !important; }
+.fx-root .d-recent .status-toggle {
+  position: relative;
+  overflow: hidden;
+}
+.fx-pink {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+}
+.fx-w {
+  position: relative;
+  z-index: 1;
+}
+.fx-root.tall .d-recent .card {
+  width: 500px;
+}
+.fx-root.tall .d-recent .recent-table th:nth-child(1),
+.fx-root.tall .d-recent .recent-table td:nth-child(1),
+.fx-root.tall .d-recent .recent-table th:nth-child(3),
+.fx-root.tall .d-recent .recent-table td:nth-child(3) {
+  display: none;
+}
+.fx-root.tall .d-recent .recent-table th:nth-child(2) {
+  width: 42% !important;
+}
+.fx-root.tall .d-recent .recent-table th:nth-child(5) {
+  width: 30% !important;
+}
+.fx-root.tall .d-recent .recent-table th:nth-child(4) { width: 28% !important; }
+/* Compensate for the canvas scale and each screen's zoom: table text renders at 13.5 px. */
+.fx-root.tall .client-status { --screen-zoom: 1.62; }
+.fx-root.tall .client-status:not(.no-actions) { --screen-zoom: 1.42; }
+.fx-root.tall .d-recent { --screen-zoom: 1.12; }
+.fx-root.tall .client-status table { width: 100%; table-layout: fixed; }
+.fx-root.tall .fe-app .client-status th:nth-child(3) { width: 42% !important; }
+.fx-root.tall .fe-app .client-status th.text-right { width: 28% !important; }
+.fx-root.tall .fe-app .client-status th.text-center { width: 30% !important; }
+.fx-root.tall .client-status:not(.no-actions) th:last-child { width: 32px !important; }
+.fx-root.tall .fe-app .client-status td.cell-truncate,
+.fx-root.tall .fe-app .d-recent td.cell-truncate { max-width: none; white-space: normal; }
+.fx-root.tall .fe-app .client-status th,
+.fx-root.tall .fe-app .client-status td,
+.fx-root.tall .fe-app .client-status .status-toggle,
+.fx-root.tall .fe-app .d-recent th,
+.fx-root.tall .fe-app .d-recent td,
+.fx-root.tall .fe-app .d-recent .status-toggle {
+  font-size: calc(13.5px / var(--demo-scale) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .client-status th,
+.fx-root.tall .fe-app .client-status td,
+.fx-root.tall .fe-app .d-recent th,
+.fx-root.tall .fe-app .d-recent td { padding: 10px 6px; letter-spacing: 0; }
+.fx-root.tall .fe-app .client-status .status-toggle,
+.fx-root.tall .fe-app .d-recent .status-toggle { padding: 3px 6px; }
+
+.fx-root .d-recent .status-toggle,
+.fx-root .d-list .status-toggle {
+  cursor: default;
+  white-space: nowrap;
+}
+.fx-pillover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+/* Brand: the real mark */
+.fx-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 128px;
+  height: 128px;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1023px) {
+  .hero-grid,
+  .chapter-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-copy,
+  .chapter-copy {
+    max-width: 40rem;
+  }
+  .hero-stage {
+    max-width: 760px;
+  }
+  .trust {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .trust li:nth-child(3) {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .trust li:nth-child(n + 3) {
+    border-top: 1px solid var(--line-1);
+  }
+  .price-card {
+    grid-template-columns: 1fr;
+  }
+  .price-side {
+    border-left: 0;
+    border-top: 1px solid var(--line-1);
+  }
+  .chapter .chapter-stage {
+    max-width: 760px;
+  }
+}
+/* stacked chapters (no sticky stage): the number and heading, then the stage, then the text; Grow keeps its text
+   above its stage, so the stage that fills with the Ride's colour sits right on the Chase band */
+@media (max-width: 1023px) {
+  .chapter-grid > .chapter-copy {
+    display: contents;
+  }
+  .chapter-grid {
+    row-gap: 0;
+  }
+  .chapter-grid > .chapter-copy > .step { order: 1; }
+  .chapter-grid > .chapter-copy > h2 { order: 2; }
+  .chapter-grid > .chapter-stage { order: 3; margin-top: 26px; }
+  .chapter-grid > .chapter-copy > p { order: 4; margin-top: 22px; max-width: 40rem; }
+  #grow .chapter-grid > .chapter-copy > p { order: 3; margin-top: 18px; }
+  #grow .chapter-grid > .chapter-stage { order: 4; }
+  #grow.chapter { padding-bottom: 0; }
+}
+@media (max-width: 639px) {
+  :root {
+    --header-h: 56px;
+  }
+  .nav a:not(.nav-cta) {
+    display: none;
+  }
+  .theme-switch {
+    margin-left: 6px;
+  }
+  .theme-switch button {
+    padding: 0 9px;
+  }
+  .theme-switch button .lbl {
+    display: none;
+  }
+  .stage {
+    aspect-ratio: 5 / 6;
+    border-radius: 22px;
+  }
+  .hero-copy h1 {
+    letter-spacing: -0.042em;
+    line-height: 1.02;
+  }
+  .hero-copy .sub {
+    margin-top: 16px;
+    font-size: 16.5px;
+  }
+  .hero-copy .cta-row {
+    margin-top: 22px;
+  }
+  .hero-copy .cta-row .btn {
+    width: 100%;
+  }
+  .hero-stage {
+    margin-top: 4px;
+  }
+  .chapter-copy p {
+    font-size: 16.5px;
+  }
+  .trust {
+    grid-template-columns: 1fr;
+  }
+  .trust li,
+  .trust li:nth-child(3) {
+    border-left: 0;
+    padding: 22px 0;
+  }
+  .trust li + li {
+    border-top: 1px solid var(--line-1);
+  }
+  .included {
+    columns: 1;
+  }
+  .price-figure .amount {
+    font-size: 64px;
+  }
+  .end-copy .cta-row .btn,
+  .price-main .cta-row .btn {
+    width: 100%;
+  }
+  .site-footer .shell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+@media (max-width: 380px) {
+  .brand span {
+    display: none;
+  }
+  .nav a.nav-cta {
+    padding: 7px 11px;
+  }
+}
+
+/* =====================================================================================================================
+   v2: ONE story driven by scroll (vault "Motion House Style" § 10). With motion, a sticky pin (the stage and the
+   captions) sits over a tall scroll track: scroll sets a target time, the stage follows it on a spring, and every
+   beat's copy moves into the pin as a caption (its home section hides). Calm and no-JS: the machinery is off and the
+   beats stack as sections, each with its static final frame.
+   ===================================================================================================================== */
+.story {
+  display: none;
+}
+.js.motion .story {
+  display: block;
+  position: relative;
+}
+.js.motion .beat.is-moved {
+  display: none;
+}
+.pin {
+  position: sticky;
+  top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  height: calc(100svh - var(--header-h));
+  z-index: 2;
+}
+.track {
+  height: 0;
+}
+/* the Ride's band: the bar's colour flooding the page from the stage outwards (clip-path, per frame) */
+.pin-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(-1 * var(--header-h));
+  bottom: 0;
+  z-index: 0;
+  display: none;
+  background: var(--ride);
+  pointer-events: none;
+}
+.pin-grid {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 4.6fr) minmax(0, 7.4fr);
+  column-gap: clamp(32px, 4vw, 64px);
+  align-items: center;
+}
+.stage-col {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 24px 0 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.stage-wrap {
+  position: relative;
+  width: min(100%, calc((100svh - var(--header-h) - 120px) * 10 / 9));
+}
+.stage-wrap .stage {
+  box-shadow: inset 0 0 0 1px var(--stage-edge);
+}
+/* the stage's long shadow lives on its own layer, so it can leave as the stage becomes the colour field */
+.stage-shade {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  box-shadow: var(--stage-shadow);
+  pointer-events: none;
+}
+.stage-field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--ride);
+  opacity: 0;
+  pointer-events: none;
+}
+.pin.full-field .stage-wrap .stage {
+  background: var(--ride);
+  box-shadow: none;
+}
+.pin.full-field .stage-wrap .stage::after {
+  opacity: 0;
+}
+/* a small visible label wherever the stage shows money adding up (legal, 2026-10-05) or a made-up client */
+.stage-label {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 6;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  font-weight: 540;
+  line-height: 1.3;
+  letter-spacing: -0.004em;
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--bg-1) 78%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  opacity: 0;
+  transition: opacity 0.24s var(--ease), color 0.24s var(--ease), background-color 0.24s var(--ease);
+  pointer-events: none;
+}
+.stage-label span {
+  display: none;
+}
+.stage-label[data-mode="data"] [data-l="data"] {
+  display: inline;
+}
+.stage-label[data-mode="data"] {
+  opacity: 1;
+}
+.pin.on-field .stage-label {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride-text) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
+}
+/* v2.1 (Daniel: "the same light and dark mode circle effect … on the website and the app"): the theme switch reveals the
+   new theme through a soft-edged circle from the toggle (site.js themeReveal animates --vt-r on the new root snapshot;
+   the old snapshot stays opaque underneath). Same numbers as the app: feather ~22% of the radius, 48–220 px. */
+@property --vt-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+html.vt-theme::view-transition-group(root),
+html.vt-theme::view-transition-old(root) {
+  animation: none;
+}
+html.vt-theme::view-transition-new(root) {
+  animation: none;
+  -webkit-mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
+  mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
+}
+/* v2.1 (Daniel: "you can see the edges of the shadows on this section"): while the band is the page and the field fills
+   the stage, the stage box is invisible, so it must not clip: a tall card's shadow (Chase's email card) would end in a
+   hard rounded edge at the box. Let it fall onto the band instead. */
+html.on-band .pin.full-field .stage {
+  overflow: visible;
+}
+/* while the Ride's band is the page, the header takes its colour */
+html.on-band .site-header {
+  background: color-mix(in srgb, var(--ride) 88%, transparent);
+  border-bottom-color: transparent;
+}
+html.on-band .site-header .brand,
+html.on-band .site-header .nav a {
+  color: var(--ride-text);
+}
+html.on-band .site-header .nav a.nav-cta {
+  box-shadow: inset 0 0 0 1px var(--ride-line);
+}
+html.on-band .theme-switch {
+  background: color-mix(in srgb, var(--ride-text) 9%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ride-line);
+}
+html.on-band .theme-switch button {
+  color: var(--ride-text-2);
+}
+html.on-band .theme-switch button[aria-pressed="true"] {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride-text) 14%, transparent);
+  box-shadow: none;
+}
+/* the page-level layer: the card that leaves the stage to become the price card, and the real FE mark */
+.pin-over {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.ov-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: clip;
+  contain: layout paint;
+  display: none;
+}
+.ov-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
+}
+/* the captions: every beat's copy, stacked in place; one shows at a time (site.js switches them by beat). The inactive
+   ones are transparent but stay in the accessibility tree, in order (one complete text version of the story); site.js
+   takes them out of the tab order. A switch: the outgoing leaves in 60 ms, then the incoming arrives in 100 ms. */
+.captions {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  pointer-events: none;
+}
+.captions > .beat-copy {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: calc((100% - clamp(32px, 4vw, 64px)) * 4.6 / 12);
+  max-width: none;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(-50%) translateY(10px);
+  pointer-events: none;
+}
+.captions > .beat-copy.is-on {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%);
+  transition: opacity 0.1s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.captions > .beat-copy.is-off {
+  opacity: 0;
+  transform: translateY(-50%) translateY(-10px);
+  transition: opacity 0.06s cubic-bezier(0.4, 0, 1, 1), transform 0.06s cubic-bezier(0.4, 0, 1, 1);
+}
+.captions > .price-copy {
+  width: 100%;
+}
+.captions .chapter-copy h2 {
+  margin-top: 18px;
+}
+/* Chase sits on the band */
+.captions > [data-copy="chase"] h2,
+.captions > [data-copy="chase"] .step {
+  color: var(--ride-text);
+}
+.captions > [data-copy="chase"] .step::after {
+  background: var(--ride-line);
+}
+.captions > [data-copy="chase"] p {
+  color: var(--ride-text-2);
+}
+/* Yours, compact in the caption column: the four facts as a 2 x 2 grid */
+.captions .yours-copy .trust {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 26px;
+}
+.captions .yours-copy .trust li {
+  padding: 20px 18px 22px 0;
+  border-left: 0;
+}
+.captions .yours-copy .trust li:nth-child(n + 3) {
+  border-top: 1px solid var(--line-1);
+}
+.captions .yours-copy .trust li:nth-child(odd) {
+  padding-right: 24px;
+  border-right: 1px solid var(--line-1);
+}
+.captions .yours-copy .trust li:nth-child(even) {
+  padding-left: 24px;
+}
+.captions .yours-copy .trust h3 {
+  margin-top: 14px;
+}
+/* Price: the card is drawn by the stage's overlay (it arrives from the folder); here only its content */
+.captions .price-copy .price-card {
+  margin-top: 24px;
+  background: transparent;
+  box-shadow: none;
+}
+.captions .price-copy .section-head h2 {
+  font-size: clamp(32px, 2.2vw + 14px, 46px);
+}
+/* the note and the closing call, left-aligned beside the mark */
+.captions .note-card {
+  text-align: left;
+}
+.captions .note-card blockquote p {
+  font-size: clamp(20px, 0.9vw + 14px, 25px);
+}
+.captions .end-copy h2 {
+  margin: 18px 0 0;
+  max-width: 13ch;
+}
+.captions .end-copy .cta-row {
+  justify-content: flex-start;
+}
+.captions .end-copy .disclose,
+.captions .end-copy .fine {
+  margin-left: 0;
+  margin-right: 0;
+}
+.captions .end-copy .brand-word {
+  margin-top: 0;
+}
+
+/* the Make -> Look seam's PDF page (light: it arrives on the page as it steps back) */
+.fx-seam-page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 612px;
+  height: 792px;
+  max-width: none;
+  transform-origin: 0 0;
+  display: none;
+  pointer-events: none;
+}
+/* the Look -> Know seam's page: its PDF is cropped (never squashed) as the page closes into a row */
+.fx-bar-pdf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  pointer-events: none;
+}
+/* the Yours piece: Settings -> Data storage, at a fixed width on the stage (the app's card is page-wide) */
+.fx-root .d-settings .card {
+  width: 520px;
+  margin: 0;
+}
+.fx-root.tall .d-settings .card {
+  width: 420px;
+}
+
+/* phones and tablets: the stage pinned at the top, the captions below it */
+@media (max-width: 1023px) {
+  .pin-grid {
+    display: block;
+  }
+  .stage-col {
+    position: absolute;
+    left: var(--pad);
+    right: var(--pad);
+    top: 12px;
+    height: auto;
+    padding: 0;
+    display: block;
+  }
+  .stage-wrap {
+    width: min(100%, calc(58svh * 10 / 9));
+    margin: 0 auto;
+    transform-origin: 50% 0;
+  }
+  .captions {
+    position: absolute;
+    inset: 0;
+    height: auto;
+  }
+  .captions > .beat-copy {
+    left: var(--pad);
+    right: var(--pad);
+    top: var(--cap-top, 62%);
+    width: auto;
+    transform: translateY(10px);
+  }
+  .captions > .beat-copy.is-on {
+    transform: none;
+  }
+  /* (the outgoing caption fades where it is: drifting up would take it into the stage's 22 px clearance) */
+  .captions > .beat-copy.is-off {
+    transform: none;
+  }
+  .captions > [data-copy="make"] {
+    top: var(--cap-top-hero, 50%);
+  }
+  .captions .chapter-copy h2 {
+    margin-top: 10px;
+    font-size: clamp(28px, 6.4vw, 40px);
+  }
+  .captions .chapter-copy p {
+    margin-top: 10px;
+    font-size: 16px;
+  }
+  .captions .hero-copy h1 {
+    font-size: clamp(34px, 9vw, 52px);
+  }
+  .captions .hero-copy .sub {
+    margin-top: 12px;
+    font-size: 16px;
+  }
+  .captions .hero-copy .cta-row {
+    margin-top: 16px;
+    gap: 10px 20px;
+  }
+  .captions .hero-copy .btn {
+    min-height: 46px;
+    padding: 10px 22px;
+  }
+  .captions .hero-copy .disclose {
+    margin-top: 12px;
+  }
+}
+@media (max-width: 639px) {
+  .stage-wrap {
+    width: min(100%, calc(56svh * 5 / 6));
+  }
+  .stage-shade {
+    border-radius: 22px;
+  }
+  .captions .hero-copy .cta-row .btn {
+    width: auto;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+  .btn:active {
+    transform: none;
+  }
+}
+
+/* =====================================================================================================================
+   The 25-second tour (2026-10-06): the hero's secondary button and the dialog it opens (assets/tour-modal.js; the
+   tour itself is /tour/quick/, in an iframe). Placed before the generated fx-lightvars block, which the build
+   script rewrites.
+   ===================================================================================================================== */
+/* the secondary button: the header's outlined Download pill (.nav-cta) at the hero's button size, both themes */
+.btn-ghost {
+  color: var(--text-0);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.btn-ghost:hover {
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+.btn-ghost svg {
+  width: 16px;
+  height: 16px;
+}
+/* the scroll lock: overflow only (scrollY is kept, so the story's follower never sees a jump); the gutter stays, so
+   classic scrollbars don't shift the page sideways */
+html.tq-locked {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+/* the dialog fills the viewport (a click on it, outside .tq-box, is a backdrop click); the box is centred.
+   --tq-chrome: the tour's own bar and notes under its 16:10 window (measured: ~108 px desktop, ~146 px at 390) */
+.tq-dialog {
+  --tq-chrome: 112px;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-0);
+  overflow: hidden;
+  container-type: size;                                /* .tq-box sizes itself in cqw / cqh: no 100vw scrollbar maths */
+}
+.tq-dialog[open] {
+  display: grid;
+  place-items: center;
+}
+.tq-dialog::backdrop {
+  background: rgba(4, 6, 10, 0.74);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+[data-theme="light"] .tq-dialog::backdrop {
+  background: rgba(226, 227, 222, 0.8);
+}
+/* 16:10 window, up to 1100 px wide, never taller than the viewport (the close row is 44 px + an 8 px gap) */
+.tq-box {
+  --tq-w: min(1100px, 100cqw, calc((100cqh - 52px - var(--tq-chrome)) * 1.6));
+  width: var(--tq-w);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.tq-close {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--bg-2) 82%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  transition: color 0.15s, box-shadow 0.15s;
+}
+.tq-close:hover {
+  color: var(--text-0);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+.tq-close svg {
+  width: 16px;
+  height: 16px;
+}
+.tq-frame {
+  width: 100%;
+  height: calc(var(--tq-w) / 1.6 + var(--tq-chrome));
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg-0);
+  box-shadow: 0 0 0 1px var(--line-2), 0 40px 100px -40px rgba(0, 0, 0, 0.7);
+}
+.tq-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* one calm arrival (the global reduced-motion rule above switches it off) */
+.tq-dialog[open] .tq-box {
+  animation: tq-in 0.28s var(--ease) both;
+}
+.tq-dialog[open]::backdrop {
+  animation: tq-fade 0.28s ease both;
+}
+@keyframes tq-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+@keyframes tq-fade {
+  from { opacity: 0; }
+}
+@media (max-width: 639px) {
+  .tq-dialog {
+    --tq-chrome: 150px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tq-dialog[open] .tq-box,
+  .tq-dialog[open]::backdrop {
+    animation: none !important;
+  }
+}
+
+/* fx-lightvars: begin (generated by build/light_vars_css.py) */
+.fe-app .fx-lightvars {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg-page: #e0e0e0;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #ffffff;
+  --bg-interactive: #ffffff;
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-active: rgba(0, 0, 0, 0.08);
+  --bg-glass: rgba(0, 0, 0, 0.06);
+  --bg-subtle: #fafafa;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.64);
+  --text-muted: rgba(0, 0, 0, 0.44);
+  --text-inverse: #ffffff;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.14);
+  --border-strong: rgba(0, 0, 0, 0.32);
+  --navbar-bg: #000000;
+  --navbar-text: #ffffff;
+  --navbar-text-muted: rgba(255, 255, 255, 0.64);
+  --navbar-hover-bg: rgba(255, 255, 255, 0.10);
+  --navbar-active-bg: rgba(255, 255, 255, 0.18);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --accent: #2c7a7b;
+  --accent-strong: #1a5456;
+  --accent-on: #ffffff;
+  --cta: #3a78aa;
+  --cta-hover: #336b98;
+  --cta-on: #ffffff;
+  --cta-rgb: 58, 120, 170;
+  --color-paid: #0d7f3d;
+  --color-paid-bg: rgba(30, 215, 96, 0.14);
+  --color-paid-text: #0d7f3d;
+  --color-outstanding: #a14d0f;
+  --color-outstanding-bg: rgba(255, 164, 43, 0.14);
+  --color-outstanding-text: #8a3e11;
+  --color-danger: #c72424;
+  --color-danger-bg: rgba(199, 36, 36, 0.08);
+  --color-warning: #a14d0f;
+  --color-warning-bg: rgba(255, 164, 43, 0.12);
+  --focus-ring: 2px dashed var(--focus-border);
+  --focus-offset: 2px;
+  --mono-tracking: 0.05em;
+  --body-tracking: -0.005em;
+  --checkbox-checked-bg: var(--text-primary);
+  --checkbox-checked-mark: var(--text-inverse);
+  --invoice-field-empty: #ebebeb;
+  --invoice-field-focus: #e7e7e7;
+  --focus-border: var(--text-primary);
+  --user-accent: #4a7c7e;
+  --user-accent-rgb: 74, 124, 126;
+  --paper-warm: #f5f0e4;
+  --bg-0: #f3f3f0;
+  --bg-1: #ffffff;
+  --bg-2: #ffffff;
+  --bg-3: #f6f7f9;
+  --bg-4: #eceef2;
+  --bg-input: #ffffff;
+  --line-1: rgba(20, 20, 24, 0.07);
+  --line-2: rgba(20, 20, 24, 0.13);
+  --line-3: rgba(20, 20, 24, 0.24);
+  --text-0: #0f1014;
+  --text-1: #323339;
+  --text-2: #60646f;
+  --text-3: #9a9da6;
+  --paid: #1a9e48;
+  --paid-soft: rgba(26, 158, 72, 0.14);
+  --paid-ring: rgba(26, 158, 72, 0.28);
+  --due: #bf7a16;
+  --due-soft: rgba(191, 122, 22, 0.14);
+  --danger: #c8353a;
+  --danger-soft: rgba(200, 53, 58, 0.14);
+  --info: #3b7dd1;
+  --accent-hi: #3a78aa;
+  --accent-rgb: 44, 95, 138;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(44, 95, 138, 0.14);
+  --accent-ring: rgba(44, 95, 138, 0.35);
+  --font-display: "Times New Roman", "Georgia", serif;
+  --font-mono-data: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+  --ease-swift: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.9, 0.25, 1);
+  --d-micro: 120ms;
+  --d-base: 200ms;
+  --d-tab: 160ms;
+  --d-page: 320ms;
+  --shadow-ring: 0 0 0 3px var(--accent-ring);
+  color: var(--text-primary);
+}
+/* fx-lightvars: end */

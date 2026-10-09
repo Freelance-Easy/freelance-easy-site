@@ -1,0 +1,81 @@
+/* The 25-second tour's presentation layer, adapted from ../tour/proto.css (same tokens, type and frame). App styles
+   live inside the inert frame (app.css, frame.css: the released ones, copied unchanged from ../tour/).
+   html.embed (the homepage's dialog): no page chrome, just the window, its "Fictional data" label, one compact bar
+   (progress, play/pause, caption, time, the end actions) and the example note, all sized to fit the iframe. */
+@font-face { font-family: Inter; font-style: normal; font-weight: 300 700; font-display: swap; src: url('../fonts/Inter-Variable-latin.woff2') format('woff2'); }
+:root { --stage: #080a0f; --ink: #edf0f6; --muted: #929aaa; --line: #252a34; --panel: #11151c; --accent: #b9cddd; color-scheme: dark; }
+:root[data-theme="light"] { --stage: #f4f5f6; --ink: #171d27; --muted: #616b79; --line: #d7dce3; --panel: #fff; --accent: #36556f; color-scheme: light; }
+* { box-sizing: border-box; }
+html { min-width: 0; background: var(--stage); }
+body { margin: 0; color: var(--ink); background: var(--stage); font: 14px/1.6 Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+body, .frame-top, button { transition: background-color 240ms ease, color 240ms ease, border-color 240ms ease; }
+.tour-page { width: min(1100px, calc(100% - 64px)); margin: 0 auto; padding: 32px 0 42px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.tour-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.back { color: var(--muted); font-size: 12px; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 8px 14px; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.theme-switch { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; }
+.theme-switch button { background: transparent; border: 0; padding: 3px 9px; font-size: 11px; color: var(--muted); }
+.theme-switch button[aria-pressed="true"] { background: var(--line); color: var(--ink); }
+.intro { margin: 43px 0 27px; }
+.eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .15em; color: var(--muted); margin: 0 0 9px; }
+h1 { font-size: clamp(32px, 4vw, 46px); line-height: 1.12; font-weight: 550; letter-spacing: -.055em; margin: 0; }
+.frame-surround { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 24px 80px -35px #0008; background: var(--panel); }
+.frame-top { height: 34px; display: flex; align-items: center; gap: 13px; padding: 0 14px; font-size: 12px; color: var(--muted); }
+.window-dots { display: flex; gap: 5px; }
+.window-dots i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .35; }
+/* the legal label: the same size as the homepage stage's "Fictional data" (12.5 px), outside the scaled screen */
+.fictional { margin-left: auto; color: var(--ink); font-size: 12.5px; font-weight: 540; white-space: nowrap; }
+.pframe-box { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; }
+#app-frame { display: block; width: 1440px; height: 900px; position: absolute; inset: 0; border: 0; transform-origin: 0 0; pointer-events: none; user-select: none; }
+/* the bar: a hairline progress, then ONE row (play/pause, the chapter's caption, time; the end actions at the end) */
+.bar { margin-top: 16px; }
+.progress { height: 2px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+.controls { display: flex; align-items: center; gap: 16px; margin-top: 12px; min-width: 0; }
+.play { flex: none; min-width: 92px; font-size: 12px; }
+.caption { display: flex; align-items: baseline; gap: 14px; flex: 1; min-width: 0; }
+.caption > span { color: var(--muted); font-size: 10px; letter-spacing: .08em; white-space: nowrap; }
+.caption p { margin: 0; font-size: 14px; }
+.time { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.time:empty { display: none; }
+.end-actions { display: flex; align-items: center; gap: 14px; flex: none; }
+.end-actions button { font-size: 12px; }
+.end-actions .full { font-size: 12px; color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; white-space: nowrap; }
+.end-actions .full:hover { color: var(--ink); text-decoration-color: var(--muted); }
+[hidden] { display: none !important; }
+.player-note, .example-note { font-size: 10px; color: var(--muted); margin: 9px 0 0; }
+.example-note { opacity: .85; }
+@media (max-width: 600px) {
+ .tour-page { width: calc(100% - 28px); padding-top: 19px; }
+ .tour-header { gap: 8px; }
+ .back { font-size: 10px; }
+ .intro { margin: 34px 0 22px; }
+ .controls { flex-wrap: wrap; gap: 10px 12px; }
+ .caption { order: 3; flex-basis: 100%; gap: 10px; }
+ .caption p { font-size: 12px; }
+ .play { min-width: 82px; }
+ .frame-top { padding: 0 9px; gap: 9px; }
+}
+
+/* ---------- #embed: chrome-less, sized to its iframe (quick.js fits the window to the height that's left) ---------- */
+html.embed, html.embed body { height: 100%; overflow: hidden; }
+html.embed .tour-header, html.embed .intro { display: none; }
+html.embed .tour-page { width: 100%; height: 100%; margin: 0; padding: 0; }
+html.embed .player { height: 100%; display: flex; flex-direction: column; padding: 0 0 10px; }
+html.embed .player > * { width: var(--fw, 100%); max-width: 100%; align-self: center; flex: none; }
+html.embed .frame-surround { border-width: 0 0 1px; border-radius: 0; box-shadow: none; }   /* the dialog's box rounds it */
+html.embed .frame-top { height: 30px; }
+html.embed .bar { margin-top: 0; padding: 0 14px; }
+html.embed .controls { margin-top: 10px; }
+html.embed .player-note, html.embed .example-note { margin: 6px 0 0; padding: 0 14px; }
+@media (max-width: 600px) {
+ html.embed .bar { padding: 0 10px; }
+ html.embed .controls { margin-top: 8px; gap: 8px 10px; }
+ html.embed .play, html.embed .end-actions button { padding: 6px 11px; }
+ html.embed .player-note, html.embed .example-note { margin-top: 4px; padding: 0 10px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
