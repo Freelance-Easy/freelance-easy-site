@@ -391,6 +391,7 @@
       add("picker", `<div id="theme-page" class="redesigned d-theme"><div class="card picker-card"><div class="card-pad">${k.picker}</div></div></div>`, ".card");
       add("presets", `<div id="theme-page" class="redesigned d-theme"><div class="card"><div class="card-pad">${k.presets}</div></div></div>`, ".card");
       add("pool", `<div id="theme-page" class="redesigned d-theme"><div class="card"><div class="card-pad"><div class="logo-pool">${k.poolItem}</div></div></div></div>`, ".card");
+      if (tall) ST.picker.st.style.setProperty("--sz", String(Z.picker));   // (phones: the template names at 12 screen px)
       const picker = ST.picker.st.querySelector(".style-picker");
       const cards = [...picker.querySelectorAll(".style-card")];
       cards.forEach((c) => c.classList.remove("active"));
@@ -565,6 +566,7 @@
       ];
       const tabsEl = div("fx-free", world);
       tabsEl.style.zoom = Z.tabs;
+      if (tall) tabsEl.style.setProperty("--sz", String(Z.tabs));         // (phones: the tabs at 12 screen px, site.css)
       tabsEl.innerHTML = `<div id="invoices-page" class="redesigned d-tabs">${k.tabs}</div>`;
       const tabs = [...tabsEl.querySelectorAll(".tab")];
       const inkEl = tabsEl.querySelector(".tab-ink");
@@ -691,6 +693,7 @@
       const Z = tall ? { kpis: 1.32, chart: 0.98 } : { kpis: 0.9, chart: 1.56 };
       const kpis = div("fx-free", world);
       kpis.style.zoom = Z.kpis;
+      if (tall) kpis.style.setProperty("--sz", String(Z.kpis));           // (phones: KPI type at fixed screen px, site.css)
       kpis.innerHTML = `<div id="dashboard-page" class="redesigned d-kpis">${k.kpiRow}</div>`;
       const shape = div("fx-shape", world);
       div("fx-ink", shape);
@@ -724,7 +727,7 @@
       const kW = kr.width, kH = kr.height;
       const surf = solid(sk.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.bc[3] > 0.005 ? sk.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
-      const gapY = tall ? 18 : 26;
+      const gapY = tall ? 12 : 26;                       // (phones, round B1: 12, the larger KPI type needs the room)
       const blockH = kH + gapY + sk.h;
       const top = Math.round(H / 2 - blockH / 2);
       const RC = { cx: W / 2, cy: top + kH + gapY + sk.h / 2, w: sk.w, h: sk.h, r: sk.r, bw: Math.max(1, sk.bw) };
@@ -750,13 +753,16 @@
         place(st, alphaAt(t, B.content, 99), RC, size, "center", Z.chart);
         css(kpis, "left", `${(kLeft / Z.kpis).toFixed(2)}px`);
         css(kpis, "top", `${(top / Z.kpis).toFixed(2)}px`);
-        const ka = alphaAt(t, B.kpiIn, 99);
+        // (phones, Sol mobile #11: the KPI cards are in from the Know -> Grow seam's second half, which reveals them;
+        // their values stay hidden until the count starts, then count up on the app's own clock)
+        const ka = tall ? 1 : alphaAt(t, B.kpiIn, 99);
         css(kpis, "opacity", ka >= 0.999 ? "1" : ka.toFixed(3));
         css(kpis, "filter", ka >= 0.999 ? "none" : `blur(${((1 - ka) * 7).toFixed(2)}px)`);
         // the app's own odometer: 900 ms easeOutCubic from $0, 80 ms stagger (dashboard.html animateOdometers)
         values.forEach((v, i) => {
           const u = clamp((t - B.count - 0.08 * i) / 0.9);
           v.textContent = money0(targets[i] * E.CUBIC_OUT(u));
+          if (tall) v.style.visibility = t < B.count ? "hidden" : "";
         });
         // the sparklines draw (style.css sparkReveal: a 700 ms wipe, cubic-bezier(.2,.7,.2,1))
         sparks.forEach((s, i) => {
@@ -851,7 +857,8 @@
       const sendBtn = stM.querySelector("#email-compose-send-btn");
       const stT = addSt(shapeB, `<div class="redesigned d-toast">${k.toast}</div>`, Z.toast);
       const boxT = stT.querySelector(".flash");
-      const stR = addSt(shapeB, `<div id="dashboard-page" class="redesigned d-recent">${k.recentSent}</div>`, Z.recent);
+      const stR = addSt(shapeB, `<div id="dashboard-page" class="redesigned d-recent${tall ? " fx-chase-recent" : ""}">${k.recentSent}</div>`, Z.recent);
+      if (tall) stT.style.setProperty("--sz", String(Z.toast));           // (phones: "Email sent." at 14 screen px, 44 px tall)
       if (tall) {
         const rows = [...stR.querySelectorAll("tbody tr")];
         rows.forEach((tr, i) => { if (i >= 2 && !tr.textContent.includes(k.number)) tr.remove(); });
@@ -871,6 +878,7 @@
       // the KPI cards (the dashboard's real row): before -> after values computed per frame by the app's own tween
       const kp = div("fx-free", world);
       kp.style.zoom = Z.kpis;
+      if (tall) { kp.style.setProperty("--sz", String(Z.kpis)); kp.classList.add("fx-chase-kpis"); }
       const kpiMarkup = `<div class="kpi-row">${k.kpiPaidBefore}${k.kpiDueBefore}${k.kpiOverdueBefore}</div>`;
       kp.innerHTML = `<div id="dashboard-page" class="redesigned d-kpis">${kpiMarkup}</div>`;
       const kpiCards = [...kp.querySelectorAll(".kpi")];
@@ -909,7 +917,12 @@
       const RI = { cx: emailAt[0], cy: emailAt[1], w: eB.width, h: eB.height, r: Math.max(4, emailSkin.r), bw: 0 };
       const RM = { cx: CX, cy: CY, w: skM.w, h: skM.h, r: skM.r, bw: Math.max(1, skM.bw) };
       const sendAt = [RM.cx - skM.w / 2 + (sB.left - mBox.left) + sB.width * 0.42, RM.cy - skM.h / 2 + (sB.top - mBox.top) + sB.height * 0.6];
-      const RT = { cx: CX, cy: CY, w: skT.w, h: skT.h, r: skT.h / 2, bw: Math.max(1, skT.bw) };
+      // (phones, Astra pA #2: after the Email press the overdue row stays; the modal opens over it, and "Email sent."
+      // lands 14 screen px under it, the two one group centred in the stage, until the dashboard takes over)
+      const ds = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
+      const grpTop = Math.round(H / 2 - (skA.h + 14 / ds + skT.h) / 2);
+      const RAt = tall ? { ...RA, cy: grpTop + skA.h / 2 } : RA;
+      const RT = { cx: CX, cy: tall ? grpTop + skA.h + 14 / ds + skT.h / 2 : CY, w: skT.w, h: skT.h, r: skT.h / 2, bw: Math.max(1, skT.bw) };
       const gapY = tall ? 18 : 24;
       const blockH = kr.height + gapY + skR.h;
       const kTop = Math.round(H / 2 - blockH / 2);
@@ -926,7 +939,7 @@
       const DUR = 6.55;
       // (phones, Sol mobile P1 #4: the list card is whole and populated from local time 0, never an empty shell; it is
       // also what the Ride hands over to. Desktop keeps its arrival from 90 %.)
-      const GA = tall ? geom([[0, RA], [0.0001, RA, 2.6, 0.86]]) : geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
+      const GA = tall ? geom([[0, RA], [0.0001, RA, 2.6, 0.86], [B.morphToast, RAt, 3.2, 0.88]]) : geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
       const GB = geom([[0, RI], [B.grow, RM, 2.6, 0.86], [B.morphToast, RT, 3.2, 0.88], [B.morphDash, RR, 2.4, 0.84]]);
       const FB = colTrack([[0, surfA], [B.grow, surfM, 2.6, 0.86], [B.morphToast, surfT, 3.2, 0.88], [B.morphDash, surfR, 2.4, 0.84]]);
       // site v2.2 (Astra's review: "no empty shell"): the one shape always carries content. Each morph's outgoing content
@@ -958,8 +971,10 @@
         const ga = GA(t);
         // the card arrives on the field (fades up as it grows from 90 %), and fades once its button has been pressed,
         // its content with it (site v2.2: never an empty card)
-        const aA = inOut(t, SCHED.A[0], B.pressEmail + 0.06, 0.2);
-        const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, B.pressEmail + 0.06, 0.2, E.ACCEL));
+        // (phones: the card stays through the email and leaves as the dashboard grows, which carries the same row)
+        const A_OUT = tall ? B.morphDash : B.pressEmail + 0.06, A_OD = tall ? 0.12 : 0.2;
+        const aA = inOut(t, SCHED.A[0], A_OUT, A_OD);
+        const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, A_OUT, A_OD, E.ACCEL));
         drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA });
         place(stA, aA, ga, szA, "center", Z.list);
         const hand = FX.gate.cursor > 0.5, pr = FX.gate.press > 0.5;

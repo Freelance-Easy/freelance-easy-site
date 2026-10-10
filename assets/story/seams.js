@@ -211,7 +211,7 @@
      The Paid list's other rows, its header and tabs leave; its last row lifts (Grow's own card, starting as that row:
      the list's colour, no shadow, the row's text above it) and grows into the chart card while the row's text gives way
      to the chart's real labels. The bars are still down at the hand-over and rise right after it (Grow's own wave). */
-  SEAMS.knowGrow = function ({ A, B, layer, dark }) {
+  SEAMS.knowGrow = function ({ A, B, layer, dark, tall }) {
     const a = A.inst.X, b = B.inst.X;
     // Grow is held at t 0.22 (its labels in, the bars down) until the labels have arrived here (u = BARS), then its own
     // clock runs: its first bar starts 0.04 s later and is a quarter up ~0.1 s after the labels; the wave runs on into
@@ -240,6 +240,9 @@
         placeSt(rowSt, fadeOut(u, 0.14, 0.1), cb.x, cb.y, S.z);
         B.show(true);
         B.seek(G0 + Math.max(0, u - BARS));
+        // (phones, Sol mobile #11 / Astra pA #9: the KPI cards' shells and labels arrive over u 0.16-0.30, so the frame
+        // always reads as a dashboard; their values count up afterwards, on Grow's own clock)
+        if (tall) { const kk = P(u, 0.16, 0.14, E.DECEL); css(b.kpis, "opacity", kk >= 0.999 ? "1" : kk.toFixed(3)); }
         const g = GS(u), k = kOf(u);
         drawShape(b.shape, g, { fill: mixC(a.surf, b.surf, k), line: b.line, lineA: k, dark, sh: P(u, 0.03, 0.16) });
         place(b.st, P(u, 0.16, 0.16, E.DECEL), g, b.size, "center", b.zc);

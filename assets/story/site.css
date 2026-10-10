@@ -1546,6 +1546,90 @@ details.disclosure p a {
 .fx-root.tall .fe-app .d-recent td { padding: 10px 6px; letter-spacing: 0; }
 .fx-root.tall .fe-app .client-status .status-toggle,
 .fx-root.tall .fe-app .d-recent .status-toggle { padding: 3px 6px; }
+/* (phones, round B1: Sol mobile #6/#8/#13, Astra pA #1) the product's words at fixed SCREEN sizes, the tables' recipe:
+   font = screen px / --demo-scale / the component's own zoom (--sz, set by scenes.js on each zoomed box). Client names
+   and amounts 14 px on one line, status pills 12 px, tabs 12 px, KPI labels 12 / values 22 / feet 12, template names
+   12, the "Email sent." toast 14 px in a 44 px pill. */
+.fx-root.tall .fe-app .client-status td,
+.fx-root.tall .fe-app .d-recent td {
+  font-size: calc(14px / var(--demo-scale) / var(--screen-zoom));
+  padding-left: calc(4px / var(--demo-scale) / var(--screen-zoom));
+  padding-right: calc(4px / var(--demo-scale) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .client-status td.cell-truncate,
+.fx-root.tall .fe-app .d-recent td.cell-truncate,
+.fx-root.tall .fe-app .d-recent td:nth-child(2) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fx-root.tall .fe-app .client-status .status-toggle,
+.fx-root.tall .fe-app .d-recent .status-toggle {
+  font-size: calc(12px / var(--demo-scale) / var(--screen-zoom));
+}
+.fx-root.tall .d-list.no-actions .card { width: 352px; }
+.fx-root.tall .fe-app .client-status th:nth-child(3) { width: 46% !important; }
+.fx-root.tall .fe-app .client-status th.text-right { width: 26% !important; }
+.fx-root.tall .fe-app .client-status th.text-center { width: 28% !important; }
+/* (Chase's list carries the row actions column: the client gets the room the one short amount leaves) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) th:nth-child(3) { width: 46% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 25% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 29% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(2) { width: 46% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(4) { width: 29% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(5) { width: 25% !important; }
+/* (Chase: the overdue row is a full-width, 64 px row that stays readable through the email) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
+  padding-top: calc(22px / var(--demo-scale) / var(--screen-zoom));
+  padding-bottom: calc(22px / var(--demo-scale) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .d-tabs .tabs .tab {
+  font-size: calc(12px / var(--demo-scale) / var(--sz, 1));
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding-left: calc(4px / var(--demo-scale) / var(--sz, 1));
+  padding-right: calc(4px / var(--demo-scale) / var(--sz, 1));
+}
+/* (the KPI cards a little tighter inside, so the larger type keeps Grow's stack and chart inside the stage) */
+.fx-root.tall .fe-app .d-kpis .kpi-row { gap: 8px; }
+.fx-root.tall .fe-app .d-kpis .kpi-row .kpi { padding: 8px 10px; }
+.fx-root.tall .fe-app .d-kpis .kpi-label { margin-bottom: 3px; }
+.fx-root.tall .fe-app .d-kpis .kpi-foot { margin-top: 2px; }
+.fx-root.tall .fx-chase-kpis .kpi-foot { white-space: nowrap; }
+.fx-root.tall .fx-chase-kpis .kpi:not(:first-child) .spark { display: none; }
+.fx-root.tall .fe-app .d-kpis .kpi-label {
+  font-size: calc(12px / var(--demo-scale) / var(--sz, 1));
+  letter-spacing: 0.04em;
+}
+.fx-root.tall .fe-app .d-kpis .kpi-value { font-size: calc(22px / var(--demo-scale) / var(--sz, 1)); }
+.fx-root.tall .fe-app .d-kpis .kpi-foot { font-size: calc(12px / var(--demo-scale) / var(--sz, 1)); }
+.fx-root.tall .fe-app .d-theme .style-card-label {
+  font-size: calc(12px / var(--demo-scale) / var(--sz, 1));
+  line-height: 1.2;
+  padding: calc(4px / var(--demo-scale) / var(--sz, 1)) 2px;
+  white-space: nowrap;
+}
+/* (the larger name takes its height from the card's thumbnail, so the tray keeps its size and place in the stage) */
+.fx-root.tall .fe-app .d-theme .style-card-preview {
+  height: calc(188px + 13px * 1.2 + 16px - 12px * 1.2 / var(--demo-scale) / var(--sz, 1) - 8px / var(--demo-scale) / var(--sz, 1));
+}
+.fx-root.tall .fe-app .d-toast .flash {
+  font-size: calc(14px / var(--demo-scale) / var(--sz, 1));
+  min-height: calc(44px / var(--demo-scale) / var(--sz, 1));
+  padding-top: 0;
+  padding-bottom: 0;
+  align-items: center;
+  box-sizing: border-box;
+}
+/* (Chase's closing dashboard: the KPI row and the Recent card share the other scenes' 528-canvas-px edges; Collected
+   YTD spans the row, Outstanding and Overdue share the one beneath it, so the stack fits the stage with readable type) */
+.fx-root.tall .fx-chase-kpis .kpi-row {
+  width: 471px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.fx-root.tall .fx-chase-kpis .kpi-row .kpi:first-child { grid-column: 1 / -1; }
+.fx-root.tall .d-recent.fx-chase-recent .card { width: 471px; }
 
 .fx-root .d-recent .status-toggle,
 .fx-root .d-list .status-toggle {
@@ -1842,25 +1926,25 @@ html.on-band .pin.full-field .stage {
   overflow: visible;
 }
 /* while the Ride's band is the page, the header takes its colour */
-html.on-band .site-header {
+html.on-band:where(:not(.past-band)) .site-header {
   background: color-mix(in srgb, var(--ride) 88%, transparent);
   border-bottom-color: transparent;
 }
-html.on-band .site-header .brand,
-html.on-band .site-header .nav a {
+html.on-band:where(:not(.past-band)) .site-header .brand,
+html.on-band:where(:not(.past-band)) .site-header .nav a {
   color: var(--ride-text);
 }
-html.on-band .site-header .nav a.nav-cta {
+html.on-band:where(:not(.past-band)) .site-header .nav a.nav-cta {
   box-shadow: inset 0 0 0 1px var(--ride-line);
 }
-html.on-band .theme-switch {
+html.on-band:where(:not(.past-band)) .theme-switch {
   background: color-mix(in srgb, var(--ride-text) 9%, transparent);
   box-shadow: inset 0 0 0 1px var(--ride-line);
 }
-html.on-band .theme-switch button {
+html.on-band:where(:not(.past-band)) .theme-switch button {
   color: var(--ride-text-2);
 }
-html.on-band .theme-switch button[aria-pressed="true"] {
+html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   color: var(--ride-text);
   background: color-mix(in srgb, var(--ride-text) 14%, transparent);
   box-shadow: none;
@@ -2153,6 +2237,10 @@ html.on-band .theme-switch button[aria-pressed="true"] {
   }
   .story-intro .hero-copy .disclose {
     margin-top: 12px;
+  }
+  /* Make's caption in the pin (site.js placeCopies): the hero's headline, its second half in the hero's own tone */
+  .captions .make-cap h2 .tone {
+    color: var(--tone);
   }
 }
 .story-intro:empty {

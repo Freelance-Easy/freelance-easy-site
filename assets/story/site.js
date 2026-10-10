@@ -198,7 +198,34 @@
       if (!want && !front && sr) sr.remove();
       capActive(c, !want);                             // in the pin: idle until its beat is up; at home or in the intro: ordinary
     }
+    // (phones, Astra pA #3: once the intro has scrolled away, the pinned Make scene keeps a caption: "01" and the hero's
+    // own headline, in the standard caption treatment. A visual copy only: aria-hidden (the intro's h1 is what screen
+    // readers read) and nothing in it can take focus.)
+    if (inIntro.includes("make") && copy.make) {
+      if (!makeCap) {
+        makeCap = document.createElement("div");
+        makeCap.className = "chapter-copy beat-copy make-cap";
+        makeCap.setAttribute("data-copy", "make-cap");
+        makeCap.setAttribute("aria-hidden", "true");
+        const n = document.createElement("span");
+        n.className = "step";
+        n.textContent = "01";
+        const h = document.createElement("h2");
+        const h1 = copy.make.querySelector("h1");
+        if (h1) for (const x of h1.childNodes) h.appendChild(x.cloneNode(true));
+        makeCap.append(n, h);
+      }
+      if (makeCap.parentNode !== capsEl) capsEl.insertBefore(makeCap, capsEl.firstChild);
+      capActive(makeCap, false);
+    } else if (makeCap && makeCap.parentNode) {
+      makeCap.classList.remove("is-on", "is-off");
+      makeCap.remove();
+    }
   }
+  let makeCap = null;
+  // the caption element a beat shows in the pin (phones: Make's is the visual copy above; the hero is the intro)
+  const capFor = (b) => (b === "make" && makeCap && makeCap.parentNode === capsEl ? makeCap
+    : b && copy[b] && copy[b].parentNode === capsEl ? copy[b] : null);
 
   /* ---------------- phones: the stage, its label row and the captions, balanced in the pin ---------------- */
   // (Sol mobile P1 #3 / P2 #7) The pin is 100svh tall. Under the stage: an 8 px gap and the 20 px "Fictional data" row
@@ -219,7 +246,7 @@
     if (preset() !== "tall") { pin.style.removeProperty("--stage-w"); pin.style.removeProperty("--stage-top"); return; }
     const ph = pin.clientHeight, cw = stageCol.clientWidth;
     let capH = 0;
-    for (const b of PHONE_BEATS) if (copy[b] && copy[b].parentNode === capsEl) capH = Math.max(capH, copy[b].offsetHeight);
+    for (const b of PHONE_BEATS) { const c = capFor(b); if (c) capH = Math.max(capH, c.offsetHeight); }
     const safe = cssPx("env(safe-area-inset-bottom, 0px)");
     const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
     const w = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
@@ -495,6 +522,22 @@
   // where the target is, as its segment and local time (a rebuild or a resize changes the map, not the story)
   function targetPlace() { const sg = TL.segs[segAt(target)]; return { id: sg.id, u: target - sg.T0 }; }
   // put the scroll position where the new map gives that same segment-local time (the map is monotonic: bisection)
+  // phones: how far below the pinned story the reader is (px past its end), or null while they are in it or above it.
+  // readerY is the position as of the last scroll event, so a layout change above (the intro growing) has not moved it.
+  let readerY = 0;
+  const storyEnd = () => storyTop + MAP.L;
+  function pastStory() { return TL && TL.p === "tall" && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
+  function keepPast(d) { const y = Math.round(storyEnd() + d); if (Math.abs(window.scrollY - y) >= 1) window.scrollTo(0, y); readerY = y; }
+  // the header takes the band's colour while the band is the page; (phones, Astra pA #8) the phone story ends on Chase's
+  // band, so once the reader is past the pinned story the header is back on its own surface (scrolling back restores it)
+  let bandK = 0;
+  function syncOnBand() {
+    const onBand = bandK >= 0.6;
+    if (lastG.onBand !== onBand) { lastG.onBand = onBand; doc.classList.toggle("on-band", onBand); }
+    const past = !!(TL && TL.p === "tall" && MAP && window.scrollY > storyEnd() + 1);
+    if (lastG.past !== past) { lastG.past = past; doc.classList.toggle("past-band", past); }
+  }
+  window.addEventListener("scroll", () => { readerY = window.scrollY; if (TL && MAP) syncOnBand(); }, { passive: true });
   function anchorScroll(tp) {
     const sg = tp && TL.seg(tp.id);
     if (!sg) return;
@@ -562,9 +605,9 @@
     // (full-field: the field is the whole stage, so the stage's own background takes its colour too: no edge fringe)
     const pinCls = "pin" + (f > 0.5 ? " on-field" : "") + (f >= 0.999 && !(G.fieldK > 0) ? " full-field" : "") + (T >= TL.late ? " is-late" : "");
     if (lastG.pinCls !== pinCls) { lastG.pinCls = pinCls; pin.setAttribute("class", pinCls); }
-    // the header joins the band while the band is the page
-    const onBand = bk >= 0.6;
-    if (lastG.onBand !== onBand) { lastG.onBand = onBand; doc.classList.toggle("on-band", onBand); }
+    // the header joins the band while the band is the page (syncOnBand)
+    bandK = bk;
+    syncOnBand();
     // the chapter rail takes the band's colours once the band's opening clip has passed it
     if (navOn && R0) {
       const nb = bk >= 1 || (bk > 0 && R0.l * kb < navCx && R0.t * kb < navCy);
@@ -611,7 +654,7 @@
     if (i === capIdx && !instant) return;
     capIdx = i;
     const b = TL.beats[i];                            // null: a beat with no caption (the Ride's flood)
-    const next = b && copy[b] && copy[b].parentNode === capsEl ? copy[b] : null;   // (phones: the hero is the intro, not a caption)
+    const next = capFor(b);                            // (phones: the hero is the intro; Make shows its visual caption)
     clearTimeout(capTimer);
     const cur = $$(".beat-copy.is-on", capsEl).filter((c) => c !== next);
     if (instant || !cur.length) {
@@ -993,7 +1036,7 @@
     clearStage();
     TL = null; MAP = null; OV = null; L = null;
     lastG = {}; curSeg = -1; lastDrawn = null; capIdx = -1;
-    doc.classList.remove("on-band");
+    doc.classList.remove("on-band", "past-band");
     pin.setAttribute("class", "pin");
     pin.style.removeProperty("opacity");
     clearDip();
@@ -1021,8 +1064,10 @@
       const h = location.hash.slice(1);
       const anchored = firstLoad && h in ANCHOR && TL.beats.includes(ANCHOR[h]);
       if (anchored) window.scrollTo(0, h === "top" ? 0 : scrollForBeat(ANCHOR[h]));
+      else if (keep && keep.past != null && TL.p === "tall") keepPast(keep.past);   // (phones: below the story, stay there)
       else if (keep && !keep.intro) anchorScroll(keep.tp);      // the same story time under the new map: nothing moves
       target = mapScroll(window.scrollY);
+      readerY = window.scrollY;
       held = false;
       if (dip) { dip = null; clearDip(); }
       intro = null; shown = target; vel = 0; dirSign = 1; FX.gate.cursor = 1;
@@ -1054,7 +1099,7 @@
   function snapshot() {
     if (!TL) return null;
     const sg = TL.segs[segAt(shown)];
-    return { id: sg.id, u: shown - sg.T0, vel, intro: intro ? { ...intro } : null, cursor: FX.gate.cursor, dirSign, tp: targetPlace() };
+    return { id: sg.id, u: shown - sg.T0, vel, intro: intro ? { ...intro } : null, cursor: FX.gate.cursor, dirSign, tp: targetPlace(), past: pastStory() };
   }
   // a rebuild that keeps the story where it is: the same segment and local time, the follower's speed, the arrival
   // (if it's still playing) and the direction gate. The map is rebuilt; the scroll position is untouched.
@@ -1082,9 +1127,13 @@
   }
   function relayout() {
     const tp = intro ? null : targetPlace();
+    const past = pastStory();
     layout();
     // the story stays where it is: the scroll position follows the new map (and the follower keeps its state)
-    anchorScroll(tp);
+    // (phones, Sol mobile pA P2: only a reader inside the pinned story is anchored to story time; one below it keeps
+    // their place among the page's sections, the same distance past the story's end: no jump back into Chase)
+    if (past != null) keepPast(past);
+    else anchorScroll(tp);
     target = mapScroll(window.scrollY);
     lastDrawn = null;
     render(shown);
