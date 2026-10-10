@@ -603,15 +603,20 @@
   // three segments on phones (make to HOLD, the start still, makeEnd): across 640 px, Make's own time carries over.
   function placeIn(id, u) {
     let sg = TL.seg(id);
-    if (!sg && (id === "start" || id === "makeEnd")) { u = TL.HOLD + (id === "makeEnd" ? u : 0); sg = TL.seg("make"); }
-    if (sg && sg.id === "make" && TL.p === "tall" && u > sg.T1 - sg.T0 + 1e-9) { u -= sg.T1 - sg.T0; sg = TL.seg("makeEnd"); }
-    return sg ? { sg, u } : null;
+    let moved = false;
+    if (!sg && (id === "start" || id === "makeEnd")) { u = TL.HOLD + (id === "makeEnd" ? u : 0); sg = TL.seg("make"); moved = true; }
+    if (sg && sg.id === "make" && TL.p === "tall" && u > sg.T1 - sg.T0 + 1e-9) { u -= sg.T1 - sg.T0; sg = TL.seg("makeEnd"); moved = true; }
+    return sg ? { sg, u, moved } : null;
   }
   function anchorScroll(tp) {
     const pl = tp && placeIn(tp.id, tp.u);
     if (!pl) return;
     const T = clamp(pl.sg.T0 + pl.u, 0, TL.T1);
-    if (T <= mapScroll(0) + 1e-6) return;
+    if (T <= mapScroll(0) + 1e-6) {
+      // (Sol F1 re-check: the phone's start still lands on a wider stage's arrival hold, which is the top of the map)
+      if (pl.moved && Math.abs(window.scrollY - Math.round(storyTop)) >= 1) window.scrollTo(0, Math.max(0, Math.round(storyTop)));
+      return;
+    }
     let lo = 0, hi = storyTop + MAP.L;
     for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (mapScroll(mid) < T) lo = mid; else hi = mid; }
     if (Math.abs(window.scrollY - hi) >= 1) window.scrollTo(0, Math.round(hi));
