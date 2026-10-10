@@ -134,22 +134,28 @@
   // off the card, Grow's KPIs past the stage). A zoom:2 probe tells the model once; on a legacy engine the rect is
   // scaled back by the element's own zoom product. Elsewhere it is the plain call (byte-identical frames). Every preset:
   // desktop and iPad Safari measure the same way. The probe runs once at startup; per frame it costs one test.
+  // (Sol, round E: the probe compares a zoom:2 box with an unzoomed control beside it, so a zoomed page can't fool it,
+  // and it caches only a real measurement: a page hidden at startup (width 0) is asked again on the next call)
   let zoomLegacy = null;
   function legacyZoom() {
     if (zoomLegacy !== null) return zoomLegacy;
-    const o = document.createElement("div"), i = document.createElement("div");
-    o.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;zoom:2";
-    i.style.cssText = "width:50px;height:10px";
-    o.appendChild(i);
-    (document.body || document.documentElement).appendChild(o);
-    const w = i.getBoundingClientRect().width;
-    o.remove();
-    zoomLegacy = w > 0 && w < 75;
+    const host = document.createElement("div"), ctl = document.createElement("div"), zo = document.createElement("div"), zi = document.createElement("div");
+    host.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none";
+    ctl.style.cssText = "width:50px;height:10px";
+    zo.style.cssText = "zoom:2";
+    zi.style.cssText = "width:50px;height:10px";
+    zo.appendChild(zi);
+    host.append(ctl, zo);
+    (document.body || document.documentElement).appendChild(host);
+    const c = ctl.getBoundingClientRect().width, w = zi.getBoundingClientRect().width;
+    host.remove();
+    if (!(c > 0) || !(w > 0)) return false;              // not laid out yet: no answer cached
+    zoomLegacy = w / c < 1.5;                             // modern: the zoomed box measures 2x its control; legacy: 1x
     return zoomLegacy;
   }
   function vrect(el) {
     const r = el.getBoundingClientRect();
-    if (!(zoomLegacy ?? legacyZoom())) return r;
+    if (!(zoomLegacy !== null ? zoomLegacy : legacyZoom())) return r;
     let z = 1;
     for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const v = parseFloat(getComputedStyle(e).zoom); if (v > 0) z *= v; }
     if (Math.abs(z - 1) < 1e-6) return r;
