@@ -143,14 +143,43 @@
       }
     }
   }
-  // each beat's copy lives in its home section (calm, no JS, the phone's late beats) or in the pin as a caption
-  function placeCopies(inPin) {
+  // phones (< 640 px, Sol mobile P1 #1): the hero's copy is an ordinary intro in the page flow ABOVE the pinned story
+  // (intro, then the sticky stage), never squeezed into the pin under a shrunken stage. Made on first use.
+  let introEl = null;
+  function introBox() {
+    if (!introEl) {
+      introEl = document.createElement("div");
+      introEl.className = "shell story-intro";
+      storyEl.parentNode.insertBefore(introEl, storyEl);
+      // it sets where the story starts: if it changes height on its own (a share status line, late fonts), the map
+      // follows it (window resizes are handled by the resize path)
+      if ("ResizeObserver" in window) {
+        let introH = -1;
+        new ResizeObserver(() => {
+          const h = introEl.offsetHeight;
+          if (!TL || TL.p !== "tall" || h === introH) return;
+          const first = introH < 0;
+          introH = h;
+          if (!first) relayout();
+        }).observe(introEl);
+      }
+    }
+    return introEl;
+  }
+  // each beat's copy lives in its home section (calm, no JS, the phone's late beats), in the pin as a caption, or
+  // (phones: the hero) in the intro above the pin
+  function placeCopies(inPin, inIntro = []) {
+    let moved = false;                                 // once one caption moves in, the later ones follow it (story order)
     for (const b of BEATS) {
       const c = copy[b];
       if (!c) continue;
-      const want = inPin.includes(b);
-      if (want && c.parentNode !== capsEl) { capsEl.appendChild(c); home[b].sec.classList.add("is-moved"); }
-      if (!want && c.parentNode === capsEl) {
+      const want = inPin.includes(b), front = !want && inIntro.includes(b);
+      const dest = want ? capsEl : front ? introBox() : null;
+      if (dest && (c.parentNode !== dest || (want && moved))) {
+        dest.appendChild(c); home[b].sec.classList.add("is-moved");
+        if (want) moved = true;
+      }
+      if (!dest && c.parentNode !== home[b].parent) {
         const nx = home[b].next && home[b].next.parentNode === home[b].parent ? home[b].next : null;
         home[b].parent.insertBefore(c, nx);
         home[b].sec.classList.remove("is-moved");
@@ -160,15 +189,43 @@
       c.removeAttribute("aria-hidden");
       c.style.removeProperty("top");
       let sr = c.querySelector(":scope > .sr-stage");
-      if (want && !sr) {
+      if ((want || front) && !sr) {
         sr = document.createElement("p");
         sr.className = "visually-hidden sr-stage";
         sr.textContent = STAGE_ARIA[b];
         c.appendChild(sr);
       }
-      if (!want && sr) sr.remove();
-      capActive(c, !want);                             // in the pin: idle until its beat is up; at home: an ordinary section
+      if (!want && !front && sr) sr.remove();
+      capActive(c, !want);                             // in the pin: idle until its beat is up; at home or in the intro: ordinary
     }
+  }
+
+  /* ---------------- phones: the stage, its label row and the captions, balanced in the pin ---------------- */
+  // (Sol mobile P1 #3 / P2 #7) The pin is 100svh tall. Under the stage: an 8 px gap and the 20 px "Fictional data" row
+  // (always reserved), 12 px, then the captions, budgeted at the LARGEST one so nothing moves between beats. The stage
+  // stays 5:6 (its canvas is 600 x 720) and as wide as the gutters allow; the space left over is shared above and below
+  // the block (a little more below), clear of the bottom safe-area inset.
+  const LABEL_ROW = 28, LABEL_GAP = 12, FIT_TOP = 12, FIT_BOT = 16;
+  // the label's spot in the stage (mounts and seam layers go before it); null (append) once it lives under the stage
+  const labelRef = () => (label.parentNode === stage ? label : null);
+  function cssPx(h) {
+    const el = div("", document.body);
+    el.style.cssText = `position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none;height:${h}`;
+    const v = el.getBoundingClientRect().height;
+    el.remove();
+    return v;
+  }
+  function fitPhone() {
+    if (preset() !== "tall") { pin.style.removeProperty("--stage-w"); pin.style.removeProperty("--stage-top"); return; }
+    const ph = pin.clientHeight, cw = stageCol.clientWidth;
+    let capH = 0;
+    for (const b of PHONE_BEATS) if (copy[b] && copy[b].parentNode === capsEl) capH = Math.max(capH, copy[b].offsetHeight);
+    const safe = cssPx("env(safe-area-inset-bottom, 0px)");
+    const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
+    const w = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
+    const free = Math.max(0, ph - safe - ((w * 6) / 5 + LABEL_ROW + LABEL_GAP + capH));
+    pin.style.setProperty("--stage-w", `${w}px`);
+    pin.style.setProperty("--stage-top", `${Math.max(FIT_TOP, Math.round(free * 0.42))}px`);
   }
 
   /* ---------------- mounts: one per piece, all on the ONE stage ---------------- */
@@ -181,7 +238,7 @@
     const cam = div("fx-free fx-cam", rootEl);
     css(cam, "width", `${W}px`); css(cam, "height", `${H}px`); css(cam, "transform-origin", "0 0");
     const world = div("fe-app", cam);
-    stage.insertBefore(rootEl, label);
+    stage.insertBefore(rootEl, labelRef());
     css(rootEl, "transform", "none");
     const inst = FX.scenes[name].build({ root: rootEl, world, W, H, tall: p === "tall", dark: theme() === "dark" });
     const m = { name, rootEl, cam, world, W, H, inst, p, vis: null };
@@ -207,6 +264,10 @@
     const isDesk = desktop();
     const dark = theme() === "dark";
     css(stageWrap, "transform", "none");
+    // phones: "Fictional data" leaves the clipped stage for its own row under it; everywhere else it is in the stage
+    if (p === "tall") { if (label.parentNode !== stageCol) stageCol.appendChild(label); }
+    else if (label.parentNode !== stage) stage.appendChild(label);
+    fitPhone();
     const s0 = stage.clientWidth / W;
     const names = isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : PHONE_BEATS;
     for (const n of names) mounts[n] = mount(n, p, s0);
@@ -214,7 +275,7 @@
     const layer = () => {
       const l = div("fx-root stage-world fx-seam" + (p === "tall" ? " tall" : ""));
       css(l, "width", `${W}px`); css(l, "height", `${H}px`); css(l, "display", "none"); css(l, "--demo-scale", String(s0));
-      stage.insertBefore(l, label);
+      stage.insertBefore(l, labelRef());
       return l;
     };
     const segs = [];
@@ -285,7 +346,7 @@
   const segAt = (T) => { const i = TL.segs.findIndex((s) => T <= s.T1 + 1e-9); return i < 0 ? TL.segs.length - 1 : i; };
 
   /* ---------------- layout: fit, the scroll map, every rect the frame path needs (measured here, never per frame) ---------------- */
-  let storyTop = 0, kHero = 1, R0 = null;
+  let storyTop = 0, kHero = 1, R0 = null, svhPx = 0, sizeW = 0, sizeH = 0;
   const CAP_GAP = 22;                                  // phones: the captions' clearance under the stage
   function layout() {
     if (!TL) return;
@@ -298,7 +359,14 @@
     const pr = pin.getBoundingClientRect(), wr = stageWrap.getBoundingClientRect();
     L = { sw, sh, s, stageTop: wr.top - pr.top, stageH: wr.height };
     // phones: the hero's copy sits under a smaller stage; every other caption under the full stage; both keep CAP_GAP
-    if (!TL.isDesk) {
+    // (phones < 640 px: the hero's copy is above the pin, so the stage is full size from the first frame and every
+    // caption sits under the label row; the map's viewport is the pin's own stable 100svh, measured once per layout)
+    sizeW = window.innerWidth; sizeH = window.innerHeight;
+    svhPx = TL.p === "tall" ? cssPx("100svh") : 0;
+    if (TL.p === "tall") {
+      kHero = 1;
+      pin.style.setProperty("--cap-top", `${Math.round(L.stageTop + L.stageH + LABEL_ROW + LABEL_GAP)}px`);
+    } else if (!TL.isDesk) {
       const heroH = copy.make ? copy.make.offsetHeight : 0;
       kHero = clamp((pr.height - L.stageTop - CAP_GAP - heroH - 14) / L.stageH, 0.5, 1);
       pin.style.setProperty("--cap-top", `${Math.round(L.stageTop + L.stageH + CAP_GAP)}px`);
@@ -349,7 +417,7 @@
 
   /* ---------------- the scroll map: plateaus at each beat's readable frame, eased ramps between them ---------------- */
   function buildMap() {
-    const vh = window.innerHeight / 100;
+    const vh = (TL.p === "tall" && svhPx > 0 ? svhPx : window.innerHeight) / 100;
     const seg = TL.seg;
     // v2.1 (Daniel: "a bit more responsive"; less scroll between the finished graph and the Ride): shorter holds (the
     // captions are on screen through each ramp too, so a hold only needs to read as a pause), a near-immediate first
@@ -485,7 +553,7 @@
     setOnce("stageVis", stageCol, "visibility", so <= 0.001 ? "hidden" : "visible");
     // phones: the stage is smaller while the hero's copy is up, and grows to full size as Look begins; the hero's copy
     // rides down with the stage's bottom edge, CAP_GAP under it, so the growing stage never runs into it
-    if (!TL.isDesk) {
+    if (!TL.isDesk && TL.p !== "tall") {
       const sl = TL.seg("makeLook");
       const k = T <= sl.T0 ? kHero : mix(kHero, 1, P(T, sl.T0, sl.T1 - sl.T0, E.SMOOTH));
       setOnce("stageK", stageWrap, "transform", k >= 0.999 ? "none" : `scale(${k.toFixed(4)})`);
@@ -543,7 +611,7 @@
     if (i === capIdx && !instant) return;
     capIdx = i;
     const b = TL.beats[i];                            // null: a beat with no caption (the Ride's flood)
-    const next = b ? copy[b] : null;
+    const next = b && copy[b] && copy[b].parentNode === capsEl ? copy[b] : null;   // (phones: the hero is the intro, not a caption)
     clearTimeout(capTimer);
     const cur = $$(".beat-copy.is-on", capsEl).filter((c) => c !== next);
     if (instant || !cur.length) {
@@ -930,6 +998,8 @@
     pin.style.removeProperty("opacity");
     clearDip();
     pin.style.removeProperty("--cap-top");
+    pin.style.removeProperty("--stage-w");
+    pin.style.removeProperty("--stage-top");
     for (const [el, props] of [[field, ["opacity", "clip-path"]], [shade, ["opacity"]], [band, ["display", "clip-path"]],
       [stageCol, ["opacity", "visibility"]], [stageWrap, ["transform"]], [track, ["height"]]]) for (const p of props) el.style.removeProperty(p);
     label.removeAttribute("data-mode");
@@ -943,7 +1013,9 @@
       cancelAnimationFrame(raf); raf = 0;
       layoutKey = key();
       if (!motion()) { teardown(); doc.classList.add("fx-ready"); return; }
-      placeCopies(desktop() ? BEATS : PHONE_BEATS);
+      if (desktop()) placeCopies(BEATS);
+      else if (preset() === "tall") placeCopies(PHONE_BEATS.filter((b) => b !== "make"), ["make"]);
+      else placeCopies(PHONE_BEATS);
       build();
       navBuild();
       const h = location.hash.slice(1);
@@ -993,19 +1065,27 @@
     resizeT = setTimeout(() => {
       if (key() !== layoutKey) { refresh(); return; }
       if (!TL) return;
+      // phones (Sol mobile P2): the browser's bars showing or hiding change the height only, by less than ~150 px. The
+      // pin and the map both use the stable 100svh, so there is nothing to re-lay or re-anchor; a width (orientation)
+      // change or a real height change still lays out again.
+      if (TL.p === "tall" && window.innerWidth === sizeW && Math.abs(window.innerHeight - sizeH) < 150) return;
+      if (TL.p === "tall") fitPhone();
       const s0 = L ? L.s : 0;
       // phones: a new canvas scale changes the tables' compensated text (--demo-scale): remeasure the pieces too
       if (TL.p === "tall" && s0 && Math.abs(stage.clientWidth / TL.W - s0) > s0 * 0.004) { refresh(); return; }
-      const tp = intro ? null : targetPlace();
-      layout();
-      // the story stays where it is: the scroll position follows the new map (and the follower keeps its state)
-      anchorScroll(tp);
-      target = mapScroll(window.scrollY);
-      lastDrawn = null;
-      render(shown);
-      wake();
+      relayout();
     }, 140);
   });
+  function relayout() {
+    const tp = intro ? null : targetPlace();
+    layout();
+    // the story stays where it is: the scroll position follows the new map (and the follower keeps its state)
+    anchorScroll(tp);
+    target = mapScroll(window.scrollY);
+    lastDrawn = null;
+    render(shown);
+    wake();
+  }
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
   const onMq = () => { doc.classList.toggle("calm", mq.matches); doc.classList.toggle("motion", !mq.matches); refresh(); };
   if (mq.addEventListener) mq.addEventListener("change", onMq);

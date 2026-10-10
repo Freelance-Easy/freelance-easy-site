@@ -1504,8 +1504,9 @@ details.disclosure p a {
   position: relative;
   z-index: 1;
 }
+/* (phones, Sol mobile P1 #5: the Recent invoices card is the KPI stack's width, 400 at the same 1.12 zoom: one column) */
 .fx-root.tall .d-recent .card {
-  width: 500px;
+  width: 400px;
 }
 .fx-root.tall .d-recent .recent-table th:nth-child(1),
 .fx-root.tall .d-recent .recent-table td:nth-child(1),
@@ -2088,8 +2089,12 @@ html.on-band .theme-switch button[aria-pressed="true"] {
   }
 }
 @media (max-width: 639px) {
+  /* (site.js fitPhone sets --stage-w and --stage-top: the stage, its label row and the largest caption, balanced) */
   .stage-wrap {
-    width: min(100%, calc(56svh * 5 / 6));
+    width: var(--stage-w, min(100%, calc(56svh * 5 / 6)));
+  }
+  .stage-col {
+    top: var(--stage-top, 12px);
   }
   .stage-shade {
     border-radius: 22px;
@@ -2097,6 +2102,61 @@ html.on-band .theme-switch button[aria-pressed="true"] {
   .captions .hero-copy .cta-row .btn {
     width: auto;
   }
+  /* "Fictional data" (Sol mobile P1 #3): its own unscaled row under the stage, left-aligned with it, 8 px below it; the
+     row is always there (the captions never move), its words show whenever records are on the stage */
+  .stage-col > .stage-label {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    display: block;
+    width: max-content;
+    height: 20px;
+    margin: 8px 0 0 calc((100% - var(--stage-w, 100%)) / 2);
+    padding: 0 8px;
+    font-size: 12px;
+    line-height: 20px;
+  }
+  /* (under the stage it sits on the page, not on the field: it takes the Ride's colours only once the band is the page) */
+  .pin.on-field .stage-col > .stage-label {
+    color: var(--text-1);
+    background: color-mix(in srgb, var(--bg-1) 78%, transparent);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+  }
+  html.on-band .pin.on-field .stage-col > .stage-label {
+    color: var(--ride-text);
+    background: color-mix(in srgb, var(--ride-text) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
+  }
+  /* the hero's copy as the intro above the pinned story (site.js placeCopies; motion only) */
+  /* (Sol's sizes: a 32 px headline, 16 px body, a 48 px button, 12–16 px gaps: more of the stage on the first screen) */
+  .story-intro {
+    padding-top: 16px;
+    padding-bottom: 8px;
+  }
+  .story-intro .hero-copy h1 {
+    font-size: 32px;
+    line-height: 1.04;
+    letter-spacing: -0.036em;
+  }
+  .story-intro .hero-copy .sub {
+    margin-top: 12px;
+    font-size: 16px;
+  }
+  .story-intro .hero-copy .cta-row {
+    margin-top: 16px;
+    gap: 10px 20px;
+  }
+  .story-intro .hero-copy .btn {
+    min-height: 48px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .story-intro .hero-copy .disclose {
+    margin-top: 12px;
+  }
+}
+.story-intro:empty {
+  display: none;
 }
 
 /* ---------- Reduced motion ---------- */
