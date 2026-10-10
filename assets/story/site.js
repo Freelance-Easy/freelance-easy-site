@@ -133,8 +133,9 @@
   function capActive(c, on) {
     c.classList.toggle("is-idle", !on);
     // (phones, F1) the start caption's controls (the hero's CTA) stay in the tab order while it's idle: Tab from the
-    // header reaches them from the first frame, and the focus brings the start beat up (capsEl's focusin)
-    if (c === startEl && c.parentNode === capsEl) return;
+    // header reaches them from the first frame, and the focus brings the start beat up (capsEl's focusin). (Sol F1 #2:
+    // treated as active, so any tabindex an idle tablet caption saved on them is restored too.)
+    if (c === startEl && c.parentNode === capsEl) on = true;
     for (const el of c.querySelectorAll(FOCUSABLE)) {
       if (!on) {
         if (!el.hasAttribute("data-ti")) el.setAttribute("data-ti", el.getAttribute("tabindex") ?? "");
@@ -323,6 +324,8 @@
     const isDesk = desktop();
     const dark = theme() === "dark";
     css(stageWrap, "transform", "none");
+    // (Sol F1 #1) the phone step-back's ride on the label row never survives a rebuild (a phone -> tablet resize)
+    label.style.removeProperty("transform");
     // phones: "Fictional data" leaves the clipped stage for its own row under it; everywhere else it is in the stage
     if (p === "tall") { if (label.parentNode !== stageCol) stageCol.appendChild(label); }
     else if (label.parentNode !== stage) stage.appendChild(label);
@@ -596,10 +599,18 @@
     if (lastG.past !== past) { lastG.past = past; doc.classList.toggle("past-band", past); }
   }
   window.addEventListener("scroll", () => { readerY = window.scrollY; if (TL && MAP) syncOnBand(); }, { passive: true });
+  // a saved place (segment id + local time) on the current timeline. (Sol F1 #3) Make is one scene on wider stages and
+  // three segments on phones (make to HOLD, the start still, makeEnd): across 640 px, Make's own time carries over.
+  function placeIn(id, u) {
+    let sg = TL.seg(id);
+    if (!sg && (id === "start" || id === "makeEnd")) { u = TL.HOLD + (id === "makeEnd" ? u : 0); sg = TL.seg("make"); }
+    if (sg && sg.id === "make" && TL.p === "tall" && u > sg.T1 - sg.T0 + 1e-9) { u -= sg.T1 - sg.T0; sg = TL.seg("makeEnd"); }
+    return sg ? { sg, u } : null;
+  }
   function anchorScroll(tp) {
-    const sg = tp && TL.seg(tp.id);
-    if (!sg) return;
-    const T = clamp(sg.T0 + tp.u, 0, TL.T1);
+    const pl = tp && placeIn(tp.id, tp.u);
+    if (!pl) return;
+    const T = clamp(pl.sg.T0 + pl.u, 0, TL.T1);
     if (T <= mapScroll(0) + 1e-6) return;
     let lo = 0, hi = storyTop + MAP.L;
     for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (mapScroll(mid) < T) lo = mid; else hi = mid; }
@@ -1150,8 +1161,8 @@
       if (dip) { dip = null; clearDip(); }
       intro = null; shown = target; vel = 0; dirSign = 1; FX.gate.cursor = 1;
       if (keep) {
-        const sg = TL.seg(keep.id);
-        if (sg) { shown = clamp(sg.T0 + keep.u, sg.T0, sg.T1); vel = keep.vel; }
+        const pl = placeIn(keep.id, keep.u);
+        if (pl) { shown = clamp(pl.sg.T0 + pl.u, pl.sg.T0, pl.sg.T1); vel = keep.vel; }
         intro = keep.intro;                            // still arriving: it carries on, on its own clock
         FX.gate.cursor = keep.cursor; dirSign = keep.dirSign;
       } else if (firstLoad && !anchored && window.scrollY < 4 && navType() === "navigate") {
