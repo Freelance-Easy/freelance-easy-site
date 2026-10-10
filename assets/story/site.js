@@ -398,7 +398,9 @@
     TL.regrowAt = Infinity;
     if (p === "tall") {
       TL.regrowAt = seg("makeEnd").T0 + (M.make.inst.B.toCreate - M.make.inst.HOLD);
-      TL.switches.unshift(["start", seg("start").T0 + START_CAP, 0.01], ["make", TL.regrowAt, 0.01]);
+      // (Sol F1b #1: the switch sits 0.01 s before the regrow, so with its 0.01 hysteresis the CTA block is gone, at once
+      // (updateCaptions), before the stage moves at all going forwards, and back only once the stage is small again)
+      TL.switches.unshift(["start", seg("start").T0 + START_CAP, 0.01], ["make", TL.regrowAt - 0.01, 0.01]);
     }
     if (isDesk) {
       // (Chase -> Yours: the Chase caption leaves before the band draws back over it; Yours arrives once it's gone)
@@ -752,6 +754,15 @@
     const b = TL.beats[i];                            // null: a beat with no caption (the Ride's flood)
     const next = capFor(b);                            // (phones: the hero is split into make + start)
     clearTimeout(capTimer);
+    // (phones, Sol F1b #1) the CTA block handing back to the headline as the stage regrows leaves at once, never on a
+    // timed fade: it rides the stage's edge, so a fade the scroll outran could carry it past the pin's bottom
+    if (next && next === copy.make && startEl && startEl.classList.contains("is-on")) {
+      startEl.style.transition = "none";
+      startEl.classList.remove("is-on", "is-off");
+      void startEl.offsetWidth;
+      startEl.style.transition = "";
+      capActive(startEl, false);
+    }
     const cur = $$(".beat-copy.is-on", capsEl).filter((c) => c !== next);
     if (instant || !cur.length) {
       for (const c of $$(".beat-copy", capsEl)) { if (c !== next) { c.classList.remove("is-on", "is-off"); capActive(c, false); } }
