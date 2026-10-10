@@ -1630,6 +1630,59 @@ details.disclosure p a {
 }
 .fx-root.tall .fx-chase-kpis .kpi-row .kpi:first-child { grid-column: 1 / -1; }
 .fx-root.tall .d-recent.fx-chase-recent .card { width: 471px; }
+/* (phones, round B2) the tables' column headers at 11.5 screen px, a step under the rows, never truncated */
+.fx-root.tall .fe-app .client-status th,
+.fx-root.tall .fe-app .d-recent th {
+  font-size: calc(11.5px / var(--demo-scale) / var(--screen-zoom));
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* Chase's list row: the amount and the status pill 16 px apart (the pill starts its column), a 48 px row */
+.fx-root.tall .fe-app .client-status:not(.no-actions) th:nth-child(3) { width: 39% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 23% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 30% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) :is(th, td).text-center {
+  text-align: left;
+  padding-left: calc(12px / var(--demo-scale) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
+  padding-top: calc(14px / var(--demo-scale) / var(--screen-zoom));
+  padding-bottom: calc(14px / var(--demo-scale) / var(--screen-zoom));
+}
+/* Chase's end stack: the half cards 12 screen px inside; their second line wraps (two lines reserved, so the swap of
+   "Overdue"'s line never changes the card's height) */
+.fx-root.tall .fe-app .fx-chase-kpis .kpi-row .kpi {
+  padding: calc(10px / var(--demo-scale) / var(--sz, 1)) calc(12px / var(--demo-scale) / var(--sz, 1));
+}
+.fx-root.tall .fe-app .fx-chase-kpis .kpi:not(:first-child) .kpi-foot {
+  white-space: normal;
+  line-height: 1.3;
+  min-height: 2.6em;
+}
+/* Know (phones): on the larger stages the rows and pills grow with the stage (never under 14 / 12 screen px) */
+.fx-root.tall .fe-app .client-status.no-actions td {
+  font-size: max(calc(14px / var(--demo-scale) / var(--screen-zoom)), calc(23.5px / var(--screen-zoom)));
+}
+.fx-root.tall .fe-app .client-status.no-actions .status-toggle {
+  font-size: max(calc(12px / var(--demo-scale) / var(--screen-zoom)), calc(20px / var(--screen-zoom)));
+}
+/* Look (phones): the colour swatches 22 screen px with 10 px gaps */
+/* (all ten never fit a phone's stage at that size: two bounded rows of five, centred) */
+.fx-root.tall .fe-app .d-theme .color-presets {
+  gap: calc(10px / var(--demo-scale) / var(--sz, 1));
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc((5 * 22px + 4 * 10px + 1px) / var(--demo-scale) / var(--sz, 1));
+}
+.fx-root.tall .fe-app .d-theme .color-preset {
+  width: calc(22px / var(--demo-scale) / var(--sz, 1));
+  height: calc(22px / var(--demo-scale) / var(--sz, 1));
+  min-width: 0;
+  flex: none;
+}
 
 .fx-root .d-recent .status-toggle,
 .fx-root .d-list .status-toggle {
@@ -1770,8 +1823,9 @@ details.disclosure p a {
   }
 }
 @media (max-width: 380px) {
+  /* (round B2, Astra pA #16: the name stays, at 13 px; measured to fit at 360 with no overflow) */
   .brand span {
-    display: none;
+    font-size: 13px;
   }
   .nav a.nav-cta {
     padding: 7px 11px;
@@ -2241,6 +2295,81 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   /* Make's caption in the pin (site.js placeCopies): the hero's headline, its second half in the hero's own tone */
   .captions .make-cap h2 .tone {
     color: var(--tone);
+  }
+  /* (round B2, Astra pA #11) one horizontal grid: the captions take the stage's edges (site.js fitPhone --cap-inset) */
+  .captions > .beat-copy {
+    left: calc(var(--pad) + var(--cap-inset, 0px));
+    right: calc(var(--pad) + var(--cap-inset, 0px));
+  }
+  /* (Astra pA #12) the arrival: 28 px from the intro's last line to the stage frame (site.js fitPhone --arrive); the
+     intro paints over the pin's empty top, so its links stay clickable */
+  .story {
+    margin-top: var(--arrive, 0px);
+  }
+  .story-intro {
+    position: relative;
+    z-index: 3;
+  }
+  /* (Astra pA #16, Sol #16) 44 px hit areas for the header's controls; the pills keep their size */
+  .theme-switch button,
+  .nav a.nav-cta {
+    position: relative;
+  }
+  .theme-switch button::after,
+  .nav a.nav-cta::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+  /* footer links: 14 px, rows 14 px apart, each a 44 px target */
+  .foot-links {
+    gap: 14px 22px;
+  }
+  .foot-links a {
+    font-size: 14px;
+    line-height: 20px;
+    padding: 12px 0;
+    margin: -12px 0;
+  }
+  .site-footer .shell {
+    gap: 24px;
+  }
+  /* (Astra pA #14, #17; Sol #17) the sections after the story */
+  .price-main,
+  .price-side {
+    padding: 20px;
+  }
+  .included {
+    font-size: 16px;
+  }
+  .note {
+    padding-top: 56px;
+  }
+  .note-card blockquote p {
+    font-size: 20px;
+    line-height: 1.45;
+  }
+  .brand-end {
+    padding-top: 56px;
+  }
+  .brand-stage,
+  .brand-stage .stage-world {
+    width: 80px;
+    height: 80px;
+  }
+  .brand-stage .stage-static img {
+    width: 80px;
+    height: 80px;
+  }
+  .brand-word {
+    margin-top: 20px;
+  }
+  .end-copy h2 {
+    margin-top: 22px;
   }
 }
 .story-intro:empty {

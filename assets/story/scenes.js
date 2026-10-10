@@ -392,6 +392,7 @@
       add("presets", `<div id="theme-page" class="redesigned d-theme"><div class="card"><div class="card-pad">${k.presets}</div></div></div>`, ".card");
       add("pool", `<div id="theme-page" class="redesigned d-theme"><div class="card"><div class="card-pad"><div class="logo-pool">${k.poolItem}</div></div></div></div>`, ".card");
       if (tall) ST.picker.st.style.setProperty("--sz", String(Z.picker));   // (phones: the template names at 12 screen px)
+      if (tall) ST.presets.st.style.setProperty("--sz", String(Z.presets)); // (phones, round B2: 22 px swatches, 10 px gaps)
       const picker = ST.picker.st.querySelector(".style-picker");
       const cards = [...picker.querySelectorAll(".style-card")];
       cards.forEach((c) => c.classList.remove("active"));
@@ -413,7 +414,9 @@
       for (const s of Object.values(ST)) css(s.st, "display", "none");
       const surf = solid(sk.picker.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.picker.bc[3] > 0.005 ? sk.picker.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
-      const bottom = tall ? H - 30 : H - 34;            // the control card floats over the paper's blank lower part (phones B1: 30, clear of the stage edge while it rises in)
+      // (round B2, Astra pA #13: on phones at least 16 screen px between the control card and the stage's bottom edge)
+      const dsL = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
+      const bottom = tall ? H - Math.max(30, Math.ceil(16 / dsL)) : H - 34;           // the control card floats over the paper's blank lower part (phones B1: 30, clear of the stage edge while it rises in)
       const RC = {};
       for (const n of ["picker", "presets", "pool"]) RC[n] = { cx: W / 2, cy: bottom - sk[n].h / 2, w: sk[n].w, h: sk[n].h, r: sk[n].r, bw: Math.max(1, sk[n].bw) };
       const B = { toBold: 0.78, pressBold: 1.28, morphPresets: 2.15, toCoral: 2.25, pressCoral: 2.77,
@@ -589,6 +592,12 @@
       for (const s of Object.values(ST)) Object.assign(s, stSize(s.st));
       const sk = {};
       for (const [n, s] of Object.entries(ST)) { sk[n] = skin(s.box, s.z); s.box.classList.add("skinless"); }
+      // (phones, round B2: the tab rail and its underline span the card's own width, the tabs shared out across it)
+      if (tall) {
+        const rail = tabsEl.querySelector(".tabs");
+        css(rail, "width", `${Math.max(...Object.values(sk).map((s) => s.w)) / Z.tabs}px`);
+        css(rail, "justify-content", "space-between");
+      }
       const tr = tabsEl.querySelector(".tabs").getBoundingClientRect();
       const tabR = tabs.map((tb) => { const r = tb.getBoundingClientRect(); return { x: (r.left - tr.left) / Z.tabs, w: r.width / Z.tabs, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; });
       const tabsW = tr.width, tabsH = tr.height;
@@ -963,6 +972,9 @@
         [B.toPill, pillAt, 1.9, 0.93], [B.away, [W * 1.04, H * 1.06], 1.3, 1.0]];
       cur.presses = [B.pressEmail, B.pressSend, B.pressPill];
       cur.fade = [0.05, B.away + 0.14];
+      // (phones, round B2, Astra pA #15: once Send is pressed and the toast shows, the hand leaves; it returns as it sets
+      // off for the Paid pill. Scrubbing back brings it back: a pure function of t.)
+      if (tall) cur.gaps = [[B.morphToast, B.toPill - 0.05]];
       // the press point in the new pill's own box (unzoomed px): the pill's right end stays put (the cell is right-aligned)
       const pressLocal = [((pB.left + pB.width * 0.8) - pB2.left) / Z.recent, (pB.height * 0.6) / Z.recent];
       const pW2 = pB2.width / Z.recent, pH2 = pB2.height / Z.recent;

@@ -242,17 +242,45 @@
     el.remove();
     return v;
   }
+  // (round B2, Astra pA #11) ONE horizontal grid: when the height limits the stage (375 x 667), the captions (and so the
+  // chapter number) take the stage's own left and right edges, as the label row does; the captions are measured at
+  // that width, so the fit runs until it settles. (Astra pA #12) The arrival: the intro's last line sits ARRIVE px
+  // above the stage frame at first load, whatever the pinned balance puts above the stage (#story's top margin, so the
+  // map's storyTop follows it).
+  const ARRIVE = 28;
+  const fitVars = ["--stage-w", "--stage-top", "--cap-inset"];
+  function introInk() {
+    let b = -Infinity;
+    for (const el of introEl.querySelectorAll("h1, p, a, button, li")) {
+      if (el.closest(".visually-hidden")) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width > 1 && r.height > 1) b = Math.max(b, r.bottom);
+    }
+    return b;
+  }
   function fitPhone() {
-    if (preset() !== "tall") { pin.style.removeProperty("--stage-w"); pin.style.removeProperty("--stage-top"); return; }
+    if (preset() !== "tall") { for (const v of fitVars) pin.style.removeProperty(v); storyEl.style.removeProperty("--arrive"); return; }
     const ph = pin.clientHeight, cw = stageCol.clientWidth;
-    let capH = 0;
-    for (const b of PHONE_BEATS) { const c = capFor(b); if (c) capH = Math.max(capH, c.offsetHeight); }
     const safe = cssPx("env(safe-area-inset-bottom, 0px)");
-    const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
-    const w = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
+    let w = cw, capH = 0;
+    for (let k = 0; k < 4; k++) {
+      pin.style.setProperty("--cap-inset", `${(cw - w) / 2}px`);
+      capH = 0;
+      for (const b of PHONE_BEATS) { const c = capFor(b); if (c) capH = Math.max(capH, c.offsetHeight); }
+      const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
+      const nw = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
+      if (nw >= w) break;
+      w = nw;
+    }
     const free = Math.max(0, ph - safe - ((w * 6) / 5 + LABEL_ROW + LABEL_GAP + capH));
+    const top = Math.max(FIT_TOP, Math.round(free * 0.42));
     pin.style.setProperty("--stage-w", `${w}px`);
-    pin.style.setProperty("--stage-top", `${Math.max(FIT_TOP, Math.round(free * 0.42))}px`);
+    pin.style.setProperty("--stage-top", `${top}px`);
+    if (introEl && introEl.parentNode && introEl.offsetHeight > 0) {
+      const ink = introInk();
+      const tail = Number.isFinite(ink) ? Math.max(0, introEl.getBoundingClientRect().bottom - ink) : 0;
+      storyEl.style.setProperty("--arrive", `${Math.round(ARRIVE - tail - top)}px`);
+    } else storyEl.style.removeProperty("--arrive");
   }
 
   /* ---------------- mounts: one per piece, all on the ONE stage ---------------- */
@@ -1041,8 +1069,8 @@
     pin.style.removeProperty("opacity");
     clearDip();
     pin.style.removeProperty("--cap-top");
-    pin.style.removeProperty("--stage-w");
-    pin.style.removeProperty("--stage-top");
+    for (const v of fitVars) pin.style.removeProperty(v);
+    storyEl.style.removeProperty("--arrive");
     for (const [el, props] of [[field, ["opacity", "clip-path"]], [shade, ["opacity"]], [band, ["display", "clip-path"]],
       [stageCol, ["opacity", "visibility"]], [stageWrap, ["transform"]], [track, ["height"]]]) for (const p of props) el.style.removeProperty(p);
     label.removeAttribute("data-mode");

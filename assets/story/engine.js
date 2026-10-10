@@ -324,6 +324,8 @@
       css(this.el, "transform-origin", `${this.tip}px ${this.tip}px`);
       let a = 1;
       if (this.fade) a = P(t, this.fade[0], 0.2, E.DECEL) * (1 - P(t, this.fade[1], 0.3, E.DECEL));
+      // (phones, round B2: gaps [[tOut, tIn], ...]: hidden between two actions, with the same fade curves; unset elsewhere)
+      if (this.gaps) for (const [g0, g1] of this.gaps) a *= 1 - (1 - P(t, g1, 0.2, E.DECEL)) * P(t, g0, 0.3, E.DECEL);
       // the hand never walks backwards: while the story reverses it fades out (FX.gate, driven by the page's loop)
       a *= FX.gate.cursor;
       css(this.el, "opacity", a >= 0.999 ? "1" : a.toFixed(3));
