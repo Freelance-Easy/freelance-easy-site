@@ -924,7 +924,9 @@
       B.swapPill = +(B.pressPill + 0.12).toFixed(3);
       B.count = B.swapPill + 0.04;
       const DUR = 6.55;
-      const GA = geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
+      // (phones, Sol mobile P1 #4: the list card is whole and populated from local time 0, never an empty shell; it is
+      // also what the Ride hands over to. Desktop keeps its arrival from 90 %.)
+      const GA = tall ? geom([[0, RA], [0.0001, RA, 2.6, 0.86]]) : geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
       const GB = geom([[0, RI], [B.grow, RM, 2.6, 0.86], [B.morphToast, RT, 3.2, 0.88], [B.morphDash, RR, 2.4, 0.84]]);
       const FB = colTrack([[0, surfA], [B.grow, surfM, 2.6, 0.86], [B.morphToast, surfT, 3.2, 0.88], [B.morphDash, surfR, 2.4, 0.84]]);
       // site v2.2 (Astra's review: "no empty shell"): the one shape always carries content. Each morph's outgoing content
@@ -934,7 +936,7 @@
       //   "Email sent." arrives in its last 60 ms;
       // - growing into the Recent card, the toast's words fade over 120 ms where they were; the card's content is
       //   revealed in place by the growing shape from 60 ms (before the toast's words have gone).
-      const SCHED = { A: [0.08] };
+      const SCHED = { A: [tall ? -1 : 0.08] };          // (-1: in from the start; inOut treats a negative tin as already in)
       const M_IN = B.grow + 0.02, M_OUT = B.morphToast, M_OD = 0.16;
       const T_IN = B.morphToast + 0.1, T_OUT = B.morphDash, T_OD = 0.12;
       const R_IN = B.morphDash + 0.06;
@@ -957,7 +959,7 @@
         // the card arrives on the field (fades up as it grows from 90 %), and fades once its button has been pressed,
         // its content with it (site v2.2: never an empty card)
         const aA = inOut(t, SCHED.A[0], B.pressEmail + 0.06, 0.2);
-        const skinA = Math.min(P(t, 0, 0.14, E.DECEL), 1 - P(t, B.pressEmail + 0.06, 0.2, E.ACCEL));
+        const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, B.pressEmail + 0.06, 0.2, E.ACCEL));
         drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA });
         place(stA, aA, ga, szA, "center", Z.list);
         const hand = FX.gate.cursor > 0.5, pr = FX.gate.press > 0.5;

@@ -251,7 +251,7 @@
      whole stage (that field is the bar's own colour, so the hand-over is invisible), then the colour floods the page
      from the stage outwards and becomes Chase's band. Every step is a pure function of u, so it scrubs both ways.
      (v2.1: unchanged; a mount it has hidden is no longer seeked.) */
-  SEAMS.ride = function ({ A, B, W, H }) {
+  SEAMS.ride = function ({ A, B, W, H, tall }) {
     const grow = A.inst;
     const bR = grow.octR;
     const fy = 0.12;
@@ -282,7 +282,12 @@
         }
         const bOn = u >= DIVE;
         B.show(bOn);
-        if (bOn) B.seek(0);
+        if (bOn) {
+          B.seek(0);
+          // (phones: Chase's opener is populated from its first frame, so it crossfades in over the dive's own FADE,
+          // as the zoomed bar leaves, instead of appearing at once; desktop's opener is invisible at 0 and untouched)
+          if (tall) { const a = clamp((u - DIVE) / FADE); css(B.rootEl, "opacity", a >= 0.999 ? "1" : a.toFixed(3)); }
+        }
       },
       globals(u) {
         return { field: u >= DIVE - 0.0005 ? 1 : 0, band: u < FLOOD0 ? 0 : flood(clamp((u - FLOOD0) / FLOOD)) };
