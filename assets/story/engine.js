@@ -127,21 +127,52 @@
     d.innerHTML = markup.trim();
     return d.firstElementChild;
   }
+  // THE VISUAL RECT of an element (phones, round E). The states are CSS-zoomed wrappers, and the shapes are sized from
+  // their rects. Chromium and WebKit with evaluation-time zoom return getBoundingClientRect() as drawn (zoom applied);
+  // shipping iOS WebKit returns it DIVIDED by the element's effective zoom, so every shape came out 1/zoom of its
+  // content (the founder's iPhone, 2026-10-10: the Make card at 1/1.36, the Create pill at 1/1.75, Know's tabs pushed
+  // off the card, Grow's KPIs past the stage). A zoom:2 probe tells the model once; on a legacy engine the rect is
+  // scaled back by the element's own zoom product. Elsewhere it is the plain call (byte-identical frames). Every preset:
+  // desktop and iPad Safari measure the same way. The probe runs once at startup; per frame it costs one test.
+  let zoomLegacy = null;
+  function legacyZoom() {
+    if (zoomLegacy !== null) return zoomLegacy;
+    const o = document.createElement("div"), i = document.createElement("div");
+    o.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;zoom:2";
+    i.style.cssText = "width:50px;height:10px";
+    o.appendChild(i);
+    (document.body || document.documentElement).appendChild(o);
+    const w = i.getBoundingClientRect().width;
+    o.remove();
+    zoomLegacy = w > 0 && w < 75;
+    return zoomLegacy;
+  }
+  function vrect(el) {
+    const r = el.getBoundingClientRect();
+    if (!(zoomLegacy ?? legacyZoom())) return r;
+    let z = 1;
+    for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const v = parseFloat(getComputedStyle(e).zoom); if (v > 0) z *= v; }
+    if (Math.abs(z - 1) < 1e-6) return r;
+    return { left: r.left * z, top: r.top * z, right: r.right * z, bottom: r.bottom * z, width: r.width * z, height: r.height * z,
+      x: r.x * z, y: r.y * z };
+  }
   // element rect in the scene's canvas units (the scene root is measured at scale 1)
   function rectIn(el, root) {
-    const r = el.getBoundingClientRect(), o = root.getBoundingClientRect();
+    const r = vrect(el), o = vrect(root);
     return { x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height, cx: r.left - o.left + r.width / 2,
       cy: r.top - o.top + r.height / 2 };
   }
   const even = (v) => 2 * Math.round(v / 2);
   // a real element's own skin, read from its computed style; zoom = the wrapper's CSS zoom (rects are zoomed already)
   function skin(el, zoom = 1) {
-    const b = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    const b = vrect(el), cs = getComputedStyle(el);
     return { w: even(b.width), h: even(b.height), r: parseFloat(cs.borderTopLeftRadius) * zoom,
       bw: parseFloat(cs.borderTopWidth) * zoom, bc: rgba(cs.borderTopColor), bg: rgba(cs.backgroundColor),
       color: rgba(cs.color) };
   }
-  Object.assign(FX, { css, div, frag, rectIn, skin, even });
+  Object.assign(FX, { css, div, frag, rectIn, skin, even, vrect });
+  if (document.body) legacyZoom();
+  else document.addEventListener("DOMContentLoaded", legacyZoom, { once: true });
 
   /* ---------------- the shape: one surface whose skin rides springs ---------------- */
   // the long soft shadow that grows with the shape (house style § 2; dark: deeper, with a top rim and a light hairline)

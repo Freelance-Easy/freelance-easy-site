@@ -7,7 +7,7 @@
 (function () {
   "use strict";
   const { clamp, mix, E, P, spring, track, press, smooth, money0, rgba, mixC, cssC, solid, over, css, div, rectIn, skin,
-    even, drawShape, drawInk, alphaAt, placeSt, swapText, Cursor, tipIn } = FX;
+    even, drawShape, drawInk, alphaAt, placeSt, swapText, Cursor, tipIn, vrect } = FX;
   const KIT = () => window.FE_SITE;
   const S = (FX.scenes = {});
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -23,7 +23,7 @@
     css(st, "display", "inline-block");
     css(st, "opacity", "1");
     css(st, "filter", "none");
-    const b = st.getBoundingClientRect();
+    const b = vrect(st);
     return { cw: b.width, ch: b.height };
   }
   // geometry tracks: seq = [[t, R, f, z], ...] -> g(t) = {cx, cy, w, h, r, bw}
@@ -411,9 +411,9 @@
       for (const s of Object.values(ST)) Object.assign(s, stSize(s.st));
       const sk = {};
       for (const [n, s] of Object.entries(ST)) { sk[n] = skin(s.box, s.z); s.box.classList.add("skinless"); }
-      const pr = picker.getBoundingClientRect();
+      const pr = vrect(picker);
       const zp = Z.picker;
-      const cardR = cards.map((c) => { const r = c.getBoundingClientRect(); return { x: (r.left - pr.left) / zp, y: (r.top - pr.top) / zp, w: r.width / zp, h: r.height / zp }; });
+      const cardR = cards.map((c) => { const r = vrect(c); return { x: (r.left - pr.left) / zp, y: (r.top - pr.top) / zp, w: r.width / zp, h: r.height / zp }; });
       const radius = parseFloat(getComputedStyle(cards[0]).borderTopLeftRadius) || 10;
       const accent = rgba(tok(picker, "--accent")) , aring = rgba(tok(picker, "--accent-ring"));
       for (const s of Object.values(ST)) css(s.st, "display", "none");
@@ -603,8 +603,8 @@
         css(rail, "width", `${Math.max(...Object.values(sk).map((s) => s.w)) / Z.tabs}px`);
         css(rail, "justify-content", "space-between");
       }
-      const tr = tabsEl.querySelector(".tabs").getBoundingClientRect();
-      const tabR = tabs.map((tb) => { const r = tb.getBoundingClientRect(); return { x: (r.left - tr.left) / Z.tabs, w: r.width / Z.tabs, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; });
+      const tr = vrect(tabsEl.querySelector(".tabs"));
+      const tabR = tabs.map((tb) => { const r = vrect(tb); return { x: (r.left - tr.left) / Z.tabs, w: r.width / Z.tabs, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; });
       const tabsW = tr.width, tabsH = tr.height;
       for (const s of Object.values(ST)) css(s.st, "display", "none");
       const surf = solid(sk.all.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
@@ -752,7 +752,7 @@
       const size = stSize(st);
       const sk = skin(box, Z.chart);
       box.classList.add("skinless");
-      const kr = kpis.getBoundingClientRect();
+      const kr = vrect(kpis);
       const kW = kr.width, kH = kr.height;
       const surf = solid(sk.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.bc[3] > 0.005 ? sk.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
@@ -775,7 +775,7 @@
       const n = stacks.length;
       const barT = stacks.map((_, i) => B.bars + B.wave * Math.pow(i / (n - 1), 0.9));
       const DUR = 2.3;
-      const kpiShadow = (el) => satShadow(el, dark, el.getBoundingClientRect().height);
+      const kpiShadow = (el) => satShadow(el, dark, vrect(el).height);
       kpiEls.forEach(kpiShadow);
       function seek(t) {
         drawShape(shape, RC, { fill: surf, line, lineA: 1, dark });
@@ -923,17 +923,17 @@
       const szA = stSize(stA), szM = stSize(stM), szT = stSize(stT), szR = stSize(stR);
       const skA = skin(boxA, Z.list), skM = skin(boxM, Z.modal), skT = skin(boxT, Z.toast), skR = skin(boxR, Z.recent);
       // where the Email button sits inside the list card, and the Send button inside the modal (canvas, centred)
-      const aBox = boxA.getBoundingClientRect(), eB = emailBtn.getBoundingClientRect(), rB = rowA.getBoundingClientRect();
-      const mBox = boxM.getBoundingClientRect(), sB = sendBtn.getBoundingClientRect();
+      const aBox = vrect(boxA), eB = vrect(emailBtn), rB = vrect(rowA);
+      const mBox = vrect(boxM), sB = vrect(sendBtn);
       // the pill before and after the swap (measured both ways, then put back): colours and the press point inside it
       css(wNew, "display", "none");
-      const rBox = boxR.getBoundingClientRect(), pB = pill.getBoundingClientRect(), rowRB = rowR.getBoundingClientRect();
+      const rBox = vrect(boxR), pB = vrect(pill), rowRB = vrect(rowR);
       const softOld = rgba(getComputedStyle(pill).backgroundColor);
       pill.className = clsNew; css(wOld, "display", "none"); css(wNew, "display", "inline");
-      const pB2 = pill.getBoundingClientRect();
+      const pB2 = vrect(pill);
       const softNew = rgba(getComputedStyle(pill).backgroundColor);
       pill.className = clsOld; css(wOld, "display", "inline"); css(wNew, "display", "none");
-      const kr = kp.getBoundingClientRect();
+      const kr = vrect(kp);
       const emailSkin = skin(emailBtn, Z.list);
       for (const el of [boxA, boxM, boxT, boxR]) el.classList.add("skinless");
       for (const s of [stA, stM, stT, stR]) css(s, "display", "none");
@@ -964,7 +964,7 @@
       const rowRect = { x: RA.cx - skA.w / 2 + (rB.left - aBox.left), y: RA.cy - skA.h / 2 + (rB.top - aBox.top), w: rB.width, h: rB.height };
       const rowRRect = { x: RR.cx - skR.w / 2 + (rowRB.left - rBox.left), y: RR.cy - skR.h / 2 + (rowRB.top - rBox.top), w: rowRB.width, h: rowRB.height };
       const kLeft = Math.round(CX - kr.width / 2);
-      kpiCards.forEach((el) => satShadow(el, dark, el.getBoundingClientRect().height));
+      kpiCards.forEach((el) => satShadow(el, dark, vrect(el).height));
       const B = { toRow: 0.22, toEmail: 0.62, pressEmail: 0.98, grow: 1.02, toSend: 1.74, pressSend: 2.3, morphToast: 2.44,
         morphDash: 3.68, toPill: 4.67, pressPill: 5.27, away: 5.59 };
       B.swapPill = +(B.pressPill + 0.12).toFixed(3);
