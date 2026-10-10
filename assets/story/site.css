@@ -1732,8 +1732,11 @@ details.disclosure p a {
   padding-left: calc(2px / var(--demo-scale) / var(--sz)) !important;
   padding-right: calc(2px / var(--demo-scale) / var(--sz)) !important;
 }
+/* (Sol, round C: each screen size below is capped at its value on a 308 px stage, the 375x667 phone's, as canvas
+   px: 12 -> 23.38, 14 -> 27.27, 16 -> 31.17, 22 -> 42.86, 38 -> 74. A smaller stage (320x568 fits ~230 px) scales
+   them down with the canvas instead of clipping "Project work", "75.00" and "16"; every phone >= 308 px is unchanged) */
 .fx-root.tall .d-rows .line-items-table th {
-  font-size: calc(12px / var(--demo-scale) / var(--sz));
+  font-size: min(calc(12px / var(--demo-scale) / var(--sz)), calc(23.38px / var(--sz)));
   letter-spacing: 0.04em;
   padding-top: 0;
   padding-bottom: calc(6px / var(--demo-scale) / var(--sz));
@@ -1746,25 +1749,25 @@ details.disclosure p a {
 }
 .fx-root.tall .d-rows .line-items-table input {
   box-sizing: border-box;
-  height: calc(38px / var(--demo-scale) / var(--sz));
+  height: min(calc(38px / var(--demo-scale) / var(--sz)), calc(74px / var(--sz)));
   padding-top: 0;
   padding-bottom: 0;
   padding-left: calc(6px / var(--demo-scale) / var(--sz)) !important;
   padding-right: calc(2px / var(--demo-scale) / var(--sz)) !important;
   /* (Chrome floors a border to whole px after zoom: 2 px under the stage's scale is 1.1-1.3 screen px; 1 px was 0.5) */
   border-width: calc(2.02px / var(--sz)) !important;
-  font-size: calc(14px / var(--demo-scale) / var(--sz));
+  font-size: min(calc(14px / var(--demo-scale) / var(--sz)), calc(27.27px / var(--sz)));
 }
 .fx-root.tall .d-rows .line-items-table .amount-display {
   padding: 0;
-  font-size: calc(14px / var(--demo-scale) / var(--sz));
-  line-height: calc(38px / var(--demo-scale) / var(--sz));
+  font-size: min(calc(14px / var(--demo-scale) / var(--sz)), calc(27.27px / var(--sz)));
+  line-height: min(calc(38px / var(--demo-scale) / var(--sz)), calc(74px / var(--sz)));
 }
 .fx-root.tall .d-sum .total-row.grand-total {
   gap: calc(16px / var(--demo-scale) / var(--sz));
 }
-.fx-root.tall .d-sum .total-label { font-size: calc(16px / var(--demo-scale) / var(--sz)); }
-.fx-root.tall .d-sum .total-value { font-size: calc(22px / var(--demo-scale) / var(--sz)); }
+.fx-root.tall .d-sum .total-label { font-size: min(calc(16px / var(--demo-scale) / var(--sz)), calc(31.17px / var(--sz))); }
+.fx-root.tall .d-sum .total-value { font-size: min(calc(22px / var(--demo-scale) / var(--sz)), calc(42.86px / var(--sz))); }
 /* Grow's baseline (scenes.js, phones): a 1 screen px rule in the chart's own line token */
 .fx-root.tall .d-chart .fx-baseline {
   stroke: var(--border-default);
