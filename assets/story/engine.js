@@ -155,7 +155,12 @@
       `0 ${(6 + 0.03 * h).toFixed(1)}px ${(18 + 0.06 * h).toFixed(1)}px -6px rgba(0,0,0,${(0.22 * k).toFixed(3)}), ` +
       `0 ${(18 + 0.07 * h).toFixed(1)}px ${(48 + 0.14 * h).toFixed(1)}px -18px rgba(0,0,0,${(0.26 * k).toFixed(3)})`;
   }
-  // g = {cx, cy, w, h, r, bw}; look = {fill, line, lineA, dark, sq (press squash 0..1), sh (shadow strength), rimA}
+  // (phones, round C, Astra #13) a small floating card or pill: one short, light shadow instead of the long one.
+  // lite = {y, b} in canvas px (the scene converts its screen target with --demo-scale); k = the shadow strength
+  function liteShadow(lite, dark, k = 1) {
+    return `0 ${lite.y.toFixed(2)}px ${lite.b.toFixed(2)}px rgba(0,0,0,${((dark ? 0.32 : 0.1) * k).toFixed(3)})`;
+  }
+  // g = {cx, cy, w, h, r, bw}; look = {fill, line, lineA, dark, sq (press squash 0..1), sh (shadow strength), rimA, lite}
   function drawShape(el, g, look) {
     const { fill, line, dark } = look;
     const lineA = look.lineA == null ? 1 : look.lineA;
@@ -168,7 +173,9 @@
     css(el, "height", `${Math.max(0, g.h).toFixed(2)}px`);
     css(el, "background", cssC(fill));
     css(el, "border-radius", `${Math.max(0, Math.min(g.r, g.h / 2, g.w / 2)).toFixed(2)}px`);
-    css(el, "box-shadow", `inset 0 0 0 ${Math.max(0, g.bw).toFixed(2)}px ${cssC(line, lineA)}${rim}, ${shadow(g.h, dark, look.sh == null ? 1 : look.sh)}`);
+    const shk = look.sh == null ? 1 : look.sh;
+    const drop = look.lite ? liteShadow(look.lite, dark, shk) : shadow(g.h, dark, shk);
+    css(el, "box-shadow", `inset 0 0 0 ${Math.max(0, g.bw).toFixed(2)}px ${cssC(line, lineA)}${rim}, ${drop}`);
     css(el, "transform", sq === 1 ? "none" : `scale(${sq.toFixed(5)})`);
     css(el, "opacity", look.alpha == null || look.alpha >= 0.999 ? "1" : look.alpha.toFixed(3));
     css(el, "display", look.alpha === 0 ? "none" : "block");

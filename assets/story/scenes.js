@@ -124,6 +124,11 @@
       add("sum", `<div id="invoice-form-page" class="redesigned d-total d-sum">${k.total}</div>`, ".total-row", "sum");
       add("create", `<div id="invoice-form-page" class="redesigned d-create">${k.create}</div>`, ".btn", "center", pill);
       if (dark) add("pdf", `<div id="invoice-detail" class="redesigned d-pdfbtn">${k.pdfBtn}</div>`, ".btn");
+      // (phones, round C, Astra #4/#5: the line items and the total at fixed screen sizes, site.css; the Create button's
+      // shadow is a control's: short and light)
+      if (tall) { ST.rows.st.style.setProperty("--sz", String(Z.rows)); ST.sum.st.style.setProperty("--sz", String(Z.sum)); }
+      const dsM = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
+      const LITE_PILL = tall ? { y: 3 / dsM, b: 10 / dsM } : null;
       // the picker: its own dropdown is drawn by dd (unfolds from under the field); the text slot swaps placeholder -> pick
       ST.pick.st.querySelector(".custom-select-dropdown")?.remove();
       const slot = ST.pick.st.querySelector(".custom-select-text");
@@ -299,7 +304,7 @@
         const pOn = t >= B.pillIn && t < B.pillOff;
         const psh = P(t, B.pillIn, 0.16) * (1 - P(t, B.merge, 0.3));
         const pa0 = pOn ? (dark ? 1 : 1 - P(t, B.merge, 0.1, E.ACCEL)) : 0;
-        drawShape(pill, gp, { fill: FP(t), line: COL.line, lineA: lineAP(t), dark, sq: press(t, B.pressCreate) * (0.03 / 0.045), sh: psh, alpha: pa0 });
+        drawShape(pill, gp, { fill: FP(t), line: COL.line, lineA: lineAP(t), dark, sq: press(t, B.pressCreate) * (0.03 / 0.045), sh: psh, alpha: pa0, lite: LITE_PILL });
         const ps = pillInk0(t);
         const pc = FX.gate.cursor > 0.5 && t > B.toCreate + 0.15 && t < B.pressCreate + 0.2 && tipOn(t, R.pill) ? COL.inkHover : COL.ink;
         drawInk(pillInk, { mode: pOn ? ps.mode : "none", k: ps.k, x: gp.w / 2 + (PRESS_AT.create[0] - gp.cx), y: gp.h / 2 + (PRESS_AT.create[1] - gp.cy), w: gp.w, h: gp.h, color: pc });
@@ -723,6 +728,21 @@
         gEl.removeAttribute("style");
         return s;
       });
+      // (phones, round C, Astra #9: the chart's baseline, drawn with the chart's labels, so its first frame is a chart
+      // whose bars are still down rather than an empty card)
+      if (tall && groups.length) {
+        const svg = st.querySelector("svg");
+        const rects = [...st.querySelectorAll(".bar-open, .bar-paid")];
+        const num = (el, a) => parseFloat(el.getAttribute(a)) || 0;
+        const y0 = Math.max(...rects.map((r) => num(r, "y") + num(r, "height")));
+        const x0 = Math.min(...rects.map((r) => num(r, "x"))), x1 = Math.max(...rects.map((r) => num(r, "x") + num(r, "width")));
+        if (svg && rects.length && isFinite(y0)) {
+          const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          ln.setAttribute("class", "fx-baseline");
+          for (const [a, v] of [["x1", x0], ["x2", x1], ["y1", y0], ["y2", y0]]) ln.setAttribute(a, String(v));
+          groups[0].parentNode.insertBefore(ln, groups[0]);
+        }
+      }
       const kpiEls = [...kpis.querySelectorAll(".kpi")];
       const values = kpiEls.map((el) => el.querySelector(".kpi-value"));
       const targets = values.map((v) => parseFloat(v.getAttribute("data-target")) || 0);
@@ -771,7 +791,7 @@
         values.forEach((v, i) => {
           const u = clamp((t - B.count - 0.08 * i) / 0.9);
           v.textContent = money0(targets[i] * E.CUBIC_OUT(u));
-          if (tall) v.style.visibility = t < B.count ? "hidden" : "";
+          // (phones, round C, Astra #9: the slots read "$0", the count's own start, from the first visible frame)
         });
         // the sparklines draw (style.css sparkReveal: a 700 ms wipe, cubic-bezier(.2,.7,.2,1))
         sparks.forEach((s, i) => {
@@ -929,7 +949,11 @@
       // (phones, Astra pA #2: after the Email press the overdue row stays; the modal opens over it, and "Email sent."
       // lands 14 screen px under it, the two one group centred in the stage, until the dashboard takes over)
       const ds = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
-      const grpTop = Math.round(H / 2 - (skA.h + 14 / ds + skT.h) / 2);
+      // (phones, round C, Astra #3: the group sits low, its bottom 40 screen px above the "Fictional data" row, which is
+      // 8 px under the stage: the action next to its caption, not floating mid-field)
+      const grpTop = Math.round(H - 32 / ds - (skA.h + 14 / ds + skT.h));
+      // (phones, round C, Astra #13: the row card, the modal, the toast and the Recent card are small floating cards)
+      const LITE = tall ? { y: 6 / ds, b: 18 / ds } : null;
       const RAt = tall ? { ...RA, cy: grpTop + skA.h / 2 } : RA;
       const RT = { cx: CX, cy: tall ? grpTop + skA.h + 14 / ds + skT.h / 2 : CY, w: skT.w, h: skT.h, r: skT.h / 2, bw: Math.max(1, skT.bw) };
       const gapY = tall ? 18 : 24;
@@ -987,7 +1011,7 @@
         const A_OUT = tall ? B.morphDash : B.pressEmail + 0.06, A_OD = tall ? 0.12 : 0.2;
         const aA = inOut(t, SCHED.A[0], A_OUT, A_OD);
         const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, A_OUT, A_OD, E.ACCEL));
-        drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA });
+        drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA, lite: LITE });
         place(stA, aA, ga, szA, "center", Z.list);
         const hand = FX.gate.cursor > 0.5, pr = FX.gate.press > 0.5;
         FX.flags(rowA, rowABase, [["fe-hover", hand && t > 0.5 && t < B.pressEmail + 0.06]]);
@@ -997,7 +1021,7 @@
         const on = t >= B.grow - 0.02;
         const gb = GB(t);
         // (the modal has no :active rule: it never squashes; Send squashes in place through the app's own .btn:active)
-        drawShape(shapeB, gb, { fill: FB(t), line: lineOf(t < B.morphToast ? skM : t < B.morphDash ? skT : skR), lineA: 1, dark, alpha: on ? 1 : 0, sh: on ? clamp((t - B.grow) / 0.15) : 0 });
+        drawShape(shapeB, gb, { fill: FB(t), line: lineOf(t < B.morphToast ? skM : t < B.morphDash ? skT : skR), lineA: 1, dark, alpha: on ? 1 : 0, sh: on ? clamp((t - B.grow) / 0.15) : 0, lite: LITE });
         drawInk(inkB, { mode: "none" });
         // the modal's content: zooming out of the button with the shape (scaled to fit, centred), then (from the toast
         // morph) where it rests, cropped by the closing shape
