@@ -304,7 +304,7 @@
      storage card is revealed over it from its folder icon (the house ink's soft circle, 0.16 s: the outgoing and
      incoming content overlap that long, and the folder path is the first thing it shows). Meanwhile the band draws back
      into the stage (the Ride backwards) and the colour gathers into the card, gone behind it. Never an empty panel. */
-  SEAMS.chaseYours = function ({ A, B, dark }) {
+  SEAMS.chaseYours = function ({ A, B, dark, tall }) {
     const a = A.inst.X, b = B.inst.X;
     const DUR = 0.9;
     const Y = b.R;
@@ -327,6 +327,9 @@
           css(a.stR, "left", `${((g.w - a.szR.cw) / 2 / a.zR).toFixed(2)}px`);
           css(a.stR, "top", `${((g.h - a.szR.ch) / 2 / a.zR).toFixed(2)}px`);
           css(a.stR, "transform", ks >= 0.9999 ? "none" : `scale(${ks.toFixed(5)})`);
+          // (phones, F2c) the Recent rows dissolve as the folder's circle starts (under a third by D0, gone by D0 + 0.02):
+          // at phone size the circle's soft edge left the paths and the client rows legible on top of each other
+          if (tall) dim(a.stR, 1 - P(u, D0 - 0.04, 0.06, E.SMOOTH));
         }
         const inOn = u >= D0;
         B.show(inOn);
