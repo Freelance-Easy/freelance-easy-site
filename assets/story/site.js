@@ -223,11 +223,22 @@
   }
   // each beat's copy lives in its home section (calm, no JS, the phone's late beats) or in the pin as a caption
   // (split: the phone story's hero split above)
+  let lastPlace = null, ctaWait = null;
   function placeCopies(inPin, split = false) {
+    lastPlace = [inPin, split];
     // (F1c, Sol F1c #4) the calm phone page's hero is the headline alone too: its "01" as well, before the 02-05 below
     heroSplit(split ? inPin.includes("make") : !inPin.length && calmPhone());
     // (F1c: before the captions' tab order is set below, so the moved controls get the End copy's)
-    ctaEnd(split ? inPin.includes("end") : !inPin.length && calmPhone());
+    // (Sol F1c #1, r2) the hero's download row leaves the page only once download.js has wired it (its DOMContentLoaded
+    // init sets data-campaign-resolved): on any earlier start, resize or mode change it stays put, and one re-placement
+    // runs after that init (plus a task), so the row a tablet or laptop puts back is always a wired one
+    const toEnd = split ? inPin.includes("end") : !inPin.length && calmPhone();
+    if (toEnd && !ctaParts && !document.body.hasAttribute("data-campaign-resolved")) {
+      if (!ctaWait) ctaWait = new Promise((r) => {
+        const go = () => setTimeout(r, 0);
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go, { once: true }); else go();
+      }).then(() => { if (TL) refresh(); else placeCopies(...lastPlace); });
+    } else ctaEnd(toEnd);
     let moved = false;                                // once one caption moves in, the later ones follow it (story order)
     for (const b of BEATS) {
       const c = copy[b];
@@ -1545,19 +1556,11 @@
   // the fonts measure every piece: wait for them (up to 1.8 s); if they land after that, remeasure in place
   const fontsLoaded = Promise.all(['400 14px "Inter"', '600 14px "Inter"', '700 14px "Inter"'].map((f) => document.fonts.load(f)))
     .then(() => document.fonts.ready);
-  // (F1c, Sol F1c #1) on a phone, ctaEnd() takes the hero's download row off the page: start there only once download.js
-  // has wired every row (its DOMContentLoaded init, plus a task), so the row put back on a tablet or laptop is a wired
-  // one. Laptops and tablets start exactly as before.
-  const rowsWired = new Promise((r) => {
-    if (!(window.innerWidth < 640 || shortTouch()) || document.body.hasAttribute("data-campaign-resolved")) { r(); return; }
-    const go = () => setTimeout(r, 0);
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go, { once: true }); else go();
-  });
   Promise.race([fontsLoaded.then(() => "fonts", () => "fonts"), new Promise((r) => setTimeout(() => r("timeout"), 1800))])
-    .then((why) => rowsWired.then(() => {
+    .then((why) => {
       start(true);
       if (why === "timeout") fontsLoaded.then(() => { if (TL) refresh(); }, () => { /* no fonts: keep the fallback */ });
-    }));
+    });
 
   /* ---------------- test hooks (headless checks): pure seeks of the master, the map, the follower's state ---------------- */
   window.__site = {
