@@ -1083,6 +1083,22 @@ details.disclosure p a {
   margin: 8px auto 0;
   max-width: 60ch;
 }
+/* (F1c) phones only (site.js ctaEnd moves them; nothing matches on a laptop): the hero's sub line under the End
+   headline, and the 25-second tour as the last control, full width, after the trial line and the mobile note */
+.end-copy > .sub {
+  margin: 16px auto 0;
+  max-width: 30em;
+  font-size: 16.5px;
+  line-height: 1.5;
+  letter-spacing: -0.014em;
+  color: var(--text-2);
+}
+.end-copy > [data-tour-quick] {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}
 
 /* ---------- Footer ---------- */
 .site-footer {
@@ -2395,9 +2411,9 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
     background: color-mix(in srgb, var(--ride-text) 12%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
   }
-  /* (F1, app first) the hero's copy as two pinned captions (site.js heroSplit; motion only). MAKE: "01", the h1 in the
-     chapter headline treatment (round B1's look: one flowing headline, its second half in the hero's tone) and the sub
-     line as caption body. START: the CTA row, the trial line and the fine print, with Sol's 48 px button. */
+  /* (F1, app first) the hero's copy as the pinned Make caption (site.js heroSplit; motion only): "01" and the h1 in the
+     chapter headline treatment (round B1's look: one flowing headline, its second half in the hero's tone). (F1c: the
+     sub line and the CTA block are at the end, in the offer card: site.js ctaEnd.) */
   .captions > [data-copy="make"] {
     top: var(--cap-top, 62%);
   }
@@ -2409,42 +2425,6 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   }
   .captions > [data-copy="make"] h1 .line {
     display: inline;
-  }
-  /* (option A, main 2026-10-10: the sub line moves beside the CTA, and the stage steps back for the block. F1b, Astra
-     F1: a compact block, so the stage only steps back to ~70 %: 14/18 body, 44 px buttons side by side where they fit
-     (430 px) and stacked 8 px apart where they don't, 8 px between the parts. The trial line keeps its legal 15 px.) */
-  .captions > .start-copy .sub {
-    margin-top: 0;
-    font-size: 14px;
-    line-height: 18px;
-  }
-  .captions > .start-copy .cta-row {
-    margin-top: 8px;
-    gap: 8px;
-  }
-  .captions > .start-copy .btn {
-    min-height: 44px;
-    padding: 0 16px;
-    font-size: 14px;
-  }
-  .captions > .start-copy .disclose {
-    margin-top: 8px;
-    line-height: 19px;
-  }
-  .captions > .start-copy .fine {
-    margin-top: 4px;
-    font-size: 13px;
-    line-height: 17px;
-  }
-  /* the share status has a fixed slim slot of its own (one 16 px line), so a status never changes the start caption or
-     the stage; a second line spills into the 16 px bottom margin, still readable, and moves nothing */
-  .captions > .start-copy .dl-status,
-  .captions > .start-copy .dl-status:empty {
-    display: block;
-    height: 16px;
-    font-size: 12px;
-    line-height: 16px;
-    overflow: visible;
   }
   /* (round B2, Astra pA #11) one horizontal grid: the captions take the stage's edges (site.js fitPhone --cap-inset) */
   .captions > .beat-copy {
@@ -2527,6 +2507,17 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
     font-size: 13px;
     line-height: 17px;
     color: var(--text-2);
+  }
+  /* (F1c, Daniel: the CTA "at the very end") the hero's sub line under the headline and the 25-second tour after the
+     fine print (site.js ctaEnd), compact so the card still fits a 548 px tall phone */
+  .captions > .end-copy > .sub {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+  .captions > .end-copy > [data-tour-quick] {
+    min-height: 44px;
+    margin-top: 8px;
   }
   /* (F2d, Astra F2: "the muted price is weak in dark mode, the disclosures are low contrast") the price and the two
      disclosures one palette step stronger (existing tokens) */
@@ -2659,6 +2650,33 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   }
   .nav a {
     font-size: 14px;
+  }
+}
+/* (F1c) a short phone-story pin (a < 640 px window under 600 px tall: 375 x 548 measured a 493 px card in a 492 px pin):
+   the offer card, which now also holds the sub line and the tour, tightens its spacing so it fits with the release gap
+   (sizes and the trial line's 15 px unchanged; nothing hidden) */
+@media (max-width: 639px) and (max-height: 600px) {
+  .captions > .end-copy {
+    padding: 16px 16px 12px;
+  }
+  .captions > .end-copy h2 {
+    font-size: 28px;
+  }
+  .captions > .end-copy > .sub {
+    margin-top: 6px;
+    line-height: 18px;
+  }
+  .captions > .end-copy .cta-row {
+    margin-top: 12px;
+  }
+  .captions > .end-copy .btn {
+    min-height: 44px;
+  }
+  .captions > .end-copy .disclose {
+    margin-top: 8px;
+  }
+  .captions > .end-copy > [data-tour-quick] {
+    margin-top: 6px;
   }
 }
 

@@ -143,10 +143,6 @@
   const FOCUSABLE = "a[href], button, input, select, textarea, summary, [tabindex]";
   function capActive(c, on) {
     c.classList.toggle("is-idle", !on);
-    // (phones, F1) the start caption's controls (the hero's CTA) stay in the tab order while it's idle: Tab from the
-    // header reaches them from the first frame, and the focus brings the start beat up (capsEl's focusin). (Sol F1 #2:
-    // treated as active, so any tabindex an idle tablet caption saved on them is restored too.)
-    if (c === startEl && c.parentNode === capsEl) on = true;
     for (const el of c.querySelectorAll(FOCUSABLE)) {
       if (!on) {
         if (!el.hasAttribute("data-ti")) el.setAttribute("data-ti", el.getAttribute("tabindex") ?? "");
@@ -159,64 +155,79 @@
     }
   }
   // phones (< 640 px, motion; phase F1, Daniel 2026-10-10 "app first"): the story pins from the first frame and the
-  // hero's own copy (real DOM, moved, never cloned) splits into two captions: MAKE = an aria-hidden "01", the h1 and the
-  // sub line (on screen while Make arrives), and START = the hero's CTA row, the trial line and the fine print with the
-  // mobile note (its own beat, the first thing the scroll reveals, one block so the disclosures stay beside the button).
-  // Both are put back in the hero's exact original order whenever the phone story is not running.
+  // hero's own copy (real DOM, moved, never cloned) is the MAKE caption: an aria-hidden "01" and the h1, full size over
+  // the full stage through all of Make. (F1c, Daniel 2026-10-10: "i want this button options and stuff to not be so
+  // early in the website experience — prolly at the very end": the opening has no CTA block and no step-back; see
+  // ctaEnd below.)
   // (F2, Daniel: "i like the your data but i also want it to end with a call to action") the phone story then goes on
   // Chase -> Yours (the folder card) -> the offer card: "yours" is an aria-hidden visual clone of the first trust item
   // (the section itself follows the pin), "end" is the End section's own copy, moved into the pin
-  const TALL_BEATS = ["make", "start", "look", "know", "grow", "chase", "yours", "end"];
+  const TALL_BEATS = ["make", "look", "know", "grow", "chase", "yours", "end"];
   const TALL_PIN = [...PHONE_BEATS, "end"];
-  // the captions under the stage (the caption budget): the start caption has its own room (the stage steps back for it)
-  // and the offer card is centred in the full pin with the stage gone
-  const CAP_EXCL = ["start", "end"];
+  // the captions under the stage (the caption budget): the offer card is centred in the full pin with the stage gone
+  const CAP_EXCL = ["end"];
   // the end hold (story s): its length, and where the map's readable rest starts before the timeline's end. The map's
   // last frame is T1 + 0.01 (rendered as T1, a still), so the very end of the timeline is a scroll position too.
   // END_K: the shown time over which FX.story.endK goes 0 -> 1, from the end hold's start (T1 - 0.02) to T1 - 0.005,
   // halfway into the hold: it is exactly 1 well before the pin lets go, so a follower still settling by a hair never
   // leaves the section after the pin part-faded
   const END_HOLD = 0.06, END_REST = 0.02, END_K = 0.015;
-  // the start still (story seconds): its length, the step-back [start, duration] inside it, the caption switch (once the
-  // stage is small) and the readable frame (the map's start hold)
-  const START_DUR = 0.5, STEP_IN = [0.04, 0.3], START_CAP = 0.36, START_HOLD = 0.42;
-  // (F1b, main 2026-10-10, option A amended) the stage grows back to full size as the hand sets off for Create (Make's
-  // own B.toCreate), over REGROW s of story, so the Create press, the PDF press and the bloom play full size
-  const REGROW = 0.3;
-  let startEl = null, stepEl = null, heroParts = null;
+  // the phone story's Make caption: the hero's own h1 with an aria-hidden "01" in front (removed whenever the phone
+  // story is not running)
+  let stepEl = null;
   function heroSplit(on) {
     const hc = copy.make;
     if (!hc) return;
     if (on) {
-      if (!heroParts) {
-        heroParts = [".sub", ".cta-row", ".disclose.strong", ".fine"].map((s) => $(`:scope > ${s}`, hc)).filter(Boolean)
-          .map((el) => ({ el, next: el.nextSibling }));
-        startEl = document.createElement("div");
-        startEl.className = "hero-copy beat-copy start-copy";
-        startEl.setAttribute("data-copy", "start");
+      if (!stepEl) {
         stepEl = document.createElement("span");
         stepEl.className = "step";
         stepEl.setAttribute("aria-hidden", "true");
         stepEl.textContent = "01";
       }
       if (stepEl.parentNode !== hc) hc.insertBefore(stepEl, hc.firstChild);
-      for (const p of heroParts) if (p.el.parentNode !== startEl) startEl.appendChild(p.el);
+    } else if (stepEl && stepEl.parentNode) stepEl.remove();
+  }
+  // (F1c, Daniel 2026-10-10: the CTA "at the very end") on a phone (the phone story, and the stacked page on a phone:
+  // < 640 px, or a short touch screen such as a phone in landscape) the hero is the headline alone and everything that
+  // asks for action is in the End copy, the offer card: the hero's sub line goes in under its headline, and the 25-second
+  // tour after its fine print, so the End's own CTA row, its trial line and its mobile note stay one adjacent block. The
+  // hero's own CTA row, trial line and fine print leave the page (one Share/Copy button on the phone page). Real DOM,
+  // moved, never cloned; everything goes back to its exact original place whenever this is off (laptops, tablets, no JS).
+  let ctaParts = null;
+  const calmPhone = () => doc.classList.contains("calm") && (window.innerWidth < 640 || shortTouch());
+  function ctaEnd(on) {
+    const hc = copy.make, ec = copy.end;
+    if (!hc || !ec) return;
+    if (on && !ctaParts) {
+      const row = $(":scope > .cta-row", hc), tour = row && $(":scope > [data-tour-quick]", row);
+      const sub = $(":scope > .sub", hc), dis = $(":scope > .disclose.strong", hc), fine = $(":scope > .fine", hc);
+      if (!row || !tour || !sub || !dis || !fine || !$(":scope > .cta-row", ec) || !$(":scope > .fine", ec)) return;
+      // (in the order they leave; they come back in reverse, each before the node that followed it)
+      ctaParts = [sub, tour, row, dis, fine].map((el) => ({ el, parent: el.parentNode, next: el.nextSibling }));
+    }
+    if (!ctaParts) return;
+    const [sub, tour, ...rest] = ctaParts.map((p) => p.el);
+    if (on) {
+      const er = $(":scope > .cta-row", ec), ef = $(":scope > .fine", ec);
+      if (sub.parentNode !== ec || sub.nextElementSibling !== er) ec.insertBefore(sub, er);
+      if (tour.parentNode !== ec || tour.previousElementSibling !== ef) ec.insertBefore(tour, ef.nextSibling);
+      for (const el of rest) if (el.parentNode) el.remove();
       return;
     }
-    if (!heroParts) return;
-    // (the parts go back in reverse, each before the node that followed it, so the hero's DOM is exactly as it was)
-    for (let k = heroParts.length - 1; k >= 0; k--) {
-      const p = heroParts[k];
-      if (p.el.parentNode !== hc) hc.insertBefore(p.el, p.next && p.next.parentNode === hc ? p.next : null);
+    if (sub.parentNode === hc && tour.parentNode === ctaParts[1].parent && rest.every((el) => el.parentNode === hc)) return;
+    for (let k = ctaParts.length - 1; k >= 0; k--) {
+      const p = ctaParts[k];
+      p.parent.insertBefore(p.el, p.next && p.next.parentNode === p.parent ? p.next : null);
     }
-    if (stepEl.parentNode) stepEl.remove();
-    if (startEl.parentNode) { startEl.classList.remove("is-on", "is-off", "is-idle"); startEl.style.removeProperty("top"); startEl.remove(); }
   }
   // each beat's copy lives in its home section (calm, no JS, the phone's late beats) or in the pin as a caption
   // (split: the phone story's hero split above)
   function placeCopies(inPin, split = false) {
     heroSplit(split && inPin.includes("make"));
-    let moved = false;                                 // once one caption moves in, the later ones follow it (story order)
+    // (F1c: before the captions' tab order is set below, so the moved controls get the End copy's)
+    ctaEnd(split ? inPin.includes("end") : !inPin.length && calmPhone());
+    let moved = false;                                // once one caption moves in, the later ones follow it (story order)
     for (const b of BEATS) {
       const c = copy[b];
       if (!c) continue;
@@ -248,11 +259,7 @@
       capActive(c, !want);                             // in the pin: idle until its beat is up; at home: ordinary
     }
     // (the phone story rode the headline's top: once it's back home, not even an empty style attribute is left)
-    if (heroParts && !split && copy.make.getAttribute("style") === "") copy.make.removeAttribute("style");
-    if (startEl && startEl.parentNode !== capsEl && heroParts && heroParts[0].el.parentNode === startEl) {
-      capsEl.insertBefore(startEl, copy.make.nextSibling);
-    }
-    if (startEl && startEl.parentNode === capsEl) { startEl.classList.remove("is-on", "is-off"); capActive(startEl, false); }
+    if (stepEl && !split && copy.make.getAttribute("style") === "") copy.make.removeAttribute("style");
     // (phones, F2) the Yours caption sits before the offer card's copy; the Yours section follows the pin (is-after-pin)
     const ending = split && inPin.includes("end") && copy.end && copy.end.parentNode === capsEl;
     const yc = ending ? yoursCapEl() : yoursCap;
@@ -282,8 +289,7 @@
     return yoursCap;
   }
   // the caption element a beat shows in the pin
-  const capFor = (b) => (b === "start" ? (startEl && startEl.parentNode === capsEl ? startEl : null)
-    : b === "yours" && yoursCap && yoursCap.parentNode === capsEl ? yoursCap
+  const capFor = (b) => (b === "yours" && yoursCap && yoursCap.parentNode === capsEl ? yoursCap
     : b && copy[b] && copy[b].parentNode === capsEl ? copy[b] : null);
 
   /* ---------------- phones: the stage, its label row and the captions, balanced in the pin ---------------- */
@@ -313,7 +319,7 @@
     for (const b of TALL_BEATS) { if (exclude.includes(b)) continue; const c = capFor(b); if (c) h = Math.max(h, c.offsetHeight); }
     return h;
   }
-  let fitCapH = -1, fitStartH = -1;
+  let fitCapH = -1;
   function fitPhone() {
     if (preset() !== "tall") { for (const v of fitVars) pin.style.removeProperty(v); fitCapH = -1; return; }
     const ph = pin.clientHeight, cw = stageCol.clientWidth;
@@ -341,9 +347,8 @@
   function capCheck() {
     capRaf = 0;
     if (!TL || TL.p !== "tall" || fitCapH < 0) return;
-    const sh = startEl && startEl.parentNode === capsEl ? startEl.offsetHeight : 0;
     // (F2: the offer card is measured on the End copy's own box, so a change in its height re-lays the card too)
-    if (capBudget(CAP_EXCL) === fitCapH && sh === fitStartH && endCopyH() === fitEndH) return;
+    if (capBudget(CAP_EXCL) === fitCapH && endCopyH() === fitEndH) return;
     relayoutChecked();
   }
 
@@ -414,11 +419,9 @@
     const hold = (id, dur, G) => { segs.push({ id, kind: "hold", T0: T, T1: T + dur, G }); T += dur; };
     const M = mounts, S = FX.seams;
     if (p === "tall") {
-      // (phones, F1 option A, main 2026-10-10) Make plays to its arrival hold; then the START still: the frame held
-      // completely still while the stage steps back (STEP_IN) to make room for the hero's CTA block under it; then Make
-      // finishes, the stage growing back to full size as the hand sets off for Create (F1b: TL.regrowAt)
+      // (phones) Make in two segments, to its arrival hold and on from it (the map's place ids, kept across F1c: the
+      // start still and the stage's step-back for the hero's CTA block are gone with the block)
       scene("make", M.make, 0, M.make.inst.HOLD, GBASE);
-      still("start", M.make, M.make.inst.HOLD, START_DUR, GBASE);
       scene("makeEnd", M.make, M.make.inst.HOLD, M.make.inst.END, GBASE);
     } else scene("make", M.make, 0, M.make.inst.END, GBASE);
     const ml = seam("makeLook", S.makeLook, M.make, M.look);
@@ -454,18 +457,6 @@
     const ride = seg("ride");
     TL.switches = [["look", seg("makeLook").T0 + 0.3], ["know", seg("lookKnow").T0 + 0.22],
       ["grow", seg("knowGrow").T0 + 0.22], [null, ride.T0 + ride.seam.DIVE + 0.04], ["chase", ride.T1 - 0.08]];
-    // (phones, F1) the start caption (the hero's CTA block) takes over from the headline just past the arrival's hold,
-    // with a narrow hysteresis (the hold itself drifts 0.03 s, so the default 0.12 would hide it)
-    // (the headline leaves once the stage has stepped back and the CTA block takes its place. F1b: the CTA block leaves
-    // as the hand sets off for Create, the moment the stage starts to grow back, and "01" + the headline return riding
-    // its edge, up through Make -> Look until Look's caption, as on BASE_F: a caption on every frame)
-    TL.regrowAt = Infinity;
-    if (p === "tall") {
-      TL.regrowAt = seg("makeEnd").T0 + (M.make.inst.B.toCreate - M.make.inst.HOLD);
-      // (Sol F1b #1: the switch sits 0.01 s before the regrow, so with its 0.01 hysteresis the CTA block is gone, at once
-      // (updateCaptions), before the stage moves at all going forwards, and back only once the stage is small again)
-      TL.switches.unshift(["start", seg("start").T0 + START_CAP, 0.01], ["make", TL.regrowAt - 0.01, 0.01]);
-    }
     if (isDesk) {
       // (Chase -> Yours: the Chase caption leaves before the band draws back over it; Yours arrives once it's gone)
       // (and the overlay card never grows or shrinks under a caption: each side of it leaves first)
@@ -522,7 +513,7 @@
   function layout() {
     if (!TL) return;
     css(stageWrap, "transform", "none");
-    if (TL.p === "tall") { label.style.removeProperty("transform"); if (copy.make) copy.make.style.removeProperty("top"); if (startEl) startEl.style.removeProperty("top"); }
+    if (TL.p === "tall") { label.style.removeProperty("transform"); if (copy.make) copy.make.style.removeProperty("top"); }
     const sw = stage.clientWidth, sh = stage.clientHeight, s = sw / TL.W;
     for (const m of Object.values(mounts)) { css(m.rootEl, "transform", `scale(${s.toFixed(5)})`); css(m.rootEl, "--demo-scale", String(s)); }
     for (const sg of TL.segs) if (sg.layer) { css(sg.layer, "transform", `scale(${s.toFixed(5)})`); css(sg.layer, "--demo-scale", String(s)); }
@@ -532,19 +523,13 @@
     L = { sw, sh, s, hh, stageTop: wr.top - pr.top, stageH: wr.height, stageW: wr.width };
     // phones: the hero's copy sits under a smaller stage; every other caption under the full stage; both keep CAP_GAP
     // (phones < 640 px: the story pins from the first frame with the stage at full size; every caption sits under the
-    // label row, the start caption under the stepped-back stage (TL.kStart); the map's viewport is the pin's own stable 100svh, measured once per layout)
+    // label row; the map's viewport is the pin's own stable 100svh, measured once per layout)
     sizeW = window.innerWidth; sizeH = window.innerHeight;
     svhPx = TL.p === "tall" ? cssPx("100svh") : 0;
     if (TL.p === "tall") {
       kHero = 1;
       L.capTop = Math.round(L.stageTop + L.stageH + LABEL_ROW + LABEL_GAP);
       pin.style.setProperty("--cap-top", `${L.capTop}px`);
-      // (F1) how far the stage steps back for the start caption: its whole block fits above the bottom margin (and the
-      // safe-area inset), the stage's top edge staying where it is
-      const sh0 = startEl && startEl.parentNode === capsEl ? startEl.offsetHeight : 0;
-      fitStartH = sh0;
-      const room = pr.height - cssPx("env(safe-area-inset-bottom, 0px)") - FIT_BOT - sh0 - L.capTop;
-      TL.kStart = sh0 > 0 ? clamp(1 + room / L.stageH, 0.3, 1) : 1;
       // (F2b) the Yours caption is one line (the folder icon and the title) under the caption budget's height: it sits
       // centred in the room between the stage and the pin's bottom margin, so the story's last chapter has no dead band
       // under it (the stage keeps its size; the caption only fades, never moves)
@@ -686,8 +671,6 @@
       { beat: "grow", T: seg("grow").T1 - 0.02, len: 14 },
       { beat: "chase", T: seg("chase").T1 - 0.02, len: TL.isDesk ? 32 : 26 },
     ];
-    // (phones, F1) the start hold: the first scroll's stop, the stage still on Make's arrival frame, the CTA block up
-    if (TL.p === "tall") holds.splice(1, 0, { beat: "start", T: seg("start").T0 + START_HOLD, len: 30 });
     // (phones, F2) the folder card's readable frame, then the offer card: a 40 vh rest at the very end of the timeline
     // (T1 - 0.02 to T1 + 0.01; FX.story.endK rises 0 -> 1 over its first half), and the pin lets go on it
     if (TL.p === "tall" && seg("end")) holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "end", T: TL.T1 - END_REST, len: 40 });
@@ -803,11 +786,11 @@
   }
   window.addEventListener("scroll", () => { readerY = window.scrollY; if (TL && MAP) syncOnBand(); }, { passive: true });
   // a saved place (segment id + local time) on the current timeline. (Sol F1 #3) Make is one scene on wider stages and
-  // three segments on phones (make to HOLD, the start still, makeEnd): across 640 px, Make's own time carries over.
+  // two segments on phones (make to HOLD, makeEnd): across 640 px, Make's own time carries over.
   function placeIn(id, u) {
     let sg = TL.seg(id);
     let moved = false;
-    if (!sg && (id === "start" || id === "makeEnd")) { u = TL.HOLD + (id === "makeEnd" ? u : 0); sg = TL.seg("make"); moved = true; }
+    if (!sg && id === "makeEnd") { u = TL.HOLD + u; sg = TL.seg("make"); moved = true; }
     if (sg && sg.id === "make" && TL.p === "tall" && u > sg.T1 - sg.T0 + 1e-9) { u -= sg.T1 - sg.T0; sg = TL.seg("makeEnd"); moved = true; }
     return sg ? { sg, u, moved } : null;
   }
@@ -895,22 +878,6 @@
       setOnce("stageK", stageWrap, "transform", k >= 0.999 ? "none" : `scale(${k.toFixed(4)})`);
       if (copy.make) setOnce("heroTop", copy.make, "top", `${Math.round(L.stageTop + L.stageH * Math.min(1, k) + CAP_GAP)}px`);
     }
-    // phones (F1 option A, amended F1b): the stage steps back during the start still (Make's frame held) so the hero's
-    // CTA block fits under it, and grows back to full size as the hand sets off for Create (TL.regrowAt, REGROW s), so
-    // the Create press, the PDF press and the bloom play full size. The stage scales about its top centre; the label row
-    // and the two hero captions ride its bottom edge. ("Fictional data" only ever moves up and down: it keeps the caption
-    // column's left edge, the full stage's, on every frame.)
-    if (TL.p === "tall" && TL.kStart < 1) {
-      const st = TL.seg("start");
-      const k = T <= TL.regrowAt ? mix(1, TL.kStart, P(T, st.T0 + STEP_IN[0], STEP_IN[1], E.SMOOTH))
-        : mix(TL.kStart, 1, P(T, TL.regrowAt, REGROW, E.SMOOTH));
-      const full = k >= 0.9995, dy = L.stageH * (1 - k);
-      setOnce("stageK", stageWrap, "transform", full ? "none" : `scale(${k.toFixed(4)})`);
-      setOnce("labelK", label, "transform", full ? "none" : `translateY(${(-dy).toFixed(2)}px)`);
-      const top = full ? "" : `${(L.capTop - dy).toFixed(2)}px`;
-      if (copy.make) setOnce("heroTop", copy.make, "top", top);
-      if (startEl) setOnce("startTop", startEl, "top", top);
-    }
     // (full-field: the field is the whole stage, so the stage's own background takes its colour too: no edge fringe)
     const pinCls = "pin" + (f > 0.5 ? " on-field" : "") + (f >= 0.999 && !(G.fieldK > 0) ? " full-field" : "") + (T >= TL.late ? " is-late" : "") + (T >= TL.ownAt ? " own" : "");
     if (lastG.pinCls !== pinCls) { lastG.pinCls = pinCls; pin.setAttribute("class", pinCls); }
@@ -979,17 +946,8 @@
     if (i === capIdx && !instant) return;
     capIdx = i;
     const b = TL.beats[i];                            // null: a beat with no caption (the Ride's flood)
-    const next = capFor(b);                            // (phones: the hero is split into make + start)
+    const next = capFor(b);
     clearTimeout(capTimer);
-    // (phones, Sol F1b #1) the CTA block handing back to the headline as the stage regrows leaves at once, never on a
-    // timed fade: it rides the stage's edge, so a fade the scroll outran could carry it past the pin's bottom
-    if (next && next === copy.make && startEl && startEl.classList.contains("is-on")) {
-      startEl.style.transition = "none";
-      startEl.classList.remove("is-on", "is-off");
-      void startEl.offsetWidth;
-      startEl.style.transition = "";
-      capActive(startEl, false);
-    }
     // (phones, F2c) the offer copy never waits out an outgoing caption's 60 ms fade: a fling can step over the null
     // switch between the Yours caption and the copy (0.04 s of story), and by the time that fade ends the stage is gone
     // and the card is empty. The outgoing caption leaves at once (it sits under the card); the copy starts its own
@@ -1567,8 +1525,7 @@
     if (elOk) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
     else if (pl.beat && TL && motion()) y = pl.beat === "make" ? 0 : scrollForBeat(pl.beat);
     if (y == null && pl.beat && !elOk) {
-      // (F1: the phone story's start caption is the hero's own CTA block; stacked, that is the hero section)
-      const sec = $(`.beat[data-beat="${pl.beat === "start" ? "make" : pl.beat}"]`);
+      const sec = $(`.beat[data-beat="${pl.beat}"]`);
       if (sec) y = window.scrollY + sec.getBoundingClientRect().top - hb;
     }
     if (y == null) return;
