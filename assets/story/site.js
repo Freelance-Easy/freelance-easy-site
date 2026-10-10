@@ -152,7 +152,18 @@
   // sub line (on screen while Make arrives), and START = the hero's CTA row, the trial line and the fine print with the
   // mobile note (its own beat, the first thing the scroll reveals, one block so the disclosures stay beside the button).
   // Both are put back in the hero's exact original order whenever the phone story is not running.
-  const TALL_BEATS = ["make", "start", "look", "know", "grow", "chase"];
+  // (F2, Daniel: "i like the your data but i also want it to end with a call to action") the phone story then goes on
+  // Chase -> Yours (the folder card) -> the offer card: "yours" is an aria-hidden visual clone of the first trust item
+  // (the section itself follows the pin), "end" is the End section's own copy, moved into the pin
+  const TALL_BEATS = ["make", "start", "look", "know", "grow", "chase", "yours", "end"];
+  const TALL_PIN = [...PHONE_BEATS, "end"];
+  // the captions under the stage (the caption budget): the start caption has its own room (the stage steps back for it)
+  // and the offer card is centred in the full pin with the stage gone
+  const CAP_EXCL = ["start", "end"];
+  // the end hold (story s): its length, and where the map's readable rest starts before the timeline's end. The map's
+  // last frame is T1 + 0.01 (rendered as T1, a still), so the very end of the timeline is a scroll position too.
+  // END_K: the map's last stretch of shown time over which FX.story.endK goes 0 -> 1 (from T1 - 0.005)
+  const END_HOLD = 0.06, END_REST = 0.02, END_K = 0.015;
   // the start still (story seconds): its length, the step-back [start, duration] inside it, the caption switch (once the
   // stage is small) and the readable frame (the map's start hold)
   const START_DUR = 0.5, STEP_IN = [0.04, 0.3], START_CAP = 0.36, START_HOLD = 0.42;
@@ -227,9 +238,37 @@
       capsEl.insertBefore(startEl, copy.make.nextSibling);
     }
     if (startEl && startEl.parentNode === capsEl) { startEl.classList.remove("is-on", "is-off"); capActive(startEl, false); }
+    // (phones, F2) the Yours caption sits before the offer card's copy; the Yours section follows the pin (is-after-pin)
+    const ending = split && inPin.includes("end") && copy.end && copy.end.parentNode === capsEl;
+    const yc = ending ? yoursCapEl() : yoursCap;
+    if (yc) {
+      yc.classList.remove("is-on", "is-off", "is-idle");
+      if (ending) { if (yc.parentNode !== capsEl || yc.nextSibling !== copy.end) capsEl.insertBefore(yc, copy.end); }
+      else if (yc.parentNode) yc.remove();
+    }
+    if (home.yours) {
+      home.yours.sec.classList.toggle("is-after-pin", !!ending);
+      if (!ending) { home.yours.sec.style.removeProperty("--end-k"); if (home.yours.sec.getAttribute("style") === "") home.yours.sec.removeAttribute("style"); }
+    }
+  }
+  // (phones, F2) the Yours caption: a visual clone of the first trust item's folder icon and title ("Your files stay
+  // with you."), aria-hidden with nothing focusable; the real one is read in the Yours section after the pin. (Its body
+  // line is longer than Chase's: it would become the caption budget and shrink the stage.)
+  let yoursCap = null;
+  function yoursCapEl() {
+    if (yoursCap) return yoursCap;
+    const li = copy.yours && $(".trust li", copy.yours);
+    if (!li) return null;
+    yoursCap = document.createElement("div");
+    yoursCap.className = "beat-copy yours-cap";
+    yoursCap.setAttribute("data-copy", "yours-cap");
+    yoursCap.setAttribute("aria-hidden", "true");
+    for (const s of [".ic", "h3"]) { const e = $(`:scope > ${s}`, li); if (e) yoursCap.appendChild(e.cloneNode(true)); }
+    return yoursCap;
   }
   // the caption element a beat shows in the pin
   const capFor = (b) => (b === "start" ? (startEl && startEl.parentNode === capsEl ? startEl : null)
+    : b === "yours" && yoursCap && yoursCap.parentNode === capsEl ? yoursCap
     : b && copy[b] && copy[b].parentNode === capsEl ? copy[b] : null);
 
   /* ---------------- phones: the stage, its label row and the captions, balanced in the pin ---------------- */
@@ -252,8 +291,8 @@
   // that width, so the fit runs until it settles. (F1: the story pins from the first frame, so there is no intro to
   // line the stage up with; the Make and start captions are in the budget like every other caption.)
   const fitVars = ["--stage-w", "--stage-top", "--cap-inset"];
-  // the caption budget: the tallest pinned caption among the phone beats, less any excluded (F2's offer card is not
-  // under the stage, so it will pass ["end"])
+  // the caption budget: the tallest pinned caption among the phone beats, less any excluded (CAP_EXCL: the start
+  // caption and the offer card, which are not under the full stage)
   function capBudget(exclude = []) {
     let h = 0;
     for (const b of TALL_BEATS) { if (exclude.includes(b)) continue; const c = capFor(b); if (c) h = Math.max(h, c.offsetHeight); }
@@ -267,13 +306,13 @@
     let w = cw, capH = 0;
     for (let k = 0; k < 4; k++) {
       pin.style.setProperty("--cap-inset", `${(cw - w) / 2}px`);
-      capH = capBudget(["start"]);     // (F1: the start caption has its own room: the stage steps back for it)
+      capH = capBudget(CAP_EXCL);      // (F1: the start caption has its own room: the stage steps back for it; F2: the offer card is centred in the pin)
       const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
       const nw = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
       if (nw >= w) break;
       w = nw;
     }
-    fitCapH = capBudget(["start"]);
+    fitCapH = capBudget(CAP_EXCL);
     const free = Math.max(0, ph - safe - ((w * 6) / 5 + LABEL_ROW + LABEL_GAP + capH));
     const top = Math.max(FIT_TOP, Math.round(free * 0.42));
     pin.style.setProperty("--stage-w", `${w}px`);
@@ -282,12 +321,14 @@
   // (F1) a caption that changes height on its own (late fonts; a share status line if its reserved line ever stopped
   // holding it) refits the stage when it changes the budget; the reserved status line means a share never does
   const capRO = "ResizeObserver" in window ? new ResizeObserver(() => { if (!capRaf) capRaf = requestAnimationFrame(capCheck); }) : null;
-  let capRaf = 0;
+  let capRaf = 0, fitEndH = -1;
+  const endCopyH = () => (copy.end && copy.end.parentNode === capsEl ? copy.end.offsetHeight : 0);
   function capCheck() {
     capRaf = 0;
     if (!TL || TL.p !== "tall" || fitCapH < 0) return;
     const sh = startEl && startEl.parentNode === capsEl ? startEl.offsetHeight : 0;
-    if (capBudget(["start"]) === fitCapH && sh === fitStartH) return;
+    // (F2: the offer card is measured on the End copy's own box, so a change in its height re-lays the card too)
+    if (capBudget(CAP_EXCL) === fitCapH && sh === fitStartH && endCopyH() === fitEndH) return;
     relayoutChecked();
   }
 
@@ -334,7 +375,7 @@
     else if (label.parentNode !== stage) stage.appendChild(label);
     fitPhone();
     const s0 = stage.clientWidth / W;
-    const names = isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : PHONE_BEATS;
+    const names = isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : p === "tall" ? [...PHONE_BEATS, "yours"] : PHONE_BEATS;
     for (const n of names) mounts[n] = mount(n, p, s0);
     for (const m of Object.values(mounts)) m.show(false);
     const layer = () => {
@@ -380,6 +421,14 @@
       hold("price", 0.6, { ...GBASE, stage: 0, card: { from: "price", k: 1 } });
       seam("priceBrand", S.priceBrand, null, null);
       hold("brand", 1.0, { ...GBASE, stage: 0, mark: 1 });
+    } else if (p === "tall") {
+      // (phones, F2) Chase -> Yours (the Ride mirrored: the band draws back, the Recent card files into the Data storage
+      // card), the folder card, then Yours -> Offer: the card leaves the stage and becomes the offer card in the full
+      // pin (the End section's copy), and the story rests on it before the pin lets go
+      seam("chaseYours", S.chaseYours, M.chase, M.yours);
+      scene("yours", M.yours, M.yours.inst.START, M.yours.inst.END, GBASE);
+      seam("yoursOffer", S.yoursOffer, M.yours, null);
+      hold("end", END_HOLD, { ...GBASE, stage: 0, card: { from: "yours", to: "offer", k: 1 } });
     }
     TL = { segs, T1: T, HOLD: M.make.inst.HOLD, isDesk, p, W, H, dark };
     const seg = (id) => segs.find((s) => s.id === id);
@@ -408,15 +457,26 @@
       TL.switches.push([null, seg("chaseYours").T0 + 0.06], ["yours", seg("chaseYours").T0 + 0.5],
         [null, seg("yoursPrice").T0 + 0.04], ["price", seg("yoursPrice").T0 + (seg("yoursPrice").seam.PRICE_IN ?? 0.5), 0.02],
         [null, seg("priceBrand").T0 + 0.04], ["note", seg("priceBrand").T0 + 0.4], ["end", seg("brand").T0 + 0.45]);
+    } else if (p === "tall") {
+      // (phones, F2: desktop's rules) Chase's caption leaves before the band draws back over it, Yours arrives once the
+      // band is gone; the folder card never moves under a caption; the offer copy arrives once the card covers 98 % of
+      // it (layout() measures that moment, TL.offerSw, on the real rects), with price's narrow 0.02 hysteresis
+      const cy = seg("chaseYours"), yo = seg("yoursOffer");
+      TL.offerSw = ["end", yo.T1, 0.02];
+      TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + 0.04], TL.offerSw);
     }
     TL.beats = ["make", ...TL.switches.map((s) => s[0])];
     TL.labelData = seg("lookKnow").T0 + 0.14;          // "Fictional data" as the list (and its year total) arrives
-    TL.labelOff = isDesk ? seg("chaseYours").T0 + 0.36 : Infinity;   // ...until the last money has left the stage
+    // ...until the last money has left the stage (desktop, and the phone's own Chase -> Yours since F2)
+    TL.labelOff = isDesk || p === "tall" ? seg("chaseYours").T0 + 0.36 : Infinity;
     TL.late = isDesk ? seg("chaseYours").T0 + 0.3 : Infinity;
-    // the page-level overlay (desktop): the card that becomes the price card, and the real mark
-    if (isDesk) {
+    // the page-level overlay (desktop, and phones since F2): the card that becomes the price card (phones: the offer
+    // card), and (desktop) the real mark
+    if (isDesk || p === "tall") {
       ovCard = div("ov-card", over);
       ovInk = div("fx-ink", ovCard);
+    }
+    if (isDesk) {
       ovMark = document.createElement("img");
       ovMark.src = "/assets/story/fe-mark.png";
       ovMark.alt = "";
@@ -502,11 +562,61 @@
       };
       css(ovMark, "left", `${mark.x.toFixed(1)}px`); css(ovMark, "top", `${mark.y.toFixed(1)}px`);
       css(ovMark, "width", `${MS}px`); css(ovMark, "height", `${MS}px`);
-    } else OV = null;
+    } else if (TL.p === "tall" && ovCard && mounts.yours && copy.end && copy.end.parentNode === capsEl) OV = offerLayout(pr, wr);
+    else OV = null;
+    if (!OV || TL.isDesk) clearOfferVars();
     buildMap();
     navMeasure();
     lastG = {};
     curSeg = -1;
+  }
+
+  // (phones, F2) the offer card: the End section's copy, centred in the full pin (its own padding is the card's), and the
+  // overlay's two rects: the Data storage card where the stage shows it, and the offer card. Then the moment the copy
+  // may arrive: the first u of Yours -> Offer from which the springing card covers >= 98 % of the copy's box (sampled
+  // from the seam's own spring, so it holds at every phone size and in both themes).
+  function clearOfferVars() {
+    if (pin.style.getPropertyValue("--offer-top")) pin.style.removeProperty("--offer-top");
+    for (const v of ["--offer-card-w", "--offer-card-h"]) if (storyEl.style.getPropertyValue(v)) storyEl.style.removeProperty(v);
+    if (storyEl.getAttribute("style") === "") storyEl.removeAttribute("style");
+  }
+  function offerLayout(pr, wr) {
+    const ec = copy.end, s = L.s;
+    const safe = cssPx("env(safe-area-inset-bottom, 0px)");
+    const eh = ec.offsetHeight;
+    fitEndH = eh;
+    pin.style.setProperty("--offer-top", `${Math.max(FIT_TOP, Math.round((pr.height - safe - eh) * 0.46))}px`);
+    const orc = over.getBoundingClientRect(), er = ec.getBoundingClientRect();   // (the copy only fades: no transform)
+    const cs = getComputedStyle(ec);
+    const y = mounts.yours.inst.X;
+    const sx = wr.left - orc.left, sy = wr.top - orc.top;
+    const probe = div("", over);
+    probe.style.cssText = "position:absolute;width:0;height:0;background:var(--bg-1);border-color:var(--line-1);border-style:solid;border-width:0";
+    const csP = getComputedStyle(probe);
+    const fill = rgba(csP.backgroundColor), line = rgba(csP.borderTopColor);
+    probe.remove();
+    const ov = {
+      yours: { g: { cx: sx + y.R.cx * s, cy: sy + y.R.cy * s, w: y.R.w * s, h: y.R.h * s, r: y.R.r * s, bw: 1 },
+        look: { fill: y.surf, line: y.line, lineA: 1, dark: TL.dark } },
+      offer: { g: { cx: er.left - orc.left + er.width / 2, cy: er.top - orc.top + er.height / 2, w: er.width, h: er.height, r: 24, bw: 1 },
+        look: { fill, line, lineA: 1, dark: TL.dark } },
+    };
+    storyEl.style.setProperty("--offer-card-w", `${Math.round(er.width)}px`);
+    storyEl.style.setProperty("--offer-card-h", `${Math.round(er.height)}px`);
+    // the copy's box: the card less its padding
+    const pl = parseFloat(cs.paddingLeft) || 0, pt = parseFloat(cs.paddingTop) || 0, pR = parseFloat(cs.paddingRight) || 0, pb = parseFloat(cs.paddingBottom) || 0;
+    const bx = { l: er.left - orc.left + pl, t: er.top - orc.top + pt, r: er.right - orc.left - pR, b: er.bottom - orc.top - pb };
+    const a = ov.yours.g, b = ov.offer.g, yo = TL.seg("yoursOffer"), sm = yo.seam;
+    const cover = (k) => {
+      const cx = mix(a.cx, b.cx, k), cy = mix(a.cy, b.cy, k), w = mix(a.w, b.w, k), h = mix(a.h, b.h, k);
+      const ix = Math.min(bx.r, cx + w / 2) - Math.max(bx.l, cx - w / 2), iy = Math.min(bx.b, cy + h / 2) - Math.max(bx.t, cy - h / 2);
+      return ix > 0 && iy > 0 ? (ix * iy) / ((bx.r - bx.l) * (bx.b - bx.t)) : 0;
+    };
+    let uIn = sm.DUR;
+    for (let u = sm.DUR; u >= sm.LIFT; u -= 0.005) { const k = sm.K(u); if (k == null || cover(k) < 0.98) break; uIn = u; }
+    TL.offerIn = +uIn.toFixed(3);
+    TL.offerSw[1] = yo.T0 + TL.offerIn;
+    return ov;
   }
 
   /* ---------------- the scroll map: plateaus at each beat's readable frame, eased ramps between them ---------------- */
@@ -527,6 +637,9 @@
     ];
     // (phones, F1) the start hold: the first scroll's stop, the stage still on Make's arrival frame, the CTA block up
     if (TL.p === "tall") holds.splice(1, 0, { beat: "start", T: seg("start").T0 + START_HOLD, len: 30 });
+    // (phones, F2) the folder card's readable frame, then the offer card: a 40 vh rest at the very end of the timeline
+    // (T1 - 0.02 to T1 + 0.01; FX.story.endK rises over its last 0.015 s), and the pin lets go on it
+    if (TL.p === "tall" && seg("end")) holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "end", T: TL.T1 - END_REST, len: 40 });
     if (TL.isDesk) {
       holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "price", T: seg("price").T0 + 0.3, len: 40 },
         { beat: "note", T: seg("brand").T0 + 0.2, len: 32 }, { beat: "end", T: seg("brand").T1 - 0.05, len: 40 });
@@ -557,7 +670,29 @@
     });
     MAP = { pieces, L: s, vh };
     css(track, "height", `${Math.round(s)}px`);
+    if (TL.p === "tall" && seg("end")) {
+      endKv = -1;
+      window.dispatchEvent(new Event("fx:layout"));
+    }
   }
+  // (phones, F2; the contract F3 builds on) FX.story.endK(): how far the SHOWN time (the stage, never the scroll) has come
+  // through the end hold's last stretch, 0..1 (0 until T1 - 0.005, 1 at the map's last frame): the section after the
+  // pin keys on it (its --end-k), so a scroll that outruns the stage never shows it early. endY(): the scroll position
+  // where the story ends and the pin starts to leave (untransformed px). Events on window: fx:shown when endK changes,
+  // fx:layout after each layout. Off phones (or with no phone ending) endK is 1.
+  let endKv = -1;
+  function setEndK(T) {
+    const pcs = MAP && MAP.pieces, e1 = pcs ? pcs[pcs.length - 1].T1 : TL.T1;
+    const k = clamp((T - (e1 - END_K)) / END_K);
+    if (k === endKv) return;
+    endKv = k;
+    if (home.yours) home.yours.sec.style.setProperty("--end-k", k >= 1 ? "1" : k.toFixed(3));
+    window.dispatchEvent(new Event("fx:shown"));
+  }
+  FX.story = {
+    endK: () => (TL && TL.p === "tall" && TL.seg("end") && endKv >= 0 ? endKv : 1),
+    endY: () => (TL && MAP ? storyTop + MAP.L : 0),
+  };
   // a ramp's progress with soft ends: zero slope at both ends, linear in the middle (C1)
   function easeEnds(q, a) {
     if (a <= 0) return q;
@@ -636,8 +771,8 @@
   // it shows, so re-entry is deterministic).
   let curSeg = -1, lastG = {};
   const setOnce = (key, el, prop, val) => { if (lastG[key] !== val) { lastG[key] = val; css(el, prop, val); } };
-  function render(T) {
-    T = clamp(T, 0, TL.T1);
+  function render(Tin) {
+    const T = clamp(Tin, 0, TL.T1);
     const i = segAt(T);
     const sg = TL.segs[i];
     if (i !== curSeg) {
@@ -655,6 +790,7 @@
       if (sg.seam.globals) G = { ...GBASE, ...sg.seam.globals(u) };
     }
     applyGlobals(G, T);
+    if (OV && OV.offer) setEndK(Tin);                  // (the map's last frame is past T1: the shown time itself)
   }
   function applyGlobals(G, T) {
     const f = G.field || 0;
@@ -732,6 +868,7 @@
       const seal = c.seal || 0;
       drawInk(ovInk, { mode: seal <= 0 ? "none" : seal >= 1 ? "full" : "disc", k: seal, x: g.w / 2, y: g.h / 2, w: g.w, h: g.h, color: [6, 10, 15, 1] });
     }
+    if (!ovMark) return;                               // (phones: the offer card only)
     const m = G.mark || 0;
     setOnce("mkO", ovMark, "opacity", m >= 0.999 ? "1" : m.toFixed(3));
     setOnce("mkD", ovMark, "display", m > 0.001 ? "block" : "none");
@@ -1149,7 +1286,8 @@
     clearDip();
     pin.style.removeProperty("--cap-top");
     for (const v of fitVars) pin.style.removeProperty(v);
-    fitCapH = -1;
+    clearOfferVars();
+    fitCapH = -1; fitEndH = -1; endKv = -1;
     if (capRO) capRO.disconnect();
     for (const [el, props] of [[field, ["opacity", "clip-path"]], [shade, ["opacity"]], [band, ["display", "clip-path"]],
       [stageCol, ["opacity", "visibility"]], [stageWrap, ["transform"]], [track, ["height"]]]) for (const p of props) el.style.removeProperty(p);
@@ -1166,7 +1304,7 @@
       layoutKey = key();
       if (!motion()) { teardown(); doc.classList.add("fx-ready"); return; }
       if (desktop()) placeCopies(BEATS);
-      else if (preset() === "tall") placeCopies(PHONE_BEATS, true);
+      else if (preset() === "tall") placeCopies(TALL_PIN, true);
       else placeCopies(PHONE_BEATS);
       if (capRO) {
         capRO.disconnect();

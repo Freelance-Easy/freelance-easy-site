@@ -1122,7 +1122,9 @@
     build(ctx) {
       const { world, W, H, tall, dark } = ctx;
       const k = KIT().yours;
-      const Z = tall ? 1.12 : 1.3;
+      // (phones, F2: the phone story now shows this card under its own caption) a narrower card at a larger zoom, so its
+      // words read at ~11-12 px on a ~300-340 px stage instead of ~7 px (site.css .fx-root.tall .d-settings .card)
+      const Z = tall ? 1.8 : 1.3;
       const shape = div("fx-shape", world);
       div("fx-ink", shape);
       const st = addSt(shape, `<div id="settings-page" class="redesigned d-settings">${k.dataCard}</div>`, Z);

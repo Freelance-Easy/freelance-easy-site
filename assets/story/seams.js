@@ -378,6 +378,32 @@
     };
   };
 
+  /* ---------------- Yours -> Offer (phones, phase F2): the folder's card becomes the offer card ----------------
+     yoursPrice's phone sibling (Daniel 2026-10-10: "i like the your data but i also want it to end with a call to
+     action"). The Data storage card's content leaves, the card is lifted out of the stage at its exact screen rect (the
+     page-level overlay, site.js) and springs to the offer card's rect in the full pin while the stage dims away. The
+     offer's copy is the End section's own (a caption): it arrives once the card covers 98 % of its box, a moment site.js
+     measures on the real rects from this same spring (K), so no text ever sits over an empty or moving edge. */
+  SEAMS.yoursOffer = function ({ A }) {
+    const a = A.inst.X;
+    const DUR = 1.25, LIFT = 0.1;
+    const K = (u) => (u < LIFT ? null : clamp(spring(u - LIFT, 2.8, 0.9)));
+    return {
+      DUR, LIFT, K,
+      seek(u) {
+        const aOn = u < LIFT;
+        A.show(aOn);
+        if (!aOn) return;
+        A.seek(A.inst.END);
+        dim(a.st, fadeOut(u, 0, 0.1), "inline-block");
+      },
+      globals(u) {
+        const k = K(u);
+        return { stage: 1 - P(u, 0.12, 0.42, E.SMOOTH), card: k == null ? null : { from: "yours", to: "offer", k } };
+      },
+    };
+  };
+
   /* ---------------- Price -> Brand: the card resolves into the Freelance Easy mark ----------------
      House order (never ink and size at once): the card shrinks to the mark's tile, then the tile's colour seals it from
      the centre. v2.1: the real raster (assets/fe-mark.png, at its own rect, opacity only) starts arriving while the tile

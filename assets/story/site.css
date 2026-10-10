@@ -2255,7 +2255,7 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   margin: 0;
 }
 .fx-root.tall .d-settings .card {
-  width: 420px;
+  width: 300px;
 }
 
 /* phones and tablets: the stage pinned at the top, the captions below it */
@@ -2425,6 +2425,94 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
      start caption's CTA) always lands on what is shown */
   .captions > .beat-copy.is-on {
     z-index: 1;
+  }
+  /* (F2) the story's end on phones. YOURS: an aria-hidden visual clone of the first trust item under the folder card:
+     its folder icon as the chapter mark (where the other captions have their number), the title in the chapter
+     headline treatment. */
+  .captions > .yours-cap .ic {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    color: var(--text-1);
+    background: var(--bg-1);
+    box-shadow: 0 0 0 1px var(--line-1);
+  }
+  [data-theme="dark"] .captions > .yours-cap .ic {
+    background: var(--bg-2);
+  }
+  .captions > .yours-cap .ic svg {
+    width: 14px;
+    height: 14px;
+  }
+  .captions > .yours-cap h3 {
+    margin-top: 8px;
+    font-size: clamp(26px, 7vw, 28px);
+    font-weight: 640;
+    line-height: 1.05;
+    letter-spacing: -0.042em;
+  }
+  /* OFFER: the End section's own copy, centred in the full pin (site.js --offer-top) over the card the folder card
+     became (site.js draws that card in .pin-over on this exact box, so the padding is the card's). It only fades: the
+     copy and its controls never move. One block: the headline, the button, the trial line, the mobile note, the status. */
+  .captions > .end-copy {
+    top: var(--offer-top, 16%);
+    left: var(--pad);
+    right: var(--pad);
+    padding: 24px 20px 18px;
+    transform: none;
+  }
+  .captions > .end-copy .brand-word {
+    margin-top: 0;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--text-2);
+  }
+  .captions > .end-copy h2 {
+    margin-top: 8px;
+    max-width: none;
+    font-size: clamp(28px, 7.8vw, 32px);
+  }
+  .captions > .end-copy .cta-row {
+    margin-top: 18px;
+    gap: 8px;
+  }
+  .captions > .end-copy .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+  .captions > .end-copy .disclose {
+    margin-top: 12px;
+    line-height: 20px;
+  }
+  .captions > .end-copy .fine {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 17px;
+  }
+  /* (as the start caption's) a fixed slot for the share status, so a status never changes the card */
+  .captions > .end-copy .dl-status,
+  .captions > .end-copy .dl-status:empty {
+    display: block;
+    height: 16px;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 16px;
+    overflow: visible;
+  }
+  /* the Yours section after the pin (F2): its headline 24-56 px under the pin's edge as the pin lets go; the static
+     figure is the folder card the story just showed; it shows once the stage has arrived on the offer card (--end-k,
+     the shown time, never the scroll: site.js FX.story.endK) */
+  html.js.motion .yours.is-after-pin {
+    padding-top: 40px;
+    opacity: var(--end-k, 1);
+  }
+  html.js.motion .yours.is-after-pin .yours-stage {
+    display: none;
+  }
+  html.js.motion .yours.is-after-pin .trust {
+    margin-top: 24px;
   }
   /* (round D) tighter captions, so the stage keeps more of a real phone's height (browser bars on): a 12 px chapter
      number row, a 26-28 px headline, 15/1.4 body, 8 px between them. fitPhone budgets the largest one. */
