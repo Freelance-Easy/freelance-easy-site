@@ -413,7 +413,7 @@
       for (const s of Object.values(ST)) css(s.st, "display", "none");
       const surf = solid(sk.picker.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.picker.bc[3] > 0.005 ? sk.picker.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
-      const bottom = tall ? H - 18 : H - 34;            // the control card floats over the paper's blank lower part
+      const bottom = tall ? H - 30 : H - 34;            // the control card floats over the paper's blank lower part (phones B1: 30, clear of the stage edge while it rises in)
       const RC = {};
       for (const n of ["picker", "presets", "pool"]) RC[n] = { cx: W / 2, cy: bottom - sk[n].h / 2, w: sk[n].w, h: sk[n].h, r: sk[n].r, bw: Math.max(1, sk[n].bw) };
       const B = { toBold: 0.78, pressBold: 1.28, morphPresets: 2.15, toCoral: 2.25, pressCoral: 2.77,
