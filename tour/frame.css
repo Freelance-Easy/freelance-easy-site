@@ -1,0 +1,12 @@
+/* Harness geometry only; a 1440 × 900 viewport preserves the released desktop media queries. */
+html, body { width: 1440px; height: 900px; margin: 0; overflow: hidden; }
+#screen { position: absolute; inset: 0; overflow: hidden; }
+#screen .app { height: 900px; }
+.fe-cursor { position: absolute; top: 0; left: 0; width: 20px; height: 28.6px; z-index: 3000; pointer-events: none; opacity: 0; transform-origin: 2px 2px; filter: drop-shadow(0 2px 3px #0005); }
+#page-ghost { position: absolute; inset: 0; pointer-events: none; z-index: 2000; }
+#page-ghost *, #page-ghost *::before, #page-ghost *::after { animation: none !important; transition: none !important; }
+#page-ghost .spark { clip-path: inset(0); }
+/* Main's dashboard extra_head rule, copied verbatim. */
+[data-theme="dark"] .redesigned .attention-ic-followup { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+[data-motion="reduced"] *, [data-motion="reduced"] *::before, [data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
+[data-motion="reduced"] .redesigned .kpi .spark { clip-path: inset(0); }

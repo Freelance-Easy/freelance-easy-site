@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <!-- NEW COPY (page title, from the homepage button) -->
+  <title>Watch the 25-second tour · Freelance Easy</title>
+  <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
+  <!-- The 25-second tour: a quick, watch-only animatic of the released app (v0.3.0-beta), derived from ../tour/.
+       Same released screens, CSS and fictional account; Sign in and Your name skipped. #embed = chrome-less (the
+       homepage's dialog), #light / #dark, #reduced. Plays once on open; never loops; a hidden tab pauses it. -->
+  <link rel="stylesheet" href="quick.css">
+  <script src="release-screens.js" defer></script>
+  <script src="fe-motion.js" defer></script>
+  <script src="quick.js" defer></script>
+</head>
+<body>
+  <main class="tour-page">
+    <header class="tour-header">
+      <a class="back" href="/">← Back to the homepage</a>
+      <div class="theme-switch" role="group" aria-label="Colour theme">
+        <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme-set="dark" aria-pressed="true">Dark</button>
+      </div>
+    </header>
+    <section class="intro" aria-labelledby="tour-title">
+      <p class="eyebrow">Freelance Easy · Desktop app</p>
+      <!-- NEW COPY -->
+      <h1 id="tour-title">Watch the 25-second tour</h1>
+    </section>
+    <section class="player" aria-label="Freelance Easy walkthrough">
+      <div class="frame-surround">
+        <div class="frame-top"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Freelance Easy</span><span class="fictional">Fictional data</span></div>
+        <div class="pframe-box" id="pframe-box">
+          <iframe id="app-frame" title="Watch-only example of the released Freelance Easy app" width="1440" height="900" inert tabindex="-1" aria-hidden="true"></iframe>
+        </div>
+      </div>
+      <div class="bar">
+        <div class="progress" id="progress" role="progressbar" aria-label="Tour progress" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><span id="progress-fill"></span></div>
+        <div class="controls">
+          <button type="button" id="play" class="play" aria-label="Play tour">▶ <span>Play</span></button>
+          <div class="caption" aria-live="polite" aria-atomic="true"><span id="caption-number">01 / 05</span><!-- NEW COPY --><p id="caption">The dashboard shows collected, outstanding, and overdue amounts.</p></div>
+          <span class="time" id="time">0:00 / 0:25</span>
+          <div class="end-actions" id="end-actions" hidden>
+            <button type="button" id="replay">Watch again</button>
+            <!-- NEW COPY -->
+            <a class="full" href="/tour/" data-full-tour>Full tour (80 s)</a>
+          </div>
+        </div>
+      </div>
+      <!-- NEW COPY -->
+      <p class="player-note" id="player-note" hidden>Reduced motion · The final screen of the tour.</p>
+      <p class="example-note">Example account with saved invoices and email already configured.</p>
+    </section>
+    <noscript><p>This watch-only tour needs JavaScript to show the app screens.</p></noscript>
+  </main>
+  <!-- Captions: the full tour's canonical captions, verbatim (../tour/index.html, queued for legal). This tour shows
+       3–7, one per chapter; 1 and 2 (Sign in, Your name) are kept so the list stays identical to the reviewed one. -->
+  <template id="caption-copy">
+    <!-- NEW COPY --><p>Sign in with Google, then finish signing in in your browser.</p>
+    <!-- NEW COPY --><p>Set the name that appears on your invoices.</p>
+    <!-- NEW COPY --><p>The dashboard shows collected, outstanding, and overdue amounts.</p>
+    <!-- NEW COPY --><p>Use the status tabs to filter your invoices.</p>
+    <!-- NEW COPY --><p>Choose a client, add line items, and create the invoice.</p>
+    <!-- NEW COPY --><p>Review the invoice, then compose and send its email.</p>
+    <!-- NEW COPY --><p>Mark the invoice paid, then return to the updated dashboard.</p>
+  </template>
+</body>
+</html>
