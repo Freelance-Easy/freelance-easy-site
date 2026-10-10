@@ -235,7 +235,9 @@
       // light (site v2.2, Astra: the paper must never be empty): the calculation stays on the page while it grows (where
       // it was: the paper grows around it) and gives way to the real PDF, overlapping it by ~100 ms
       B.pdfIn = dark ? null : +(B.morphPage + 0.16).toFixed(3);
-      const calcOut = dark ? B.merge - 0.1 : +(B.pdfIn + 0.03).toFixed(3);
+      // (phones, F1b, Astra F1: on a phone the two states overlapping read as the form drawn over the PDF) the
+      // calculation leaves first: gone (its 0.1 s fade) 0.02 s before the PDF starts to show, both directions
+      const calcOut = dark ? B.merge - 0.1 : tall ? +(B.pdfIn - 0.12).toFixed(3) : +(B.pdfIn + 0.03).toFixed(3);
       const SCHED = {
         new: [-1, B.pressNew + 0.02],
         pick: [B.morphPick + 0.2, B.morphRows - 0.1],
