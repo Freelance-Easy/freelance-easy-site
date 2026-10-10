@@ -1136,6 +1136,7 @@
   window.addEventListener("resize", () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
+      syncMode();                                     // (round D: a rotation can cross the short-touch line)
       if (key() !== layoutKey) { refresh(); return; }
       if (!TL) return;
       // phones (Sol mobile P2): the browser's bars showing or hiding change the height only, by less than ~150 px. The
@@ -1168,8 +1169,25 @@
     wake();
   }
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const onMq = () => { doc.classList.toggle("calm", mq.matches); doc.classList.toggle("motion", !mq.matches); refresh(); };
+  // (round D) a short touch screen gets the stacked beats, as reduced motion does (index.html's head script decides it
+  // first, before the first paint; this is the same test). Touch only, so desktop windows never change. The small
+  // viewport (100svh) ignores the browser bars showing and hiding, so only a rotation or a real resize flips it.
+  const SHORT_TOUCH = 600;
+  const coarse = window.matchMedia("(pointer: coarse)");
+  const shortTouch = () => { try { return coarse.matches && (cssPx("100svh") || window.innerHeight) < SHORT_TOUCH; } catch (e) { return false; } };
+  // true when the mode changed (the caller refreshes); on a resize, a page that fell back to its static layout (no
+  // motion, no calm class) stays there (a change of the motion preference sets the mode, as it always did)
+  function syncMode(force) {
+    if (!force && !doc.classList.contains("motion") && !doc.classList.contains("calm")) return false;
+    const short = !mq.matches && shortTouch(), calm = mq.matches || short;
+    doc.classList.toggle("short-touch", short);
+    if (calm === doc.classList.contains("calm") && !calm === doc.classList.contains("motion")) return false;
+    doc.classList.toggle("calm", calm); doc.classList.toggle("motion", !calm);
+    return true;
+  }
+  const onMq = () => { syncMode(true); refresh(); };
   if (mq.addEventListener) mq.addEventListener("change", onMq);
+  if (coarse.addEventListener) coarse.addEventListener("change", onMq);
   // the fonts measure every piece: wait for them (up to 1.8 s); if they land after that, remeasure in place
   const fontsLoaded = Promise.all(['400 14px "Inter"', '600 14px "Inter"', '700 14px "Inter"'].map((f) => document.fonts.load(f)))
     .then(() => document.fonts.ready);
