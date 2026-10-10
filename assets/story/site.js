@@ -478,12 +478,19 @@
       // it (layout() measures that moment, TL.offerSw, on the real rects), with price's narrow 0.02 hysteresis
       const cy = seg("chaseYours"), yo = seg("yoursOffer");
       TL.offerSw = ["end", yo.T1, 0.02];
-      TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + 0.04], TL.offerSw);
+      // (F2d, Astra F2: a washed-out crossover) the Yours statement stays readable until the card lifts (LIFT), so a
+      // readable element is up until the offer gives the eye its focal point
+      TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + yo.seam.LIFT], TL.offerSw);
     }
     TL.beats = ["make", ...TL.switches.map((s) => s[0])];
     TL.labelData = seg("lookKnow").T0 + 0.14;          // "Fictional data" as the list (and its year total) arrives
     // ...until the last money has left the stage (desktop, and the phone's own Chase -> Yours since F2)
-    TL.labelOff = isDesk || p === "tall" ? seg("chaseYours").T0 + 0.36 : Infinity;
+    // (phones, F2d, Astra F2: the label retires WITH the dashboard it describes) the phone's Recent rows are gone at
+    // chaseYours u 0.21 (SEAMS.chaseYours), so the label leaves at 0.24 instead of hanging under the card to 0.36
+    TL.labelOff = isDesk ? seg("chaseYours").T0 + 0.36 : p === "tall" ? seg("chaseYours").T0 + 0.24 : Infinity;
+    // (phones, F2d) from Chase -> Yours on, the stage's own box (its skin, its shade, the field in it) is gone: the band
+    // and then the folder card are the one container on screen (site.css .pin.own)
+    TL.ownAt = p === "tall" ? seg("chaseYours").T0 : Infinity;
     TL.late = isDesk ? seg("chaseYours").T0 + 0.3 : Infinity;
     // the page-level overlay (desktop, and phones since F2): the card that becomes the price card (phones: the offer
     // card), and (desktop) the real mark
@@ -501,6 +508,7 @@
     // the Ride's colour (the October bar's own, near its top) is the band's and the field's
     const c = M.grow.inst.octColor(0.12);
     doc.style.setProperty("--ride", `rgb(${c.slice(0, 3).map(Math.round).join(",")})`);
+    TL.ride = [c[0], c[1], c[2], 1];
     layout();
   }
   const beatAt = (T) => { let i = 0; for (const [, t] of TL.switches) if (T >= t) i++; return i; };
@@ -509,6 +517,8 @@
   /* ---------------- layout: fit, the scroll map, every rect the frame path needs (measured here, never per frame) ---------------- */
   let storyTop = 0, kHero = 1, R0 = null, svhPx = 0, sizeW = 0, sizeH = 0;
   const CAP_GAP = 22;                                  // phones: the captions' clearance under the stage
+  const YOURS_GAP = 36, OFFER_NEXT = 56;               // (F2d) folder card -> its statement; offer card -> the next h2
+  const LITE = (FX.PHONE_LITE = { y: 10, b: 28 });     // (F2d, Astra F2) the phone light theme: one soft card shadow
   function layout() {
     if (!TL) return;
     css(stageWrap, "transform", "none");
@@ -539,8 +549,12 @@
       // centred in the room between the stage and the pin's bottom margin, so the story's last chapter has no dead band
       // under it (the stage keeps its size; the caption only fades, never moves)
       if (yoursCap && yoursCap.parentNode === capsEl) {
-        const bot = pr.height - cssPx("env(safe-area-inset-bottom, 0px)") - FIT_BOT, sb = L.stageTop + L.stageH;
-        yoursCap.style.top = `${Math.max(L.capTop, Math.round(sb + (bot - sb - yoursCap.offsetHeight) / 2))}px`;
+        // (F2d, Astra F2: object and statement read as one composition) the caption sits YOURS_GAP under the folder card
+        // itself (the stage's box is gone by then: .pin.own), not centred in the room under the stage
+        const Y = mounts.yours && mounts.yours.inst.X.R;
+        const bot = pr.height - cssPx("env(safe-area-inset-bottom, 0px)") - FIT_BOT;
+        const cb = Y ? L.stageTop + (Y.cy + Y.h / 2) * s : L.stageTop + L.stageH;
+        yoursCap.style.top = `${Math.round(Math.min(cb + YOURS_GAP, bot - yoursCap.offsetHeight))}px`;
       }
     } else if (!TL.isDesk) {
       const heroH = copy.make ? copy.make.offsetHeight : 0;
@@ -599,6 +613,9 @@
   // from the seam's own spring, so it holds at every phone size and in both themes).
   function clearOfferVars() {
     if (pin.style.getPropertyValue("--offer-top")) pin.style.removeProperty("--offer-top");
+    const ys = home.yours && home.yours.sec;
+    if (ys && ys.style.getPropertyValue("--offer-pull")) { ys.style.removeProperty("--offer-pull"); if (ys.getAttribute("style") === "") ys.removeAttribute("style"); }
+    if (pin.style.clipPath) { pin.style.removeProperty("clip-path"); lastG.pinCut = ""; }
     for (const v of ["--offer-card-w", "--offer-card-h"]) if (storyEl.style.getPropertyValue(v)) storyEl.style.removeProperty(v);
     if (storyEl.getAttribute("style") === "") storyEl.removeAttribute("style");
   }
@@ -607,10 +624,22 @@
     const safe = cssPx("env(safe-area-inset-bottom, 0px)");
     const eh = ec.offsetHeight;
     fitEndH = eh;
-    pin.style.setProperty("--offer-top", `${Math.max(FIT_TOP, Math.round((pr.height - safe - eh) * 0.46))}px`);
+    const y = mounts.yours.inst.X;
+    // (F2d, Astra F2: the storage card visibly becomes the offer card) the offer shares the folder card's centre, up to
+    // where the old 46 % placement had it (a taller card is clamped to the pin's top margin)
+    const ycy = (wr.top - pr.top) + y.R.cy * s;
+    const top = Math.round(clamp(ycy - eh / 2, FIT_TOP, Math.max(FIT_TOP, (pr.height - safe - eh) * 0.46)));
+    pin.style.setProperty("--offer-top", `${top}px`);
+    // (F2d, Astra F2: ~190 px of empty page between the offer and the next heading as the pin lets go) the section after
+    // the pin is drawn up under the pin's empty lower part, so its h2 is OFFER_NEXT under the card at release; the
+    // release itself (storyEnd) does not move
+    const ys = home.yours && home.yours.sec, h2 = ys && ys.querySelector("h2");
+    if (h2) {
+      const off = h2.getBoundingClientRect().top - ys.getBoundingClientRect().top;
+      ys.style.setProperty("--offer-pull", `${Math.max(0, Math.round(pr.height - (top + eh) + off - OFFER_NEXT))}px`);
+    }
     const orc = over.getBoundingClientRect(), er = ec.getBoundingClientRect();   // (the copy only fades: no transform)
     const cs = getComputedStyle(ec);
-    const y = mounts.yours.inst.X;
     const sx = wr.left - orc.left, sy = wr.top - orc.top;
     const probe = div("", over);
     probe.style.cssText = "position:absolute;width:0;height:0;background:var(--bg-1);border-color:var(--line-1);border-style:solid;border-width:0";
@@ -763,6 +792,11 @@
     if (lastG.onBand !== onBand) { lastG.onBand = onBand; doc.classList.toggle("on-band", onBand); }
     const past = !!(TL && TL.p === "tall" && MAP && window.scrollY > storyEnd() + 1);
     if (lastG.past !== past) { lastG.past = past; doc.classList.toggle("past-band", past); }
+    // (phones, F2d, Astra F2: the offer passed under the translucent header) as the pin lets go, everything in it is cut
+    // at the header's lower edge: the pin's top has risen (scrollY - storyEnd) px above it, so that much is clipped
+    const cut = TL && TL.p === "tall" && MAP && TL.seg("end") ? window.scrollY - storyEnd() : 0;
+    const clip = cut > 0.5 ? `inset(${cut.toFixed(1)}px 0px 0px 0px)` : "";
+    if (lastG.pinCut !== clip && (clip || pin.style.clipPath)) { lastG.pinCut = clip; if (clip) pin.style.clipPath = clip; else pin.style.removeProperty("clip-path"); }
   }
   window.addEventListener("scroll", () => { readerY = window.scrollY; if (TL && MAP) syncOnBand(); }, { passive: true });
   // a saved place (segment id + local time) on the current timeline. (Sol F1 #3) Make is one scene on wider stages and
@@ -828,10 +862,25 @@
     }
     setOnce("fieldClip", field, "clip-path", fclip);
     const bk = G.band || 0;
-    setOnce("bandD", band, "display", bk > 0 ? "block" : "none");
     const kb = 1 - bk;
-    setOnce("bandC", band, "clip-path", bk <= 0 || bk >= 1 || !R0 ? "none"
-      : `inset(${(R0.t * kb).toFixed(1)}px ${(R0.r * kb).toFixed(1)}px ${(R0.b * kb).toFixed(1)}px ${(R0.l * kb).toFixed(1)}px round ${(R0.rad * kb).toFixed(1)}px)`);
+    if (G.bandTo && R0) {
+      // (phones, F2d, Astra F2: "one container") the band gathers straight into a rect on the stage (canvas units: the
+      // Data storage card), one silhouette from the page to the card, its corners the card's from a third of the way in,
+      // its colour turning into the card's own (bandC, bandMix) so it lands on the card without a rim
+      const s = L.s, k = clamp(G.bandK), r = G.bandTo;
+      const x = (r.cx - r.w / 2) * s, y = (r.cy - r.h / 2) * s, w = r.w * s, h = r.h * s;
+      const t = R0.t + y, l = R0.l + x, rr = R0.r + (L.sw - x - w), bb = R0.b + (L.sh - y - h);
+      setOnce("bandD", band, "display", k < 1 ? "block" : "none");
+      setOnce("bandC", band, "clip-path", k <= 0 ? "none"
+        : `inset(${(t * k).toFixed(1)}px ${(rr * k).toFixed(1)}px ${(bb * k).toFixed(1)}px ${(l * k).toFixed(1)}px round ${((r.r || 3) * s * Math.min(1, k * 3)).toFixed(1)}px)`);
+      const m = clamp(G.bandMix || 0), c = G.bandC;
+      setOnce("bandBg", band, "background-color", !c || m <= 0 ? "" : FX.cssC(FX.mixC(TL.ride, c, m)));
+    } else {
+      setOnce("bandD", band, "display", bk > 0 ? "block" : "none");
+      setOnce("bandC", band, "clip-path", bk <= 0 || bk >= 1 || !R0 ? "none"
+        : `inset(${(R0.t * kb).toFixed(1)}px ${(R0.r * kb).toFixed(1)}px ${(R0.b * kb).toFixed(1)}px ${(R0.l * kb).toFixed(1)}px round ${(R0.rad * kb).toFixed(1)}px)`);
+      setOnce("bandBg", band, "background-color", "");
+    }
     const so = G.stage == null ? 1 : G.stage;
     setOnce("stageOp", stageCol, "opacity", so >= 0.999 ? "1" : so.toFixed(3));
     setOnce("stageVis", stageCol, "visibility", so <= 0.001 ? "hidden" : "visible");
@@ -860,7 +909,7 @@
       if (startEl) setOnce("startTop", startEl, "top", top);
     }
     // (full-field: the field is the whole stage, so the stage's own background takes its colour too: no edge fringe)
-    const pinCls = "pin" + (f > 0.5 ? " on-field" : "") + (f >= 0.999 && !(G.fieldK > 0) ? " full-field" : "") + (T >= TL.late ? " is-late" : "");
+    const pinCls = "pin" + (f > 0.5 ? " on-field" : "") + (f >= 0.999 && !(G.fieldK > 0) ? " full-field" : "") + (T >= TL.late ? " is-late" : "") + (T >= TL.ownAt ? " own" : "");
     if (lastG.pinCls !== pinCls) { lastG.pinCls = pinCls; pin.setAttribute("class", pinCls); }
     // the header joins the band while the band is the page (syncOnBand)
     bandK = bk;
@@ -887,7 +936,7 @@
         r: mix(a.g.r, b.g.r, clamp(k)), bw: 1 };
       const kc = clamp(k);
       drawShape(ovCard, g, { fill: FX.mixC(a.look.fill, b.look.fill, kc), line: FX.mixC(a.look.line, b.look.line, kc),
-        lineA: mix(a.look.lineA, b.look.lineA, kc), dark: TL.dark, sq: 0 });
+        lineA: mix(a.look.lineA, b.look.lineA, kc), dark: TL.dark, sq: 0, lite: TL.p === "tall" && !TL.dark ? LITE : undefined });
       const seal = c.seal || 0;
       drawInk(ovInk, { mode: seal <= 0 ? "none" : seal >= 1 ? "full" : "disc", k: seal, x: g.w / 2, y: g.h / 2, w: g.w, h: g.h, color: [6, 10, 15, 1] });
     }

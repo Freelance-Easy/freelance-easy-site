@@ -1145,18 +1145,19 @@
       const surf = solid(sk.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.bc[3] > 0.005 ? sk.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
       const R = { cx: W / 2, cy: H / 2, w: sk.w, h: sk.h, r: sk.r, bw: Math.max(1, sk.bw) };
-      drawShape(shape, R, { fill: surf, line, lineA: 1, dark });
+      const lite = tall && !dark ? FX.PHONE_LITE : undefined;       // (F2d) the phone light theme: a soft shadow
+      drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite });
       place(st, 1, R, size, "center", Z);
       const ic = rectIn(st.querySelector(".path-input .ic"), ctx.root);
       css(st, "display", "none");
       const DUR = 0.9;
       function seek(t) {
-        drawShape(shape, R, { fill: surf, line, lineA: 1, dark });
+        drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite });
         css(shape, "-webkit-mask-image", "none");          // (the Chase -> Yours seam reveals the card through a disc)
         css(shape, "mask-image", "none");
         place(st, alphaAt(t, 0.05, 99), R, size, "center", Z);
       }
-      const X = { shape, R, surf, line, st, size, Z, folder: { cx: ic.x + ic.w / 2, cy: ic.y + ic.h / 2, w: ic.w, h: ic.h } };
+      const X = { shape, R, surf, line, lite, st, size, Z, folder: { cx: ic.x + ic.w / 2, cy: ic.y + ic.h / 2, w: ic.w, h: ic.h } };
       return { DUR, seek, EVENTS: [{ t: 0.05, what: "Settings -> Data storage: the folder that holds everything" }], B: {}, label: "Yours", START: 0.3, END: DUR, X };
     },
   };

@@ -309,7 +309,10 @@
     const DUR = 0.9;
     const Y = b.R;
     const G = geom([[0, a.RR], [0.04, Y, 2.4, 0.88]]);
-    const D0 = 0.18, DD = 0.16;
+    // (phones, F2d, judge F2 fix 1) the folder's circle starts 0.02 s earlier on phones, under the Recent rows' last
+    // fifth, so the card is never empty between the rows leaving and the path arriving (u 0.17-0.20 was blank)
+    const D0 = tall ? 0.16 : 0.18, DD = 0.16, DR = 0.18;
+    const DECEL = bezier(0.2, 0, 0, 1);
     const outScale = (g) => Math.min(1, g.w / a.RR.w, g.h / a.RR.h);
     const inScale = (g) => Math.min(1, g.w / Y.w, g.h / Y.h);
     return {
@@ -329,13 +332,15 @@
           css(a.stR, "transform", ks >= 0.9999 ? "none" : `scale(${ks.toFixed(5)})`);
           // (phones, F2c) the Recent rows dissolve as the folder's circle starts (under a third by D0, gone by D0 + 0.02):
           // at phone size the circle's soft edge left the paths and the client rows legible on top of each other
-          if (tall) dim(a.stR, 1 - P(u, D0 - 0.04, 0.06, E.SMOOTH));
+          if (tall) dim(a.stR, 1 - P(u, DR - 0.04, 0.06, E.SMOOTH));
         }
         const inOn = u >= D0;
         B.show(inOn);
         if (!inOn) return;
         B.seek(B.inst.START);
-        drawShape(b.shape, g, { fill: b.surf, line: b.line, lineA: 1, dark });
+        // (phones, F2d) the card's own outline arrives as the band (by then the card's colour) lands on it, so no inner
+        // outline shows inside the closing band
+        drawShape(b.shape, g, { fill: b.surf, line: b.line, lineA: tall ? P(u, 0.34, 0.08) : 1, dark, lite: b.lite });
         const ki = inScale(g);
         css(b.st, "left", `${((g.w - b.size.cw) / 2 / b.Z).toFixed(2)}px`);
         css(b.st, "top", `${((g.h - b.size.ch) / 2 / b.Z).toFixed(2)}px`);
@@ -347,6 +352,14 @@
       globals(u) {
         // the Ride, mirrored: the band draws back into the stage once the Chase caption has left; the field then
         // gathers into the Data storage card and is gone behind it
+        // (phones, F2d, Astra F2: "nested boxes", "a small table stranded in a big blue field") one silhouette: the band
+        // gathers straight from the page into the Data storage card (site.js bandTo; the stage's own box is gone,
+        // .pin.own), quickly at first so the scene keeps its mass around the card, its colour turning into the card's as
+        // it closes, so it lands without a rim. The header leaves the band's colour as it starts (band = 1 - k).
+        if (tall) {
+          const k = P(u, 0.06, 0.36, DECEL);
+          return { field: u < 0.64 ? 1 : 0, band: 1 - k, bandTo: Y, bandK: k, bandC: b.surf, bandMix: P(u, 0.12, 0.22, E.SMOOTH) };
+        }
         const fk = P(u, 0.3, 0.32, bezier(0.5, 0, 0.2, 1));
         return { field: u < 0.64 ? 1 : 0, fieldTo: Y, fieldK: fk, band: 1 - P(u, 0.08, 0.42, bezier(0.4, 0, 0.6, 1)) };
       },
