@@ -162,7 +162,9 @@
   const CAP_EXCL = ["start", "end"];
   // the end hold (story s): its length, and where the map's readable rest starts before the timeline's end. The map's
   // last frame is T1 + 0.01 (rendered as T1, a still), so the very end of the timeline is a scroll position too.
-  // END_K: the map's last stretch of shown time over which FX.story.endK goes 0 -> 1 (from T1 - 0.005)
+  // END_K: the shown time over which FX.story.endK goes 0 -> 1, from the end hold's start (T1 - 0.02) to T1 - 0.005,
+  // halfway into the hold: it is exactly 1 well before the pin lets go, so a follower still settling by a hair never
+  // leaves the section after the pin part-faded
   const END_HOLD = 0.06, END_REST = 0.02, END_K = 0.015;
   // the start still (story seconds): its length, the step-back [start, duration] inside it, the caption switch (once the
   // stage is small) and the readable frame (the map's start hold)
@@ -638,7 +640,7 @@
     // (phones, F1) the start hold: the first scroll's stop, the stage still on Make's arrival frame, the CTA block up
     if (TL.p === "tall") holds.splice(1, 0, { beat: "start", T: seg("start").T0 + START_HOLD, len: 30 });
     // (phones, F2) the folder card's readable frame, then the offer card: a 40 vh rest at the very end of the timeline
-    // (T1 - 0.02 to T1 + 0.01; FX.story.endK rises over its last 0.015 s), and the pin lets go on it
+    // (T1 - 0.02 to T1 + 0.01; FX.story.endK rises 0 -> 1 over its first half), and the pin lets go on it
     if (TL.p === "tall" && seg("end")) holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "end", T: TL.T1 - END_REST, len: 40 });
     if (TL.isDesk) {
       holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "price", T: seg("price").T0 + 0.3, len: 40 },
@@ -676,14 +678,13 @@
     }
   }
   // (phones, F2; the contract F3 builds on) FX.story.endK(): how far the SHOWN time (the stage, never the scroll) has come
-  // through the end hold's last stretch, 0..1 (0 until T1 - 0.005, 1 at the map's last frame): the section after the
+  // through the first half of the end hold, 0..1 (0 until T1 - 0.02, 1 from T1 - 0.005): the section after the
   // pin keys on it (its --end-k), so a scroll that outruns the stage never shows it early. endY(): the scroll position
   // where the story ends and the pin starts to leave (untransformed px). Events on window: fx:shown when endK changes,
   // fx:layout after each layout. Off phones (or with no phone ending) endK is 1.
   let endKv = -1;
   function setEndK(T) {
-    const pcs = MAP && MAP.pieces, e1 = pcs ? pcs[pcs.length - 1].T1 : TL.T1;
-    const k = clamp((T - (e1 - END_K)) / END_K);
+    const k = clamp((T - (TL.T1 - END_REST)) / END_K);
     if (k === endKv) return;
     endKv = k;
     if (home.yours) home.yours.sec.style.setProperty("--end-k", k >= 1 ? "1" : k.toFixed(3));
@@ -1256,6 +1257,12 @@
     if (!(id in ANCHOR) || !TL.beats.includes(ANCHOR[id])) return;   // not in the story (phones: a page section): native
     e.preventDefault();
     if (jumpTo(id)) { try { history.replaceState(null, "", "#" + id); } catch (err) { /* file:// */ } }
+  });
+  // (phones, F2) a hash set by other means (typed, a script) to a story anchor: the End section's copy is in the pin, so
+  // the browser has no box to scroll to for #download; land on the beat's readable frame as a click would
+  window.addEventListener("hashchange", () => {
+    const id = location.hash.slice(1);
+    if (TL && TL.p === "tall" && motion() && id !== "top" && id in ANCHOR && TL.beats.includes(ANCHOR[id])) jumpTo(id);
   });
   // focus that reaches an idle caption (a screen reader's cursor) brings that beat up, so focus is never invisible
   capsEl.addEventListener("focusin", (e) => {
