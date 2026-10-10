@@ -2362,41 +2362,54 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
     background: color-mix(in srgb, var(--ride-text) 12%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
   }
-  /* the hero's copy as the intro above the pinned story (site.js placeCopies; motion only) */
-  /* (Sol's sizes: a 32 px headline, 16 px body, a 48 px button, 12–16 px gaps: more of the stage on the first screen) */
-  .story-intro {
-    padding-top: 16px;
-    padding-bottom: 8px;
+  /* (F1, app first) the hero's copy as two pinned captions (site.js heroSplit; motion only). MAKE: "01", the h1 in the
+     chapter headline treatment (round B1's look: one flowing headline, its second half in the hero's tone) and the sub
+     line as caption body. START: the CTA row, the trial line and the fine print, with Sol's 48 px button. */
+  .captions > [data-copy="make"] {
+    top: var(--cap-top, 62%);
   }
-  .story-intro .hero-copy h1 {
-    font-size: 32px;
-    line-height: 1.04;
-    letter-spacing: -0.036em;
+  .captions > [data-copy="make"] h1 {
+    margin-top: 8px;
+    font-size: clamp(26px, 7vw, 28px);
+    line-height: 1.02;
+    letter-spacing: -0.042em;
   }
-  .story-intro .hero-copy .sub {
-    margin-top: 12px;
-    font-size: 16px;
+  .captions > [data-copy="make"] h1 .line {
+    display: inline;
   }
-  .story-intro .hero-copy .cta-row {
-    margin-top: 16px;
+  /* (option A, main 2026-10-10: the sub line moves beside the CTA, and the stage steps back for the block) */
+  .captions > .start-copy .sub {
+    margin-top: 0;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .captions > .start-copy .cta-row {
+    margin-top: 14px;
     gap: 10px 20px;
   }
-  .story-intro .hero-copy .btn {
+  .captions > .start-copy .btn {
     min-height: 48px;
     padding-top: 10px;
     padding-bottom: 10px;
   }
-  .story-intro .hero-copy .disclose {
+  .captions > .start-copy .disclose {
     margin-top: 12px;
   }
-  /* Make's caption in the pin (site.js placeCopies): the hero's headline, its second half in the hero's own tone */
-  .captions .make-cap h2 .tone {
-    color: var(--tone);
+  /* the share status keeps a reserved line of its own, so a status never changes the caption budget or the stage */
+  .captions > .start-copy .dl-status,
+  .captions > .start-copy .dl-status:empty {
+    display: block;
+    min-height: calc(2 * 1.55em);
   }
   /* (round B2, Astra pA #11) one horizontal grid: the captions take the stage's edges (site.js fitPhone --cap-inset) */
   .captions > .beat-copy {
     left: calc(var(--pad) + var(--cap-inset, 0px));
     right: calc(var(--pad) + var(--cap-inset, 0px));
+  }
+  /* (F1) the caption that is up sits above the transparent idle ones stacked in the same place, so a tap (and the
+     start caption's CTA) always lands on what is shown */
+  .captions > .beat-copy.is-on {
+    z-index: 1;
   }
   /* (round D) tighter captions, so the stage keeps more of a real phone's height (browser bars on): a 12 px chapter
      number row, a 26-28 px headline, 15/1.4 body, 8 px between them. fitPhone budgets the largest one. */
@@ -2412,15 +2425,6 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
     margin-top: 8px;
     font-size: 15px;
     line-height: 1.4;
-  }
-  /* (Astra pA #12) the arrival: 28 px from the intro's last line to the stage frame (site.js fitPhone --arrive); the
-     intro paints over the pin's empty top, so its links stay clickable */
-  .story {
-    margin-top: var(--arrive, 0px);
-  }
-  .story-intro {
-    position: relative;
-    z-index: 3;
   }
   /* (Astra pA #16, Sol #16) 44 px hit areas for the header's controls; the pills keep their size */
   .theme-switch button,
@@ -2498,9 +2502,6 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   .nav a {
     font-size: 14px;
   }
-}
-.story-intro:empty {
-  display: none;
 }
 
 /* ---------- Reduced motion ---------- */

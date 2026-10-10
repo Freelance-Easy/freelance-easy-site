@@ -132,6 +132,9 @@
   const FOCUSABLE = "a[href], button, input, select, textarea, summary, [tabindex]";
   function capActive(c, on) {
     c.classList.toggle("is-idle", !on);
+    // (phones, F1) the start caption's controls (the hero's CTA) stay in the tab order while it's idle: Tab from the
+    // header reaches them from the first frame, and the focus brings the start beat up (capsEl's focusin)
+    if (c === startEl && c.parentNode === capsEl) return;
     for (const el of c.querySelectorAll(FOCUSABLE)) {
       if (!on) {
         if (!el.hasAttribute("data-ti")) el.setAttribute("data-ti", el.getAttribute("tabindex") ?? "");
@@ -143,41 +146,57 @@
       }
     }
   }
-  // phones (< 640 px, Sol mobile P1 #1): the hero's copy is an ordinary intro in the page flow ABOVE the pinned story
-  // (intro, then the sticky stage), never squeezed into the pin under a shrunken stage. Made on first use.
-  let introEl = null;
-  function introBox() {
-    if (!introEl) {
-      introEl = document.createElement("div");
-      introEl.className = "shell story-intro";
-      storyEl.parentNode.insertBefore(introEl, storyEl);
-      // it sets where the story starts: if it changes height on its own (a share status line, late fonts), the map
-      // follows it (window resizes are handled by the resize path)
-      if ("ResizeObserver" in window) {
-        let introH = -1;
-        new ResizeObserver(() => {
-          const h = introEl.offsetHeight;
-          if (!TL || TL.p !== "tall" || h === introH) return;
-          const first = introH < 0;
-          introH = h;
-          if (!first) relayoutChecked();
-        }).observe(introEl);
+  // phones (< 640 px, motion; phase F1, Daniel 2026-10-10 "app first"): the story pins from the first frame and the
+  // hero's own copy (real DOM, moved, never cloned) splits into two captions: MAKE = an aria-hidden "01", the h1 and the
+  // sub line (on screen while Make arrives), and START = the hero's CTA row, the trial line and the fine print with the
+  // mobile note (its own beat, the first thing the scroll reveals, one block so the disclosures stay beside the button).
+  // Both are put back in the hero's exact original order whenever the phone story is not running.
+  const TALL_BEATS = ["make", "start", "look", "know", "grow", "chase"];
+  // the start still (story seconds): its length, the step-back [start, duration] inside it, the caption switch (once the
+  // stage is small) and the readable frame (the map's start hold)
+  const START_DUR = 0.5, STEP_IN = [0.04, 0.3], START_CAP = 0.36, START_HOLD = 0.42;
+  let startEl = null, stepEl = null, heroParts = null;
+  function heroSplit(on) {
+    const hc = copy.make;
+    if (!hc) return;
+    if (on) {
+      if (!heroParts) {
+        heroParts = [".sub", ".cta-row", ".disclose.strong", ".fine"].map((s) => $(`:scope > ${s}`, hc)).filter(Boolean)
+          .map((el) => ({ el, next: el.nextSibling }));
+        startEl = document.createElement("div");
+        startEl.className = "hero-copy beat-copy start-copy";
+        startEl.setAttribute("data-copy", "start");
+        stepEl = document.createElement("span");
+        stepEl.className = "step";
+        stepEl.setAttribute("aria-hidden", "true");
+        stepEl.textContent = "01";
       }
+      if (stepEl.parentNode !== hc) hc.insertBefore(stepEl, hc.firstChild);
+      for (const p of heroParts) if (p.el.parentNode !== startEl) startEl.appendChild(p.el);
+      return;
     }
-    return introEl;
+    if (!heroParts) return;
+    // (the parts go back in reverse, each before the node that followed it, so the hero's DOM is exactly as it was)
+    for (let k = heroParts.length - 1; k >= 0; k--) {
+      const p = heroParts[k];
+      if (p.el.parentNode !== hc) hc.insertBefore(p.el, p.next && p.next.parentNode === hc ? p.next : null);
+    }
+    if (stepEl.parentNode) stepEl.remove();
+    if (startEl.parentNode) { startEl.classList.remove("is-on", "is-off", "is-idle"); startEl.style.removeProperty("top"); startEl.remove(); }
   }
-  // each beat's copy lives in its home section (calm, no JS, the phone's late beats), in the pin as a caption, or
-  // (phones: the hero) in the intro above the pin
-  function placeCopies(inPin, inIntro = []) {
+  // each beat's copy lives in its home section (calm, no JS, the phone's late beats) or in the pin as a caption
+  // (split: the phone story's hero split above)
+  function placeCopies(inPin, split = false) {
+    heroSplit(split && inPin.includes("make"));
     let moved = false;                                 // once one caption moves in, the later ones follow it (story order)
     for (const b of BEATS) {
       const c = copy[b];
       if (!c) continue;
-      const want = inPin.includes(b), front = !want && inIntro.includes(b);
-      const dest = want ? capsEl : front ? introBox() : null;
-      if (dest && (c.parentNode !== dest || (want && moved))) {
+      const want = inPin.includes(b);
+      const dest = want ? capsEl : null;
+      if (dest && (c.parentNode !== dest || moved)) {
         dest.appendChild(c); home[b].sec.classList.add("is-moved");
-        if (want) moved = true;
+        moved = true;
       }
       if (!dest && c.parentNode !== home[b].parent) {
         const nx = home[b].next && home[b].next.parentNode === home[b].parent ? home[b].next : null;
@@ -189,42 +208,24 @@
       c.removeAttribute("aria-hidden");
       c.style.removeProperty("top");
       let sr = c.querySelector(":scope > .sr-stage");
-      if ((want || front) && !sr) {
+      if (want && !sr) {
         sr = document.createElement("p");
         sr.className = "visually-hidden sr-stage";
         sr.textContent = STAGE_ARIA[b];
         c.appendChild(sr);
       }
-      if (!want && !front && sr) sr.remove();
-      capActive(c, !want);                             // in the pin: idle until its beat is up; at home or in the intro: ordinary
+      if (!want && sr) sr.remove();
+      capActive(c, !want);                             // in the pin: idle until its beat is up; at home: ordinary
     }
-    // (phones, Astra pA #3: once the intro has scrolled away, the pinned Make scene keeps a caption: "01" and the hero's
-    // own headline, in the standard caption treatment. A visual copy only: aria-hidden (the intro's h1 is what screen
-    // readers read) and nothing in it can take focus.)
-    if (inIntro.includes("make") && copy.make) {
-      if (!makeCap) {
-        makeCap = document.createElement("div");
-        makeCap.className = "chapter-copy beat-copy make-cap";
-        makeCap.setAttribute("data-copy", "make-cap");
-        makeCap.setAttribute("aria-hidden", "true");
-        const n = document.createElement("span");
-        n.className = "step";
-        n.textContent = "01";
-        const h = document.createElement("h2");
-        const h1 = copy.make.querySelector("h1");
-        if (h1) for (const x of h1.childNodes) h.appendChild(x.cloneNode(true));
-        makeCap.append(n, h);
-      }
-      if (makeCap.parentNode !== capsEl) capsEl.insertBefore(makeCap, capsEl.firstChild);
-      capActive(makeCap, false);
-    } else if (makeCap && makeCap.parentNode) {
-      makeCap.classList.remove("is-on", "is-off");
-      makeCap.remove();
+    // (the phone story rode the headline's top: once it's back home, not even an empty style attribute is left)
+    if (heroParts && !split && copy.make.getAttribute("style") === "") copy.make.removeAttribute("style");
+    if (startEl && startEl.parentNode !== capsEl && heroParts && heroParts[0].el.parentNode === startEl) {
+      capsEl.insertBefore(startEl, copy.make.nextSibling);
     }
+    if (startEl && startEl.parentNode === capsEl) { startEl.classList.remove("is-on", "is-off"); capActive(startEl, false); }
   }
-  let makeCap = null;
-  // the caption element a beat shows in the pin (phones: Make's is the visual copy above; the hero is the intro)
-  const capFor = (b) => (b === "make" && makeCap && makeCap.parentNode === capsEl ? makeCap
+  // the caption element a beat shows in the pin
+  const capFor = (b) => (b === "start" ? (startEl && startEl.parentNode === capsEl ? startEl : null)
     : b && copy[b] && copy[b].parentNode === capsEl ? copy[b] : null);
 
   /* ---------------- phones: the stage, its label row and the captions, balanced in the pin ---------------- */
@@ -244,43 +245,46 @@
   }
   // (round B2, Astra pA #11) ONE horizontal grid: when the height limits the stage (375 x 667), the captions (and so the
   // chapter number) take the stage's own left and right edges, as the label row does; the captions are measured at
-  // that width, so the fit runs until it settles. (Astra pA #12) The arrival: the intro's last line sits ARRIVE px
-  // above the stage frame at first load, whatever the pinned balance puts above the stage (#story's top margin, so the
-  // map's storyTop follows it).
-  const ARRIVE = 28;
+  // that width, so the fit runs until it settles. (F1: the story pins from the first frame, so there is no intro to
+  // line the stage up with; the Make and start captions are in the budget like every other caption.)
   const fitVars = ["--stage-w", "--stage-top", "--cap-inset"];
-  function introInk() {
-    let b = -Infinity;
-    for (const el of introEl.querySelectorAll("h1, p, a, button, li")) {
-      if (el.closest(".visually-hidden")) continue;
-      const r = el.getBoundingClientRect();
-      if (r.width > 1 && r.height > 1) b = Math.max(b, r.bottom);
-    }
-    return b;
+  // the caption budget: the tallest pinned caption among the phone beats, less any excluded (F2's offer card is not
+  // under the stage, so it will pass ["end"])
+  function capBudget(exclude = []) {
+    let h = 0;
+    for (const b of TALL_BEATS) { if (exclude.includes(b)) continue; const c = capFor(b); if (c) h = Math.max(h, c.offsetHeight); }
+    return h;
   }
+  let fitCapH = -1, fitStartH = -1;
   function fitPhone() {
-    if (preset() !== "tall") { for (const v of fitVars) pin.style.removeProperty(v); storyEl.style.removeProperty("--arrive"); return; }
+    if (preset() !== "tall") { for (const v of fitVars) pin.style.removeProperty(v); fitCapH = -1; return; }
     const ph = pin.clientHeight, cw = stageCol.clientWidth;
     const safe = cssPx("env(safe-area-inset-bottom, 0px)");
     let w = cw, capH = 0;
     for (let k = 0; k < 4; k++) {
       pin.style.setProperty("--cap-inset", `${(cw - w) / 2}px`);
-      capH = 0;
-      for (const b of PHONE_BEATS) { const c = capFor(b); if (c) capH = Math.max(capH, c.offsetHeight); }
+      capH = capBudget(["start"]);     // (F1: the start caption has its own room: the stage steps back for it)
       const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
       const nw = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
       if (nw >= w) break;
       w = nw;
     }
+    fitCapH = capBudget(["start"]);
     const free = Math.max(0, ph - safe - ((w * 6) / 5 + LABEL_ROW + LABEL_GAP + capH));
     const top = Math.max(FIT_TOP, Math.round(free * 0.42));
     pin.style.setProperty("--stage-w", `${w}px`);
     pin.style.setProperty("--stage-top", `${top}px`);
-    if (introEl && introEl.parentNode && introEl.offsetHeight > 0) {
-      const ink = introInk();
-      const tail = Number.isFinite(ink) ? Math.max(0, introEl.getBoundingClientRect().bottom - ink) : 0;
-      storyEl.style.setProperty("--arrive", `${Math.round(ARRIVE - tail - top)}px`);
-    } else storyEl.style.removeProperty("--arrive");
+  }
+  // (F1) a caption that changes height on its own (late fonts; a share status line if its reserved line ever stopped
+  // holding it) refits the stage when it changes the budget; the reserved status line means a share never does
+  const capRO = "ResizeObserver" in window ? new ResizeObserver(() => { if (!capRaf) capRaf = requestAnimationFrame(capCheck); }) : null;
+  let capRaf = 0;
+  function capCheck() {
+    capRaf = 0;
+    if (!TL || TL.p !== "tall" || fitCapH < 0) return;
+    const sh = startEl && startEl.parentNode === capsEl ? startEl.offsetHeight : 0;
+    if (capBudget(["start"]) === fitCapH && sh === fitStartH) return;
+    relayoutChecked();
   }
 
   /* ---------------- mounts: one per piece, all on the ONE stage ---------------- */
@@ -336,6 +340,8 @@
     const segs = [];
     let T = 0;
     const scene = (id, m, t0, t1, G) => { segs.push({ id, kind: "scene", m, t0, T0: T, T1: T + (t1 - t0), G }); T += t1 - t0; };
+    // a still: a scene held on one of its frames for dur seconds of story (phones: the start beat, Make held at HOLD)
+    const still = (id, m, t, dur, G) => { segs.push({ id, kind: "scene", still: true, m, t0: t, T0: T, T1: T + dur, G }); T += dur; };
     const seam = (id, make, A, B) => {
       const ctx = { A, B, layer: layer(), W, H, tall: p === "tall", dark };
       const sm = make(ctx);
@@ -345,7 +351,14 @@
     };
     const hold = (id, dur, G) => { segs.push({ id, kind: "hold", T0: T, T1: T + dur, G }); T += dur; };
     const M = mounts, S = FX.seams;
-    scene("make", M.make, 0, M.make.inst.END, GBASE);
+    if (p === "tall") {
+      // (phones, F1 option A, main 2026-10-10) Make plays to its arrival hold; then the START still: the frame held
+      // completely still while the stage steps back (STEP_IN) to make room for the hero's CTA block under it; then Make
+      // finishes on the smaller stage, which grows back over Make -> Look as the tablet stage does
+      scene("make", M.make, 0, M.make.inst.HOLD, GBASE);
+      still("start", M.make, M.make.inst.HOLD, START_DUR, GBASE);
+      scene("makeEnd", M.make, M.make.inst.HOLD, M.make.inst.END, GBASE);
+    } else scene("make", M.make, 0, M.make.inst.END, GBASE);
     const ml = seam("makeLook", S.makeLook, M.make, M.look);
     scene("look", M.look, ml.B0 || 0, M.look.inst.END, GBASE);
     const lk = seam("lookKnow", S.lookKnow, M.look, M.know);
@@ -371,6 +384,13 @@
     const ride = seg("ride");
     TL.switches = [["look", seg("makeLook").T0 + 0.3], ["know", seg("lookKnow").T0 + 0.22],
       ["grow", seg("knowGrow").T0 + 0.22], [null, ride.T0 + ride.seam.DIVE + 0.04], ["chase", ride.T1 - 0.08]];
+    // (phones, F1) the start caption (the hero's CTA block) takes over from the headline just past the arrival's hold,
+    // with a narrow hysteresis (the hold itself drifts 0.03 s, so the default 0.12 would hide it)
+    // (the headline leaves once the stage has stepped back and the CTA block takes its place; the CTA block leaves as
+    // Make -> Look begins, before the regrowing stage reaches it; Look arrives as before)
+    if (p === "tall") {
+      TL.switches.unshift(["start", seg("start").T0 + START_CAP, 0.01], [null, seg("makeLook").T0 + 0.02, 0.01]);
+    }
     if (isDesk) {
       // (Chase -> Yours: the Chase caption leaves before the band draws back over it; Yours arrives once it's gone)
       // (and the overlay card never grows or shrinks under a caption: each side of it leaves first)
@@ -406,21 +426,29 @@
   function layout() {
     if (!TL) return;
     css(stageWrap, "transform", "none");
+    if (TL.p === "tall") { label.style.removeProperty("transform"); if (copy.make) copy.make.style.removeProperty("top"); if (startEl) startEl.style.removeProperty("top"); }
     const sw = stage.clientWidth, sh = stage.clientHeight, s = sw / TL.W;
     for (const m of Object.values(mounts)) { css(m.rootEl, "transform", `scale(${s.toFixed(5)})`); css(m.rootEl, "--demo-scale", String(s)); }
     for (const sg of TL.segs) if (sg.layer) { css(sg.layer, "transform", `scale(${s.toFixed(5)})`); css(sg.layer, "--demo-scale", String(s)); }
     const hh = header ? header.getBoundingClientRect().height : 64;
     storyTop = storyEl.getBoundingClientRect().top + window.scrollY - hh;
     const pr = pin.getBoundingClientRect(), wr = stageWrap.getBoundingClientRect();
-    L = { sw, sh, s, stageTop: wr.top - pr.top, stageH: wr.height };
+    L = { sw, sh, s, stageTop: wr.top - pr.top, stageH: wr.height, stageW: wr.width };
     // phones: the hero's copy sits under a smaller stage; every other caption under the full stage; both keep CAP_GAP
-    // (phones < 640 px: the hero's copy is above the pin, so the stage is full size from the first frame and every
-    // caption sits under the label row; the map's viewport is the pin's own stable 100svh, measured once per layout)
+    // (phones < 640 px: the story pins from the first frame with the stage at full size; every caption sits under the
+    // label row, the start caption under the stepped-back stage (TL.kStart); the map's viewport is the pin's own stable 100svh, measured once per layout)
     sizeW = window.innerWidth; sizeH = window.innerHeight;
     svhPx = TL.p === "tall" ? cssPx("100svh") : 0;
     if (TL.p === "tall") {
       kHero = 1;
-      pin.style.setProperty("--cap-top", `${Math.round(L.stageTop + L.stageH + LABEL_ROW + LABEL_GAP)}px`);
+      L.capTop = Math.round(L.stageTop + L.stageH + LABEL_ROW + LABEL_GAP);
+      pin.style.setProperty("--cap-top", `${L.capTop}px`);
+      // (F1) how far the stage steps back for the start caption: its whole block fits above the bottom margin (and the
+      // safe-area inset), the stage's top edge staying where it is
+      const sh0 = startEl && startEl.parentNode === capsEl ? startEl.offsetHeight : 0;
+      fitStartH = sh0;
+      const room = pr.height - cssPx("env(safe-area-inset-bottom, 0px)") - FIT_BOT - sh0 - L.capTop;
+      TL.kStart = sh0 > 0 ? clamp(1 + room / L.stageH, 0.3, 1) : 1;
     } else if (!TL.isDesk) {
       const heroH = copy.make ? copy.make.offsetHeight : 0;
       kHero = clamp((pr.height - L.stageTop - CAP_GAP - heroH - 14) / L.stageH, 0.5, 1);
@@ -486,6 +514,8 @@
       { beat: "grow", T: seg("grow").T1 - 0.02, len: 14 },
       { beat: "chase", T: seg("chase").T1 - 0.02, len: TL.isDesk ? 32 : 26 },
     ];
+    // (phones, F1) the start hold: the first scroll's stop, the stage still on Make's arrival frame, the CTA block up
+    if (TL.p === "tall") holds.splice(1, 0, { beat: "start", T: seg("start").T0 + START_HOLD, len: 30 });
     if (TL.isDesk) {
       holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "price", T: seg("price").T0 + 0.3, len: 40 },
         { beat: "note", T: seg("brand").T0 + 0.2, len: 32 }, { beat: "end", T: seg("brand").T1 - 0.05, len: 40 });
@@ -551,7 +581,7 @@
   function targetPlace() { const sg = TL.segs[segAt(target)]; return { id: sg.id, u: target - sg.T0 }; }
   // put the scroll position where the new map gives that same segment-local time (the map is monotonic: bisection)
   // phones: how far below the pinned story the reader is (px past its end), or null while they are in it or above it.
-  // readerY is the position as of the last scroll event, so a layout change above (the intro growing) has not moved it.
+  // readerY is the position as of the last scroll event, so a layout change above (a caption refit) has not moved it.
   let readerY = 0;
   const storyEnd = () => storyTop + MAP.L;
   function pastStory() { return TL && TL.p === "tall" && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
@@ -594,7 +624,7 @@
     let G = sg.G;
     if (sg.kind === "scene") {
       sg.m.show(true);
-      sg.m.seek(sg.t0 + (T - sg.T0));
+      sg.m.seek(sg.still ? sg.t0 : sg.t0 + (T - sg.T0));
     } else if (sg.kind === "seam") {
       const u = T - sg.T0;
       sg.seam.seek(u);
@@ -629,6 +659,20 @@
       const k = T <= sl.T0 ? kHero : mix(kHero, 1, P(T, sl.T0, sl.T1 - sl.T0, E.SMOOTH));
       setOnce("stageK", stageWrap, "transform", k >= 0.999 ? "none" : `scale(${k.toFixed(4)})`);
       if (copy.make) setOnce("heroTop", copy.make, "top", `${Math.round(L.stageTop + L.stageH * Math.min(1, k) + CAP_GAP)}px`);
+    }
+    // phones (F1 option A): the stage steps back during the start still (Make's frame held) so the hero's CTA block fits
+    // under it, stays back while Make finishes, and grows back over Make -> Look as the tablet stage does. The label row
+    // and the two hero captions ride the stage's bottom edge; the stage scales about its top centre.
+    if (TL.p === "tall" && TL.kStart < 1) {
+      const st = TL.seg("start"), sl = TL.seg("makeLook");
+      const k = T <= sl.T0 ? mix(1, TL.kStart, P(T, st.T0 + STEP_IN[0], STEP_IN[1], E.SMOOTH))
+        : mix(TL.kStart, 1, P(T, sl.T0, sl.T1 - sl.T0, E.SMOOTH));
+      const full = k >= 0.9995, dy = L.stageH * (1 - k);
+      setOnce("stageK", stageWrap, "transform", full ? "none" : `scale(${k.toFixed(4)})`);
+      setOnce("labelK", label, "transform", full ? "none" : `translate(${(L.stageW * (1 - k) / 2).toFixed(2)}px, ${(-dy).toFixed(2)}px)`);
+      const top = full ? "" : `${(L.capTop - dy).toFixed(2)}px`;
+      if (copy.make) setOnce("heroTop", copy.make, "top", top);
+      if (startEl) setOnce("startTop", startEl, "top", top);
     }
     // (full-field: the field is the whole stage, so the stage's own background takes its colour too: no edge fringe)
     const pinCls = "pin" + (f > 0.5 ? " on-field" : "") + (f >= 0.999 && !(G.fieldK > 0) ? " full-field" : "") + (T >= TL.late ? " is-late" : "");
@@ -682,7 +726,7 @@
     if (i === capIdx && !instant) return;
     capIdx = i;
     const b = TL.beats[i];                            // null: a beat with no caption (the Ride's flood)
-    const next = capFor(b);                            // (phones: the hero is the intro; Make shows its visual caption)
+    const next = capFor(b);                            // (phones: the hero is split into make + start)
     clearTimeout(capTimer);
     const cur = $$(".beat-copy.is-on", capsEl).filter((c) => c !== next);
     if (instant || !cur.length) {
@@ -1070,10 +1114,12 @@
     clearDip();
     pin.style.removeProperty("--cap-top");
     for (const v of fitVars) pin.style.removeProperty(v);
-    storyEl.style.removeProperty("--arrive");
+    fitCapH = -1;
+    if (capRO) capRO.disconnect();
     for (const [el, props] of [[field, ["opacity", "clip-path"]], [shade, ["opacity"]], [band, ["display", "clip-path"]],
       [stageCol, ["opacity", "visibility"]], [stageWrap, ["transform"]], [track, ["height"]]]) for (const p of props) el.style.removeProperty(p);
     label.removeAttribute("data-mode");
+    label.style.removeProperty("transform");
     FX.gate.cursor = 1; FX.gate.press = 1;
     navTeardown();
     placeCopies([]);
@@ -1085,8 +1131,12 @@
       layoutKey = key();
       if (!motion()) { teardown(); doc.classList.add("fx-ready"); return; }
       if (desktop()) placeCopies(BEATS);
-      else if (preset() === "tall") placeCopies(PHONE_BEATS.filter((b) => b !== "make"), ["make"]);
+      else if (preset() === "tall") placeCopies(PHONE_BEATS, true);
       else placeCopies(PHONE_BEATS);
+      if (capRO) {
+        capRO.disconnect();
+        if (preset() === "tall") for (const b of TALL_BEATS) { const c = capFor(b); if (c) capRO.observe(c); }
+      }
       build();
       navBuild();
       const h = location.hash.slice(1);
@@ -1148,7 +1198,7 @@
       relayoutChecked();
     }, 140);
   });
-  // (also the intro's own resize: it can fire before the window's debounced one, so it must refit the stage too)
+  // (also a pinned caption's own resize, capCheck: it can fire before the window's debounced one, so it must refit the stage too)
   function relayoutChecked() {
     if (TL.p === "tall") fitPhone();
     const s0 = L ? L.s : 0;
@@ -1196,7 +1246,7 @@
       const b = TL.beats[capIdx] || (window.scrollY < storyTop + 4 ? "make" : null);
       if (b) return { beat: b };
     }
-    for (const el of document.querySelectorAll(".story-intro, .beat:not(.is-moved), .site-footer")) {
+    for (const el of document.querySelectorAll(".beat:not(.is-moved), .site-footer")) {
       const r = el.getBoundingClientRect();
       if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) {
         const b = el.classList.contains("beat") ? el.dataset.beat : null;
@@ -1212,7 +1262,8 @@
     if (pl.el && pl.el.isConnected) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
     else if (pl.beat && TL && motion()) y = pl.beat === "make" ? 0 : scrollForBeat(pl.beat);
     else if (pl.beat) {
-      const sec = $(`.beat[data-beat="${pl.beat}"]`);
+      // (F1: the phone story's start caption is the hero's own CTA block; stacked, that is the hero section)
+      const sec = $(`.beat[data-beat="${pl.beat === "start" ? "make" : pl.beat}"]`);
       if (sec) y = window.scrollY + sec.getBoundingClientRect().top - hb;
     }
     if (y == null) return;
