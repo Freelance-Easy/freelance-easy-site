@@ -223,7 +223,7 @@
   }
   // each beat's copy lives in its home section (calm, no JS, the phone's late beats) or in the pin as a caption
   // (split: the phone story's hero split above)
-  let lastPlace = null, ctaWait = null;
+  let lastPlace = null, ctaWait = null, ctaWaited = false;
   function placeCopies(inPin, split = false) {
     lastPlace = [inPin, split];
     // (F1c, Sol F1c #4) the calm phone page's hero is the headline alone too: its "01" as well, before the 02-05 below
@@ -233,18 +233,27 @@
     // init sets data-campaign-resolved): on any earlier start, resize or mode change it stays put, and one re-placement
     // runs after that init (plus a task), so the row a tablet or laptop puts back is always a wired one
     const toEnd = split ? inPin.includes("end") : !inPin.length && calmPhone();
-    // (Sol F1c r3) while it waits, html.cta-pending keeps that block hidden (site.css); the re-placement keeps the reader's
-    // place, and if download.js never ran it gives up and shows the block where it is (its plain links still work)
-    if (toEnd && !ctaParts && !document.body.hasAttribute("data-campaign-resolved")) {
+    // (Sol F1c r3, r4) while it waits, html.cta-pending keeps that block hidden (site.css). The re-placement keeps the
+    // reader exactly where they are: the timeline's own snapshot (refresh), or on the stacked page the first section
+    // still on screen held at the same height. It waits once: if download.js never ran, the block is moved anyway (its
+    // plain links still work) and nothing waits or hides again.
+    if (toEnd && !ctaParts && !ctaWaited && !document.body.hasAttribute("data-campaign-resolved")) {
       doc.classList.add("cta-pending");
+      // (no marker yet means download.js, a deferred script, has not run, so DOMContentLoaded is still to come even at
+      // readyState "interactive"; the load event covers a download.js that never runs)
       if (!ctaWait) ctaWait = new Promise((r) => {
         const go = () => setTimeout(r, 0);
-        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go, { once: true }); else go();
+        if (document.readyState === "complete") { go(); return; }
+        document.addEventListener("DOMContentLoaded", go, { once: true });
+        window.addEventListener("load", go, { once: true });
       }).then(() => {
-        const pl = readingPlace();
-        if (TL) refresh(); else placeCopies(...lastPlace);
-        restorePlace(pl);
+        ctaWaited = true;
         doc.classList.remove("cta-pending");
+        if (TL) { refresh(); return; }
+        const anchor = [...document.querySelectorAll("section")].find((s) => s.getBoundingClientRect().bottom > 0);
+        const y0 = anchor ? anchor.getBoundingClientRect().top : 0;
+        placeCopies(...lastPlace);
+        if (anchor && window.scrollY > 0) window.scrollBy(0, anchor.getBoundingClientRect().top - y0);
       });
     } else ctaEnd(toEnd);
     let moved = false;                                // once one caption moves in, the later ones follow it (story order)
