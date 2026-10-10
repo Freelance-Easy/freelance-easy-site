@@ -160,7 +160,7 @@
           if (!TL || TL.p !== "tall" || h === introH) return;
           const first = introH < 0;
           introH = h;
-          if (!first) relayout();
+          if (!first) relayoutChecked();
         }).observe(introEl);
       }
     }
@@ -1069,13 +1069,17 @@
       // pin and the map both use the stable 100svh, so there is nothing to re-lay or re-anchor; a width (orientation)
       // change or a real height change still lays out again.
       if (TL.p === "tall" && window.innerWidth === sizeW && Math.abs(window.innerHeight - sizeH) < 150) return;
-      if (TL.p === "tall") fitPhone();
-      const s0 = L ? L.s : 0;
-      // phones: a new canvas scale changes the tables' compensated text (--demo-scale): remeasure the pieces too
-      if (TL.p === "tall" && s0 && Math.abs(stage.clientWidth / TL.W - s0) > s0 * 0.004) { refresh(); return; }
-      relayout();
+      relayoutChecked();
     }, 140);
   });
+  // (also the intro's own resize: it can fire before the window's debounced one, so it must refit the stage too)
+  function relayoutChecked() {
+    if (TL.p === "tall") fitPhone();
+    const s0 = L ? L.s : 0;
+    // phones: a new canvas scale changes the tables' compensated text (--demo-scale): remeasure the pieces too
+    if (TL.p === "tall" && s0 && Math.abs(stage.clientWidth / TL.W - s0) > s0 * 0.004) { refresh(); return; }
+    relayout();
+  }
   function relayout() {
     const tp = intro ? null : targetPlace();
     layout();
