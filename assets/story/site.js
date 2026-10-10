@@ -156,6 +156,9 @@
   // the start still (story seconds): its length, the step-back [start, duration] inside it, the caption switch (once the
   // stage is small) and the readable frame (the map's start hold)
   const START_DUR = 0.5, STEP_IN = [0.04, 0.3], START_CAP = 0.36, START_HOLD = 0.42;
+  // (F1b, main 2026-10-10, option A amended) the stage grows back to full size as the hand sets off for Create (Make's
+  // own B.toCreate), over REGROW s of story, so the Create press, the PDF press and the bloom play full size
+  const REGROW = 0.3;
   let startEl = null, stepEl = null, heroParts = null;
   function heroSplit(on) {
     const hc = copy.make;
@@ -357,7 +360,7 @@
     if (p === "tall") {
       // (phones, F1 option A, main 2026-10-10) Make plays to its arrival hold; then the START still: the frame held
       // completely still while the stage steps back (STEP_IN) to make room for the hero's CTA block under it; then Make
-      // finishes on the smaller stage, which grows back over Make -> Look as the tablet stage does
+      // finishes, the stage growing back to full size as the hand sets off for Create (F1b: TL.regrowAt)
       scene("make", M.make, 0, M.make.inst.HOLD, GBASE);
       still("start", M.make, M.make.inst.HOLD, START_DUR, GBASE);
       scene("makeEnd", M.make, M.make.inst.HOLD, M.make.inst.END, GBASE);
@@ -389,10 +392,13 @@
       ["grow", seg("knowGrow").T0 + 0.22], [null, ride.T0 + ride.seam.DIVE + 0.04], ["chase", ride.T1 - 0.08]];
     // (phones, F1) the start caption (the hero's CTA block) takes over from the headline just past the arrival's hold,
     // with a narrow hysteresis (the hold itself drifts 0.03 s, so the default 0.12 would hide it)
-    // (the headline leaves once the stage has stepped back and the CTA block takes its place; the CTA block leaves as
-    // Make -> Look begins, before the regrowing stage reaches it; Look arrives as before)
+    // (the headline leaves once the stage has stepped back and the CTA block takes its place. F1b: the CTA block leaves
+    // as the hand sets off for Create, the moment the stage starts to grow back, and "01" + the headline return riding
+    // its edge, up through Make -> Look until Look's caption, as on BASE_F: a caption on every frame)
+    TL.regrowAt = Infinity;
     if (p === "tall") {
-      TL.switches.unshift(["start", seg("start").T0 + START_CAP, 0.01], [null, seg("makeLook").T0 + 0.02, 0.01]);
+      TL.regrowAt = seg("makeEnd").T0 + (M.make.inst.B.toCreate - M.make.inst.HOLD);
+      TL.switches.unshift(["start", seg("start").T0 + START_CAP, 0.01], ["make", TL.regrowAt, 0.01]);
     }
     if (isDesk) {
       // (Chase -> Yours: the Chase caption leaves before the band draws back over it; Yours arrives once it's gone)
@@ -676,16 +682,18 @@
       setOnce("stageK", stageWrap, "transform", k >= 0.999 ? "none" : `scale(${k.toFixed(4)})`);
       if (copy.make) setOnce("heroTop", copy.make, "top", `${Math.round(L.stageTop + L.stageH * Math.min(1, k) + CAP_GAP)}px`);
     }
-    // phones (F1 option A): the stage steps back during the start still (Make's frame held) so the hero's CTA block fits
-    // under it, stays back while Make finishes, and grows back over Make -> Look as the tablet stage does. The label row
-    // and the two hero captions ride the stage's bottom edge; the stage scales about its top centre.
+    // phones (F1 option A, amended F1b): the stage steps back during the start still (Make's frame held) so the hero's
+    // CTA block fits under it, and grows back to full size as the hand sets off for Create (TL.regrowAt, REGROW s), so
+    // the Create press, the PDF press and the bloom play full size. The stage scales about its top centre; the label row
+    // and the two hero captions ride its bottom edge. ("Fictional data" only ever moves up and down: it keeps the caption
+    // column's left edge, the full stage's, on every frame.)
     if (TL.p === "tall" && TL.kStart < 1) {
-      const st = TL.seg("start"), sl = TL.seg("makeLook");
-      const k = T <= sl.T0 ? mix(1, TL.kStart, P(T, st.T0 + STEP_IN[0], STEP_IN[1], E.SMOOTH))
-        : mix(TL.kStart, 1, P(T, sl.T0, sl.T1 - sl.T0, E.SMOOTH));
+      const st = TL.seg("start");
+      const k = T <= TL.regrowAt ? mix(1, TL.kStart, P(T, st.T0 + STEP_IN[0], STEP_IN[1], E.SMOOTH))
+        : mix(TL.kStart, 1, P(T, TL.regrowAt, REGROW, E.SMOOTH));
       const full = k >= 0.9995, dy = L.stageH * (1 - k);
       setOnce("stageK", stageWrap, "transform", full ? "none" : `scale(${k.toFixed(4)})`);
-      setOnce("labelK", label, "transform", full ? "none" : `translate(${(L.stageW * (1 - k) / 2).toFixed(2)}px, ${(-dy).toFixed(2)}px)`);
+      setOnce("labelK", label, "transform", full ? "none" : `translateY(${(-dy).toFixed(2)}px)`);
       const top = full ? "" : `${(L.capTop - dy).toFixed(2)}px`;
       if (copy.make) setOnce("heroTop", copy.make, "top", top);
       if (startEl) setOnce("startTop", startEl, "top", top);

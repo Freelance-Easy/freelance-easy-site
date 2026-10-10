@@ -1608,15 +1608,18 @@ details.disclosure p a {
 }
 .fx-root.tall .fe-app .d-kpis .kpi-value { font-size: calc(22px / var(--ds) / var(--sz, 1)); }
 .fx-root.tall .fe-app .d-kpis .kpi-foot { font-size: calc(12px / var(--ds) / var(--sz, 1)); }
+/* (F1b, Astra F1: the names at a full 12 screen px down to a 288 px stage, 393 x 640's 301 px included: their own,
+   lower floor than --ds's 0.52) */
+.fx-root.tall .fe-app .d-theme { --dsn: max(var(--demo-scale, 1), 0.48); }
 .fx-root.tall .fe-app .d-theme .style-card-label {
-  font-size: calc(12px / var(--ds) / var(--sz, 1));
+  font-size: calc(12px / var(--dsn) / var(--sz, 1));
   line-height: 1.2;
-  padding: calc(4px / var(--ds) / var(--sz, 1)) 2px;
+  padding: calc(4px / var(--dsn) / var(--sz, 1)) 2px;
   white-space: nowrap;
 }
 /* (the larger name takes its height from the card's thumbnail, so the tray keeps its size and place in the stage) */
 .fx-root.tall .fe-app .d-theme .style-card-preview {
-  height: calc(188px + 13px * 1.2 + 16px - 12px * 1.2 / var(--ds) / var(--sz, 1) - 8px / var(--ds) / var(--sz, 1));
+  height: calc(188px + 13px * 1.2 + 16px - 12px * 1.2 / var(--dsn) / var(--sz, 1) - 8px / var(--dsn) / var(--sz, 1));
 }
 .fx-root.tall .fe-app .d-toast .flash {
   font-size: calc(14px / var(--ds) / var(--sz, 1));
@@ -2377,31 +2380,40 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   .captions > [data-copy="make"] h1 .line {
     display: inline;
   }
-  /* (option A, main 2026-10-10: the sub line moves beside the CTA, and the stage steps back for the block) */
+  /* (option A, main 2026-10-10: the sub line moves beside the CTA, and the stage steps back for the block. F1b, Astra
+     F1: a compact block, so the stage only steps back to ~70 %: 14/18 body, 44 px buttons side by side where they fit
+     (430 px) and stacked 8 px apart where they don't, 8 px between the parts. The trial line keeps its legal 15 px.) */
   .captions > .start-copy .sub {
     margin-top: 0;
-    font-size: 15px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 18px;
   }
   .captions > .start-copy .cta-row {
-    margin-top: 14px;
-    gap: 10px 20px;
+    margin-top: 8px;
+    gap: 8px;
   }
   .captions > .start-copy .btn {
-    min-height: 48px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
   }
   .captions > .start-copy .disclose {
-    margin-top: 12px;
+    margin-top: 8px;
+    line-height: 19px;
   }
-  /* the share status has a fixed two-line slot of its own, so a status never changes the start caption or the stage
-     (every existing status fits two lines down to a 288 px caption, a 320 px phone; anything longer spills into the
-     bottom margin, still readable, and moves nothing) */
+  .captions > .start-copy .fine {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 17px;
+  }
+  /* the share status has a fixed slim slot of its own (one 16 px line), so a status never changes the start caption or
+     the stage; a second line spills into the 16 px bottom margin, still readable, and moves nothing */
   .captions > .start-copy .dl-status,
   .captions > .start-copy .dl-status:empty {
     display: block;
-    height: calc(2 * 1.55em);
+    height: 16px;
+    font-size: 12px;
+    line-height: 16px;
     overflow: visible;
   }
   /* (round B2, Astra pA #11) one horizontal grid: the captions take the stage's edges (site.js fitPhone --cap-inset) */
