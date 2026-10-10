@@ -387,7 +387,9 @@
   SEAMS.yoursOffer = function ({ A }) {
     const a = A.inst.X;
     const DUR = 1.25, LIFT = 0.1;
-    const K = (u) => (u < LIFT ? null : clamp(spring(u - LIFT, 2.8, 0.9)));
+    // (F2b) a quicker spring than yoursPrice's (4.0 Hz, from 2.8): the card is empty while it flies (its content leaves
+    // first, the copy waits for 98 % cover), so the flight is kept short: ~0.11 s of story, from ~0.16
+    const K = (u) => (u < LIFT ? null : clamp(spring(u - LIFT, 4.0, 0.9)));
     return {
       DUR, LIFT, K,
       seek(u) {

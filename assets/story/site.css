@@ -2257,6 +2257,17 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
 .fx-root.tall .d-settings .card {
   width: 300px;
 }
+/* (F2b) the path as the app's input shows it, in full: it wraps after a slash (scenes.js S.yours) */
+.fx-root.tall .d-settings .path-input .path-val {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  color: var(--text-0);
+  font-family: var(--font-mono-data);
+  font-size: 12.5px;
+  line-height: 1.4;
+  white-space: normal;
+}
 
 /* phones and tablets: the stage pinned at the top, the captions below it */
 @media (max-width: 1023px) {
@@ -2481,6 +2492,11 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   .captions > .end-copy .btn {
     width: 100%;
     min-height: 48px;
+  }
+  /* (F2b, Sol F2 #4) the full-width button over its card never moves under a held tap (.btn:active's scale would move
+     its edges several px) */
+  .captions > .end-copy .btn:active {
+    transform: none;
   }
   .captions > .end-copy .disclose {
     margin-top: 12px;

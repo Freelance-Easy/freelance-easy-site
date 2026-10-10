@@ -1129,6 +1129,15 @@
       div("fx-ink", shape);
       const st = addSt(shape, `<div id="settings-page" class="redesigned d-settings">${k.dataCard}</div>`, Z);
       const box = st.querySelector(".card");
+      // (phones, F2b) the folder's path in full: the app's one-line input clips it at this card's width ("…/Freelanc"), so
+      // the phone's picture shows the same value as text that wraps after a slash (site.css .fx-root.tall .path-val)
+      const inp = tall && st.querySelector(".path-input input");
+      if (inp) {
+        const v = document.createElement("span");
+        v.className = "path-val";
+        inp.value.split("/").forEach((p, i) => { if (i) { v.append("/"); if (i > 1) v.append(document.createElement("wbr")); } v.append(p.replace(/ /g, " ")); });
+        inp.replaceWith(v);
+      }
       css(shape, "left", "0px"); css(shape, "top", "0px"); css(shape, "width", `${W}px`); css(shape, "height", `${H}px`);
       const size = stSize(st);
       const sk = skin(box, Z);

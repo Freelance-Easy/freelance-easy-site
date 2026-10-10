@@ -99,10 +99,21 @@
   // v2.1 (Daniel: "in the middle of 05, the blue background like flickers"): a dip (a catch-up too long to glide)
   // fades only the stage and its overlay cards, never the pin. Fading the pin let the dark page flash through the
   // blue band mid-Chase on fast scrolls; the band and the captions now stay put while the stage blinks to its frame.
+  // (phones, F2b, Sol F2 #2) the offer copy rides the overlay's card, so it dips with it (a filter, which multiplies with
+  // its own caption fade): no text ever outlives its card on a long jump
+  const dipCopy = () => (TL && TL.p === "tall" && TL.offerSw && copy.end && copy.end.parentNode === capsEl ? copy.end : null);
   function setDip(a) {
     for (const el of [stageWrap, over]) if (el) { if (a >= 0.999) el.style.removeProperty("opacity"); else el.style.opacity = a.toFixed(3); }
+    const c = dipCopy();
+    if (c) { if (a >= 0.999) unDipCopy(); else c.style.filter = `opacity(${a.toFixed(3)})`; }
   }
-  function clearDip() { for (const el of [stageWrap, over]) if (el) el.style.removeProperty("opacity"); }
+  function unDipCopy() {
+    const c = copy.end;
+    if (!c || !c.style.filter) return;
+    c.style.removeProperty("filter");
+    if (c.getAttribute("style") === "") c.removeAttribute("style");
+  }
+  function clearDip() { for (const el of [stageWrap, over]) if (el) el.style.removeProperty("opacity"); unDipCopy(); }
   const nav = $(".story-nav"), navBtns = nav ? $$("button[data-go]", nav) : [], navTip = nav ? $(".nav-tip", nav) : null;
   const BEATS = ["make", "look", "know", "grow", "chase", "yours", "price", "note", "end"];
   const PHONE_BEATS = ["make", "look", "know", "grow", "chase"];
@@ -225,7 +236,9 @@
       c.removeAttribute("aria-hidden");
       c.style.removeProperty("top");
       let sr = c.querySelector(":scope > .sr-stage");
-      if (want && !sr) {
+      // (phones, F2b, Sol F2 #5) the phone story ends on the offer card, with no mark on the stage: no stage description
+      if (want && split && b === "end") { if (sr) sr.remove(); sr = null; }
+      else if (want && !sr) {
         sr = document.createElement("p");
         sr.className = "visually-hidden sr-stage";
         sr.textContent = STAGE_ARIA[b];
@@ -522,6 +535,13 @@
       fitStartH = sh0;
       const room = pr.height - cssPx("env(safe-area-inset-bottom, 0px)") - FIT_BOT - sh0 - L.capTop;
       TL.kStart = sh0 > 0 ? clamp(1 + room / L.stageH, 0.3, 1) : 1;
+      // (F2b) the Yours caption is one line (the folder icon and the title) under the caption budget's height: it sits
+      // centred in the room between the stage and the pin's bottom margin, so the story's last chapter has no dead band
+      // under it (the stage keeps its size; the caption only fades, never moves)
+      if (yoursCap && yoursCap.parentNode === capsEl) {
+        const bot = pr.height - cssPx("env(safe-area-inset-bottom, 0px)") - FIT_BOT, sb = L.stageTop + L.stageH;
+        yoursCap.style.top = `${Math.max(L.capTop, Math.round(sb + (bot - sb - yoursCap.offsetHeight) / 2))}px`;
+      }
     } else if (!TL.isDesk) {
       const heroH = copy.make ? copy.make.offsetHeight : 0;
       kHero = clamp((pr.height - L.stageTop - CAP_GAP - heroH - 14) / L.stageH, 0.5, 1);
@@ -731,7 +751,7 @@
   // readerY is the position as of the last scroll event, so a layout change above (a caption refit) has not moved it.
   let readerY = 0;
   const storyEnd = () => storyTop + MAP.L;
-  function pastStory() { return TL && TL.p === "tall" && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
+  function pastStory() { return TL && !TL.isDesk && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
   function keepPast(d) { const y = Math.round(storyEnd() + d); if (Math.abs(window.scrollY - y) >= 1) window.scrollTo(0, y); readerY = y; }
   // the header takes the band's colour while the band is the page; (phones, Astra pA #8) the phone story ends on Chase's
   // band, so once the reader is past the pinned story the header is back on its own surface (scrolling back restores it)
@@ -886,6 +906,21 @@
       // so it uses 0.02: with 0.12 the card showed empty going forwards and the copy hung over it going back, ~0.3 s)
       const [, boundary, width = 0.12] = TL.switches[Math.max(i, capIdx) - 1];
       if (Math.abs(T - boundary) < width) i = capIdx;
+    }
+    // (phones, F2b, Sol F2 #1) the offer copy shows only while its card covers >= 98 % of it, which is from TL.offerSw[1]
+    // on (layout() measures that moment): before it, the copy leaves at once in either direction, with no hysteresis and
+    // no fade, so scrolling back never leaves it over a card that is shrinking away
+    if (TL.offerSw && T < TL.offerSw[1]) {
+      if (TL.beats[i] === "end") i = beatAt(T);
+      const ec = copy.end;
+      if (ec && ec.parentNode === capsEl && (ec.classList.contains("is-on") || ec.classList.contains("is-off"))) {
+        ec.style.transition = "none";
+        ec.classList.remove("is-on", "is-off");
+        void ec.offsetWidth;
+        ec.style.removeProperty("transition");
+        if (ec.getAttribute("style") === "") ec.removeAttribute("style");
+        capActive(ec, false);
+      }
     }
     if (i === capIdx && !instant) return;
     capIdx = i;
@@ -1322,7 +1357,7 @@
       const h = location.hash.slice(1);
       const anchored = firstLoad && h in ANCHOR && TL.beats.includes(ANCHOR[h]);
       if (anchored) window.scrollTo(0, h === "top" ? 0 : scrollForBeat(ANCHOR[h]));
-      else if (keep && keep.past != null && TL.p === "tall") keepPast(keep.past);   // (phones: below the story, stay there)
+      else if (keep && keep.past != null && !TL.isDesk) keepPast(keep.past);   // (phones, tablets (F2b): below the story, stay there)
       else if (keep && !keep.intro) anchorScroll(keep.tp);      // the same story time under the new map: nothing moves
       target = mapScroll(window.scrollY);
       readerY = window.scrollY;
@@ -1361,7 +1396,13 @@
   }
   // a rebuild that keeps the story where it is: the same segment and local time, the follower's speed, the arrival
   // (if it's still playing) and the direction gate. The map is rebuilt; the scroll position is untouched.
-  function refresh() { start(false, snapshot()); }
+  // (phones, F2b, Sol F2 #3) across the phone line (tall <-> tablet: a resize, or a caption's own refit, can be first),
+  // the phone ending's places map to the tablet's Yours and End sections and back
+  function refresh() {
+    const p0 = TL ? TL.p : null, pl = p0 && !desktop() ? readingPlace() : null;
+    start(false, snapshot());
+    if (TL && TL.p !== p0 && (p0 === "tall" || TL.p === "tall") && endingPlace(pl)) restorePlace(pl);
+  }
   let resizeT = 0;
   window.addEventListener("resize", () => {
     clearTimeout(resizeT);
@@ -1423,25 +1464,36 @@
   function readingPlace() {
     const hb = header ? header.getBoundingClientRect().bottom : 0;
     if (TL && motion() && pastStory() == null && window.scrollY >= storyTop - 1) {
-      const b = TL.beats[capIdx] || (window.scrollY < storyTop + 4 ? "make" : null);
+      let b = TL.beats[capIdx] || (window.scrollY < storyTop + 4 ? "make" : null);
+      // (phones, F2b, Sol F2 #3) between two captions of the phone ending (the band drawing back, the card flying), the
+      // place is the last beat that had one
+      for (let j = capIdx; !b && TL.p === "tall" && j >= 0; j--) b = TL.beats[j];
       if (b) return { beat: b };
     }
     for (const el of document.querySelectorAll(".beat:not(.is-moved), .site-footer")) {
       const r = el.getBoundingClientRect();
       if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) {
         const b = el.classList.contains("beat") ? el.dataset.beat : null;
-        return b && PHONE_BEATS.includes(b) ? { beat: b } : { el, off: r.top };
+        // (F2b) the section's beat goes along: a section the new mode moves into the pin (the phone's End) lands on its
+        // beat; and off the phone story (a tablet, stacked), Yours and End are the phone story's last two beats
+        const ending = !desktop() && !(TL && TL.p === "tall") && (b === "yours" || b === "end");
+        return b && (PHONE_BEATS.includes(b) || ending) ? { beat: b } : { el, off: r.top, beat: b };
       }
     }
     return null;
   }
+  // (phones, F2b, Sol F2 #3) the phone ending's places: the story's Yours and End beats, or the sections they are on a
+  // tablet and stacked; a rebuild across the phone line (tall <-> tablet) keeps them as a mode change does
+  const endingPlace = (pl) => !!(pl && !desktop() && (pl.beat === "yours" || pl.beat === "end"));
   function restorePlace(pl) {
     if (!pl) return;
     const hb = header ? header.getBoundingClientRect().bottom : 0;
     let y = null;
-    if (pl.el && pl.el.isConnected) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
+    // (F2b: a section the new mode hid, moved into the pin, falls back to its beat; a beat the new map does not hold, a
+    // tablet's Yours or End, to its section)
+    if (pl.el && pl.el.isConnected && pl.el.getBoundingClientRect().height > 0) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
     else if (pl.beat && TL && motion()) y = pl.beat === "make" ? 0 : scrollForBeat(pl.beat);
-    else if (pl.beat) {
+    if (y == null && pl.beat && !(pl.el && pl.el.isConnected && pl.el.getBoundingClientRect().height > 0)) {
       // (F1: the phone story's start caption is the hero's own CTA block; stacked, that is the hero section)
       const sec = $(`.beat[data-beat="${pl.beat === "start" ? "make" : pl.beat}"]`);
       if (sec) y = window.scrollY + sec.getBoundingClientRect().top - hb;
