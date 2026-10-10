@@ -1136,7 +1136,9 @@
   window.addEventListener("resize", () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
-      syncMode();                                     // (round D: a rotation can cross the short-touch line)
+      // (round D: a rotation can cross the short-touch line; the reader keeps their place across it)
+      const pl = readingPlace();
+      if (syncMode()) { refresh(); restorePlace(pl); return; }
       if (key() !== layoutKey) { refresh(); return; }
       if (!TL) return;
       // phones (Sol mobile P2): the browser's bars showing or hiding change the height only, by less than ~150 px. The
@@ -1185,7 +1187,45 @@
     doc.classList.toggle("calm", calm); doc.classList.toggle("motion", !calm);
     return true;
   }
-  const onMq = () => { syncMode(true); refresh(); };
+  // (Sol round D P2) a mode change (motion <-> stacked: a rotation across the short-touch line, the motion preference)
+  // keeps the reader's place: the story beat they were reading, or the section under the header. Taken BEFORE the
+  // classes flip (the stacked sections appear at once), applied after the rebuild.
+  function readingPlace() {
+    const hb = header ? header.getBoundingClientRect().bottom : 0;
+    if (TL && motion() && pastStory() == null && window.scrollY >= storyTop - 1) {
+      const b = TL.beats[capIdx] || (window.scrollY < storyTop + 4 ? "make" : null);
+      if (b) return { beat: b };
+    }
+    for (const el of document.querySelectorAll(".story-intro, .beat:not(.is-moved), .site-footer")) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) {
+        const b = el.classList.contains("beat") ? el.dataset.beat : null;
+        return b && PHONE_BEATS.includes(b) ? { beat: b } : { el, off: r.top };
+      }
+    }
+    return null;
+  }
+  function restorePlace(pl) {
+    if (!pl) return;
+    const hb = header ? header.getBoundingClientRect().bottom : 0;
+    let y = null;
+    if (pl.el && pl.el.isConnected) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
+    else if (pl.beat && TL && motion()) y = pl.beat === "make" ? 0 : scrollForBeat(pl.beat);
+    else if (pl.beat) {
+      const sec = $(`.beat[data-beat="${pl.beat}"]`);
+      if (sec) y = window.scrollY + sec.getBoundingClientRect().top - hb;
+    }
+    if (y == null) return;
+    y = Math.max(0, Math.round(y));
+    window.scrollTo(0, y);
+    readerY = window.scrollY;
+    if (TL && motion()) {
+      target = shown = mapScroll(window.scrollY); vel = 0; intro = null;
+      lastDrawn = null; capIdx = -1;
+      render(shown); updateCaptions(shown, true); navTick(shown, 0, true);
+    }
+  }
+  const onMq = () => { const pl = readingPlace(); syncMode(true); refresh(); restorePlace(pl); };
   if (mq.addEventListener) mq.addEventListener("change", onMq);
   if (coarse.addEventListener) coarse.addEventListener("change", onMq);
   // the fonts measure every piece: wait for them (up to 1.8 s); if they land after that, remeasure in place
