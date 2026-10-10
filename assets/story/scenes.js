@@ -1009,8 +1009,11 @@
         // its content with it (site v2.2: never an empty card)
         // (phones: the card stays through the email and leaves as the dashboard grows, which carries the same row)
         const A_OUT = tall ? B.morphDash : B.pressEmail + 0.06, A_OD = tall ? 0.12 : 0.2;
-        const aA = inOut(t, SCHED.A[0], A_OUT, A_OD);
-        const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, A_OUT, A_OD, E.ACCEL));
+        // (phones, round E: the open modal covered the row card's middle and left its edges cut on both sides; the row
+        // steps aside while the modal is up, inside the grow and the close, and is back for "Email sent." under it)
+        const cover = tall ? P(t, M_IN, 0.16, E.DECEL) * (1 - P(t, M_OUT + M_OD, 0.16, E.DECEL)) : 0;
+        const aA = inOut(t, SCHED.A[0], A_OUT, A_OD) * (1 - cover);
+        const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, A_OUT, A_OD, E.ACCEL)) * (1 - cover);
         drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA, lite: LITE });
         place(stA, aA, ga, szA, "center", Z.list);
         const hand = FX.gate.cursor > 0.5, pr = FX.gate.press > 0.5;
@@ -1025,19 +1028,25 @@
         drawInk(inkB, { mode: "none" });
         // the modal's content: zooming out of the button with the shape (scaled to fit, centred), then (from the toast
         // morph) where it rests, cropped by the closing shape
-        const am = inOut(t, M_IN, M_OUT, M_OD);
-        if (t < M_OUT) {
-          place(stM, am, gb, szM, "center", Z.modal);
-          const km = Math.min(1, gb.w / RM.w, gb.h / RM.h);
-          if (am > 0.001 && km < 0.9999) css(stM, "transform", `scale(${Math.max(0.001, km).toFixed(5)})`);
-        } else anchored(stM, am, gb, RM, szM, Z.modal);
+        // (phones, round E: the screen-size text left no slack, so a crop cut words mid-letter; on phones the closing
+        // modal's content shrinks with its shape as it grew with it, the toast's words have left as the Recent card
+        // starts to grow, and the card's content grows with its shape: nothing is ever cut by a moving edge)
+        const fit = (st, a, R, size, z) => {
+          place(st, a, gb, size, "center", z);
+          const k = Math.min(1, gb.w / R.w, gb.h / R.h);
+          if (a > 0.001 && k < 0.9999) css(st, "transform", `scale(${Math.max(0.001, k).toFixed(5)})`);
+        };
+        const am = inOut(t, M_IN, M_OUT, tall ? T_IN - M_OUT : M_OD);   // (phones: gone as "Email sent." arrives)
+        if (t < M_OUT || tall) fit(stM, am, RM, szM, Z.modal);
+        else anchored(stM, am, gb, RM, szM, Z.modal);
         // the toast's words: centred in the closing shape (where the toast rests), then left where they are as the card
         // grows around them
-        const at = inOut(t, T_IN, T_OUT, T_OD);
+        const at = inOut(t, T_IN, tall ? T_OUT - T_OD : T_OUT, T_OD);
         if (t < T_OUT) place(stT, at, gb, szT, "center", Z.toast);
         else anchored(stT, at, gb, RT, szT, Z.toast);
         // the Recent card's content: where it rests, revealed by the growing shape
-        anchored(stR, inOut(t, R_IN, 99, 0.1), gb, RR, szR, Z.recent);
+        if (tall) fit(stR, inOut(t, R_IN, 99, 0.1), RR, szR, Z.recent);
+        else anchored(stR, inOut(t, R_IN, 99, 0.1), gb, RR, szR, Z.recent);
         FX.flags(sendBtn, sendBase, [["fe-hover", hand && t > B.toSend + 0.3 && t < B.pressSend + 0.1],
           ["fe-active", pr && t > B.pressSend && t < B.pressSend + 0.08]]);
         // the KPI cards arrive above the Recent card (the dashboard's own order)
