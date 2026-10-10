@@ -233,11 +233,19 @@
     // init sets data-campaign-resolved): on any earlier start, resize or mode change it stays put, and one re-placement
     // runs after that init (plus a task), so the row a tablet or laptop puts back is always a wired one
     const toEnd = split ? inPin.includes("end") : !inPin.length && calmPhone();
+    // (Sol F1c r3) while it waits, html.cta-pending keeps that block hidden (site.css); the re-placement keeps the reader's
+    // place, and if download.js never ran it gives up and shows the block where it is (its plain links still work)
     if (toEnd && !ctaParts && !document.body.hasAttribute("data-campaign-resolved")) {
+      doc.classList.add("cta-pending");
       if (!ctaWait) ctaWait = new Promise((r) => {
         const go = () => setTimeout(r, 0);
         if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go, { once: true }); else go();
-      }).then(() => { if (TL) refresh(); else placeCopies(...lastPlace); });
+      }).then(() => {
+        const pl = readingPlace();
+        if (TL) refresh(); else placeCopies(...lastPlace);
+        restorePlace(pl);
+        doc.classList.remove("cta-pending");
+      });
     } else ctaEnd(toEnd);
     let moved = false;                                // once one caption moves in, the later ones follow it (story order)
     for (const b of BEATS) {
