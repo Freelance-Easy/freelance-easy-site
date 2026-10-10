@@ -1521,6 +1521,11 @@ details.disclosure p a {
   width: 30% !important;
 }
 .fx-root.tall .d-recent .recent-table th:nth-child(4) { width: 28% !important; }
+/* (round D) the scale the scene text below compensates for: the canvas scale, but never under a 312 px stage's
+   (312 / 600). 312 px is the narrowest stage at which every scene fits unclipped at full screen size (measured: 304 px
+   cut Know's "Paid" by 3 px, 312 and 320 cut nothing). On a narrower stage the text scales with the canvas instead of
+   clipping: min(screen px / --demo-scale, its canvas size on a 312 px stage). Make's own rules keep their 308 px cap. */
+.fx-root.tall { --ds: max(var(--demo-scale, 1), 0.52); }
 /* Compensate for the canvas scale and each screen's zoom: table text renders at 13.5 px. */
 .fx-root.tall .client-status { --screen-zoom: 1.62; }
 .fx-root.tall .client-status:not(.no-actions) { --screen-zoom: 1.42; }
@@ -1538,7 +1543,7 @@ details.disclosure p a {
 .fx-root.tall .fe-app .d-recent th,
 .fx-root.tall .fe-app .d-recent td,
 .fx-root.tall .fe-app .d-recent .status-toggle {
-  font-size: calc(13.5px / var(--demo-scale) / var(--screen-zoom));
+  font-size: calc(13.5px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .fe-app .client-status th,
 .fx-root.tall .fe-app .client-status td,
@@ -1552,9 +1557,9 @@ details.disclosure p a {
    12, the "Email sent." toast 14 px in a 44 px pill. */
 .fx-root.tall .fe-app .client-status td,
 .fx-root.tall .fe-app .d-recent td {
-  font-size: calc(14px / var(--demo-scale) / var(--screen-zoom));
-  padding-left: calc(4px / var(--demo-scale) / var(--screen-zoom));
-  padding-right: calc(4px / var(--demo-scale) / var(--screen-zoom));
+  font-size: calc(14px / var(--ds) / var(--screen-zoom));
+  padding-left: calc(4px / var(--ds) / var(--screen-zoom));
+  padding-right: calc(4px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .fe-app .client-status td.cell-truncate,
 .fx-root.tall .fe-app .d-recent td.cell-truncate,
@@ -1565,7 +1570,7 @@ details.disclosure p a {
 }
 .fx-root.tall .fe-app .client-status .status-toggle,
 .fx-root.tall .fe-app .d-recent .status-toggle {
-  font-size: calc(12px / var(--demo-scale) / var(--screen-zoom));
+  font-size: calc(12px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .d-list.no-actions .card { width: 352px; }
 .fx-root.tall .fe-app .client-status th:nth-child(3) { width: 46% !important; }
@@ -1580,15 +1585,15 @@ details.disclosure p a {
 .fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(5) { width: 25% !important; }
 /* (Chase: the overdue row is a full-width, 64 px row that stays readable through the email) */
 .fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
-  padding-top: calc(22px / var(--demo-scale) / var(--screen-zoom));
-  padding-bottom: calc(22px / var(--demo-scale) / var(--screen-zoom));
+  padding-top: calc(22px / var(--ds) / var(--screen-zoom));
+  padding-bottom: calc(22px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .fe-app .d-tabs .tabs .tab {
-  font-size: calc(12px / var(--demo-scale) / var(--sz, 1));
+  font-size: calc(12px / var(--ds) / var(--sz, 1));
   letter-spacing: 0.02em;
   white-space: nowrap;
-  padding-left: calc(4px / var(--demo-scale) / var(--sz, 1));
-  padding-right: calc(4px / var(--demo-scale) / var(--sz, 1));
+  padding-left: calc(4px / var(--ds) / var(--sz, 1));
+  padding-right: calc(4px / var(--ds) / var(--sz, 1));
 }
 /* (the KPI cards a little tighter inside, so the larger type keeps Grow's stack and chart inside the stage) */
 .fx-root.tall .fe-app .d-kpis .kpi-row { gap: 8px; }
@@ -1598,24 +1603,24 @@ details.disclosure p a {
 .fx-root.tall .fx-chase-kpis .kpi-foot { white-space: nowrap; }
 .fx-root.tall .fx-chase-kpis .kpi:not(:first-child) .spark { display: none; }
 .fx-root.tall .fe-app .d-kpis .kpi-label {
-  font-size: calc(12px / var(--demo-scale) / var(--sz, 1));
+  font-size: calc(12px / var(--ds) / var(--sz, 1));
   letter-spacing: 0.04em;
 }
-.fx-root.tall .fe-app .d-kpis .kpi-value { font-size: calc(22px / var(--demo-scale) / var(--sz, 1)); }
-.fx-root.tall .fe-app .d-kpis .kpi-foot { font-size: calc(12px / var(--demo-scale) / var(--sz, 1)); }
+.fx-root.tall .fe-app .d-kpis .kpi-value { font-size: calc(22px / var(--ds) / var(--sz, 1)); }
+.fx-root.tall .fe-app .d-kpis .kpi-foot { font-size: calc(12px / var(--ds) / var(--sz, 1)); }
 .fx-root.tall .fe-app .d-theme .style-card-label {
-  font-size: calc(12px / var(--demo-scale) / var(--sz, 1));
+  font-size: calc(12px / var(--ds) / var(--sz, 1));
   line-height: 1.2;
-  padding: calc(4px / var(--demo-scale) / var(--sz, 1)) 2px;
+  padding: calc(4px / var(--ds) / var(--sz, 1)) 2px;
   white-space: nowrap;
 }
 /* (the larger name takes its height from the card's thumbnail, so the tray keeps its size and place in the stage) */
 .fx-root.tall .fe-app .d-theme .style-card-preview {
-  height: calc(188px + 13px * 1.2 + 16px - 12px * 1.2 / var(--demo-scale) / var(--sz, 1) - 8px / var(--demo-scale) / var(--sz, 1));
+  height: calc(188px + 13px * 1.2 + 16px - 12px * 1.2 / var(--ds) / var(--sz, 1) - 8px / var(--ds) / var(--sz, 1));
 }
 .fx-root.tall .fe-app .d-toast .flash {
-  font-size: calc(14px / var(--demo-scale) / var(--sz, 1));
-  min-height: calc(44px / var(--demo-scale) / var(--sz, 1));
+  font-size: calc(14px / var(--ds) / var(--sz, 1));
+  min-height: calc(44px / var(--ds) / var(--sz, 1));
   padding-top: 0;
   padding-bottom: 0;
   align-items: center;
@@ -1633,7 +1638,7 @@ details.disclosure p a {
 /* (phones, round B2) the tables' column headers at 11.5 screen px, a step under the rows, never truncated */
 .fx-root.tall .fe-app .client-status th,
 .fx-root.tall .fe-app .d-recent th {
-  font-size: calc(11.5px / var(--demo-scale) / var(--screen-zoom));
+  font-size: calc(11.5px / var(--ds) / var(--screen-zoom));
   font-weight: 500;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -1646,16 +1651,16 @@ details.disclosure p a {
 .fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 30% !important; }
 .fx-root.tall .fe-app .client-status:not(.no-actions) :is(th, td).text-center {
   text-align: left;
-  padding-left: calc(12px / var(--demo-scale) / var(--screen-zoom));
+  padding-left: calc(12px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
-  padding-top: calc(14px / var(--demo-scale) / var(--screen-zoom));
-  padding-bottom: calc(14px / var(--demo-scale) / var(--screen-zoom));
+  padding-top: calc(14px / var(--ds) / var(--screen-zoom));
+  padding-bottom: calc(14px / var(--ds) / var(--screen-zoom));
 }
 /* Chase's end stack: the half cards 12 screen px inside; their second line wraps (two lines reserved, so the swap of
    "Overdue"'s line never changes the card's height) */
 .fx-root.tall .fe-app .fx-chase-kpis .kpi-row .kpi {
-  padding: calc(10px / var(--demo-scale) / var(--sz, 1)) calc(12px / var(--demo-scale) / var(--sz, 1));
+  padding: calc(10px / var(--ds) / var(--sz, 1)) calc(12px / var(--ds) / var(--sz, 1));
 }
 .fx-root.tall .fe-app .fx-chase-kpis .kpi:not(:first-child) .kpi-foot {
   white-space: normal;
@@ -1664,34 +1669,34 @@ details.disclosure p a {
 }
 /* Know (phones): on the larger stages the rows and pills grow with the stage (never under 14 / 12 screen px) */
 .fx-root.tall .fe-app .client-status.no-actions td {
-  font-size: max(calc(14px / var(--demo-scale) / var(--screen-zoom)), calc(23.5px / var(--screen-zoom)));
+  font-size: max(calc(14px / var(--ds) / var(--screen-zoom)), calc(23.5px / var(--screen-zoom)));
 }
 .fx-root.tall .fe-app .client-status.no-actions .status-toggle {
-  font-size: max(calc(12px / var(--demo-scale) / var(--screen-zoom)), calc(20px / var(--screen-zoom)));
+  font-size: max(calc(12px / var(--ds) / var(--screen-zoom)), calc(20px / var(--screen-zoom)));
 }
 /* Look (phones): the colour swatches 22 screen px with 10 px gaps */
 /* (all ten never fit a phone's stage at that size: two bounded rows of five, centred) */
 .fx-root.tall .fe-app .d-theme .color-presets {
-  gap: calc(10px / var(--demo-scale) / var(--sz, 1));
+  gap: calc(10px / var(--ds) / var(--sz, 1));
   flex-wrap: wrap;
   justify-content: center;
-  max-width: calc((5 * 22px + 4 * 10px + 1px) / var(--demo-scale) / var(--sz, 1));
+  max-width: calc((5 * 22px + 4 * 10px + 1px) / var(--ds) / var(--sz, 1));
 }
 .fx-root.tall .fe-app .d-theme .color-preset {
-  width: calc(22px / var(--demo-scale) / var(--sz, 1));
-  height: calc(22px / var(--demo-scale) / var(--sz, 1));
+  width: calc(22px / var(--ds) / var(--sz, 1));
+  height: calc(22px / var(--ds) / var(--sz, 1));
   min-width: 0;
   flex: none;
 }
 /* (phones, round C, Astra #3) Chase's row card: 80 screen px at every phone size (a 28 px header over a 52 px row) */
 .fx-root.tall .fe-app .client-status:not(.no-actions) thead th {
-  height: calc(28px / var(--demo-scale) / var(--screen-zoom));
+  height: calc(28px / var(--ds) / var(--screen-zoom));
   padding-top: 0;
   padding-bottom: 0;
   vertical-align: middle;
 }
 .fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
-  height: calc(52px / var(--demo-scale) / var(--screen-zoom));
+  height: calc(52px / var(--ds) / var(--screen-zoom));
   padding-top: 0;
   padding-bottom: 0;
   vertical-align: middle;
@@ -1707,7 +1712,7 @@ details.disclosure p a {
 .fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 22% !important; }
 .fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 29% !important; }
 .fx-root.tall .fe-app .client-status:not(.no-actions) :is(th, td).text-center {
-  padding-left: calc(10px / var(--demo-scale) / var(--screen-zoom));
+  padding-left: calc(10px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .fe-app .client-status:not(.no-actions) .status-cell-wrap.ring-slot::after {
   display: none;
@@ -2392,6 +2397,21 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   .captions > .beat-copy {
     left: calc(var(--pad) + var(--cap-inset, 0px));
     right: calc(var(--pad) + var(--cap-inset, 0px));
+  }
+  /* (round D) tighter captions, so the stage keeps more of a real phone's height (browser bars on): a 12 px chapter
+     number row, a 26-28 px headline, 15/1.4 body, 8 px between them. fitPhone budgets the largest one. */
+  .captions .step {
+    font-size: 12px;
+    line-height: 12px;
+  }
+  .captions .chapter-copy h2 {
+    margin-top: 8px;
+    font-size: clamp(26px, 7vw, 28px);
+  }
+  .captions .chapter-copy p {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.4;
   }
   /* (Astra pA #12) the arrival: 28 px from the intro's last line to the stage frame (site.js fitPhone --arrive); the
      intro paints over the pin's empty top, so its links stay clickable */
