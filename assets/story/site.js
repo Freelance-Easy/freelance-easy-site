@@ -529,7 +529,7 @@
     const hh = header ? header.getBoundingClientRect().height : 64;
     storyTop = storyEl.getBoundingClientRect().top + window.scrollY - hh;
     const pr = pin.getBoundingClientRect(), wr = stageWrap.getBoundingClientRect();
-    L = { sw, sh, s, stageTop: wr.top - pr.top, stageH: wr.height, stageW: wr.width };
+    L = { sw, sh, s, hh, stageTop: wr.top - pr.top, stageH: wr.height, stageW: wr.width };
     // phones: the hero's copy sits under a smaller stage; every other caption under the full stage; both keep CAP_GAP
     // (phones < 640 px: the story pins from the first frame with the stage at full size; every caption sits under the
     // label row, the start caption under the stepped-back stage (TL.kStart); the map's viewport is the pin's own stable 100svh, measured once per layout)
@@ -794,7 +794,10 @@
     if (lastG.past !== past) { lastG.past = past; doc.classList.toggle("past-band", past); }
     // (phones, F2d, Astra F2: the offer passed under the translucent header) as the pin lets go, everything in it is cut
     // at the header's lower edge: the pin's top has risen (scrollY - storyEnd) px above it, so that much is clipped
-    const cut = TL && TL.p === "tall" && MAP && TL.seg("end") ? window.scrollY - storyEnd() : 0;
+    // (measured: the pin's own top, read only from a few px before the release on, outside the pinned frames; the
+    // computed storyEnd can differ from the sticky release by a px or two, which left a sliver under the header)
+    const near = TL && TL.p === "tall" && MAP && TL.seg("end") && window.scrollY > storyEnd() - 8;
+    const cut = near ? (L.hh || 0) - pin.getBoundingClientRect().top : 0;
     const clip = cut > 0.5 ? `inset(${cut.toFixed(1)}px 0px 0px 0px)` : "";
     if (lastG.pinCut !== clip && (clip || pin.style.clipPath)) { lastG.pinCut = clip; if (clip) pin.style.clipPath = clip; else pin.style.removeProperty("clip-path"); }
   }
