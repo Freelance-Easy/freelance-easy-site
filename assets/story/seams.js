@@ -340,7 +340,7 @@
         B.seek(B.inst.START);
         // (phones, F2d) the card's own outline arrives as the band (by then the card's colour) lands on it, so no inner
         // outline shows inside the closing band
-        drawShape(b.shape, g, { fill: b.surf, line: b.line, lineA: tall ? P(u, 0.34, 0.08) : 1, dark, lite: b.lite });
+        drawShape(b.shape, g, { fill: b.surf, line: b.line, lineA: tall ? P(u, 0.34, 0.08) : 1, dark, lite: b.lite && b.lite() });
         const ki = inScale(g);
         css(b.st, "left", `${((g.w - b.size.cw) / 2 / b.Z).toFixed(2)}px`);
         css(b.st, "top", `${((g.h - b.size.ch) / 2 / b.Z).toFixed(2)}px`);

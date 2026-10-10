@@ -480,7 +480,7 @@
       TL.offerSw = ["end", yo.T1, 0.02];
       // (F2d, Astra F2: a washed-out crossover) the Yours statement stays readable until the card lifts (LIFT), so a
       // readable element is up until the offer gives the eye its focal point
-      TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + yo.seam.LIFT], TL.offerSw);
+      TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + yo.seam.LIFT, 0.02], TL.offerSw);
     }
     TL.beats = ["make", ...TL.switches.map((s) => s[0])];
     TL.labelData = seg("lookKnow").T0 + 0.14;          // "Fictional data" as the list (and its year total) arrives

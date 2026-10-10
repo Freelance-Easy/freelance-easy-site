@@ -1145,14 +1145,16 @@
       const surf = solid(sk.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.bc[3] > 0.005 ? sk.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
       const R = { cx: W / 2, cy: H / 2, w: sk.w, h: sk.h, r: sk.r, bw: Math.max(1, sk.bw) };
-      const lite = tall && !dark ? FX.PHONE_LITE : undefined;       // (F2d) the phone light theme: a soft shadow
-      drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite });
+      // (F2d, Sol F2d #2) the phone light theme: a soft shadow, in canvas px so it is FX.PHONE_LITE on screen (the
+      // overlay card it hands to at LIFT draws it in screen px)
+      const lite = () => { if (!tall || dark) return undefined; const sc = parseFloat(ctx.root.style.getPropertyValue("--demo-scale")) || 1; return { y: FX.PHONE_LITE.y / sc, b: FX.PHONE_LITE.b / sc }; };
+      drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite: lite() });
       place(st, 1, R, size, "center", Z);
       const ic = rectIn(st.querySelector(".path-input .ic"), ctx.root);
       css(st, "display", "none");
       const DUR = 0.9;
       function seek(t) {
-        drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite });
+        drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite: lite() });
         css(shape, "-webkit-mask-image", "none");          // (the Chase -> Yours seam reveals the card through a disc)
         css(shape, "mask-image", "none");
         place(st, alphaAt(t, 0.05, 99), R, size, "center", Z);
