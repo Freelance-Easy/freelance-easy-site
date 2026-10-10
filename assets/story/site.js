@@ -751,7 +751,9 @@
   // readerY is the position as of the last scroll event, so a layout change above (a caption refit) has not moved it.
   let readerY = 0;
   const storyEnd = () => storyTop + MAP.L;
-  function pastStory() { return TL && !TL.isDesk && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
+  // (F2b: and touch tablets; a >= 640 px fine-pointer window keeps the story-time anchoring)
+  const pastMode = () => !!TL && (TL.p === "tall" || (!TL.isDesk && coarse.matches));
+  function pastStory() { return TL && pastMode() && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
   function keepPast(d) { const y = Math.round(storyEnd() + d); if (Math.abs(window.scrollY - y) >= 1) window.scrollTo(0, y); readerY = y; }
   // the header takes the band's colour while the band is the page; (phones, Astra pA #8) the phone story ends on Chase's
   // band, so once the reader is past the pinned story the header is back on its own surface (scrolling back restores it)
@@ -1357,7 +1359,7 @@
       const h = location.hash.slice(1);
       const anchored = firstLoad && h in ANCHOR && TL.beats.includes(ANCHOR[h]);
       if (anchored) window.scrollTo(0, h === "top" ? 0 : scrollForBeat(ANCHOR[h]));
-      else if (keep && keep.past != null && !TL.isDesk) keepPast(keep.past);   // (phones, tablets (F2b): below the story, stay there)
+      else if (keep && keep.past != null && pastMode()) keepPast(keep.past);   // (phones, touch tablets (F2b): below the story, stay there)
       else if (keep && !keep.intro) anchorScroll(keep.tp);      // the same story time under the new map: nothing moves
       target = mapScroll(window.scrollY);
       readerY = window.scrollY;
@@ -1399,7 +1401,7 @@
   // (phones, F2b, Sol F2 #3) across the phone line (tall <-> tablet: a resize, or a caption's own refit, can be first),
   // the phone ending's places map to the tablet's Yours and End sections and back
   function refresh() {
-    const p0 = TL ? TL.p : null, pl = p0 && !desktop() ? readingPlace() : null;
+    const p0 = TL ? TL.p : null, pl = p0 && phoneish() ? readingPlace() : null;
     start(false, snapshot());
     if (TL && TL.p !== p0 && (p0 === "tall" || TL.p === "tall") && endingPlace(pl)) restorePlace(pl);
   }
@@ -1476,24 +1478,28 @@
         const b = el.classList.contains("beat") ? el.dataset.beat : null;
         // (F2b) the section's beat goes along: a section the new mode moves into the pin (the phone's End) lands on its
         // beat; and off the phone story (a tablet, stacked), Yours and End are the phone story's last two beats
-        const ending = !desktop() && !(TL && TL.p === "tall") && (b === "yours" || b === "end");
-        return b && (PHONE_BEATS.includes(b) || ending) ? { beat: b } : { el, off: r.top, beat: b };
+        const ending = phoneish() && !(TL && TL.p === "tall") && (b === "yours" || b === "end");
+        return b && (PHONE_BEATS.includes(b) || ending) ? { beat: b } : phoneish() ? { el, off: r.top, beat: b } : { el, off: r.top };
       }
     }
     return null;
   }
   // (phones, F2b, Sol F2 #3) the phone ending's places: the story's Yours and End beats, or the sections they are on a
   // tablet and stacked; a rebuild across the phone line (tall <-> tablet) keeps them as a mode change does
-  const endingPlace = (pl) => !!(pl && !desktop() && (pl.beat === "yours" || pl.beat === "end"));
+  const endingPlace = (pl) => !!(pl && phoneish() && (pl.beat === "yours" || pl.beat === "end"));
+  // (F2b, Sol re-check) phones and touch tablets only: a >= 640 px fine-pointer window keeps the baseline
+  function phoneish() { try { return coarse.matches || window.innerWidth < 640; } catch (e) { return false; } }
   function restorePlace(pl) {
     if (!pl) return;
     const hb = header ? header.getBoundingClientRect().bottom : 0;
     let y = null;
     // (F2b: a section the new mode hid, moved into the pin, falls back to its beat; a beat the new map does not hold, a
     // tablet's Yours or End, to its section)
-    if (pl.el && pl.el.isConnected && pl.el.getBoundingClientRect().height > 0) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
+    // (an element place with no beat, desktop, is used as it always was)
+    const elOk = !!(pl.el && pl.el.isConnected && (!pl.beat || pl.el.getBoundingClientRect().height > 0));
+    if (elOk) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
     else if (pl.beat && TL && motion()) y = pl.beat === "make" ? 0 : scrollForBeat(pl.beat);
-    if (y == null && pl.beat && !(pl.el && pl.el.isConnected && pl.el.getBoundingClientRect().height > 0)) {
+    if (y == null && pl.beat && !elOk) {
       // (F1: the phone story's start caption is the hero's own CTA block; stacked, that is the hero section)
       const sec = $(`.beat[data-beat="${pl.beat === "start" ? "make" : pl.beat}"]`);
       if (sec) y = window.scrollY + sec.getBoundingClientRect().top - hb;
