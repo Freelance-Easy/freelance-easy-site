@@ -938,6 +938,21 @@
       startEl.style.transition = "";
       capActive(startEl, false);
     }
+    // (phones, F2c) the offer copy never waits out an outgoing caption's 60 ms fade: a fling can step over the null
+    // switch between the Yours caption and the copy (0.04 s of story), and by the time that fade ends the stage is gone
+    // and the card is empty. The outgoing caption leaves at once (it sits under the card); the copy starts its own
+    // 100 ms arrival now.
+    if (next && next === copy.end && TL.offerSw) {
+      for (const c of $$(".beat-copy.is-on, .beat-copy.is-off", capsEl)) {
+        if (c === next) continue;
+        c.style.transition = "none";
+        c.classList.remove("is-on", "is-off");
+        void c.offsetWidth;
+        c.style.removeProperty("transition");
+        if (c.getAttribute("style") === "") c.removeAttribute("style");
+        capActive(c, false);
+      }
+    }
     const cur = $$(".beat-copy.is-on", capsEl).filter((c) => c !== next);
     if (instant || !cur.length) {
       for (const c of $$(".beat-copy", capsEl)) { if (c !== next) { c.classList.remove("is-on", "is-off"); capActive(c, false); } }
