@@ -64,7 +64,6 @@ SUBS: list[tuple[str, str]] = [
         "Checkout is handled by Stripe: card, Apple Pay or Link.",
         "Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link.",
     ),
-    ("invoices themselves stay on your Mac.", "invoices themselves stay on your computer."),
 ]
 
 
