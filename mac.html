@@ -15,6 +15,7 @@
     <script>
       (function () {
         var root = document.documentElement;
+        root.classList.add("js"); // Tier 1's styles key the clear-at-top header on it
         // /mac opens LIGHT for a first visit (the flight-1 ad is light); a choice
         // made with the toggle still wins. sessionStorage carries the light look
         // to pages whose head script reads "fe-theme-visit" for the rest of the visit.
@@ -77,22 +78,33 @@
       .dl-mobile-actions .btn-primary {
         flex: 1 1 auto;
       }
+      /* Copy link: an outlined secondary in the page's button shape (Tier 1's .btn
+         drops the border, so it is set here). Without a share sheet it becomes the one
+         action and takes the site's own .btn-primary look (teal today, Tier 1's ink pill). */
       .dl-mobile-actions .btn-copy {
         flex: 0 0 auto;
         width: auto;
+      }
+      .dl-mobile-actions .btn-copy:not(.btn-primary) {
         background: transparent;
         color: var(--text-0);
-        border-color: var(--line-3);
+        border: 1px solid var(--line-3);
+        box-shadow: none;
       }
-      .dl-mobile-actions .btn-copy:hover {
+      .dl-mobile-actions .btn-copy:not(.btn-primary):hover {
         border-color: var(--text-2);
       }
       .dl-mobile-actions .btn-copy.btn-primary {
-        /* no share sheet: copying is the one action */
         flex: 1 1 auto;
-        background: var(--accent);
-        color: var(--accent-on);
-        border-color: var(--accent);
+      }
+      /* Header: Tier 1 makes it clear at the top when html.js is set and lets
+         script.js frost it on scroll. If script.js never wires it (failed to load, no
+         IntersectionObserver), keep it frosted so text never runs under bare text. */
+      .js .site-header:not(.is-wired) {
+        background: var(--bg-0);
+        background: color-mix(in srgb, var(--bg-0) 82%, transparent);
+        -webkit-backdrop-filter: saturate(1.4) blur(14px);
+        backdrop-filter: saturate(1.4) blur(14px);
       }
       .dl-mobile .dl-mobile-fine {
         margin-top: 12px;

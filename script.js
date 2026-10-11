@@ -599,6 +599,8 @@
     new IntersectionObserver(function (entries) {
       header.classList.toggle("is-stuck", !entries[0].isIntersecting);
     }).observe(sentinel);
+    // Pages may keep the header frosted until this exists (/mac's no-script fallback).
+    header.classList.add("is-wired");
   }
 
   function init() {
