@@ -1,14 +1,16 @@
 # Cloudflare redirects (Workers Static Assets honours the Pages format)
 # Format: <source> <destination> <status>
 #
-# This file is the SINGLE source of truth for download URLs.
+# Download URLs live here and in worker.js. The Mac ones (/download/mac and
+# /dl/mac/*) are served by worker.js as the DMG itself from this domain
+# (macDownload; wrangler.toml runs the Worker first for them), for Google's
+# free-desktop-software policy. The Windows ones stay redirects to GitHub.
 # The HTML never links to GitHub directly. When a new version ships, nothing
 # here changes — the GitHub "latest" alias and the version-less asset names
 # (electron/package.json artifactName) keep every URL below stable.
 
 # === Direct downloads (site buttons without a campaign) ===
 /download/win   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
-/download/mac   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg         302
 
 # === Campaign download paths ===
 # Ads and campaign pages link to /dl/<os>/<campaign> so a download click can be
@@ -16,11 +18,11 @@
 # pixel. The trailing splat is the campaign label: a flight's label from the
 # allowlist in script.js (CAMPAIGNS, e.g. /dl/mac/f1) or the page's own
 # (/dl/mac/mac). Same files as above; the file name never carries the label.
-# These redirects do NOT drop a query string: Cloudflare passes it on to
+# The Windows redirect does NOT drop a query string: Cloudflare passes it on to
 # GitHub (seen 2026-10-04: /dl/mac/f1?probe=1 -> ...Freelance-Easy.dmg?probe=1).
 # So never link a /dl/ path with one. The site's buttons never add one, and
 # GitHub sees only our origin as the referrer (Referrer-Policy in _headers).
-/dl/mac/*   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy.dmg         302
+# (/dl/mac/* is worker.js's: it never forwards a query string or the label.)
 /dl/win/*   https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/latest/download/Freelance-Easy-Setup.exe   302
 
 # === General ===
