@@ -94,6 +94,12 @@
         color: var(--accent-on);
         border-color: var(--accent);
       }
+      .dl-mobile .dl-mobile-fine {
+        margin-top: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--text-2);
+      }
       .dl-mobile .dl-mobile-alt a {
         color: var(--text-1);
         border-bottom: 1px solid var(--line-3);
@@ -183,6 +189,9 @@
                   <button type="button" class="btn btn-copy" data-copy-link><span data-label>Copy link</span></button>
                 </div>
                 <p class="dl-status" data-share-status aria-live="polite"></p>
+                <!-- The requirements and the install disclosure, compact, for phone viewers too
+                     (Google reviews the landing page on phones; same facts as the desktop block). -->
+                <p class="dl-mobile-fine">For Apple Silicon Macs (M1 or later) running macOS 12 Monterey or later; Intel Macs aren't supported. Freelance Easy is in beta. Installing: drag it into Applications, then sign in with Google. Your clients and invoices are saved in a folder you choose on your Mac. Each time it starts, the app checks your subscription with our server and looks for updates; an update downloads in the background and installs when you choose to restart.</p>
                 <p class="dl-mobile-alt"><a href="/">On Windows?</a></p>
               </div>
             </div>
