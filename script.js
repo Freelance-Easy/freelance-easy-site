@@ -148,32 +148,45 @@
       });
     });
 
-    // Phones: share or copy the page link; never a silent button.
+    // Phones: share or copy the page link; never a silent button. The link is
+    // the page itself (origin + path), never its query string. A page can name
+    // the share button (data-share-label, e.g. /mac's "Send to my Mac") and its
+    // message (data-share-text), and add a separate [data-copy-link] button.
     var shareBtn = block.querySelector("[data-share]");
+    var copyBtn = block.querySelector("[data-copy-link]");
     var status = block.querySelector("[data-share-status]");
-    if (shareBtn) {
-      var canShare = typeof navigator.share === "function";
-      var label = shareBtn.querySelector("[data-label]");
-      if (label) label.textContent = canShare ? "Share this page" : "Copy page link";
-      shareBtn.addEventListener("click", function () {
-        var url = location.origin + location.pathname;
-        function copyPageUrl() {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(
-              function () {
-                if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
-              },
-              function () {
-                if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
-              }
-            );
-          } else if (status) {
-            status.textContent = "Copy this address: " + url;
+    var canShare = typeof navigator.share === "function";
+    function pageUrl() {
+      return location.origin + location.pathname;
+    }
+    function copyPageUrl() {
+      var url = pageUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(
+          function () {
+            if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
+          },
+          function () {
+            if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
           }
-        }
+        );
+      } else if (status) {
+        status.textContent = "Copy this address: " + url;
+      }
+    }
+    if (copyBtn) copyBtn.addEventListener("click", copyPageUrl);
+    if (shareBtn) {
+      if (!canShare && copyBtn) {
+        // No share sheet: the copy button is the one action, so it takes the main style.
+        shareBtn.hidden = true;
+        copyBtn.classList.add("btn-primary");
+      }
+      var label = shareBtn.querySelector("[data-label]");
+      if (label) label.textContent = canShare ? shareBtn.getAttribute("data-share-label") || "Share this page" : "Copy page link";
+      shareBtn.addEventListener("click", function () {
         if (canShare) {
           navigator
-            .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: url })
+            .share({ title: "Freelance Easy", text: shareBtn.getAttribute("data-share-text") || "Freelance Easy, an invoicing app for your computer.", url: pageUrl() })
             .catch(function (err) {
               // Cancelling the share sheet is silent; a real failure falls back to the copy path.
               if (!err || err.name !== "AbortError") copyPageUrl();
