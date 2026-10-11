@@ -1,5 +1,7 @@
 /* Freelance Easy — landing page behaviour (v2.3, 2026-09)
-   1. Theme toggle (dark default, persisted in localStorage). The product
+   1. Theme toggle (dark default, light on /mac for a first visit; the head
+      script decides before the first paint; a toggle choice persists in
+      localStorage). The product
       screenshots follow the theme in CSS (.shot-dark / .shot-light pairs).
       The making-an-invoice loop autoplays muted; see wireDemo for the
       reduced-motion and autoplay-refused fallbacks.
@@ -31,11 +33,10 @@
     if (t === "light") root.setAttribute("data-theme", "light");
     else root.removeAttribute("data-theme");
   }
-  var stored = null;
-  try {
-    stored = localStorage.getItem(STORAGE_KEY);
-  } catch (e) {}
-  applyTheme(stored === "light" ? "light" : "dark");
+  // Each page's head script has already chosen the theme before the first paint
+  // (the visitor's stored choice, else the page's default: dark, or light on
+  // /mac); keep it rather than recomputing.
+  applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
 
   function bindToggle() {
     var btn = document.querySelector("[data-theme-toggle]");
@@ -147,32 +148,45 @@
       });
     });
 
-    // Phones: share or copy the page link; never a silent button.
+    // Phones: share or copy the page link; never a silent button. The link is
+    // the page itself (origin + path), never its query string. A page can name
+    // the share button (data-share-label, e.g. /mac's "Send to my Mac") and its
+    // message (data-share-text), and add a separate [data-copy-link] button.
     var shareBtn = block.querySelector("[data-share]");
+    var copyBtn = block.querySelector("[data-copy-link]");
     var status = block.querySelector("[data-share-status]");
-    if (shareBtn) {
-      var canShare = typeof navigator.share === "function";
-      var label = shareBtn.querySelector("[data-label]");
-      if (label) label.textContent = canShare ? "Share this page" : "Copy page link";
-      shareBtn.addEventListener("click", function () {
-        var url = location.origin + location.pathname;
-        function copyPageUrl() {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(
-              function () {
-                if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
-              },
-              function () {
-                if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
-              }
-            );
-          } else if (status) {
-            status.textContent = "Copy this address: " + url;
+    var canShare = typeof navigator.share === "function";
+    function pageUrl() {
+      return location.origin + location.pathname;
+    }
+    function copyPageUrl() {
+      var url = pageUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(
+          function () {
+            if (status) status.textContent = "Link copied. Paste it into Notes or a message to yourself.";
+          },
+          function () {
+            if (status) status.textContent = "Couldn't copy the link. Copy this address: " + url;
           }
-        }
+        );
+      } else if (status) {
+        status.textContent = "Copy this address: " + url;
+      }
+    }
+    if (copyBtn) copyBtn.addEventListener("click", copyPageUrl);
+    if (shareBtn) {
+      if (!canShare && copyBtn) {
+        // No share sheet: the copy button is the one action, so it takes the main style.
+        shareBtn.hidden = true;
+        copyBtn.classList.add("btn-primary");
+      }
+      var label = shareBtn.querySelector("[data-label]");
+      if (label) label.textContent = canShare ? shareBtn.getAttribute("data-share-label") || "Share this page" : "Copy page link";
+      shareBtn.addEventListener("click", function () {
         if (canShare) {
           navigator
-            .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: url })
+            .share({ title: "Freelance Easy", text: shareBtn.getAttribute("data-share-text") || "Freelance Easy, an invoicing app for your computer.", url: pageUrl() })
             .catch(function (err) {
               // Cancelling the share sheet is silent; a real failure falls back to the copy path.
               if (!err || err.name !== "AbortError") copyPageUrl();
@@ -585,6 +599,8 @@
     new IntersectionObserver(function (entries) {
       header.classList.toggle("is-stuck", !entries[0].isIntersecting);
     }).observe(sentinel);
+    // Pages may keep the header frosted until this exists (/mac's no-script fallback).
+    header.classList.add("is-wired");
   }
 
   function init() {
