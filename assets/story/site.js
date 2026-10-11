@@ -693,7 +693,10 @@
 
   /* ---------------- the scroll map: plateaus at each beat's readable frame, eased ramps between them ---------------- */
   function buildMap() {
-    const vh = (TL.p === "tall" && svhPx > 0 ? svhPx : window.innerHeight) / 100;
+    // (phones, Daniel 10-10: "on phone id like you to have to scroll like 40% more … to slow down the animations, kinda
+    // like how we had to hone that in for the laptop") every hold and ramp on the phone story is 1.4x the scroll; laptops
+    // and tablets keep their tuned 48 vh per second
+    const vh = (TL.p === "tall" && svhPx > 0 ? svhPx : window.innerHeight) / 100 * (TL.p === "tall" ? 1.4 : 1);
     const seg = TL.seg;
     // v2.1 (Daniel: "a bit more responsive"; less scroll between the finished graph and the Ride): shorter holds (the
     // captions are on screen through each ramp too, so a hold only needs to read as a pause), a near-immediate first
