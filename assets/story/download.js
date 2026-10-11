@@ -8,8 +8,9 @@
      /download/mac and /download/win stay.
    - Analytics (Plausible, cookieless, proxied through this domain; worker.js decides whether anything is sent): one
      event, "Download Click" {os, campaign, page, placement}. /privacy §3 lists it; nothing else is sent from here.
-   - Phones and tablets: no installers. The filled button shares the page (or copies its link) and the note says
-     there's no mobile app; the other OS's link is hidden.
+   - Phones and tablets: no installers. The filled button ("Send to my Mac") shares the page (or copies its link) and
+     the note says the app runs on a Mac or Windows PC; the other OS's link is hidden. On a phone the End row adds two
+     quiet links ("Copy link", "On Windows? Send it to your PC") and the header's Download reads "Get it on Mac".
    site.js moves each row's copy into the sticky story as it plays (the nodes move, they aren't cloned), so the
    listeners set here travel with them. */
 (function () {
@@ -59,37 +60,60 @@
   };
   var NAMES = { mac: "Mac", win: "Windows" };
 
-  function share(statusEls) {
-    var url = location.origin + location.pathname;
+  function pageUrl() {
+    return location.origin + location.pathname;
+  }
+
+  function copyLink(statusEls) {
+    var url = pageUrl();
     function say(text) {
       statusEls.forEach(function (s) {
         s.textContent = text;
       });
     }
-    function copyPageUrl() {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(
-          function () {
-            say("Link copied. Paste it into Notes or a message to yourself.");
-          },
-          function () {
-            say("Couldn't copy the link. Copy this address: " + url);
-          }
-        );
-      } else {
-        say("Copy this address: " + url);
-      }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        function () {
+          say("Link copied. Paste it into Notes or a message to yourself.");
+        },
+        function () {
+          say("Couldn't copy the link. Copy this address: " + url);
+        }
+      );
+    } else {
+      say("Copy this address: " + url);
     }
+  }
+
+  function share(statusEls) {
     if (typeof navigator.share === "function") {
       navigator
-        .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: url })
+        .share({ title: "Freelance Easy", text: "Freelance Easy, an invoicing app for your computer.", url: pageUrl() })
         .catch(function (err) {
           // Cancelling the share sheet is silent; a real failure falls back to the copy path.
-          if (!err || err.name !== "AbortError") copyPageUrl();
+          if (!err || err.name !== "AbortError") copyLink(statusEls);
         });
       return;
     }
-    copyPageUrl();
+    copyLink(statusEls);
+  }
+
+  // (piece M, Daniel 2026-10-11) a phone: < 640 px, or a short touch screen such as a phone in landscape (site.css's
+  // phone rules use the same query). Only the header's label follows it; the share button's words are every mobile
+  // device's (an iPad can't install either).
+  var PHONE_MQ = "(max-width: 639px), (pointer: coarse) and (max-height: 599px)";
+
+  function headerLabel() {
+    var a = document.querySelector(".site-header .nav-cta");
+    if (!a || !window.matchMedia) return;
+    var mq = window.matchMedia(PHONE_MQ);
+    function set() {
+      var want = mq.matches ? "Get it on Mac" : "Download";
+      if (a.textContent !== want) a.textContent = want;
+    }
+    set();
+    if (mq.addEventListener) mq.addEventListener("change", set);
+    else if (mq.addListener) mq.addListener(set);
   }
 
   function wire(block, os, campaign) {
@@ -102,7 +126,9 @@
 
     if (os === "mobile") {
       var label = primary.querySelector("[data-label]");
-      if (label) label.textContent = typeof navigator.share === "function" ? "Share this page" : "Copy page link";
+      // (piece M, Daniel 2026-10-11: "Share this page" read like a social share) the button sends the page to the
+      // visitor's own computer: the share sheet (AirDrop to their Mac is at its top on an iPhone), else the copy path
+      if (label) label.textContent = "Send to my Mac";
       var icon = primary.querySelector("[data-icon]");
       if (icon) icon.style.display = "none";
       primary.removeAttribute("href");
@@ -118,6 +144,18 @@
           e.preventDefault();
           share(statusEls);
         }
+      });
+      // (piece M) the row's two quiet links (phones only, site.css): "Copy link" copies; "On Windows? Send it to your
+      // PC" is the same share as the button. Native buttons: one tab stop each, Enter and Space built in.
+      [].slice.call(document.querySelectorAll('[data-dl-copy][data-for="' + placement + '"]')).forEach(function (b) {
+        b.addEventListener("click", function () {
+          copyLink(statusEls);
+        });
+      });
+      [].slice.call(document.querySelectorAll('[data-dl-send][data-for="' + placement + '"]')).forEach(function (b) {
+        b.addEventListener("click", function () {
+          share(statusEls);
+        });
       });
       return;
     }
@@ -160,6 +198,8 @@
     document.querySelectorAll("[data-dl]").forEach(function (block) {
       wire(block, os, campaign);
     });
+    // (piece M) the header's "Download" says where the app goes, on a phone only (it still jumps to the download block)
+    if (os === "mobile") headerLabel();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

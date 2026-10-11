@@ -466,6 +466,51 @@ p {
 .dl-status:empty {
   display: none;
 }
+/* (piece M, Daniel 2026-10-11: phones must make it obvious the app is for Mac and Windows) phones only (< 640 px, or a
+   short touch screen; download.js's PHONE_MQ is the same query): a quiet platform line under the opening headline, and
+   on a mobile device the End row's two text links under its note. Nothing matches on a laptop or tablet. */
+.platforms,
+.dl-more {
+  display: none;
+}
+.link-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text-1);
+  text-decoration: underline;
+  text-decoration-color: var(--line-3);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+@media (max-width: 639px), (pointer: coarse) and (max-height: 599px) {
+  .hero-copy > .platforms {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 18px;
+    letter-spacing: -0.006em;
+    color: var(--text-2);
+  }
+  [data-os="mobile"] .fine > .dl-more {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 18px;
+    margin-top: 2px;
+  }
+  /* the offer card's text is left-aligned (the stacked End is centred): the links start on its text edge */
+  .captions > .end-copy .fine > .dl-more {
+    justify-content: flex-start;
+    margin-left: -2px;
+  }
+}
 
 
 @media (min-width: 1280px) {
