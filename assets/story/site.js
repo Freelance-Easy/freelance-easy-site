@@ -329,7 +329,7 @@
   // (always reserved), 12 px, then the captions, budgeted at the LARGEST one so nothing moves between beats. The stage
   // stays 5:6 (its canvas is 600 x 720) and as wide as the gutters allow; the space left over is shared above and below
   // the block (a little more below), clear of the bottom safe-area inset.
-  const LABEL_ROW = 28, LABEL_GAP = 12, FIT_TOP = 12, FIT_BOT = 16;
+  const LABEL_ROW = 28, LABEL_GAP = 12, FIT_TOP = 12, FIT_BOT = 16, CAP_MIN = 288;
   // the label's spot in the stage (mounts and seam layers go before it); null (append) once it lives under the stage
   const labelRef = () => (label.parentNode === stage ? label : null);
   function cssPx(h) {
@@ -358,7 +358,10 @@
     const safe = cssPx("env(safe-area-inset-bottom, 0px)");
     let w = cw, capH = 0;
     for (let k = 0; k < 4; k++) {
-      pin.style.setProperty("--cap-inset", `${(cw - w) / 2}px`);
+      // (R, Daniel 10-10 "make the bounds … a bit wider if the space feels cramped") the captions take the stage's edges
+      // only down to CAP_MIN: below it, a narrower caption wraps taller, which shrank the stage again (375 x 548 settled
+      // on a 134 px stage under 4-line headlines). Past that point the captions keep CAP_MIN, centred on the stage.
+      pin.style.setProperty("--cap-inset", `${Math.min((cw - w) / 2, Math.max(0, (cw - CAP_MIN) / 2))}px`);
       capH = capBudget(CAP_EXCL);      // (F1: the start caption has its own room: the stage steps back for it; F2: the offer card is centred in the pin)
       const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
       const nw = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
@@ -540,7 +543,7 @@
   /* ---------------- layout: fit, the scroll map, every rect the frame path needs (measured here, never per frame) ---------------- */
   let storyTop = 0, kHero = 1, R0 = null, svhPx = 0, sizeW = 0, sizeH = 0;
   const CAP_GAP = 22;                                  // phones: the captions' clearance under the stage
-  const YOURS_GAP = 36, OFFER_NEXT = 56;               // (F2d) folder card -> its statement; offer card -> the next h2
+  const YOURS_GAP = 36, OFFER_NEXT = 56, OFFER_RING = 8;               // (F2d) folder card -> its statement; offer card -> the next h2
   const LITE = (FX.PHONE_LITE = { y: 10, b: 28 });     // (F2d, Astra F2) the phone light theme: one soft card shadow
   function layout() {
     if (!TL) return;
@@ -680,8 +683,15 @@
       const ix = Math.min(bx.r, cx + w / 2) - Math.max(bx.l, cx - w / 2), iy = Math.min(bx.b, cy + h / 2) - Math.max(bx.t, cy - h / 2);
       return ix > 0 && iy > 0 ? (ix * iy) / ((bx.r - bx.l) * (bx.b - bx.t)) : 0;
     };
+    // (R, Astra R #12: the tour button sat 1-5 px OUTSIDE the springing card as the copy arrived at 98 % cover) the copy
+    // also waits until the card clears every side of it by OFFER_RING (or the side's own padding, if smaller)
+    const ring = (k) => {
+      const cx = mix(a.cx, b.cx, k), cy = mix(a.cy, b.cy, k), w = mix(a.w, b.w, k), h = mix(a.h, b.h, k);
+      return (cx - w / 2) <= bx.l - Math.min(OFFER_RING, pl) + 0.5 && (cx + w / 2) >= bx.r + Math.min(OFFER_RING, pR) - 0.5
+        && (cy - h / 2) <= bx.t - Math.min(OFFER_RING, pt) + 0.5 && (cy + h / 2) >= bx.b + Math.min(OFFER_RING, pb) - 0.5;
+    };
     let uIn = sm.DUR;
-    for (let u = sm.DUR; u >= sm.LIFT; u -= 0.005) { const k = sm.K(u); if (k == null || cover(k) < 0.98) break; uIn = u; }
+    for (let u = sm.DUR; u >= sm.LIFT; u -= 0.005) { const k = sm.K(u); if (k == null || cover(k) < 0.98 || !ring(k)) break; uIn = u; }
     TL.offerIn = +uIn.toFixed(3);
     TL.offerSw[1] = yo.T0 + TL.offerIn;
     return ov;

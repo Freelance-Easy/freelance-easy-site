@@ -1750,6 +1750,21 @@ details.disclosure p a {
 .fx-root.tall .d-recent.fx-chase-recent .card {
   width: calc((600px - 16px / var(--demo-scale)) / 1.12);
 }
+/* (R, Daniel 10-10: "feel free to make the bounds … a bit wider if the space feels cramped"; Astra R #6/#7/#10) phones:
+   - the client lists (Know, Chase): the client column 10 screen px inside the card (it was 4: names 1.9-4.7 px from it)
+   - Know's list: the status pill centred in its column with no reserved dot slot after it (the app's flex-end wrapper
+     and its ring slot pushed "• Overdue" LEFT onto the amount, -3 px at 393), and the status column 3 % wider
+   - Chase's end stack: the Outstanding and Overdue cards 8 screen px apart (they were 2-6) */
+.fx-root.tall .fe-app .client-status :is(th, td):nth-child(3) {
+  padding-left: max(calc(10px / var(--ds) / var(--screen-zoom)), calc(8.5px / var(--demo-scale, 1) / var(--screen-zoom)));
+  padding-right: 0;                                  /* (the amount beside it is right-aligned: its cell's left side is empty) */
+}
+.fx-root.tall .fe-app .client-status.no-actions th:nth-child(3) { width: 44% !important; }
+.fx-root.tall .fe-app .client-status.no-actions th.text-right { width: 25% !important; }
+.fx-root.tall .fe-app .client-status.no-actions th.text-center { width: 31% !important; }
+.fx-root.tall .fe-app .client-status.no-actions .status-cell-wrap { justify-content: center; gap: 0; }
+.fx-root.tall .fe-app .client-status.no-actions .status-cell-wrap.ring-slot::after { display: none; }
+.fx-root.tall .fe-app .fx-chase-kpis .kpi-row { gap: calc(8px / var(--demo-scale, 1) / 1.12); }
 /* (Astra #4/#5) Make's line items at fixed screen sizes: values 14 px in 38 px fields with a crisp 1 px border of the
    app's own token, column labels 12 px, the total 22 px under a 16 px label; the columns re-split so "Project work",
    "75.00", "16" and "$1,200.00" fit the 360 px card (--sz = the box's zoom, set by scenes.js) */
