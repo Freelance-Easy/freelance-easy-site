@@ -26,3 +26,7 @@ binding = "ASSETS"
 
 # When a request doesn't match an asset, serve our branded 404 page.
 not_found_handling = "404-page"
+# The Mac download is served by worker.js (macDownload: the DMG as a 200 from
+# this domain, for Google's free-desktop-software policy), so these paths reach
+# the Worker before _redirects. /dl/win/* stays a _redirects line to GitHub.
+run_worker_first = ["/dl/mac/*", "/download/mac"]
