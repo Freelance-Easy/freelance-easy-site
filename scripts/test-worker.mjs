@@ -23,7 +23,7 @@ const args = process.argv.slice(2);
 const payloadsAt = args.indexOf("--payloads");
 const payloadFile = payloadsAt >= 0 ? args[payloadsAt + 1] : null;
 const substituteDomain = args.includes("--substitute-domain");
-const SRC = args.find((a, i) => !a.startsWith("--") && i !== payloadsAt + 1) || fileURLToPath(new URL("../worker.js", import.meta.url));
+const SRC = args.find((a, i) => !a.startsWith("--") && (payloadsAt < 0 || i !== payloadsAt + 1)) || fileURLToPath(new URL("../worker.js", import.meta.url));
 const dir = mkdtempSync(join(tmpdir(), "fe-worker-"));
 const src = readFileSync(SRC, "utf8");
 if (!payloadFile) assert.ok(src.includes("pa-REPLACE_ME.js"), "shipped worker must be OFF");
@@ -37,7 +37,23 @@ globalThis.fetch = async (url, init = {}) => {
   if (github && String(url).startsWith("https://github.com/")) return github(String(url), init);
   return new Response("/* plausible */", { status: 200 });
 };
-globalThis.caches = { default: { match: async () => undefined, put: async () => {} } };
+// Cache API stand-in: "miss" (default: nothing stored), "store" (a real map), "throw".
+let cacheMode = "miss";
+const cacheStore = new Map();
+globalThis.caches = {
+  default: {
+    match: async (req) => {
+      if (cacheMode === "throw") throw new Error("cache down");
+      if (cacheMode !== "store") return undefined;
+      const hit = cacheStore.get(new Request(req).url);
+      return hit ? hit.clone() : undefined;
+    },
+    put: async (req, res) => {
+      if (cacheMode === "throw") throw new Error("cache down");
+      if (cacheMode === "store") cacheStore.set(new Request(req).url, res.clone());
+    },
+  },
+};
 const ctx = { waitUntil: () => {} };
 const assets = [];
 const env = { ASSETS: { fetch: async (r) => { assets.push(r.url); return new Response("asset"); } } };
@@ -203,13 +219,15 @@ assert.equal(d1.headers.get("etag"), '"e1"');
 assert.equal(d1.headers.get("accept-ranges"), "bytes");
 for (const s of d1.sent) {
   assert.ok(!/f1|gclid|utm_/.test(s.url), "no label or query string reaches GitHub");
-  const h = new Headers(s.init.headers);
-  assert.equal(h.get("cookie"), null, "no cookie to GitHub");
-  assert.equal(h.get("x-forwarded-for"), null, "no visitor IP to GitHub");
-  assert.notEqual(h.get("user-agent"), "VisitorUA", "not the visitor's user agent");
 }
+// Exactly these headers go to GitHub: anything else (an IP header, a cookie, the visitor's UA) fails here.
+assert.deepEqual([...new Headers(d1.sent[0].init.headers).keys()].sort(), ["user-agent"], "resolver sends only our user agent");
+assert.deepEqual([...new Headers(d1.sent[1].init.headers).keys()].sort(), ["accept-encoding", "user-agent"], "asset fetch sends only our UA + identity");
+assert.equal(new Headers(d1.sent[1].init.headers).get("user-agent"), "freelance-easy-site (download proxy)");
+assert.equal(new Headers(d1.sent[1].init.headers).get("accept-encoding"), "identity");
 assert.equal(d1.sent[0].init.redirect, "manual", "latest is resolved from GitHub's redirect, not followed");
-results.push("ok  the label, query, cookie, IP and visitor UA never reach GitHub; latest resolved to the tag");
+assert.equal(d1.headers.get("cache-control"), "no-store, no-transform");
+results.push("ok  only our UA (+ identity) reaches GitHub: no label, query, cookie, IP header or visitor UA; latest resolved to the tag");
 await check("DL /download/mac streams the DMG", off, dlReq("/download/mac"), DL_OK);
 await check("DL /dl/mac/site (homepage) streams the DMG", off, dlReq("/dl/mac/site"), DL_OK);
 await check("DL works with analytics ON too", on, dlReq("/dl/mac/mac"), DL_OK);
@@ -220,6 +238,9 @@ assert.equal(d2.sent[1].init.method, "HEAD");
 const d3 = await check("DL Range passes through as 206", off, dlReq("/dl/mac/f1", { headers: { range: "bytes=0-0" } }), { status: 206, upstream: [LATEST, VERSIONED] });
 assert.equal(d3.headers.get("content-range"), "bytes 0-0/154075165");
 assert.equal(new Headers(d3.sent[1].init.headers).get("range"), "bytes=0-0", "the Range header is forwarded");
+const d3b = await check("DL If-Range is forwarded with Range", off, dlReq("/dl/mac/f1", { headers: { range: "bytes=0-0", "if-range": '"e1"' } }), { status: 206, upstream: [LATEST, VERSIONED] });
+assert.equal(new Headers(d3b.sent[1].init.headers).get("if-range"), '"e1"', "the If-Range header is forwarded");
+assert.deepEqual([...new Headers(d3b.sent[1].init.headers).keys()].sort(), ["accept-encoding", "if-range", "range", "user-agent"]);
 const d4 = await check("DL unsatisfiable Range keeps 416", off, dlReq("/dl/mac/f1", { headers: { range: "bytes=999999999-" } }), { status: 416, upstream: [LATEST, VERSIONED] });
 assert.equal(d4.headers.get("content-range"), "bytes */154075165");
 for (const code of [404, 403, 500, 503]) {
@@ -232,6 +253,40 @@ github = releases({ location: null, asset: goodAsset });
 await check("DL no tag from GitHub -> 502, no asset fetch", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
 github = releases({ location: "https://evil.example/releases/download/../x/Freelance-Easy.dmg", asset: goodAsset });
 await check("DL odd redirect target -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+// Sol P3: the redirect target must be exactly our repo's asset on github.com.
+for (const loc of [
+  "https://evil.example/Freelance-Easy/InvoiceGenerator-releases/releases/download/v0.3.1-beta/Freelance-Easy.dmg",
+  "https://github.com/someone-else/repo/releases/download/v0.3.1-beta/Freelance-Easy.dmg",
+  "http://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/download/v0.3.1-beta/Freelance-Easy.dmg",
+  VERSIONED + "?x=1",
+]) {
+  github = releases({ location: loc, asset: goodAsset });
+  await check(`DL redirect to ${loc.slice(0, 40)}… refused -> 502`, off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+}
+github = releases({ location: "/Freelance-Easy/InvoiceGenerator-releases/releases/download/v0.3.1-beta/Freelance-Easy.dmg", asset: goodAsset });
+await check("DL relative redirect on github.com accepted", off, dlReq("/dl/mac/f1"), DL_OK);
+// Sol P2: the resolver's own error status is kept, and a tag is taken only from a redirect.
+for (const code of [403, 404, 429, 500, 503]) {
+  github = (url, init) => (url === LATEST ? new Response("err", { status: code, headers: { location: VERSIONED } }) : goodAsset(init));
+  await check(`DL resolver ${code} keeps its status (no asset fetch)`, off, dlReq("/dl/mac/f1"), { status: code, upstream: [LATEST] });
+}
+github = (url, init) => (url === LATEST ? new Response(null, { status: 200, headers: { location: VERSIONED } }) : goodAsset(init));
+await check("DL resolver 200 with a Location is not a redirect -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+github = releases({ asset: () => new Response("gz", { status: 200, headers: { ...DMG_HEADERS, "content-encoding": "gzip" } }) });
+await check("DL an encoded upstream body is refused -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST, VERSIONED] });
+// Sol P2/P3: the tag cache is real (a hit skips the resolver) and a cache failure is a miss.
+github = releases({ asset: goodAsset });
+cacheMode = "store";
+cacheStore.clear();
+await check("DL cache: first request resolves and stores the tag", off, dlReq("/dl/mac/f1"), DL_OK);
+await new Promise((r) => setTimeout(r, 0));
+assert.equal(await cacheStore.get("https://freelance-easy.com/__internal/latest-mac-tag")?.clone().text(), "v0.3.1-beta", "the tag is cached");
+assert.match(cacheStore.get("https://freelance-easy.com/__internal/latest-mac-tag").headers.get("cache-control"), /max-age=300/);
+await check("DL cache: second request uses the cached tag", off, dlReq("/dl/mac/f1"), { status: 200, upstream: [VERSIONED] });
+cacheMode = "throw";
+await check("DL cache failure is a miss (still downloads)", off, dlReq("/dl/mac/f1"), DL_OK);
+cacheMode = "miss";
+results.push("ok  the tag cache stores and hits; a failing cache never blocks the download");
 github = releases({ location: REL + "/download/../Freelance-Easy.dmg", asset: goodAsset });
 await check("DL a '..' tag is refused -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
 github = () => { throw new TypeError("network down"); };

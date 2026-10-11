@@ -178,38 +178,70 @@ function rebuild(text) {
 // never reach GitHub either. A Range request passes through (206), so a
 // resumed download works; an upstream error keeps its status (never a 200
 // with an error page saved as a .dmg). App updates still come from GitHub.
-const DL_RELEASES = "https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases";
+const DL_ORIGIN = "https://github.com";
+const DL_REPO_PATH = "/Freelance-Easy/InvoiceGenerator-releases/releases";
+const DL_RELEASES = DL_ORIGIN + DL_REPO_PATH;
 const DL_FILE = "Freelance-Easy.dmg";
-const DL_TAG = /\/releases\/download\/([A-Za-z0-9][A-Za-z0-9._-]*)\/Freelance-Easy\.dmg$/;
 const DL_TAG_OK = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const DL_TAG_KEY = "https://freelance-easy.com/__internal/latest-mac-tag";
-const DL_TAG_SECONDS = 300;
+const DL_TAG_SECONDS = 300; // the only thing cached: latest -> tag metadata, never the installer or a 206
 const DL_UA = "freelance-easy-site (download proxy)";
+const REDIRECTS = new Set([301, 302, 303, 307, 308]);
 
 function isMacDownload(pathname) {
   return pathname === "/download/mac" || pathname.startsWith("/dl/mac/");
 }
 
-// The latest release's tag (e.g. "v0.3.1-beta"), or null.
+// The tag in a redirect target, only if it is exactly
+// https://github.com/<our repo>/releases/download/<tag>/Freelance-Easy.dmg.
+function tagFromLocation(location) {
+  let url;
+  try {
+    url = new URL(location, DL_ORIGIN);
+  } catch (err) {
+    return null;
+  }
+  if (url.origin !== DL_ORIGIN || url.search || url.hash) return null;
+  const prefix = DL_REPO_PATH + "/download/";
+  const suffix = "/" + DL_FILE;
+  if (!url.pathname.startsWith(prefix) || !url.pathname.endsWith(suffix)) return null;
+  const tag = url.pathname.slice(prefix.length, url.pathname.length - suffix.length);
+  return DL_TAG_OK.test(tag) ? tag : null;
+}
+
+// The latest release's tag: { tag } or { status } (the resolver's own error
+// status when GitHub answered one, else 502).
 async function latestMacTag(ctx) {
   const cache = caches.default;
   const key = new Request(DL_TAG_KEY);
-  const hit = await cache.match(key);
-  if (hit) {
-    const tag = (await hit.text()).trim();
-    if (DL_TAG_OK.test(tag)) return tag;
+  try {
+    const hit = await cache.match(key);
+    if (hit) {
+      const tag = (await hit.text()).trim();
+      if (DL_TAG_OK.test(tag)) return { tag };
+    }
+  } catch (err) {
+    // a cache read failure is a miss
   }
-  const res = await fetch(`${DL_RELEASES}/latest/download/${DL_FILE}`, {
-    method: "HEAD",
-    redirect: "manual",
-    headers: { "user-agent": DL_UA },
-  });
-  const m = (res.headers.get("location") || "").match(DL_TAG);
-  if (!m) return null;
+  let res;
+  try {
+    res = await fetch(`${DL_RELEASES}/latest/download/${DL_FILE}`, {
+      method: "HEAD",
+      redirect: "manual",
+      headers: { "user-agent": DL_UA },
+    });
+  } catch (err) {
+    return { status: 502 };
+  }
+  if (res.status >= 400) return { status: res.status };
+  const tag = REDIRECTS.has(res.status) ? tagFromLocation(res.headers.get("location") || "") : null;
+  if (!tag) return { status: 502 };
   ctx.waitUntil(
-    cache.put(key, new Response(m[1], { headers: { "cache-control": `public, max-age=${DL_TAG_SECONDS}` } })).catch(() => {}),
+    Promise.resolve()
+      .then(() => cache.put(key, new Response(tag, { headers: { "cache-control": `public, max-age=${DL_TAG_SECONDS}` } })))
+      .catch(() => {}),
   );
-  return m[1];
+  return { tag };
 }
 
 function downloadUnavailable(status, extra = {}) {
@@ -223,14 +255,12 @@ async function macDownload(request, ctx) {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response(null, { status: 405, headers: { allow: "GET, HEAD", "cache-control": "no-store" } });
   }
-  let tag = null;
-  try {
-    tag = await latestMacTag(ctx);
-  } catch (err) {
-    tag = null;
-  }
-  if (!tag) return downloadUnavailable(502);
-  const headers = new Headers({ "user-agent": DL_UA });
+  const latest = await latestMacTag(ctx);
+  if (!latest.tag) return downloadUnavailable(latest.status);
+  const tag = latest.tag;
+  // A fresh header set: only our user agent, identity encoding (so the length
+  // GitHub states is the length sent on) and the visitor's Range / If-Range.
+  const headers = new Headers({ "user-agent": DL_UA, "accept-encoding": "identity" });
   for (const name of ["range", "if-range"]) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
@@ -253,9 +283,14 @@ async function macDownload(request, ctx) {
     "content-type": "application/x-apple-diskimage",
     "content-disposition": `attachment; filename="${DL_FILE}"`,
     "accept-ranges": "bytes",
-    "cache-control": "no-store",
+    "cache-control": "no-store, no-transform",
     "x-robots-tag": "noindex",
   });
+  if (upstream.headers.get("content-encoding")) {
+    // Never pass on an encoded body under the DMG's name and length.
+    if (upstream.body) await upstream.body.cancel().catch(() => {});
+    return downloadUnavailable(502);
+  }
   for (const name of ["content-length", "content-range", "etag", "last-modified"]) {
     const value = upstream.headers.get(name);
     if (value) out.set(name, value);
