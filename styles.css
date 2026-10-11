@@ -321,8 +321,12 @@ a:not(.btn):not(.sheet):focus-visible {
 }
 /* With JS (html.js, set by the head script) the header is clear over the
    stage at the top and frosts once the page scrolls under it; without JS it
-   stays frosted, so text never runs under bare text. */
-.js .site-header:not(.is-stuck) {
+   stays frosted, so text never runs under bare text. The clear state also
+   waits for script.js's wireHeader() to mark the header `is-wired` (its
+   scroll observer exists), so a script.js that fails to load, or a browser
+   without IntersectionObserver, keeps the frosted header (same contract as
+   /mac's rule on feat/mac-landing). */
+.js .site-header.is-wired:not(.is-stuck) {
   background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
