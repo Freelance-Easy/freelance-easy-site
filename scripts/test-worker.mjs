@@ -220,14 +220,15 @@ assert.equal(d1.headers.get("accept-ranges"), "bytes");
 for (const s of d1.sent) {
   assert.ok(!/f1|gclid|utm_/.test(s.url), "no label or query string reaches GitHub");
 }
-// Exactly these headers go to GitHub: anything else (an IP header, a cookie, the visitor's UA) fails here.
+// Exactly these headers are set by the Worker for GitHub (a JavaScript-level check; Cloudflare adds its own
+// on the wire): anything else (an IP header, a cookie, the visitor's UA) fails here.
 assert.deepEqual([...new Headers(d1.sent[0].init.headers).keys()].sort(), ["user-agent"], "resolver sends only our user agent");
 assert.deepEqual([...new Headers(d1.sent[1].init.headers).keys()].sort(), ["accept-encoding", "user-agent"], "asset fetch sends only our UA + identity");
 assert.equal(new Headers(d1.sent[1].init.headers).get("user-agent"), "freelance-easy-site (download proxy)");
 assert.equal(new Headers(d1.sent[1].init.headers).get("accept-encoding"), "identity");
 assert.equal(d1.sent[0].init.redirect, "manual", "latest is resolved from GitHub's redirect, not followed");
 assert.equal(d1.headers.get("cache-control"), "no-store, no-transform");
-results.push("ok  only our UA (+ identity) reaches GitHub: no label, query, cookie, IP header or visitor UA; latest resolved to the tag");
+results.push("ok  the Worker sets only our UA (+ identity) for GitHub: no label, query, cookie, IP header or visitor UA; latest resolved to the tag");
 await check("DL /download/mac streams the DMG", off, dlReq("/download/mac"), DL_OK);
 await check("DL /dl/mac/site (homepage) streams the DMG", off, dlReq("/dl/mac/site"), DL_OK);
 await check("DL works with analytics ON too", on, dlReq("/dl/mac/mac"), DL_OK);

@@ -258,8 +258,11 @@ async function macDownload(request, ctx) {
   const latest = await latestMacTag(ctx);
   if (!latest.tag) return downloadUnavailable(latest.status);
   const tag = latest.tag;
-  // A fresh header set: only our user agent, identity encoding (so the length
-  // GitHub states is the length sent on) and the visitor's Range / If-Range.
+  // A fresh header set: only our user agent, a best-effort identity encoding
+  // (Cloudflare may rewrite Accept-Encoding on the way out; the content-encoding
+  // check below is what guarantees an unencoded body) and the visitor's Range /
+  // If-Range. Seen on a deployed preview: outside servers get Cloudflare's
+  // addresses, never the visitor's IP.
   const headers = new Headers({ "user-agent": DL_UA, "accept-encoding": "identity" });
   for (const name of ["range", "if-range"]) {
     const value = request.headers.get(name);
