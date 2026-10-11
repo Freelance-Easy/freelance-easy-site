@@ -58,7 +58,6 @@ SUBS: list[tuple[str, str]] = [
         "There's no mobile app. Send yourself the link and open it on your Mac.",
         "There's no mobile app. Send yourself the link and open it on your Mac or PC.",
     ),
-    ("your files stay on your Mac either way.", "your files stay on your computer either way."),
     ("In US dollars, for one person, on your Mac.", "In US dollars, for one person, on your Mac or PC."),
     (
         "Checkout is handled by Stripe: card, Apple Pay or Link.",
