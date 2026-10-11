@@ -1596,9 +1596,18 @@ details.disclosure p a {
 .fx-root.tall .fe-app .client-status:not(.no-actions) th:nth-child(3) { width: 46% !important; }
 .fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 25% !important; }
 .fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 29% !important; }
-.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(2) { width: 46% !important; }
-.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(4) { width: 29% !important; }
-.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(5) { width: 25% !important; }
+/* (Daniel 10-10, "overdue is kinda cramped there": the Overdue pill overflowed its 25% column and ran into the card's
+   edge at 393 px) Chase's table on a phone: names and amounts at 13 px, a 10 px margin inside the card on both sides,
+   the status column sized for "• Overdue", and the row's reminder ring and its reserved slot step aside */
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(2) { width: 40% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(4) { width: 25.5% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(5) { width: 34.5% !important; }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent td { font-size: calc(13px / var(--ds) / var(--screen-zoom)); }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent .recent-table :is(th, td):nth-child(2) { padding-left: calc(10px / var(--ds) / var(--screen-zoom)); }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent .recent-table :is(th, td):nth-child(5) { padding-right: calc(15px / var(--ds) / var(--screen-zoom)); }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent .status-toggle { padding-left: 5px; padding-right: 5px; }
+.fx-root.tall .fe-app .d-recent .status-cell-wrap .state-dot { display: none; }
+.fx-root.tall .fe-app .d-recent .status-cell-wrap.ring-slot::after { content: none; }
 /* (Chase: the overdue row is a full-width, 64 px row that stays readable through the email) */
 .fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
   padding-top: calc(22px / var(--ds) / var(--screen-zoom));

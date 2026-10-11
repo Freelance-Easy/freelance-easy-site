@@ -255,7 +255,10 @@
         placeCopies(...lastPlace);
         if (anchor && window.scrollY > 0) window.scrollBy(0, anchor.getBoundingClientRect().top - y0);
       });
-    } else ctaEnd(toEnd);
+    } else {
+      if (!toEnd) doc.classList.remove("cta-pending");  // (Sol F1c r5) a layout that keeps the block in place shows it
+      ctaEnd(toEnd);
+    }
     let moved = false;                                // once one caption moves in, the later ones follow it (story order)
     for (const b of BEATS) {
       const c = copy[b];
