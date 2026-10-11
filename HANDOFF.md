@@ -360,6 +360,57 @@ Plausible goes on the day legal v2 publishes (v2's `/privacy` §3 describes it);
 
 *Later, when the weekly report moves off hand entry:* a **Stats API key**. Plausible → your account → Settings → API Keys → New API Key → **Stats API**. It is team-scoped and Business-plan only, limited to 600 requests an hour, and queried with `POST https://plausible.io/api/v2/query` and `Authorization: Bearer …`. It goes to the report's owner as a secret, never into the vault or git.
 
+### 2026-10-04 — `/mac`: the general Mac landing page for the ads (branch `feat/mac-landing`, stacked on `feat/analytics-switch`)
+
+Spec: vault `03 - Operations/Execution Playbook — $1,500 (2026-10)` §4 and §8, the A24 list in `04 - Future/GTM Decision Register`, and the ad text v3 (`_creative-raw/2026-09/spike/price-drop/out/infeed/ad-copy.txt`). Flight 1's ads land here: `/mac?utm_source=google&utm_medium=demandgen&utm_campaign=f1&utm_content=ta` (and `tb`). It goes live only after legal v2 (flight 1 needs v2 and Plausible).
+
+- **The page** (`mac.html`, `noindex`): `/mac-audio`'s structure with the homepage's general copy.
+  - Hero: kicker "For Mac, M1 or later." (the ads' long headline ends "Mac M1 or later."); the H1 is the ads' LEAD, "Invoice your next client for $5 a month"; the offer line was "$5 a month is less than a cup of coffee, …" (A25: the coffee line on the same line as the $5; replaced 2026-10-05 by legal G10 v2's latte wording, see below); the homepage's lede, saying "Mac" and "Made by a freelancer who bills with it" (the homepage says "a mix engineer"; Daniel's note further down still does).
+  - The making-an-invoice caption is "Sped up." with no real-time number (the legal ruling on G1, above).
+- **The download block** (Mac only, `data-single-platform="mac"`):
+  - under the button: Apple Silicon, macOS 12, "signed with an Apple Developer ID and notarized by Apple", "Freelance Easy is in beta." (no version number to go stale; the footer has it);
+  - the button's no-JS `href` is `/dl/mac/mac`, the page's own label (script.js replaces it);
+  - the install disclosure Google's software policy asks for (A24 item 6): drag to Applications, Google sign-in, a folder you choose on your Mac, the subscription check and the update check at each start, and an update installing when you choose to restart.
+  - Each clause was checked against v0.3.0-beta: the arm64-only DMG (`electron/package.json`); `LSMinimumSystemVersion` 12.0 (the built app's Info.plist); `/check-license` at launch; `electron/main.js` (`autoDownload = true`, `autoInstallOnAppQuit = false`, the banner's "Restart now").
+- **The hero deck is the ads' invoice:** INV1056 (the invoice-film chat's `invoice-film/data/inv1056.json`, a draft until Daniel's styleframe OK; its client was renamed under legal G11 on 2026-10-04, see the 2026-10-05 sections below).
+  - `assets/samples/inv1056-<style>.pdf` are the invoice-film chat's **draft** renders (2026-10-04). They're the app's own `pdf_gen` output from `invoice-film/data/inv1056.json`: title "October work", accent `#4a7c7e` in all four templates, fictional persona and client. `assets/screenshots/inv1056-<style>.webp` are rastered from them. They replaced the labelled placeholders the same day. **Don't merge before Daniel's styleframe OK.**
+  - If the data or template changes at that OK: copy the new `invoice-film/kit/pdf/INV1056-<style>.pdf` over `assets/samples/inv1056-<style>.pdf` (lowercase), then run `uv run --with pymupdf --with pillow python3 scripts/build-hero-collage.py sheets --set inv1056`.
+  - Check that the front template matches the ad's. The deck starts Modern-front; another front means changing the sheets' inline geometry and script.js's starting order.
+  - Update the `data-alt` text if the content changed.
+- **A24, item by item:**
+  1. the H1 ✓;
+  2. the ad's invoice ✓ (placeholder until the renders arrive);
+  3. macOS 12 under the button ✓;
+  4. the sending explanation, as step 3: "Set up your email account in Settings to send it from your own address, or save the PDF and send it yourself." ✓;
+  5. the beta beside the download ✓ (the version number is in the footer);
+  6. the install disclosure ✓;
+  7. no crossed-out price ✓;
+  8. the tagged link in the YouTube description is the ad chat's.
+- **Legal v2's wording, taken now** (the page ships after v2): the pricing note's "Where sales tax applies, it's added at checkout."; "doesn't host it, and the app never uploads it to us"; v0.3.0-beta in the footer. The band's lead line says "No paid tiers, no add-ons." like the other pages (the third G1 ruling above).
+- **Kept from the homepage, flagged as later options for Daniel** *(superseded 2026-10-05: everything is re-captured on the G11 account, see below)*:
+  - The making-an-invoice recording and the dashboard screenshots still show the audio demo data (mixes, mastering, studios).
+  - The light recording's invoice is also numbered INV1056, a different invoice.
+  - A general re-capture, or the invoice film's `?cut=film`, would replace them.
+- **`script.js`** (built here, now carried by `feat/analytics-switch`, which this branch stacks on; that branch also removed the two events `/privacy` doesn't list):
+  - **The campaign allowlist.** `CAMPAIGNS = ["f1"]`: a download path carries `?utm_campaign` only when its value is on this list (any case); otherwise the page's own label is used (`/dl/mac/mac` on `/mac`, `site` on `/`). Before, any value sanitised to `[a-z0-9-]` went into the path and the `campaign` property. Add each flight's label before its ads run.
+    - The legal rule behind it: the path carries only the campaign label, with no other query value and no per-visitor id. The DMG's name never changes.
+    - **`_redirects` does not drop a query string:** Cloudflare passes it on to GitHub (checked on the branch preview, `/dl/mac/f1?probe=1` → `…/Freelance-Easy.dmg?probe=1`). The old comment saying it did was wrong. The rule holds because no link we make adds one: the buttons' paths come from script.js, the ads land on `/mac`, and GitHub gets only our origin as the referrer (`Referrer-Policy: strict-origin-when-cross-origin`). If a hard guarantee is ever wanted, `worker.js` can answer `/dl/*` itself and drop the query (the redirect lines then leave `_redirects`).
+  - **The Windows link isn't a download.** On a single-platform page, "Need the Windows version?" (a link to `/`) no longer sends `Download Click`. The Mac goal is `Download Click` with `os=mac`.
+  - **The deck reads its data from the HTML.** It takes each sheet's PDF from its `href`, and the front sheet's description from `data-alt`. The homepage's deck (no `data-alt`) falls back to `SHEET_ALT` and is unchanged.
+- **`_redirects`:** `/mac/` → `/mac` (301); the campaign comment updated. **`_headers`:** `X-Robots-Tag: noindex` on `/mac`.
+- **Bump at each release:** `/mac`'s footer "v0.3.0-beta", like every page's.
+- **Verified locally** (`python3 -m http.server`, the in-app browser):
+  - **Campaign resolution in 10 cases** across `/`, `/mac`, `/mac-audio`, `/audio`: `f1` and `F1` pass; a name, a click-id-like value, `f1x` and an empty value fall back to the page label.
+  - **Events:** on `/mac`, one `Download Click {os: mac, campaign: f1, page: mac, placement: hero}`, and nothing for the Windows link. The homepage still sends both of its clicks.
+  - **The deck:** Modern in front with its `data-alt`; Bold from the picker gets its own description, and "Open the Bold PDF" points at `inv1056-bold.pdf`. The homepage's deck is unchanged (`SHEET_ALT`, `invoice-bold.pdf`). All eight INV1056 files answer 200.
+  - **Layout:** at 800 px the hero column ends level with the deck; at 375 px phones get "Copy page link".
+- **Accessibility (axe-core 4.10.2, WCAG 2.1 A/AA, headless Chromium on the branch preview, 2026-10-04):** `/mac` has **0 violations in the dark and the light theme**, and nothing left for review under `color-contrast` or `link-in-text-block`; `/mac-audio` (control) the same.
+  - The scan is proven able to fail: on the same preview, `/privacy` with `main`'s styles shows the doc-link problems legal v2's `393c7fd` fixes (dark 3.93:1 contrast, light 2.5:1 link-in-text-block).
+  - Re-run before merging once the real INV1056 sheets are in.
+- **Reviews (2026-10-04):**
+  - **GPT-6.1 Sol (read-only): FIX FIRST, two findings, both fixed.** The no-JS button went to `/download/mac`, skipping the page label (now `/dl/mac/mac`); "Made by a mix engineer" was audio wording in the general hero (now "a freelancer"). Its checks otherwise passed: 336 routing and event cases, the deck on four pages, and `sheets` byte-identical to before for the homepage set.
+  - **Legal chat: approved,** with "signed with an Apple Developer ID and notarized by Apple" (applied here and, via G1, on `/`, `/mac-audio`, `/audio`) and no version number beside the button. Its conditions: the hero must be the app's real render (fictional data) before the merge, and any later claim-bearing change goes back to it. The `/dl/` rule stays "by construction"; if a link ever has to point straight at `/dl/`, do the Worker version first.
+
 ### 2026-10-05 — demo data: the persona and every client cleared (legal G11) (branch `fix/demo-data-g11`, off `fix/capture-scripts-dev-port`)
 
 Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 2026-10-03` §7) found real-business collisions and a payment brand in the site's demo data, and ruled the persona renamed. The earlier demo names, all retired, are listed in the private NAMES-LOG (Dropbox `_creative-raw/2026-09/spike/invoice-film/data/NAMES-LOG.md`), never in this public repo. Every product image now shows the fictional account the ads use (the invoice-film chat's dashboard kit), so `/`, `/mac` and the ads show one world. This branch carries `fix/capture-scripts-dev-port` (the capture scripts default to :50506 and refuse :50505).
@@ -406,6 +457,75 @@ Legal's demo-data rule G11 (vault `03 - Operations/Legal & Compliance Audit — 
   - `assets/logo.svg` removed.
   - Re-checked on the preview after these commits: the changed pages and `script.js` byte-identical to the branch; `/assets/logo.svg` 404. axe 4.12.1: `/` and `/mac-audio` 0 violations in both themes. `/install` keeps two link findings (dark contrast, light link-in-text-block) that production shows identically; they're the doc pages' link styles that legal v2 fixes.
 - **Legal's final pass on the delta (2026-10-05): PASS** (its `git grep` of the tracked files for the retired names and payment brands finds none; no history rewrite, agreed). One fix was applied first: `install.html` had lost the space after the "·" (the edit tool trims trailing whitespace from a replacement). That rendered "v0.3.0-beta ·Release files…" and made `git merge-tree` conflict with v2. The line is byte-identical to v2's now, and `git merge-tree --write-tree` is clean both against `fix/legal-pages-2026-10` and into `origin/main`. **The branch is cleared to merge on Daniel's yes, on its own, ahead of v2.**
+
+### 2026-10-05 — `/mac` caught up: the renamed INV1056, the latte line, the theme-matched hero (branch `feat/mac-landing`)
+
+- **Merged in:** `main` (e9c3a97: G1 + the inert analytics switch) and `fix/demo-data-g11` (above). The conflicts were the HANDOFF appends (all kept, in date order) and the collage script's docstring.
+- **The deck's PDFs are the renamed INV1056:** `assets/samples/inv1056-<style>.pdf` re-copied from the invoice-film chat's `kit/pdf/INV1056-<style>.pdf` after its G11 renames (Jordan Wexcombe, Halvard & Wren, the note without a payment brand; pdfplumber clean), then `build-hero-collage.py sheets --set inv1056`.
+- **The offer line (Daniel approved it 2026-10-05: "i like it just needs to be formatted aesthetically"; legal G10 v3):** under the h1, "Unlimited invoices for less than a cup of coffee.* / Every feature included. Free for 7 days, no card.", with the note "*vs. a typical café latte" directly beneath.
+  - **Legal's G10 v3 conditions:** the note sits directly under the line and is always visible (no hover, tooltip or collapse; phones too); it is ≥ 15 px in normal body-text colour (not faded), ≥ 4.5:1 in both themes; it reads as part of the line, not fine print; no plain or drip coffee imagery nearby. Why: a regular cup is $3.77 (Toast median, Aug 2026) and a café latte $5.60 (vault `05 - Reference/Marketing and Video/Claim Substantiation/G10 — less than a cup of coffee — 2026-10-04`).
+  - **The layout:**
+    - a `<br>` after the coffee sentence;
+    - a non-breaking space so "coffee.*" never sits alone;
+    - "Free for 7 days, no card." kept on one line (`.keep`, nowrap), so phones break after "included." (four even lines);
+    - `text-wrap: balance`;
+    - the note at 16 px in `--text-1` (the body-text colour in both themes, and Tier 1's offer colour too), 6 px under the line, while the lede starts 14 px below, so it groups with the offer.
+    - The two small rules sit in a page-scoped `<style>` in `mac.html` (`styles.css` belongs to the premium pass); fold them in with Tier 1.
+  - Looked at in both themes at 1280 px and 375 px.
+  - The meta description is tightened to the same voice: "Desktop invoicing for freelancers on your Mac. $5 a month, every feature, unlimited invoices. Free for 7 days, no card." (no coffee claim, so G10 doesn't apply).
+  - Superseded: the G10 v2 line "$5 a month is less than a typical café latte, and it includes …" (Daniel: "too wordy").
+- **The dashboard alt** says one fictional overdue invoice (the re-captured shots).
+- **The hero is theme-matched: the invoice film's FINAL stills, in Classic (2026-10-05).** The four-template deck is gone from `/mac`. In its place:
+  - One figure (`hero-invoice shot`) holds two images of INV1056 as light paper, in the motion chat's frame: 1200×1400, transparent, the page whole with its shadow baked in. `mac-hero-light.webp` has a soft shadow, for the light site; `mac-hero-dark.webp` is the same paper with a deeper shadow and a faint rim, for the dark site. The page theme picks one with the dashboard's `.shot` rules.
+  - The invoice stays light paper in both themes, as Daniel asked ("the invoice itself should be light mode"), and there's no lifted totals box.
+  - No new CSS. `.figure` is left off, because its border and box would frame the transparent image. The two images carry `width: 100%; height: auto` inline, so `styles.css` (the premium pass's file) is untouched.
+  - Loading: both images are `loading="lazy"`, so the hidden one never loads, and the head script preloads the visible theme's image at high priority. This is Sol's P2: before, a light-theme visitor downloaded the hidden dark image eagerly and lazy-loaded their own.
+  - The caption: "An invoice made in Freelance Easy; the names on it are fictional. Open the PDF" (`inv1056-classic.pdf` since Daniel's template pick; `inv1056-modern.pdf` before). Legal's wording: "The client is fictional" implied the sender might be real, and the persona shown using the product would read as a real customer (an implied endorsement).
+  - **Daniel picked CLASSIC** for the film and the hero (the motion chat's Motion Picks, 2026-10-05 17:14Z; its recommendation was Bold).
+  - **The final stills** (the motion chat's `review/hero/hero-{light,dark}.png`, 2026-10-05) are now `mac-hero-{light,dark}.webp`: WebP with alpha, quality 90.
+    - The source: INV1056 in Classic from the film kit's real markup (the in-app invoice card), whole, no callout, no cursor. The paper is 1000×1172 at x 100, y 114.
+    - The two interiors are pixel-identical. Light has the house soft shadow; dark has a deeper, softer shadow plus a 1 px `rgba(255,255,255,.06)` hairline. Every shadow fades to alpha 0 before the canvas edge.
+    - Checked on install: 1200×1400, transparent corners, opaque paper, alpha kept in the WebP. By eye over both site backgrounds, everything is cleared demo data (Jordan Wexcombe, Halvard & Wren, example.com/.example).
+    - **The one difference from the PDF is the date format.** The in-app card shows ISO dates ("2026-10-05", due "2026-11-04"); the PDF prints "Oct 05, 2026" / "Nov 04, 2026". They're the same data in the app's two real formats, so the PDF stays as it is (the motion chat checked the rest of the text matches). Whether "Open the PDF" needs a note went to legal; my recommendation is no note.
+    - The alt describes the content, which is the same in both, so it stands.
+    - The placeholders before them: a render of `inv1056-classic.pdf` (after the pick), and before that a Modern render, which had itself replaced the app's invoice page with its toolbar (1200×1012).
+  - **Legal (2026-10-05, 17:48Z): PASS on the final stills** (`3263839`, both WebPs checked on the preview).
+    - G11: both names cleared; city only; reserved addresses; generic line items; the note names no payment brand; no cursor, callout or brand. The numbers add up.
+    - **The date format needs no note:** the same invoice and dates, in the app's on-screen and print formats, and nothing claims they're pixel-identical.
+    - The deletions are fine: only `/mac`'s own deck files, which were never on `main`. The caption and alt are unchanged and fine.
+  - **Removed with the swap:** the deck's unused files, `inv1056-{bold,modern,minimal}.pdf` and all four `inv1056-*.webp`. The collage script's `--set inv1056` is undone too, so `scripts/build-hero-collage.py` equals `main`'s. `inv1056-classic.pdf` stays: it's the "Open the PDF" link.
+- **Checked on the branch preview (2026-10-05):**
+  - before the hero change: `node scripts/test-worker.mjs` 46/46; `check-download-wiring.py` 8/8 plus the inert `/js/script.js`; axe-core 4.12.1 (WCAG 2.1 A/AA, headless Chromium) finds 0 violations on `/mac` and `/` in the dark and the light theme, while the control (`/privacy` with `main`'s styles) still fails on the link issues legal v2 fixes;
+  - after it (`1ad2344`): every served file byte-identical to the branch; axe 0 violations on `/mac` in both themes (the `/privacy` control fails as expected); download wiring 8/8 plus the inert analytics route.
+  - Locally: a dark load fetches only `mac-hero-dark.webp` and a light load only `mac-hero-light.webp`, each through the preload; both render at the 6:7 shape (480×560 in an 800 px window).
+- **Legal (2026-10-05): PASS** on the delta and on the first hero placeholder (every visible button a real shipped feature). The final stills get a 2-minute G11 look.
+- **Legal (2026-10-05, 17:25Z): PASS on the offer line (`0a070ce`), explicitly.** Daniel's line plus "*vs. a typical café latte" directly beneath it meets G10 v3: 16 px in `--text-1` (13.2:1 / 11.3:1), always visible, no coffee imagery. The caption fix and the meta description are fine. The first-visit `sessionStorage` theme flag raises no privacy issue: no page claim covers browser storage, and it's a session-only display flag.
+- **The pricing note carries legal v2's before-Link line now** (legal, 2026-10-05): "Checkout shows the currency and the full total, including any tax, before you pay." It replaces "Where sales tax applies, it's added at checkout." word for word, the same as the before-Link branch's `/mac-audio` note.
+  - **So `/mac` no longer waits for Stripe's Managed Payments switch-on.** Its gates now:
+    - legal v2 (the before-Link branch) published first, or in the same deploy;
+    - the film stills' G11 look;
+    - Daniel's merge yes.
+  - The old tax line was the page's only sentence that depended on Managed Payments. Legal checked the rest of `mac.html`: the renewal line ("Cancel in the app's Settings, through the Stripe billing portal…") and "Checkout is handled by Stripe: card, Apple Pay or Link…" are true before and after the switch, since Stripe keeps the Customer Portal for Managed Payments subscriptions.
+  - When `/mac` merges `main` after v2, `/`, `/mac-audio` and `/audio` arrive with the same line. If Daniel picks a v2 variant other than before-Link, legal tells the orchestrator, and this line follows it.
+- **v2 day, PRE-CHECKED (2026-10-05, 17:50Z).** The test merge was `git merge-tree` of `3263839` with legal's before-Link branch at `c793c1b`: clean, tree `33a6cb0`. That tree was served locally from a `git archive` copy (its files hash-checked against the tree):
+  - axe 4.12.1: 0 violations on `/mac`, `/`, `/privacy`, `/terms` and `/install` in both themes (v2 clears `/install`'s old link findings);
+  - the 8 theme paths pass;
+  - `node scripts/test-worker.mjs` 46/46;
+  - every pricing note (`/`, `/audio`, `/mac-audio`, `/mac`) carries the before-Link line once, and "Where sales tax applies" appears nowhere.
+  - **So on v2 day:** merge `main` into this branch, push, check the preview (byte-identical, axe, `check-download-wiring.py`), then ask Daniel. If legal's branch moves past `c793c1b` first, re-run the merge-tree.
+- **`/mac` opens LIGHT for a first visit** (Daniel picked a light flight-1 ad; agreed with the premium pass chat, 2026-10-05). A choice made with the toggle (`localStorage` `fe-theme`) still wins; the rest of the site stays dark-first.
+  - `mac.html`'s head script sets light unless the stored choice is "dark". With no stored choice it also writes `sessionStorage` `fe-theme-visit=light`, so the light look can carry to other pages for the visit.
+  - The read side (a stored choice first, then `fe-theme-visit`, else dark) goes into the head scripts of `/` and `/mac-audio` (so `/audio` too) with the premium pass's Tier 1 head lines; until then those pages ignore the key and open dark. The legal pages don't read it.
+  - `script.js` now keeps the theme each page's head script chose, instead of recomputing it from `localStorage` (which would have flipped `/mac` back to dark after load). It's the same outcome on every other page: each one that loads `script.js` has the head script.
+  - Checked locally (8 paths, Playwright, fresh contexts):
+    - a first visit to `/mac` is light, writes the visit key and fetches only the light hero;
+    - then `/` opens dark (no read side yet);
+    - the toggle on `/mac` stores dark, and a reload keeps it;
+    - a stored dark gives dark on `/mac` (only the dark hero), and a stored light gives light;
+    - the homepage is unchanged on a first visit (dark) and with a stored light.
+  - Checked on the branch preview after `8ea92b1`: the same 8 paths pass; axe 0 violations on `/mac` and `/` in both themes (each pass sets its theme explicitly now, since `/mac` opens light); download wiring 8/8.
+  - The privacy page (live or v2) doesn't list browser storage; the theme keys are a display preference (no cookie, nothing sent). Flagged to legal as an FYI.
+- **When Tier 1 lands:** add its two `<head>` lines to `mac.html`: `document.documentElement.classList.add("js");` as the first statement of the theme IIFE, and `<link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />` right before the stylesheet link. Then merge `main` and re-run axe in both themes and the wiring check.
 
 ### 2026-10-08 — the scroll-story homepage (feat/scroll-story-home)
 
