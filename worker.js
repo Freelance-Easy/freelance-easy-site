@@ -1,10 +1,13 @@
 /* Freelance Easy — site Worker.
  *
- * Two jobs, nothing else:
+ * Three jobs, nothing else:
  *   1. Serve the static site (everything under this folder) through the
  *      ASSETS binding, so `_redirects` and `_headers` keep working exactly as
  *      before this file existed.
- *   2. Proxy Plausible Analytics through our own domain — the script at
+ *   2. Serve the Mac installer from this domain at /dl/mac/<label> and
+ *      /download/mac (see macDownload below; wrangler.toml runs the Worker
+ *      first for those paths).
+ *   3. Proxy Plausible Analytics through our own domain — the script at
  *      /js/script.js and the event endpoint at /api/event. Plausible is
  *      cookieless and records no personal data; proxying is disclosed in
  *      /privacy ("served through our own domain"). Only the headers Plausible
@@ -162,6 +165,143 @@ function rebuild(text) {
   return out;
 }
 
+// ---- The Mac download, served from this domain -------------------------------
+// Google's "Free desktop software" policy (13528034) wants the installer
+// "directly downloadable from your website", so /dl/mac/<label> and
+// /download/mac answer with the DMG itself as a 200 from freelance-easy.com,
+// not a redirect to GitHub. The file stays on GitHub Releases: the Worker
+// resolves "latest" to its tag (the redirect GitHub's latest/download link
+// answers with, cached for a few minutes) and streams the versioned asset
+// through, so a new release never mixes with an old one. Rules kept from the
+// old _redirects lines: the label (/dl/mac/<label>) never reaches the file or
+// GitHub, nor does any query string; the visitor's IP, cookies and user agent
+// never reach GitHub either. A Range request passes through (206), so a
+// resumed download works; an upstream error keeps its status (never a 200
+// with an error page saved as a .dmg). App updates still come from GitHub.
+const DL_ORIGIN = "https://github.com";
+const DL_REPO_PATH = "/Freelance-Easy/InvoiceGenerator-releases/releases";
+const DL_RELEASES = DL_ORIGIN + DL_REPO_PATH;
+const DL_FILE = "Freelance-Easy.dmg";
+const DL_TAG_OK = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const DL_TAG_KEY = "https://freelance-easy.com/__internal/latest-mac-tag";
+const DL_TAG_SECONDS = 300; // the only thing cached: latest -> tag metadata, never the installer or a 206
+const DL_UA = "freelance-easy-site (download proxy)";
+const REDIRECTS = new Set([301, 302, 303, 307, 308]);
+
+function isMacDownload(pathname) {
+  return pathname === "/download/mac" || pathname.startsWith("/dl/mac/");
+}
+
+// The tag in a redirect target, only if it is exactly
+// https://github.com/<our repo>/releases/download/<tag>/Freelance-Easy.dmg.
+function tagFromLocation(location) {
+  let url;
+  try {
+    url = new URL(location, DL_ORIGIN);
+  } catch (err) {
+    return null;
+  }
+  if (url.origin !== DL_ORIGIN || url.search || url.hash) return null;
+  const prefix = DL_REPO_PATH + "/download/";
+  const suffix = "/" + DL_FILE;
+  if (!url.pathname.startsWith(prefix) || !url.pathname.endsWith(suffix)) return null;
+  const tag = url.pathname.slice(prefix.length, url.pathname.length - suffix.length);
+  return DL_TAG_OK.test(tag) ? tag : null;
+}
+
+// The latest release's tag: { tag } or { status } (the resolver's own error
+// status when GitHub answered one, else 502).
+async function latestMacTag(ctx) {
+  const cache = caches.default;
+  const key = new Request(DL_TAG_KEY);
+  try {
+    const hit = await cache.match(key);
+    if (hit) {
+      const tag = (await hit.text()).trim();
+      if (DL_TAG_OK.test(tag)) return { tag };
+    }
+  } catch (err) {
+    // a cache read failure is a miss
+  }
+  let res;
+  try {
+    res = await fetch(`${DL_RELEASES}/latest/download/${DL_FILE}`, {
+      method: "HEAD",
+      redirect: "manual",
+      headers: { "user-agent": DL_UA },
+    });
+  } catch (err) {
+    return { status: 502 };
+  }
+  if (res.status >= 400) return { status: res.status };
+  const tag = REDIRECTS.has(res.status) ? tagFromLocation(res.headers.get("location") || "") : null;
+  if (!tag) return { status: 502 };
+  ctx.waitUntil(
+    Promise.resolve()
+      .then(() => cache.put(key, new Response(tag, { headers: { "cache-control": `public, max-age=${DL_TAG_SECONDS}` } })))
+      .catch(() => {}),
+  );
+  return { tag };
+}
+
+function downloadUnavailable(status, extra = {}) {
+  return new Response("The download is unavailable right now. Please try again in a minute.\n", {
+    status,
+    headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", ...extra },
+  });
+}
+
+async function macDownload(request, ctx) {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response(null, { status: 405, headers: { allow: "GET, HEAD", "cache-control": "no-store" } });
+  }
+  const latest = await latestMacTag(ctx);
+  if (!latest.tag) return downloadUnavailable(latest.status);
+  const tag = latest.tag;
+  // A fresh header set: only our user agent, a best-effort identity encoding
+  // (Cloudflare may rewrite Accept-Encoding on the way out; the content-encoding
+  // check below is what guarantees an unencoded body) and the visitor's Range /
+  // If-Range. Seen on a deployed preview: outside servers get Cloudflare's
+  // addresses, never the visitor's IP.
+  const headers = new Headers({ "user-agent": DL_UA, "accept-encoding": "identity" });
+  for (const name of ["range", "if-range"]) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  let upstream;
+  try {
+    upstream = await fetch(`${DL_RELEASES}/download/${tag}/${DL_FILE}`, { method: request.method, headers, redirect: "follow" });
+  } catch (err) {
+    return downloadUnavailable(502);
+  }
+  if (upstream.status !== 200 && upstream.status !== 206) {
+    if (upstream.body) await upstream.body.cancel().catch(() => {});
+    if (upstream.status === 416) {
+      const range = upstream.headers.get("content-range");
+      return downloadUnavailable(416, range ? { "content-range": range } : {});
+    }
+    return downloadUnavailable(upstream.status >= 400 ? upstream.status : 502);
+  }
+  const out = new Headers({
+    "content-type": "application/x-apple-diskimage",
+    "content-disposition": `attachment; filename="${DL_FILE}"`,
+    "accept-ranges": "bytes",
+    "cache-control": "no-store, no-transform",
+    "x-robots-tag": "noindex",
+  });
+  if (upstream.headers.get("content-encoding")) {
+    // Never pass on an encoded body under the DMG's name and length.
+    if (upstream.body) await upstream.body.cancel().catch(() => {});
+    return downloadUnavailable(502);
+  }
+  for (const name of ["content-length", "content-range", "etag", "last-modified"]) {
+    const value = upstream.headers.get(name);
+    if (value) out.set(name, value);
+  }
+  if (request.method === "HEAD" && upstream.body) await upstream.body.cancel().catch(() => {});
+  return new Response(request.method === "HEAD" ? null : upstream.body, { status: upstream.status, headers: out });
+}
+
 function dropped() {
   return new Response(null, { status: 202, headers: { "cache-control": "no-store" } });
 }
@@ -236,6 +376,9 @@ export default {
     }
     if (url.pathname === EVENT_PATH && request.method === "POST") {
       return proxyEvent(request, url);
+    }
+    if (isMacDownload(url.pathname)) {
+      return macDownload(request, ctx);
     }
     return env.ASSETS.fetch(request);
   },

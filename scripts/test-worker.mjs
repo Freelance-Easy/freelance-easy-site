@@ -23,7 +23,7 @@ const args = process.argv.slice(2);
 const payloadsAt = args.indexOf("--payloads");
 const payloadFile = payloadsAt >= 0 ? args[payloadsAt + 1] : null;
 const substituteDomain = args.includes("--substitute-domain");
-const SRC = args.find((a, i) => !a.startsWith("--") && i !== payloadsAt + 1) || fileURLToPath(new URL("../worker.js", import.meta.url));
+const SRC = args.find((a, i) => !a.startsWith("--") && (payloadsAt < 0 || i !== payloadsAt + 1)) || fileURLToPath(new URL("../worker.js", import.meta.url));
 const dir = mkdtempSync(join(tmpdir(), "fe-worker-"));
 const src = readFileSync(SRC, "utf8");
 if (!payloadFile) assert.ok(src.includes("pa-REPLACE_ME.js"), "shipped worker must be OFF");
@@ -31,11 +31,29 @@ writeFileSync(join(dir, "worker-off.mjs"), src);
 writeFileSync(join(dir, "worker-on.mjs"), src.replace("pa-REPLACE_ME.js", "pa-TESTID123.js"));
 
 const upstream = [];
+let github = null; // the GitHub Releases stand-in for the download tests
 globalThis.fetch = async (url, init = {}) => {
   upstream.push({ url: String(url), init });
+  if (github && String(url).startsWith("https://github.com/")) return github(String(url), init);
   return new Response("/* plausible */", { status: 200 });
 };
-globalThis.caches = { default: { match: async () => undefined, put: async () => {} } };
+// Cache API stand-in: "miss" (default: nothing stored), "store" (a real map), "throw".
+let cacheMode = "miss";
+const cacheStore = new Map();
+globalThis.caches = {
+  default: {
+    match: async (req) => {
+      if (cacheMode === "throw") throw new Error("cache down");
+      if (cacheMode !== "store") return undefined;
+      const hit = cacheStore.get(new Request(req).url);
+      return hit ? hit.clone() : undefined;
+    },
+    put: async (req, res) => {
+      if (cacheMode === "throw") throw new Error("cache down");
+      if (cacheMode === "store") cacheStore.set(new Request(req).url, res.clone());
+    },
+  },
+};
 const ctx = { waitUntil: () => {} };
 const assets = [];
 const env = { ASSETS: { fetch: async (r) => { assets.push(r.url); return new Response("asset"); } } };
@@ -56,7 +74,7 @@ function get(url) {
 async function run(worker, request) {
   upstream.length = 0;
   const res = await worker.default.fetch(request, env, ctx);
-  return { status: res.status, body: await res.text(), sent: upstream.slice() };
+  return { status: res.status, headers: res.headers, body: await res.text(), sent: upstream.slice() };
 }
 
 // ---- --payloads: real tracker events must all pass -------------------------
@@ -169,6 +187,118 @@ const big = new ReadableStream({
 await check("ON streamed 2 MiB body dropped", on, new Request(E, { method: "POST", headers: { "content-type": "text/plain" }, body: big, duplex: "half" }), DROP);
 assert.ok(pulled <= 4, `reading stopped at the cap (pulled ${pulled} chunks)`);
 results.push(`ok  the streamed body was cut off after ${pulled} chunk(s), not read to the end`);
+
+// The Mac download: the DMG itself as a 200 from this domain (worker.js macDownload).
+const REL = "https://github.com/Freelance-Easy/InvoiceGenerator-releases/releases";
+const LATEST = REL + "/latest/download/Freelance-Easy.dmg";
+const VERSIONED = REL + "/download/v0.3.1-beta/Freelance-Easy.dmg";
+const DMG_HEADERS = { "content-length": "8", etag: '"e1"', "last-modified": "Mon, 05 Oct 2026 23:26:16 GMT", "content-type": "application/octet-stream" };
+function releases({ location = VERSIONED, asset } = {}) {
+  return (url, init) => {
+    if (url === LATEST) return new Response(null, { status: 302, headers: location ? { location } : {} });
+    if (url === VERSIONED) return asset(init);
+    return new Response("not found", { status: 404 });
+  };
+}
+const goodAsset = (init) => {
+  const range = new Headers(init.headers).get("range");
+  if (range === "bytes=0-0") return new Response("D", { status: 206, headers: { ...DMG_HEADERS, "content-length": "1", "content-range": "bytes 0-0/154075165" } });
+  if (range === "bytes=999999999-") return new Response("", { status: 416, headers: { "content-range": "bytes */154075165" } });
+  return new Response(init.method === "HEAD" ? null : "DMGBYTES", { status: 200, headers: DMG_HEADERS });
+};
+const DL_OK = { status: 200, upstream: [LATEST, VERSIONED] };
+const dlReq = (path, init = {}) => new Request(PROD + path, { headers: { "cf-connecting-ip": "203.0.113.7", "user-agent": "VisitorUA", cookie: "a=b", ...(init.headers || {}) }, method: init.method || "GET" });
+
+github = releases({ asset: goodAsset });
+const d1 = await check("DL /dl/mac/f1 streams the DMG as a 200", off, dlReq("/dl/mac/f1?utm_source=google&gclid=abc"), DL_OK);
+assert.equal(d1.body, "DMGBYTES");
+assert.equal(d1.headers.get("content-type"), "application/x-apple-diskimage");
+assert.equal(d1.headers.get("content-disposition"), 'attachment; filename="Freelance-Easy.dmg"');
+assert.equal(d1.headers.get("content-length"), "8");
+assert.equal(d1.headers.get("etag"), '"e1"');
+assert.equal(d1.headers.get("accept-ranges"), "bytes");
+for (const s of d1.sent) {
+  assert.ok(!/f1|gclid|utm_/.test(s.url), "no label or query string reaches GitHub");
+}
+// Exactly these headers are set by the Worker for GitHub (a JavaScript-level check; Cloudflare adds its own
+// on the wire): anything else (an IP header, a cookie, the visitor's UA) fails here.
+assert.deepEqual([...new Headers(d1.sent[0].init.headers).keys()].sort(), ["user-agent"], "resolver sends only our user agent");
+assert.deepEqual([...new Headers(d1.sent[1].init.headers).keys()].sort(), ["accept-encoding", "user-agent"], "asset fetch sends only our UA + identity");
+assert.equal(new Headers(d1.sent[1].init.headers).get("user-agent"), "freelance-easy-site (download proxy)");
+assert.equal(new Headers(d1.sent[1].init.headers).get("accept-encoding"), "identity");
+assert.equal(d1.sent[0].init.redirect, "manual", "latest is resolved from GitHub's redirect, not followed");
+assert.equal(d1.headers.get("cache-control"), "no-store, no-transform");
+results.push("ok  the Worker sets only our UA (+ identity) for GitHub: no label, query, cookie, IP header or visitor UA; latest resolved to the tag");
+await check("DL /download/mac streams the DMG", off, dlReq("/download/mac"), DL_OK);
+await check("DL /dl/mac/site (homepage) streams the DMG", off, dlReq("/dl/mac/site"), DL_OK);
+await check("DL works with analytics ON too", on, dlReq("/dl/mac/mac"), DL_OK);
+const d2 = await check("DL HEAD: same headers, no body", off, dlReq("/dl/mac/f1", { method: "HEAD" }), DL_OK);
+assert.equal(d2.body, "");
+assert.equal(d2.headers.get("content-length"), "8");
+assert.equal(d2.sent[1].init.method, "HEAD");
+const d3 = await check("DL Range passes through as 206", off, dlReq("/dl/mac/f1", { headers: { range: "bytes=0-0" } }), { status: 206, upstream: [LATEST, VERSIONED] });
+assert.equal(d3.headers.get("content-range"), "bytes 0-0/154075165");
+assert.equal(new Headers(d3.sent[1].init.headers).get("range"), "bytes=0-0", "the Range header is forwarded");
+const d3b = await check("DL If-Range is forwarded with Range", off, dlReq("/dl/mac/f1", { headers: { range: "bytes=0-0", "if-range": '"e1"' } }), { status: 206, upstream: [LATEST, VERSIONED] });
+assert.equal(new Headers(d3b.sent[1].init.headers).get("if-range"), '"e1"', "the If-Range header is forwarded");
+assert.deepEqual([...new Headers(d3b.sent[1].init.headers).keys()].sort(), ["accept-encoding", "if-range", "range", "user-agent"]);
+const d4 = await check("DL unsatisfiable Range keeps 416", off, dlReq("/dl/mac/f1", { headers: { range: "bytes=999999999-" } }), { status: 416, upstream: [LATEST, VERSIONED] });
+assert.equal(d4.headers.get("content-range"), "bytes */154075165");
+for (const code of [404, 403, 500, 503]) {
+  github = releases({ asset: () => new Response("<html>error</html>", { status: code }) });
+  const r = await check(`DL upstream ${code} keeps its status`, off, dlReq("/dl/mac/f1"), { status: code, upstream: [LATEST, VERSIONED] });
+  assert.notEqual(r.headers.get("content-type"), "application/x-apple-diskimage", "an error is never served as a .dmg");
+  assert.equal(r.headers.get("content-disposition"), null);
+}
+github = releases({ location: null, asset: goodAsset });
+await check("DL no tag from GitHub -> 502, no asset fetch", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+github = releases({ location: "https://evil.example/releases/download/../x/Freelance-Easy.dmg", asset: goodAsset });
+await check("DL odd redirect target -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+// Sol P3: the redirect target must be exactly our repo's asset on github.com.
+for (const loc of [
+  "https://evil.example/Freelance-Easy/InvoiceGenerator-releases/releases/download/v0.3.1-beta/Freelance-Easy.dmg",
+  "https://github.com/someone-else/repo/releases/download/v0.3.1-beta/Freelance-Easy.dmg",
+  "http://github.com/Freelance-Easy/InvoiceGenerator-releases/releases/download/v0.3.1-beta/Freelance-Easy.dmg",
+  VERSIONED + "?x=1",
+]) {
+  github = releases({ location: loc, asset: goodAsset });
+  await check(`DL redirect to ${loc.slice(0, 40)}… refused -> 502`, off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+}
+github = releases({ location: "/Freelance-Easy/InvoiceGenerator-releases/releases/download/v0.3.1-beta/Freelance-Easy.dmg", asset: goodAsset });
+await check("DL relative redirect on github.com accepted", off, dlReq("/dl/mac/f1"), DL_OK);
+// Sol P2: the resolver's own error status is kept, and a tag is taken only from a redirect.
+for (const code of [403, 404, 429, 500, 503]) {
+  github = (url, init) => (url === LATEST ? new Response("err", { status: code, headers: { location: VERSIONED } }) : goodAsset(init));
+  await check(`DL resolver ${code} keeps its status (no asset fetch)`, off, dlReq("/dl/mac/f1"), { status: code, upstream: [LATEST] });
+}
+github = (url, init) => (url === LATEST ? new Response(null, { status: 200, headers: { location: VERSIONED } }) : goodAsset(init));
+await check("DL resolver 200 with a Location is not a redirect -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+github = releases({ asset: () => new Response("gz", { status: 200, headers: { ...DMG_HEADERS, "content-encoding": "gzip" } }) });
+await check("DL an encoded upstream body is refused -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST, VERSIONED] });
+// Sol P2/P3: the tag cache is real (a hit skips the resolver) and a cache failure is a miss.
+github = releases({ asset: goodAsset });
+cacheMode = "store";
+cacheStore.clear();
+await check("DL cache: first request resolves and stores the tag", off, dlReq("/dl/mac/f1"), DL_OK);
+await new Promise((r) => setTimeout(r, 0));
+assert.equal(await cacheStore.get("https://freelance-easy.com/__internal/latest-mac-tag")?.clone().text(), "v0.3.1-beta", "the tag is cached");
+assert.match(cacheStore.get("https://freelance-easy.com/__internal/latest-mac-tag").headers.get("cache-control"), /max-age=300/);
+await check("DL cache: second request uses the cached tag", off, dlReq("/dl/mac/f1"), { status: 200, upstream: [VERSIONED] });
+cacheMode = "throw";
+await check("DL cache failure is a miss (still downloads)", off, dlReq("/dl/mac/f1"), DL_OK);
+cacheMode = "miss";
+results.push("ok  the tag cache stores and hits; a failing cache never blocks the download");
+github = releases({ location: REL + "/download/../Freelance-Easy.dmg", asset: goodAsset });
+await check("DL a '..' tag is refused -> 502", off, dlReq("/dl/mac/f1"), { status: 502, upstream: [LATEST] });
+github = () => { throw new TypeError("network down"); };
+await check("DL GitHub unreachable -> 502", off, dlReq("/dl/mac/f1"), { status: 502 });
+github = releases({ asset: goodAsset });
+const d5 = await check("DL POST -> 405", off, dlReq("/dl/mac/f1", { method: "POST" }), { status: 405, upstream: [] });
+assert.equal(d5.headers.get("allow"), "GET, HEAD");
+await check("DL /dl/win/x stays with the site's redirects", off, dlReq("/dl/win/site"), { status: 200, upstream: [] });
+assert.ok(assets.includes(PROD + "/dl/win/site"), "/dl/win goes to ASSETS (_redirects)");
+await check("DL /dl/macintosh is not a Mac download path", off, dlReq("/dl/macintosh"), { status: 200, upstream: [] });
+github = null;
 
 // Everything else goes to the site's files.
 await check("ON prod GET /api/event", on, get(E), { status: 200, upstream: [] });
