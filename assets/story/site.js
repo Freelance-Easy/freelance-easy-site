@@ -329,7 +329,7 @@
   // (always reserved), 12 px, then the captions, budgeted at the LARGEST one so nothing moves between beats. The stage
   // stays 5:6 (its canvas is 600 x 720) and as wide as the gutters allow; the space left over is shared above and below
   // the block (a little more below), clear of the bottom safe-area inset.
-  const LABEL_ROW = 28, LABEL_GAP = 12, FIT_TOP = 12, FIT_BOT = 16, CAP_MIN = 288;
+  const LABEL_ROW = 28, LABEL_GAP = 12, FIT_TOP = 12, FIT_BOT = 16;
   // the label's spot in the stage (mounts and seam layers go before it); null (append) once it lives under the stage
   const labelRef = () => (label.parentNode === stage ? label : null);
   function cssPx(h) {
@@ -339,11 +339,10 @@
     el.remove();
     return v;
   }
-  // (round B2, Astra pA #11) ONE horizontal grid: when the height limits the stage (375 x 667), the captions (and so the
-  // chapter number) take the stage's own left and right edges, as the label row does; the captions are measured at
-  // that width, so the fit runs until it settles. (F1: the story pins from the first frame, so there is no intro to
-  // line the stage up with; the Make and start captions are in the budget like every other caption.)
-  const fitVars = ["--stage-w", "--stage-top", "--cap-inset"];
+  // (R2: round B2's one-grid rule, captions on the stage's edges, is retired on phones for a wider stage; the captions
+  // sit on the page's text column like every section below the story. F1: the story pins from the first frame, so the
+  // Make caption is in the budget like every other caption.)
+  const fitVars = ["--stage-w", "--stage-top"];
   // the caption budget: the tallest pinned caption among the phone beats, less any excluded (CAP_EXCL: the start
   // caption and the offer card, which are not under the full stage)
   function capBudget(exclude = []) {
@@ -356,19 +355,14 @@
     if (preset() !== "tall") { for (const v of fitVars) pin.style.removeProperty(v); fitCapH = -1; return; }
     const ph = pin.clientHeight, cw = stageCol.clientWidth;
     const safe = cssPx("env(safe-area-inset-bottom, 0px)");
-    let w = cw, capH = 0;
-    for (let k = 0; k < 4; k++) {
-      // (R, Daniel 10-10 "make the bounds … a bit wider if the space feels cramped") the captions take the stage's edges
-      // only down to CAP_MIN: below it, a narrower caption wraps taller, which shrank the stage again (375 x 548 settled
-      // on a 134 px stage under 4-line headlines). Past that point the captions keep CAP_MIN, centred on the stage.
-      pin.style.setProperty("--cap-inset", `${Math.min((cw - w) / 2, Math.max(0, (cw - CAP_MIN) / 2))}px`);
-      capH = capBudget(CAP_EXCL);      // (F1: the start caption has its own room: the stage steps back for it; F2: the offer card is centred in the pin)
-      const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
-      const nw = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
-      if (nw >= w) break;
-      w = nw;
-    }
-    fitCapH = capBudget(CAP_EXCL);
+    // (R2, Daniel 10-10 "make the bounds … a bit wider if the space feels cramped") the captions keep the full text
+    // column (the page's 16 px gutters) instead of narrowing to the stage's edges: a narrower caption wrapped taller and
+    // took that height from the stage (393 x 640: Chase's caption on 4 lines, a 301 px stage). At full width the
+    // tallest caption is as short as it gets, so the stage is the widest the height allows, in one pass.
+    const capH = capBudget(CAP_EXCL);   // (F2: the offer card is centred in the pin, outside the budget)
+    const room = ph - safe - FIT_TOP - FIT_BOT - LABEL_ROW - LABEL_GAP - capH;
+    const w = Math.max(120, Math.floor(Math.min(cw, (room * 5) / 6)));
+    fitCapH = capH;
     const free = Math.max(0, ph - safe - ((w * 6) / 5 + LABEL_ROW + LABEL_GAP + capH));
     const top = Math.max(FIT_TOP, Math.round(free * 0.42));
     pin.style.setProperty("--stage-w", `${w}px`);
