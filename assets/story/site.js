@@ -537,7 +537,7 @@
   /* ---------------- layout: fit, the scroll map, every rect the frame path needs (measured here, never per frame) ---------------- */
   let storyTop = 0, kHero = 1, R0 = null, svhPx = 0, sizeW = 0, sizeH = 0;
   const CAP_GAP = 22;                                  // phones: the captions' clearance under the stage
-  const YOURS_GAP = 36, OFFER_NEXT = 56, OFFER_RING = 8;               // (F2d) folder card -> its statement; offer card -> the next h2
+  const YOURS_GAP = 36, OFFER_NEXT = 56, OFFER_RING = 8.5;               // (F2d) folder card -> its statement; offer card -> the next h2
   const LITE = (FX.PHONE_LITE = { y: 10, b: 28 });     // (F2d, Astra F2) the phone light theme: one soft card shadow
   function layout() {
     if (!TL) return;
