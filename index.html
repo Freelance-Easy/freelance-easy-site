@@ -39,8 +39,25 @@
         d.setAttribute("data-theme", t === "light" ? "light" : "dark");
         var calm = false;
         try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { calm = false; }
+        // a short touch screen (a phone with its browser bars, or any phone held sideways: under 600 px of small
+        // viewport) gets the stacked beats too: a pinned stage plus its caption would leave a thumbnail. Touch only
+        // (pointer: coarse), so a desktop window is never affected. site.js re-checks on rotation (the same test).
+        var short = false;
+        if (!calm) {
+          try {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              var pr = document.createElement("div");
+              pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+              d.appendChild(pr);
+              var sv = pr.getBoundingClientRect().height || window.innerHeight;
+              d.removeChild(pr);
+              short = sv < 600;
+            }
+          } catch (e) { short = false; }
+        }
         d.classList.remove("no-js");
-        d.classList.add("js", calm ? "calm" : "motion");
+        d.classList.add("js", calm || short ? "calm" : "motion");
+        if (short) d.classList.add("short-touch");
         // a safety net: if the engine never comes up, the beats fall back to their stacked, static layout
         setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
       })();
@@ -281,7 +298,7 @@
         </ul>
         <details class="disclosure trust-more">
           <summary>Sign-in and account details</summary>
-          <p>Signing in with Google identifies your account by name and email, and the app checks your subscription with our server when it starts; the invoices themselves stay on your computer. No team features, no mobile app. To close your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.</p>
+          <p>Signing in with Google identifies your account by name and email, and the app checks your subscription with our server when it starts; the app never uploads your invoice database to us (a sync service you choose may copy your data folder to your cloud account).<!-- NEW COPY (legal: privacy §2 sync note) --> No team features, no mobile app. To close your account, email <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>.</p>
         </details>
       </div>
       <!-- the static final frame (no JS, reduced motion, and phones, where Yours follows the story as a section) -->
@@ -326,7 +343,7 @@
               <li>PDF import (supported layouts)</li>
               <li>Email from your own address</li>
             </ul>
-            <p class="disclose terms">Renews until you cancel. Cancel in the app's Settings, through the Stripe billing portal; you keep access to the end of the period you paid for, and your files stay on your computer either way.</p>
+            <p class="disclose terms">Renews until you cancel. Cancel in the app's Settings, through the Stripe billing portal; you keep access to the end of the period you paid for, and the app never uploads your invoice database to us either way.</p><!-- NEW COPY (legal: privacy §2 sync note) -->
             <details class="disclosure">
               <summary>Payment details</summary>
               <p>Checkout is handled by Stripe: card, Apple Pay, Google Pay or Link. There's a field for promotion codes at checkout. Stripe keeps your card details; we never see them.</p>

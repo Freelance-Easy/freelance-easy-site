@@ -7,7 +7,7 @@
 (function () {
   "use strict";
   const { clamp, mix, E, P, spring, track, press, smooth, money0, rgba, mixC, cssC, solid, over, css, div, rectIn, skin,
-    even, drawShape, drawInk, alphaAt, placeSt, swapText, Cursor, tipIn } = FX;
+    even, drawShape, drawInk, alphaAt, placeSt, swapText, Cursor, tipIn, vrect } = FX;
   const KIT = () => window.FE_SITE;
   const S = (FX.scenes = {});
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -23,7 +23,7 @@
     css(st, "display", "inline-block");
     css(st, "opacity", "1");
     css(st, "filter", "none");
-    const b = st.getBoundingClientRect();
+    const b = vrect(st);
     return { cw: b.width, ch: b.height };
   }
   // geometry tracks: seq = [[t, R, f, z], ...] -> g(t) = {cx, cy, w, h, r, bw}
@@ -124,6 +124,11 @@
       add("sum", `<div id="invoice-form-page" class="redesigned d-total d-sum">${k.total}</div>`, ".total-row", "sum");
       add("create", `<div id="invoice-form-page" class="redesigned d-create">${k.create}</div>`, ".btn", "center", pill);
       if (dark) add("pdf", `<div id="invoice-detail" class="redesigned d-pdfbtn">${k.pdfBtn}</div>`, ".btn");
+      // (phones, round C, Astra #4/#5: the line items and the total at fixed screen sizes, site.css; the Create button's
+      // shadow is a control's: short and light)
+      if (tall) { ST.rows.st.style.setProperty("--sz", String(Z.rows)); ST.sum.st.style.setProperty("--sz", String(Z.sum)); }
+      const dsM = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
+      const LITE_PILL = tall ? { y: 3 / dsM, b: 10 / dsM } : null;
       // the picker: its own dropdown is drawn by dd (unfolds from under the field); the text slot swaps placeholder -> pick
       ST.pick.st.querySelector(".custom-select-dropdown")?.remove();
       const slot = ST.pick.st.querySelector(".custom-select-text");
@@ -230,7 +235,9 @@
       // light (site v2.2, Astra: the paper must never be empty): the calculation stays on the page while it grows (where
       // it was: the paper grows around it) and gives way to the real PDF, overlapping it by ~100 ms
       B.pdfIn = dark ? null : +(B.morphPage + 0.16).toFixed(3);
-      const calcOut = dark ? B.merge - 0.1 : +(B.pdfIn + 0.03).toFixed(3);
+      // (phones, F1b, Astra F1: on a phone the two states overlapping read as the form drawn over the PDF) the
+      // calculation leaves first: gone (its 0.1 s fade) 0.02 s before the PDF starts to show, both directions
+      const calcOut = dark ? B.merge - 0.1 : tall ? +(B.pdfIn - 0.12).toFixed(3) : +(B.pdfIn + 0.03).toFixed(3);
       const SCHED = {
         new: [-1, B.pressNew + 0.02],
         pick: [B.morphPick + 0.2, B.morphRows - 0.1],
@@ -299,7 +306,7 @@
         const pOn = t >= B.pillIn && t < B.pillOff;
         const psh = P(t, B.pillIn, 0.16) * (1 - P(t, B.merge, 0.3));
         const pa0 = pOn ? (dark ? 1 : 1 - P(t, B.merge, 0.1, E.ACCEL)) : 0;
-        drawShape(pill, gp, { fill: FP(t), line: COL.line, lineA: lineAP(t), dark, sq: press(t, B.pressCreate) * (0.03 / 0.045), sh: psh, alpha: pa0 });
+        drawShape(pill, gp, { fill: FP(t), line: COL.line, lineA: lineAP(t), dark, sq: press(t, B.pressCreate) * (0.03 / 0.045), sh: psh, alpha: pa0, lite: LITE_PILL });
         const ps = pillInk0(t);
         const pc = FX.gate.cursor > 0.5 && t > B.toCreate + 0.15 && t < B.pressCreate + 0.2 && tipOn(t, R.pill) ? COL.inkHover : COL.ink;
         drawInk(pillInk, { mode: pOn ? ps.mode : "none", k: ps.k, x: gp.w / 2 + (PRESS_AT.create[0] - gp.cx), y: gp.h / 2 + (PRESS_AT.create[1] - gp.cy), w: gp.w, h: gp.h, color: pc });
@@ -391,6 +398,8 @@
       add("picker", `<div id="theme-page" class="redesigned d-theme"><div class="card picker-card"><div class="card-pad">${k.picker}</div></div></div>`, ".card");
       add("presets", `<div id="theme-page" class="redesigned d-theme"><div class="card"><div class="card-pad">${k.presets}</div></div></div>`, ".card");
       add("pool", `<div id="theme-page" class="redesigned d-theme"><div class="card"><div class="card-pad"><div class="logo-pool">${k.poolItem}</div></div></div></div>`, ".card");
+      if (tall) ST.picker.st.style.setProperty("--sz", String(Z.picker));   // (phones: the template names at 12 screen px)
+      if (tall) ST.presets.st.style.setProperty("--sz", String(Z.presets)); // (phones, round B2: 22 px swatches, 10 px gaps)
       const picker = ST.picker.st.querySelector(".style-picker");
       const cards = [...picker.querySelectorAll(".style-card")];
       cards.forEach((c) => c.classList.remove("active"));
@@ -404,15 +413,17 @@
       for (const s of Object.values(ST)) Object.assign(s, stSize(s.st));
       const sk = {};
       for (const [n, s] of Object.entries(ST)) { sk[n] = skin(s.box, s.z); s.box.classList.add("skinless"); }
-      const pr = picker.getBoundingClientRect();
+      const pr = vrect(picker);
       const zp = Z.picker;
-      const cardR = cards.map((c) => { const r = c.getBoundingClientRect(); return { x: (r.left - pr.left) / zp, y: (r.top - pr.top) / zp, w: r.width / zp, h: r.height / zp }; });
+      const cardR = cards.map((c) => { const r = vrect(c); return { x: (r.left - pr.left) / zp, y: (r.top - pr.top) / zp, w: r.width / zp, h: r.height / zp }; });
       const radius = parseFloat(getComputedStyle(cards[0]).borderTopLeftRadius) || 10;
       const accent = rgba(tok(picker, "--accent")) , aring = rgba(tok(picker, "--accent-ring"));
       for (const s of Object.values(ST)) css(s.st, "display", "none");
       const surf = solid(sk.picker.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.picker.bc[3] > 0.005 ? sk.picker.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
-      const bottom = tall ? H - 18 : H - 34;            // the control card floats over the paper's blank lower part
+      // (round B2, Astra pA #13: on phones at least 16 screen px between the control card and the stage's bottom edge)
+      const dsL = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
+      const bottom = tall ? H - Math.max(30, Math.ceil(16 / dsL)) : H - 34;           // the control card floats over the paper's blank lower part (phones B1: 30, clear of the stage edge while it rises in)
       const RC = {};
       for (const n of ["picker", "presets", "pool"]) RC[n] = { cx: W / 2, cy: bottom - sk[n].h / 2, w: sk[n].w, h: sk[n].h, r: sk[n].r, bw: Math.max(1, sk[n].bw) };
       const B = { toBold: 0.78, pressBold: 1.28, morphPresets: 2.15, toCoral: 2.25, pressCoral: 2.77,
@@ -565,6 +576,7 @@
       ];
       const tabsEl = div("fx-free", world);
       tabsEl.style.zoom = Z.tabs;
+      if (tall) tabsEl.style.setProperty("--sz", String(Z.tabs));         // (phones: the tabs at 12 screen px, site.css)
       tabsEl.innerHTML = `<div id="invoices-page" class="redesigned d-tabs">${k.tabs}</div>`;
       const tabs = [...tabsEl.querySelectorAll(".tab")];
       const inkEl = tabsEl.querySelector(".tab-ink");
@@ -587,8 +599,14 @@
       for (const s of Object.values(ST)) Object.assign(s, stSize(s.st));
       const sk = {};
       for (const [n, s] of Object.entries(ST)) { sk[n] = skin(s.box, s.z); s.box.classList.add("skinless"); }
-      const tr = tabsEl.querySelector(".tabs").getBoundingClientRect();
-      const tabR = tabs.map((tb) => { const r = tb.getBoundingClientRect(); return { x: (r.left - tr.left) / Z.tabs, w: r.width / Z.tabs, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; });
+      // (phones, round B2: the tab rail and its underline span the card's own width, the tabs shared out across it)
+      if (tall) {
+        const rail = tabsEl.querySelector(".tabs");
+        css(rail, "width", `${Math.max(...Object.values(sk).map((s) => s.w)) / Z.tabs}px`);
+        css(rail, "justify-content", "space-between");
+      }
+      const tr = vrect(tabsEl.querySelector(".tabs"));
+      const tabR = tabs.map((tb) => { const r = vrect(tb); return { x: (r.left - tr.left) / Z.tabs, w: r.width / Z.tabs, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; });
       const tabsW = tr.width, tabsH = tr.height;
       for (const s of Object.values(ST)) css(s.st, "display", "none");
       const surf = solid(sk.all.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
@@ -691,6 +709,7 @@
       const Z = tall ? { kpis: 1.32, chart: 0.98 } : { kpis: 0.9, chart: 1.56 };
       const kpis = div("fx-free", world);
       kpis.style.zoom = Z.kpis;
+      if (tall) kpis.style.setProperty("--sz", String(Z.kpis));           // (phones: KPI type at fixed screen px, site.css)
       kpis.innerHTML = `<div id="dashboard-page" class="redesigned d-kpis">${k.kpiRow}</div>`;
       const shape = div("fx-shape", world);
       div("fx-ink", shape);
@@ -711,6 +730,21 @@
         gEl.removeAttribute("style");
         return s;
       });
+      // (phones, round C, Astra #9: the chart's baseline, drawn with the chart's labels, so its first frame is a chart
+      // whose bars are still down rather than an empty card)
+      if (tall && groups.length) {
+        const svg = st.querySelector("svg");
+        const rects = [...st.querySelectorAll(".bar-open, .bar-paid")];
+        const num = (el, a) => parseFloat(el.getAttribute(a)) || 0;
+        const y0 = Math.max(...rects.map((r) => num(r, "y") + num(r, "height")));
+        const x0 = Math.min(...rects.map((r) => num(r, "x"))), x1 = Math.max(...rects.map((r) => num(r, "x") + num(r, "width")));
+        if (svg && rects.length && isFinite(y0)) {
+          const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          ln.setAttribute("class", "fx-baseline");
+          for (const [a, v] of [["x1", x0], ["x2", x1], ["y1", y0], ["y2", y0]]) ln.setAttribute(a, String(v));
+          groups[0].parentNode.insertBefore(ln, groups[0]);
+        }
+      }
       const kpiEls = [...kpis.querySelectorAll(".kpi")];
       const values = kpiEls.map((el) => el.querySelector(".kpi-value"));
       const targets = values.map((v) => parseFloat(v.getAttribute("data-target")) || 0);
@@ -720,11 +754,11 @@
       const size = stSize(st);
       const sk = skin(box, Z.chart);
       box.classList.add("skinless");
-      const kr = kpis.getBoundingClientRect();
+      const kr = vrect(kpis);
       const kW = kr.width, kH = kr.height;
       const surf = solid(sk.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.bc[3] > 0.005 ? sk.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
-      const gapY = tall ? 18 : 26;
+      const gapY = tall ? 12 : 26;                       // (phones, round B1: 12, the larger KPI type needs the room)
       const blockH = kH + gapY + sk.h;
       const top = Math.round(H / 2 - blockH / 2);
       const RC = { cx: W / 2, cy: top + kH + gapY + sk.h / 2, w: sk.w, h: sk.h, r: sk.r, bw: Math.max(1, sk.bw) };
@@ -743,20 +777,23 @@
       const n = stacks.length;
       const barT = stacks.map((_, i) => B.bars + B.wave * Math.pow(i / (n - 1), 0.9));
       const DUR = 2.3;
-      const kpiShadow = (el) => satShadow(el, dark, el.getBoundingClientRect().height);
+      const kpiShadow = (el) => satShadow(el, dark, vrect(el).height);
       kpiEls.forEach(kpiShadow);
       function seek(t) {
         drawShape(shape, RC, { fill: surf, line, lineA: 1, dark });
         place(st, alphaAt(t, B.content, 99), RC, size, "center", Z.chart);
         css(kpis, "left", `${(kLeft / Z.kpis).toFixed(2)}px`);
         css(kpis, "top", `${(top / Z.kpis).toFixed(2)}px`);
-        const ka = alphaAt(t, B.kpiIn, 99);
+        // (phones, Sol mobile #11: the KPI cards are in from the Know -> Grow seam's second half, which reveals them;
+        // their values stay hidden until the count starts, then count up on the app's own clock)
+        const ka = tall ? 1 : alphaAt(t, B.kpiIn, 99);
         css(kpis, "opacity", ka >= 0.999 ? "1" : ka.toFixed(3));
         css(kpis, "filter", ka >= 0.999 ? "none" : `blur(${((1 - ka) * 7).toFixed(2)}px)`);
         // the app's own odometer: 900 ms easeOutCubic from $0, 80 ms stagger (dashboard.html animateOdometers)
         values.forEach((v, i) => {
           const u = clamp((t - B.count - 0.08 * i) / 0.9);
           v.textContent = money0(targets[i] * E.CUBIC_OUT(u));
+          // (phones, round C, Astra #9: the slots read "$0", the count's own start, from the first visible frame)
         });
         // the sparklines draw (style.css sparkReveal: a 700 ms wipe, cubic-bezier(.2,.7,.2,1))
         sparks.forEach((s, i) => {
@@ -851,7 +888,8 @@
       const sendBtn = stM.querySelector("#email-compose-send-btn");
       const stT = addSt(shapeB, `<div class="redesigned d-toast">${k.toast}</div>`, Z.toast);
       const boxT = stT.querySelector(".flash");
-      const stR = addSt(shapeB, `<div id="dashboard-page" class="redesigned d-recent">${k.recentSent}</div>`, Z.recent);
+      const stR = addSt(shapeB, `<div id="dashboard-page" class="redesigned d-recent${tall ? " fx-chase-recent" : ""}">${k.recentSent}</div>`, Z.recent);
+      if (tall) stT.style.setProperty("--sz", String(Z.toast));           // (phones: "Email sent." at 14 screen px, 44 px tall)
       if (tall) {
         const rows = [...stR.querySelectorAll("tbody tr")];
         rows.forEach((tr, i) => { if (i >= 2 && !tr.textContent.includes(k.number)) tr.remove(); });
@@ -871,6 +909,7 @@
       // the KPI cards (the dashboard's real row): before -> after values computed per frame by the app's own tween
       const kp = div("fx-free", world);
       kp.style.zoom = Z.kpis;
+      if (tall) { kp.style.setProperty("--sz", String(Z.kpis)); kp.classList.add("fx-chase-kpis"); }
       const kpiMarkup = `<div class="kpi-row">${k.kpiPaidBefore}${k.kpiDueBefore}${k.kpiOverdueBefore}</div>`;
       kp.innerHTML = `<div id="dashboard-page" class="redesigned d-kpis">${kpiMarkup}</div>`;
       const kpiCards = [...kp.querySelectorAll(".kpi")];
@@ -886,17 +925,17 @@
       const szA = stSize(stA), szM = stSize(stM), szT = stSize(stT), szR = stSize(stR);
       const skA = skin(boxA, Z.list), skM = skin(boxM, Z.modal), skT = skin(boxT, Z.toast), skR = skin(boxR, Z.recent);
       // where the Email button sits inside the list card, and the Send button inside the modal (canvas, centred)
-      const aBox = boxA.getBoundingClientRect(), eB = emailBtn.getBoundingClientRect(), rB = rowA.getBoundingClientRect();
-      const mBox = boxM.getBoundingClientRect(), sB = sendBtn.getBoundingClientRect();
+      const aBox = vrect(boxA), eB = vrect(emailBtn), rB = vrect(rowA);
+      const mBox = vrect(boxM), sB = vrect(sendBtn);
       // the pill before and after the swap (measured both ways, then put back): colours and the press point inside it
       css(wNew, "display", "none");
-      const rBox = boxR.getBoundingClientRect(), pB = pill.getBoundingClientRect(), rowRB = rowR.getBoundingClientRect();
+      const rBox = vrect(boxR), pB = vrect(pill), rowRB = vrect(rowR);
       const softOld = rgba(getComputedStyle(pill).backgroundColor);
       pill.className = clsNew; css(wOld, "display", "none"); css(wNew, "display", "inline");
-      const pB2 = pill.getBoundingClientRect();
+      const pB2 = vrect(pill);
       const softNew = rgba(getComputedStyle(pill).backgroundColor);
       pill.className = clsOld; css(wOld, "display", "inline"); css(wNew, "display", "none");
-      const kr = kp.getBoundingClientRect();
+      const kr = vrect(kp);
       const emailSkin = skin(emailBtn, Z.list);
       for (const el of [boxA, boxM, boxT, boxR]) el.classList.add("skinless");
       for (const s of [stA, stM, stT, stR]) css(s, "display", "none");
@@ -909,7 +948,16 @@
       const RI = { cx: emailAt[0], cy: emailAt[1], w: eB.width, h: eB.height, r: Math.max(4, emailSkin.r), bw: 0 };
       const RM = { cx: CX, cy: CY, w: skM.w, h: skM.h, r: skM.r, bw: Math.max(1, skM.bw) };
       const sendAt = [RM.cx - skM.w / 2 + (sB.left - mBox.left) + sB.width * 0.42, RM.cy - skM.h / 2 + (sB.top - mBox.top) + sB.height * 0.6];
-      const RT = { cx: CX, cy: CY, w: skT.w, h: skT.h, r: skT.h / 2, bw: Math.max(1, skT.bw) };
+      // (phones, Astra pA #2: after the Email press the overdue row stays; the modal opens over it, and "Email sent."
+      // lands 14 screen px under it, the two one group centred in the stage, until the dashboard takes over)
+      const ds = parseFloat(getComputedStyle(ctx.root).getPropertyValue("--demo-scale")) || 0.55;
+      // (phones, round C, Astra #3: the group sits low, its bottom 40 screen px above the "Fictional data" row, which is
+      // 8 px under the stage: the action next to its caption, not floating mid-field)
+      const grpTop = Math.round(H - 32 / ds - (skA.h + 14 / ds + skT.h));
+      // (phones, round C, Astra #13: the row card, the modal, the toast and the Recent card are small floating cards)
+      const LITE = tall ? { y: 6 / ds, b: 18 / ds } : null;
+      const RAt = tall ? { ...RA, cy: grpTop + skA.h / 2 } : RA;
+      const RT = { cx: CX, cy: tall ? grpTop + skA.h + 14 / ds + skT.h / 2 : CY, w: skT.w, h: skT.h, r: skT.h / 2, bw: Math.max(1, skT.bw) };
       const gapY = tall ? 18 : 24;
       const blockH = kr.height + gapY + skR.h;
       const kTop = Math.round(H / 2 - blockH / 2);
@@ -918,13 +966,15 @@
       const rowRect = { x: RA.cx - skA.w / 2 + (rB.left - aBox.left), y: RA.cy - skA.h / 2 + (rB.top - aBox.top), w: rB.width, h: rB.height };
       const rowRRect = { x: RR.cx - skR.w / 2 + (rowRB.left - rBox.left), y: RR.cy - skR.h / 2 + (rowRB.top - rBox.top), w: rowRB.width, h: rowRB.height };
       const kLeft = Math.round(CX - kr.width / 2);
-      kpiCards.forEach((el) => satShadow(el, dark, el.getBoundingClientRect().height));
+      kpiCards.forEach((el) => satShadow(el, dark, vrect(el).height));
       const B = { toRow: 0.22, toEmail: 0.62, pressEmail: 0.98, grow: 1.02, toSend: 1.74, pressSend: 2.3, morphToast: 2.44,
         morphDash: 3.68, toPill: 4.67, pressPill: 5.27, away: 5.59 };
       B.swapPill = +(B.pressPill + 0.12).toFixed(3);
       B.count = B.swapPill + 0.04;
       const DUR = 6.55;
-      const GA = geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
+      // (phones, Sol mobile P1 #4: the list card is whole and populated from local time 0, never an empty shell; it is
+      // also what the Ride hands over to. Desktop keeps its arrival from 90 %.)
+      const GA = tall ? geom([[0, RA], [0.0001, RA, 2.6, 0.86], [B.morphToast, RAt, 3.2, 0.88]]) : geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
       const GB = geom([[0, RI], [B.grow, RM, 2.6, 0.86], [B.morphToast, RT, 3.2, 0.88], [B.morphDash, RR, 2.4, 0.84]]);
       const FB = colTrack([[0, surfA], [B.grow, surfM, 2.6, 0.86], [B.morphToast, surfT, 3.2, 0.88], [B.morphDash, surfR, 2.4, 0.84]]);
       // site v2.2 (Astra's review: "no empty shell"): the one shape always carries content. Each morph's outgoing content
@@ -934,7 +984,7 @@
       //   "Email sent." arrives in its last 60 ms;
       // - growing into the Recent card, the toast's words fade over 120 ms where they were; the card's content is
       //   revealed in place by the growing shape from 60 ms (before the toast's words have gone).
-      const SCHED = { A: [0.08] };
+      const SCHED = { A: [tall ? -1 : 0.08] };          // (-1: in from the start; inOut treats a negative tin as already in)
       const M_IN = B.grow + 0.02, M_OUT = B.morphToast, M_OD = 0.16;
       const T_IN = B.morphToast + 0.1, T_OUT = B.morphDash, T_OD = 0.12;
       const R_IN = B.morphDash + 0.06;
@@ -948,6 +998,9 @@
         [B.toPill, pillAt, 1.9, 0.93], [B.away, [W * 1.04, H * 1.06], 1.3, 1.0]];
       cur.presses = [B.pressEmail, B.pressSend, B.pressPill];
       cur.fade = [0.05, B.away + 0.14];
+      // (phones, round B2, Astra pA #15: once Send is pressed and the toast shows, the hand leaves; it returns as it sets
+      // off for the Paid pill. Scrubbing back brings it back: a pure function of t.)
+      if (tall) cur.gaps = [[B.morphToast, B.toPill - 0.05]];
       // the press point in the new pill's own box (unzoomed px): the pill's right end stays put (the cell is right-aligned)
       const pressLocal = [((pB.left + pB.width * 0.8) - pB2.left) / Z.recent, (pB.height * 0.6) / Z.recent];
       const pW2 = pB2.width / Z.recent, pH2 = pB2.height / Z.recent;
@@ -956,9 +1009,14 @@
         const ga = GA(t);
         // the card arrives on the field (fades up as it grows from 90 %), and fades once its button has been pressed,
         // its content with it (site v2.2: never an empty card)
-        const aA = inOut(t, SCHED.A[0], B.pressEmail + 0.06, 0.2);
-        const skinA = Math.min(P(t, 0, 0.14, E.DECEL), 1 - P(t, B.pressEmail + 0.06, 0.2, E.ACCEL));
-        drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA });
+        // (phones: the card stays through the email and leaves as the dashboard grows, which carries the same row)
+        const A_OUT = tall ? B.morphDash : B.pressEmail + 0.06, A_OD = tall ? 0.12 : 0.2;
+        // (phones, round E: the open modal covered the row card's middle and left its edges cut on both sides; the row
+        // steps aside while the modal is up, inside the grow and the close, and is back for "Email sent." under it)
+        const cover = tall ? P(t, M_IN, 0.16, E.DECEL) * (1 - P(t, M_OUT + M_OD, 0.16, E.DECEL)) : 0;
+        const aA = inOut(t, SCHED.A[0], A_OUT, A_OD) * (1 - cover);
+        const skinA = Math.min(tall ? 1 : P(t, 0, 0.14, E.DECEL), 1 - P(t, A_OUT, A_OD, E.ACCEL)) * (1 - cover);
+        drawShape(shapeA, ga, { fill: surfA, line: lineOf(skA), lineA: 1, dark, alpha: skinA <= 0.001 ? 0 : skinA, lite: LITE });
         place(stA, aA, ga, szA, "center", Z.list);
         const hand = FX.gate.cursor > 0.5, pr = FX.gate.press > 0.5;
         FX.flags(rowA, rowABase, [["fe-hover", hand && t > 0.5 && t < B.pressEmail + 0.06]]);
@@ -968,23 +1026,29 @@
         const on = t >= B.grow - 0.02;
         const gb = GB(t);
         // (the modal has no :active rule: it never squashes; Send squashes in place through the app's own .btn:active)
-        drawShape(shapeB, gb, { fill: FB(t), line: lineOf(t < B.morphToast ? skM : t < B.morphDash ? skT : skR), lineA: 1, dark, alpha: on ? 1 : 0, sh: on ? clamp((t - B.grow) / 0.15) : 0 });
+        drawShape(shapeB, gb, { fill: FB(t), line: lineOf(t < B.morphToast ? skM : t < B.morphDash ? skT : skR), lineA: 1, dark, alpha: on ? 1 : 0, sh: on ? clamp((t - B.grow) / 0.15) : 0, lite: LITE });
         drawInk(inkB, { mode: "none" });
         // the modal's content: zooming out of the button with the shape (scaled to fit, centred), then (from the toast
         // morph) where it rests, cropped by the closing shape
-        const am = inOut(t, M_IN, M_OUT, M_OD);
-        if (t < M_OUT) {
-          place(stM, am, gb, szM, "center", Z.modal);
-          const km = Math.min(1, gb.w / RM.w, gb.h / RM.h);
-          if (am > 0.001 && km < 0.9999) css(stM, "transform", `scale(${Math.max(0.001, km).toFixed(5)})`);
-        } else anchored(stM, am, gb, RM, szM, Z.modal);
+        // (phones, round E: the screen-size text left no slack, so a crop cut words mid-letter; on phones the closing
+        // modal's content shrinks with its shape as it grew with it, the toast's words have left as the Recent card
+        // starts to grow, and the card's content grows with its shape: nothing is ever cut by a moving edge)
+        const fit = (st, a, R, size, z) => {
+          place(st, a, gb, size, "center", z);
+          const k = Math.min(1, gb.w / R.w, gb.h / R.h);
+          if (a > 0.001 && k < 0.9999) css(st, "transform", `scale(${Math.max(0.001, k).toFixed(5)})`);
+        };
+        const am = inOut(t, M_IN, M_OUT, tall ? T_IN - M_OUT : M_OD);   // (phones: gone as "Email sent." arrives)
+        if (t < M_OUT || tall) fit(stM, am, RM, szM, Z.modal);
+        else anchored(stM, am, gb, RM, szM, Z.modal);
         // the toast's words: centred in the closing shape (where the toast rests), then left where they are as the card
         // grows around them
-        const at = inOut(t, T_IN, T_OUT, T_OD);
+        const at = inOut(t, T_IN, tall ? T_OUT - T_OD : T_OUT, T_OD);
         if (t < T_OUT) place(stT, at, gb, szT, "center", Z.toast);
         else anchored(stT, at, gb, RT, szT, Z.toast);
         // the Recent card's content: where it rests, revealed by the growing shape
-        anchored(stR, inOut(t, R_IN, 99, 0.1), gb, RR, szR, Z.recent);
+        if (tall) fit(stR, inOut(t, R_IN, 99, 0.1), RR, szR, Z.recent);
+        else anchored(stR, inOut(t, R_IN, 99, 0.1), gb, RR, szR, Z.recent);
         FX.flags(sendBtn, sendBase, [["fe-hover", hand && t > B.toSend + 0.3 && t < B.pressSend + 0.1],
           ["fe-active", pr && t > B.pressSend && t < B.pressSend + 0.08]]);
         // the KPI cards arrive above the Recent card (the dashboard's own order)
@@ -1058,11 +1122,22 @@
     build(ctx) {
       const { world, W, H, tall, dark } = ctx;
       const k = KIT().yours;
-      const Z = tall ? 1.12 : 1.3;
+      // (phones, F2: the phone story now shows this card under its own caption) a narrower card at a larger zoom, so its
+      // words read at ~11-12 px on a ~300-340 px stage instead of ~7 px (site.css .fx-root.tall .d-settings .card)
+      const Z = tall ? 1.8 : 1.3;
       const shape = div("fx-shape", world);
       div("fx-ink", shape);
       const st = addSt(shape, `<div id="settings-page" class="redesigned d-settings">${k.dataCard}</div>`, Z);
       const box = st.querySelector(".card");
+      // (phones, F2b) the folder's path in full: the app's one-line input clips it at this card's width ("…/Freelanc"), so
+      // the phone's picture shows the same value as text that wraps after a slash (site.css .fx-root.tall .path-val)
+      const inp = tall && st.querySelector(".path-input input");
+      if (inp) {
+        const v = document.createElement("span");
+        v.className = "path-val";
+        inp.value.split("/").forEach((p, i) => { if (i) { v.append("/"); if (i > 1) v.append(document.createElement("wbr")); } v.append(p.replace(/ /g, " ")); });
+        inp.replaceWith(v);
+      }
       css(shape, "left", "0px"); css(shape, "top", "0px"); css(shape, "width", `${W}px`); css(shape, "height", `${H}px`);
       const size = stSize(st);
       const sk = skin(box, Z);
@@ -1070,18 +1145,21 @@
       const surf = solid(sk.bg, dark ? [19, 22, 30, 1] : [255, 255, 255, 1]);
       const line = sk.bc[3] > 0.005 ? sk.bc : dark ? [255, 255, 255, 0.07] : [20, 20, 24, 0.08];
       const R = { cx: W / 2, cy: H / 2, w: sk.w, h: sk.h, r: sk.r, bw: Math.max(1, sk.bw) };
-      drawShape(shape, R, { fill: surf, line, lineA: 1, dark });
+      // (F2d, Sol F2d #2) the phone light theme: a soft shadow, in canvas px so it is FX.PHONE_LITE on screen (the
+      // overlay card it hands to at LIFT draws it in screen px)
+      const lite = () => { if (!tall || dark) return undefined; const sc = parseFloat(ctx.root.style.getPropertyValue("--demo-scale")) || 1; return { y: FX.PHONE_LITE.y / sc, b: FX.PHONE_LITE.b / sc }; };
+      drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite: lite() });
       place(st, 1, R, size, "center", Z);
       const ic = rectIn(st.querySelector(".path-input .ic"), ctx.root);
       css(st, "display", "none");
       const DUR = 0.9;
       function seek(t) {
-        drawShape(shape, R, { fill: surf, line, lineA: 1, dark });
+        drawShape(shape, R, { fill: surf, line, lineA: 1, dark, lite: lite() });
         css(shape, "-webkit-mask-image", "none");          // (the Chase -> Yours seam reveals the card through a disc)
         css(shape, "mask-image", "none");
         place(st, alphaAt(t, 0.05, 99), R, size, "center", Z);
       }
-      const X = { shape, R, surf, line, st, size, Z, folder: { cx: ic.x + ic.w / 2, cy: ic.y + ic.h / 2, w: ic.w, h: ic.h } };
+      const X = { shape, R, surf, line, lite, st, size, Z, folder: { cx: ic.x + ic.w / 2, cy: ic.y + ic.h / 2, w: ic.w, h: ic.h } };
       return { DUR, seek, EVENTS: [{ t: 0.05, what: "Settings -> Data storage: the folder that holds everything" }], B: {}, label: "Yours", START: 0.3, END: DUR, X };
     },
   };

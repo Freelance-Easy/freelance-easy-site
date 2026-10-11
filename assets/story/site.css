@@ -1083,6 +1083,22 @@ details.disclosure p a {
   margin: 8px auto 0;
   max-width: 60ch;
 }
+/* (F1c) phones only (site.js ctaEnd moves them; nothing matches on a laptop): the hero's sub line under the End
+   headline, and the 25-second tour as the last control, full width, after the trial line and the mobile note */
+.end-copy > .sub {
+  margin: 16px auto 0;
+  max-width: 30em;
+  font-size: 16.5px;
+  line-height: 1.5;
+  letter-spacing: -0.014em;
+  color: var(--text-2);
+}
+.end-copy > [data-tour-quick] {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}
 
 /* ---------- Footer ---------- */
 .site-footer {
@@ -1504,8 +1520,9 @@ details.disclosure p a {
   position: relative;
   z-index: 1;
 }
+/* (phones, Sol mobile P1 #5: the Recent invoices card is the KPI stack's width, 400 at the same 1.12 zoom: one column) */
 .fx-root.tall .d-recent .card {
-  width: 500px;
+  width: 400px;
 }
 .fx-root.tall .d-recent .recent-table th:nth-child(1),
 .fx-root.tall .d-recent .recent-table td:nth-child(1),
@@ -1520,6 +1537,11 @@ details.disclosure p a {
   width: 30% !important;
 }
 .fx-root.tall .d-recent .recent-table th:nth-child(4) { width: 28% !important; }
+/* (round D) the scale the scene text below compensates for: the canvas scale, but never under a 312 px stage's
+   (312 / 600). 312 px is the narrowest stage at which every scene fits unclipped at full screen size (measured: 304 px
+   cut Know's "Paid" by 3 px, 312 and 320 cut nothing). On a narrower stage the text scales with the canvas instead of
+   clipping: min(screen px / --demo-scale, its canvas size on a 312 px stage). Make's own rules keep their 308 px cap. */
+.fx-root.tall { --ds: max(var(--demo-scale, 1), 0.52); }
 /* Compensate for the canvas scale and each screen's zoom: table text renders at 13.5 px. */
 .fx-root.tall .client-status { --screen-zoom: 1.62; }
 .fx-root.tall .client-status:not(.no-actions) { --screen-zoom: 1.42; }
@@ -1537,7 +1559,7 @@ details.disclosure p a {
 .fx-root.tall .fe-app .d-recent th,
 .fx-root.tall .fe-app .d-recent td,
 .fx-root.tall .fe-app .d-recent .status-toggle {
-  font-size: calc(13.5px / var(--demo-scale) / var(--screen-zoom));
+  font-size: calc(13.5px / var(--ds) / var(--screen-zoom));
 }
 .fx-root.tall .fe-app .client-status th,
 .fx-root.tall .fe-app .client-status td,
@@ -1545,6 +1567,262 @@ details.disclosure p a {
 .fx-root.tall .fe-app .d-recent td { padding: 10px 6px; letter-spacing: 0; }
 .fx-root.tall .fe-app .client-status .status-toggle,
 .fx-root.tall .fe-app .d-recent .status-toggle { padding: 3px 6px; }
+/* (phones, round B1: Sol mobile #6/#8/#13, Astra pA #1) the product's words at fixed SCREEN sizes, the tables' recipe:
+   font = screen px / --demo-scale / the component's own zoom (--sz, set by scenes.js on each zoomed box). Client names
+   and amounts 14 px on one line, status pills 12 px, tabs 12 px, KPI labels 12 / values 22 / feet 12, template names
+   12, the "Email sent." toast 14 px in a 44 px pill. */
+.fx-root.tall .fe-app .client-status td,
+.fx-root.tall .fe-app .d-recent td {
+  font-size: calc(14px / var(--ds) / var(--screen-zoom));
+  padding-left: calc(4px / var(--ds) / var(--screen-zoom));
+  padding-right: calc(4px / var(--ds) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .client-status td.cell-truncate,
+.fx-root.tall .fe-app .d-recent td.cell-truncate,
+.fx-root.tall .fe-app .d-recent td:nth-child(2) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fx-root.tall .fe-app .client-status .status-toggle,
+.fx-root.tall .fe-app .d-recent .status-toggle {
+  font-size: calc(12px / var(--ds) / var(--screen-zoom));
+}
+.fx-root.tall .d-list.no-actions .card { width: 352px; }
+.fx-root.tall .fe-app .client-status th:nth-child(3) { width: 46% !important; }
+.fx-root.tall .fe-app .client-status th.text-right { width: 26% !important; }
+.fx-root.tall .fe-app .client-status th.text-center { width: 28% !important; }
+/* (Chase's list carries the row actions column: the client gets the room the one short amount leaves) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) th:nth-child(3) { width: 46% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 25% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 29% !important; }
+/* (Daniel 10-10, "overdue is kinda cramped there": the Overdue pill overflowed its 25% column and ran into the card's
+   edge at 393 px) Chase's table on a phone: names and amounts at 13 px, a 10 px margin inside the card on both sides,
+   the status column sized for "• Overdue", and the row's reminder ring and its reserved slot step aside */
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(2) { width: 40% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(4) { width: 25.5% !important; }
+.fx-root.tall .d-recent.fx-chase-recent .recent-table th:nth-child(5) { width: 34.5% !important; }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent td { font-size: calc(13px / var(--ds) / var(--screen-zoom)); }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent .recent-table :is(th, td):nth-child(2) { padding-left: calc(10px / var(--ds) / var(--screen-zoom)); }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent .recent-table :is(th, td):nth-child(5) { padding-right: calc(15px / var(--ds) / var(--screen-zoom)); }
+.fx-root.tall .fe-app .d-recent.fx-chase-recent .status-toggle { padding-left: 5px; padding-right: 5px; }
+.fx-root.tall .fe-app .d-recent .status-cell-wrap .state-dot { display: none; }
+.fx-root.tall .fe-app .d-recent .status-cell-wrap.ring-slot::after { content: none; }
+/* (Chase: the overdue row is a full-width, 64 px row that stays readable through the email) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
+  padding-top: calc(22px / var(--ds) / var(--screen-zoom));
+  padding-bottom: calc(22px / var(--ds) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .d-tabs .tabs .tab {
+  font-size: calc(12px / var(--ds) / var(--sz, 1));
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding-left: calc(4px / var(--ds) / var(--sz, 1));
+  padding-right: calc(4px / var(--ds) / var(--sz, 1));
+}
+/* (the KPI cards a little tighter inside, so the larger type keeps Grow's stack and chart inside the stage) */
+.fx-root.tall .fe-app .d-kpis .kpi-row { gap: 8px; }
+.fx-root.tall .fe-app .d-kpis .kpi-row .kpi { padding: 8px 10px; }
+.fx-root.tall .fe-app .d-kpis .kpi-label { margin-bottom: 3px; }
+.fx-root.tall .fe-app .d-kpis .kpi-foot { margin-top: 2px; }
+.fx-root.tall .fx-chase-kpis .kpi-foot { white-space: nowrap; }
+.fx-root.tall .fx-chase-kpis .kpi:not(:first-child) .spark { display: none; }
+.fx-root.tall .fe-app .d-kpis .kpi-label {
+  font-size: calc(12px / var(--ds) / var(--sz, 1));
+  letter-spacing: 0.04em;
+}
+.fx-root.tall .fe-app .d-kpis .kpi-value { font-size: calc(22px / var(--ds) / var(--sz, 1)); }
+.fx-root.tall .fe-app .d-kpis .kpi-foot { font-size: calc(12px / var(--ds) / var(--sz, 1)); }
+/* (F1b, Astra F1: the names at a full 12 screen px down to a 288 px stage, 393 x 640's 301 px included: their own,
+   lower floor than --ds's 0.52) */
+.fx-root.tall .fe-app .d-theme { --dsn: max(var(--demo-scale, 1), 0.48); }
+.fx-root.tall .fe-app .d-theme .style-card-label {
+  font-size: calc(12px / var(--dsn) / var(--sz, 1));
+  line-height: 1.2;
+  padding: calc(4px / var(--dsn) / var(--sz, 1)) 2px;
+  white-space: nowrap;
+}
+/* (the larger name takes its height from the card's thumbnail, so the tray keeps its size and place in the stage) */
+.fx-root.tall .fe-app .d-theme .style-card-preview {
+  height: calc(188px + 13px * 1.2 + 16px - 12px * 1.2 / var(--dsn) / var(--sz, 1) - 8px / var(--dsn) / var(--sz, 1));
+}
+.fx-root.tall .fe-app .d-toast .flash {
+  font-size: calc(14px / var(--ds) / var(--sz, 1));
+  min-height: calc(44px / var(--ds) / var(--sz, 1));
+  padding-top: 0;
+  padding-bottom: 0;
+  align-items: center;
+  box-sizing: border-box;
+}
+/* (Chase's closing dashboard: the KPI row and the Recent card share the other scenes' 528-canvas-px edges; Collected
+   YTD spans the row, Outstanding and Overdue share the one beneath it, so the stack fits the stage with readable type) */
+.fx-root.tall .fx-chase-kpis .kpi-row {
+  width: 471px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.fx-root.tall .fx-chase-kpis .kpi-row .kpi:first-child { grid-column: 1 / -1; }
+.fx-root.tall .d-recent.fx-chase-recent .card { width: 471px; }
+/* (phones, round B2) the tables' column headers at 11.5 screen px, a step under the rows, never truncated */
+.fx-root.tall .fe-app .client-status th,
+.fx-root.tall .fe-app .d-recent th {
+  font-size: calc(11.5px / var(--ds) / var(--screen-zoom));
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* Chase's list row: the amount and the status pill 16 px apart (the pill starts its column), a 48 px row */
+.fx-root.tall .fe-app .client-status:not(.no-actions) th:nth-child(3) { width: 39% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 23% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 30% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) :is(th, td).text-center {
+  text-align: left;
+  padding-left: calc(12px / var(--ds) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
+  padding-top: calc(14px / var(--ds) / var(--screen-zoom));
+  padding-bottom: calc(14px / var(--ds) / var(--screen-zoom));
+}
+/* Chase's end stack: the half cards 12 screen px inside; their second line wraps (two lines reserved, so the swap of
+   "Overdue"'s line never changes the card's height) */
+.fx-root.tall .fe-app .fx-chase-kpis .kpi-row .kpi {
+  padding: calc(10px / var(--ds) / var(--sz, 1)) calc(12px / var(--ds) / var(--sz, 1));
+}
+.fx-root.tall .fe-app .fx-chase-kpis .kpi:not(:first-child) .kpi-foot {
+  white-space: normal;
+  line-height: 1.3;
+  min-height: 2.6em;
+}
+/* Know (phones): on the larger stages the rows and pills grow with the stage (never under 14 / 12 screen px) */
+.fx-root.tall .fe-app .client-status.no-actions td {
+  font-size: max(calc(14px / var(--ds) / var(--screen-zoom)), calc(23.5px / var(--screen-zoom)));
+}
+.fx-root.tall .fe-app .client-status.no-actions .status-toggle {
+  font-size: max(calc(12px / var(--ds) / var(--screen-zoom)), calc(20px / var(--screen-zoom)));
+}
+/* Look (phones): the colour swatches 22 screen px with 10 px gaps */
+/* (all ten never fit a phone's stage at that size: two bounded rows of five, centred) */
+.fx-root.tall .fe-app .d-theme .color-presets {
+  gap: calc(10px / var(--ds) / var(--sz, 1));
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc((5 * 22px + 4 * 10px + 1px) / var(--ds) / var(--sz, 1));
+}
+.fx-root.tall .fe-app .d-theme .color-preset {
+  width: calc(22px / var(--ds) / var(--sz, 1));
+  height: calc(22px / var(--ds) / var(--sz, 1));
+  min-width: 0;
+  flex: none;
+}
+/* (phones, round C, Astra #3) Chase's row card: 80 screen px at every phone size (a 28 px header over a 52 px row) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) thead th {
+  height: calc(28px / var(--ds) / var(--screen-zoom));
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
+}
+.fx-root.tall .fe-app .client-status:not(.no-actions) tbody tr:not(.year-header) td {
+  height: calc(52px / var(--ds) / var(--screen-zoom));
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
+}
+/* (the app's status wrapper is flex-end with a dot slot after the pill: in a narrow cell the pill overflowed LEFT, onto
+   the amount, 6-9 px from it. Here the pill starts its column, 12 px in, so it sits 16 px from the amount) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) .status-cell-wrap {
+  justify-content: flex-start;
+  gap: 0;
+}
+/* (the client keeps one line at 375, whose stage is the narrowest: 41 / 22 / 29 %, the pill 10 px into its column) */
+.fx-root.tall .fe-app .client-status:not(.no-actions) th:nth-child(3) { width: 41% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-right { width: 22% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) th.text-center { width: 29% !important; }
+.fx-root.tall .fe-app .client-status:not(.no-actions) :is(th, td).text-center {
+  padding-left: calc(10px / var(--ds) / var(--screen-zoom));
+}
+.fx-root.tall .fe-app .client-status:not(.no-actions) .status-cell-wrap.ring-slot::after {
+  display: none;
+}
+/* Chase's end stack: the viewport's width less 48 px (8 px inside the stage's sides), centred */
+.fx-root.tall .fx-chase-kpis .kpi-row,
+.fx-root.tall .d-recent.fx-chase-recent .card {
+  width: calc((600px - 16px / var(--demo-scale)) / 1.12);
+}
+/* (R, Daniel 10-10: "feel free to make the bounds … a bit wider if the space feels cramped"; Astra R #6/#7/#10) phones:
+   - the client lists (Know, Chase): the client column 10 screen px inside the card (it was 4: names 1.9-4.7 px from it)
+   - Know's list: the status pill centred in its column with no reserved dot slot after it (the app's flex-end wrapper
+     and its ring slot pushed "• Overdue" LEFT onto the amount, -3 px at 393), and the status column 3 % wider
+   - Chase's end stack: the Outstanding and Overdue cards 8 screen px apart (they were 2-6) */
+.fx-root.tall .fe-app .client-status :is(th, td):nth-child(3) {
+  padding-left: max(calc(10px / var(--ds) / var(--screen-zoom)), calc(8.5px / var(--demo-scale, 1) / var(--screen-zoom)));
+  padding-right: 0;                                  /* (the amount beside it is right-aligned: its cell's left side is empty) */
+}
+.fx-root.tall .fe-app .client-status.no-actions th:nth-child(3) { width: 44% !important; }
+.fx-root.tall .fe-app .client-status.no-actions th.text-right { width: 25% !important; }
+.fx-root.tall .fe-app .client-status.no-actions th.text-center { width: 31% !important; }
+.fx-root.tall .fe-app .client-status.no-actions .status-cell-wrap { justify-content: center; gap: 0; }
+.fx-root.tall .fe-app .client-status.no-actions .status-cell-wrap.ring-slot::after { display: none; }
+.fx-root.tall .fe-app .fx-chase-kpis .kpi-row { gap: calc(8px / var(--demo-scale, 1) / 1.12); }
+/* (Astra #4/#5) Make's line items at fixed screen sizes: values 14 px in 38 px fields with a crisp 1 px border of the
+   app's own token, column labels 12 px, the total 22 px under a 16 px label; the columns re-split so "Project work",
+   "75.00", "16" and "$1,200.00" fit the 360 px card (--sz = the box's zoom, set by scenes.js) */
+.fx-root.tall .d-rows .card-pad {
+  padding: calc(12px / var(--demo-scale) / var(--sz)) calc(8px / var(--demo-scale) / var(--sz)) !important;
+}
+.fx-root.tall .d-rows .col-desc { width: 38.5%; }
+.fx-root.tall .d-rows .col-rate { width: 21%; }
+.fx-root.tall .d-rows .col-qty { width: 13%; }
+.fx-root.tall .d-rows .col-amount { width: 27.5%; }
+.fx-root.tall .d-rows .line-items-table th,
+.fx-root.tall .d-rows .line-items-table td {
+  padding-left: calc(2px / var(--demo-scale) / var(--sz)) !important;
+  padding-right: calc(2px / var(--demo-scale) / var(--sz)) !important;
+}
+/* (Sol, round C: each screen size below is capped at its value on a 308 px stage, the 375x667 phone's, as canvas
+   px: 12 -> 23.38, 14 -> 27.27, 16 -> 31.17, 22 -> 42.86, 38 -> 74. A smaller stage (320x568 fits ~230 px) scales
+   them down with the canvas instead of clipping "Project work", "75.00" and "16"; every phone >= 308 px is unchanged) */
+.fx-root.tall .d-rows .line-items-table th {
+  font-size: min(calc(12px / var(--demo-scale) / var(--sz)), calc(23.38px / var(--sz)));
+  letter-spacing: 0.04em;
+  padding-top: 0;
+  padding-bottom: calc(6px / var(--demo-scale) / var(--sz));
+  white-space: nowrap;
+}
+.fx-root.tall .d-rows .line-items-table td {
+  padding-top: calc(4px / var(--demo-scale) / var(--sz));
+  padding-bottom: calc(4px / var(--demo-scale) / var(--sz));
+  vertical-align: middle;
+}
+.fx-root.tall .d-rows .line-items-table input {
+  box-sizing: border-box;
+  height: min(calc(38px / var(--demo-scale) / var(--sz)), calc(74px / var(--sz)));
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: calc(6px / var(--demo-scale) / var(--sz)) !important;
+  padding-right: calc(2px / var(--demo-scale) / var(--sz)) !important;
+  /* (Chrome floors a border to whole px after zoom: 2 px under the stage's scale is 1.1-1.3 screen px; 1 px was 0.5) */
+  border-width: calc(2.02px / var(--sz)) !important;
+  font-size: min(calc(14px / var(--demo-scale) / var(--sz)), calc(27.27px / var(--sz)));
+}
+.fx-root.tall .d-rows .line-items-table .amount-display {
+  padding: 0;
+  font-size: min(calc(14px / var(--demo-scale) / var(--sz)), calc(27.27px / var(--sz)));
+  line-height: min(calc(38px / var(--demo-scale) / var(--sz)), calc(74px / var(--sz)));
+}
+.fx-root.tall .d-sum .total-row.grand-total {
+  gap: calc(16px / var(--demo-scale) / var(--sz));
+}
+.fx-root.tall .d-sum .total-label { font-size: min(calc(16px / var(--demo-scale) / var(--sz)), calc(31.17px / var(--sz))); }
+.fx-root.tall .d-sum .total-value { font-size: min(calc(22px / var(--demo-scale) / var(--sz)), calc(42.86px / var(--sz))); }
+/* Grow's baseline (scenes.js, phones): a 1 screen px rule in the chart's own line token */
+.fx-root.tall .d-chart .fx-baseline {
+  stroke: var(--border-default);
+  stroke-width: calc(1px / var(--demo-scale) / var(--sz, 0.98));
+  vector-effect: non-scaling-stroke;
+  shape-rendering: crispEdges;
+}
 
 .fx-root .d-recent .status-toggle,
 .fx-root .d-list .status-toggle {
@@ -1685,8 +1963,9 @@ details.disclosure p a {
   }
 }
 @media (max-width: 380px) {
+  /* (round B2, Astra pA #16: the name stays, at 13 px; measured to fit at 360 with no overflow) */
   .brand span {
-    display: none;
+    font-size: 13px;
   }
   .nav a.nav-cta {
     padding: 7px 11px;
@@ -1841,25 +2120,25 @@ html.on-band .pin.full-field .stage {
   overflow: visible;
 }
 /* while the Ride's band is the page, the header takes its colour */
-html.on-band .site-header {
+html.on-band:where(:not(.past-band)) .site-header {
   background: color-mix(in srgb, var(--ride) 88%, transparent);
   border-bottom-color: transparent;
 }
-html.on-band .site-header .brand,
-html.on-band .site-header .nav a {
+html.on-band:where(:not(.past-band)) .site-header .brand,
+html.on-band:where(:not(.past-band)) .site-header .nav a {
   color: var(--ride-text);
 }
-html.on-band .site-header .nav a.nav-cta {
+html.on-band:where(:not(.past-band)) .site-header .nav a.nav-cta {
   box-shadow: inset 0 0 0 1px var(--ride-line);
 }
-html.on-band .theme-switch {
+html.on-band:where(:not(.past-band)) .theme-switch {
   background: color-mix(in srgb, var(--ride-text) 9%, transparent);
   box-shadow: inset 0 0 0 1px var(--ride-line);
 }
-html.on-band .theme-switch button {
+html.on-band:where(:not(.past-band)) .theme-switch button {
   color: var(--ride-text-2);
 }
-html.on-band .theme-switch button[aria-pressed="true"] {
+html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
   color: var(--ride-text);
   background: color-mix(in srgb, var(--ride-text) 14%, transparent);
   box-shadow: none;
@@ -2016,7 +2295,37 @@ html.on-band .theme-switch button[aria-pressed="true"] {
   margin: 0;
 }
 .fx-root.tall .d-settings .card {
-  width: 420px;
+  width: 300px;
+}
+/* (F2b) the path as the app's input shows it, in full: it wraps after a slash (scenes.js S.yours) */
+.fx-root.tall .d-settings .path-input .path-val {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  color: var(--text-0);
+  font-family: var(--font-mono-data);
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: normal;
+}
+/* (F2d, Astra F2: "a large container showcases tiny settings text") the phone card's words at phone sizes: the card
+   is drawn at ~0.9 of these, so the title reads ~16 px, the explanation and the path ~13.5 px, the metadata ~12 px+;
+   they wrap inside the same 300 px card */
+.fx-root.tall .d-settings .card h3 {
+  font-size: 17.75px;
+  line-height: 1.25;
+}
+.fx-root.tall .d-settings .card .sub {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.fx-root.tall .d-settings .card .btn {
+  font-size: 14.5px;
+}
+.fx-root.tall .d-settings .card .data-dir-meta,
+.fx-root.tall .d-settings .card .data-dir-meta span {
+  font-size: 13.5px;
+  line-height: 1.4;
 }
 
 /* phones and tablets: the stage pinned at the top, the captions below it */
@@ -2088,14 +2397,313 @@ html.on-band .theme-switch button[aria-pressed="true"] {
   }
 }
 @media (max-width: 639px) {
+  /* (site.js fitPhone sets --stage-w and --stage-top: the stage, its label row and the largest caption, balanced) */
   .stage-wrap {
-    width: min(100%, calc(56svh * 5 / 6));
+    width: var(--stage-w, min(100%, calc(56svh * 5 / 6)));
+  }
+  .stage-col {
+    top: var(--stage-top, 12px);
   }
   .stage-shade {
     border-radius: 22px;
   }
   .captions .hero-copy .cta-row .btn {
     width: auto;
+  }
+  /* "Fictional data" (Sol mobile P1 #3): its own unscaled row under the stage, left-aligned with it, 8 px below it; the
+     row is always there (the captions never move), its words show whenever records are on the stage */
+  .stage-col > .stage-label {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    display: block;
+    width: max-content;
+    height: 20px;
+    margin: 8px 0 0 calc((100% - var(--stage-w, 100%)) / 2);
+    padding: 0 8px;
+    font-size: 12px;
+    line-height: 20px;
+  }
+  /* (under the stage it sits on the page, not on the field: it takes the Ride's colours only once the band is the page) */
+  .pin.on-field .stage-col > .stage-label {
+    color: var(--text-1);
+    background: color-mix(in srgb, var(--bg-1) 78%, transparent);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+  }
+  html.on-band .pin.on-field .stage-col > .stage-label {
+    color: var(--ride-text);
+    background: color-mix(in srgb, var(--ride-text) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
+  }
+  /* (F1, app first) the hero's copy as the pinned Make caption (site.js heroSplit; motion only): "01" and the h1 in the
+     chapter headline treatment (round B1's look: one flowing headline, its second half in the hero's tone). (F1c: the
+     sub line and the CTA block are at the end, in the offer card: site.js ctaEnd.) */
+  .captions > [data-copy="make"] {
+    top: var(--cap-top, 62%);
+  }
+  .captions > [data-copy="make"] h1 {
+    margin-top: 8px;
+    font-size: clamp(26px, 7vw, 28px);
+    line-height: 1.02;
+    letter-spacing: -0.042em;
+  }
+  .captions > [data-copy="make"] h1 .line {
+    display: inline;
+  }
+  /* (R2) the captions keep the page's text column (16 px gutters), so they wrap short and the stage gets the height
+     (site.js fitPhone); round B2's stage-edge inset is retired */
+  .captions > .beat-copy {
+    left: var(--pad);
+    right: var(--pad);
+  }
+  /* (F1) the caption that is up sits above the transparent idle ones stacked in the same place, so a tap (and the
+     start caption's CTA) always lands on what is shown */
+  .captions > .beat-copy.is-on {
+    z-index: 1;
+  }
+  /* (F2) the story's end on phones. YOURS: an aria-hidden visual clone of the first trust item under the folder card:
+     its folder icon as the chapter mark (where the other captions have their number), the title in the chapter
+     headline treatment. */
+  .captions > .yours-cap .ic {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    color: var(--text-1);
+    background: var(--bg-1);
+    box-shadow: 0 0 0 1px var(--line-1);
+  }
+  [data-theme="dark"] .captions > .yours-cap .ic {
+    background: var(--bg-2);
+  }
+  .captions > .yours-cap .ic svg {
+    width: 14px;
+    height: 14px;
+  }
+  .captions > .yours-cap h3 {
+    margin-top: 8px;
+    font-size: clamp(26px, 7vw, 28px);
+    font-weight: 640;
+    line-height: 1.05;
+    letter-spacing: -0.042em;
+  }
+  /* OFFER: the End section's own copy, centred in the full pin (site.js --offer-top) over the card the folder card
+     became (site.js draws that card in .pin-over on this exact box, so the padding is the card's). It only fades: the
+     copy and its controls never move. One block: the headline, the button, the trial line, the mobile note, the status. */
+  .captions > .end-copy {
+    top: var(--offer-top, 16%);
+    left: var(--pad);
+    right: var(--pad);
+    padding: 24px 20px 18px;
+    transform: none;
+  }
+  .captions > .end-copy .brand-word {
+    margin-top: 0;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--text-2);
+  }
+  .captions > .end-copy h2 {
+    margin-top: 8px;
+    max-width: none;
+    font-size: clamp(28px, 7.8vw, 32px);
+  }
+  .captions > .end-copy .cta-row {
+    margin-top: 18px;
+    gap: 8px;
+  }
+  .captions > .end-copy .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+  /* (F2b, Sol F2 #4) the full-width button over its card never moves under a held tap (.btn:active's scale would move
+     its edges several px) */
+  .captions > .end-copy .btn:active {
+    transform: none;
+  }
+  .captions > .end-copy .disclose {
+    margin-top: 12px;
+    line-height: 20px;
+    color: var(--text-1);
+  }
+  .captions > .end-copy .fine {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 17px;
+    color: var(--text-2);
+  }
+  /* (F1c, Daniel: the CTA "at the very end") the hero's sub line under the headline and the 25-second tour after the
+     fine print (site.js ctaEnd), compact so the card still fits a 548 px tall phone */
+  .captions > .end-copy > .sub {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+  .captions > .end-copy > [data-tour-quick] {
+    min-height: 44px;
+    margin-top: 8px;
+  }
+  /* (F2d, Astra F2: "the muted price is weak in dark mode, the disclosures are low contrast") the price and the two
+     disclosures one palette step stronger (existing tokens) */
+  .captions > .end-copy h2 .tone {
+    color: var(--text-2);
+  }
+  /* (F2d, Astra F2: "nested boxes") from Chase -> Yours on (site.js .pin.own), the stage's own box (its skin, grain,
+     long shadow and the field inside it) is gone: the band and then the folder card are the one container */
+  .pin.own .stage-wrap .stage {
+    background: transparent;
+    box-shadow: none;
+  }
+  .pin.own .stage-wrap .stage::after,
+  .pin.own .stage-shade,
+  .pin.own .stage-field {
+    visibility: hidden;
+  }
+  /* (as the start caption's) a slot for the share status: one line reserved, so the usual status never changes the
+     card; (F1c, Sol F1c #3) a longer one (two lines at 375 px) grows the slot instead of spilling onto the tour button
+     that now follows the fine print */
+  .captions > .end-copy .dl-status,
+  .captions > .end-copy .dl-status:empty {
+    display: block;
+    min-height: 16px;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 16px;
+    overflow: visible;
+  }
+  /* the Yours section after the pin (F2): its headline 24-56 px under the pin's edge as the pin lets go; the static
+     figure is the folder card the story just showed; it shows once the stage has arrived on the offer card (--end-k,
+     the shown time, never the scroll: site.js FX.story.endK) */
+  html.js.motion .yours.is-after-pin {
+    padding-top: 40px;
+    opacity: var(--end-k, 1);
+    /* (F2d) drawn up under the pin's empty lower part: its h2 lands ~56 px under the offer card (site.js --offer-pull) */
+    margin-top: calc(-1 * var(--offer-pull, 0px));
+  }
+  html.js.motion .yours.is-after-pin .yours-stage {
+    display: none;
+  }
+  html.js.motion .yours.is-after-pin .trust {
+    margin-top: 24px;
+  }
+  /* (round D) tighter captions, so the stage keeps more of a real phone's height (browser bars on): a 12 px chapter
+     number row, a 26-28 px headline, 15/1.4 body, 8 px between them. fitPhone budgets the largest one. */
+  .captions .step {
+    font-size: 12px;
+    line-height: 12px;
+  }
+  .captions .chapter-copy h2 {
+    margin-top: 8px;
+    font-size: clamp(26px, 7vw, 28px);
+  }
+  .captions .chapter-copy p {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  /* (Astra pA #16, Sol #16) 44 px hit areas for the header's controls; the pills keep their size */
+  .theme-switch button,
+  .nav a.nav-cta {
+    position: relative;
+  }
+  .theme-switch button::after,
+  .nav a.nav-cta::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+  /* footer links: 14 px, rows 14 px apart, each a 44 px target */
+  .foot-links {
+    gap: 14px 22px;
+  }
+  .foot-links a {
+    font-size: 14px;
+    line-height: 20px;
+    padding: 12px 0;
+    margin: -12px 0;
+  }
+  .site-footer .shell {
+    gap: 24px;
+  }
+  /* (Astra pA #14, #17; Sol #17) the sections after the story */
+  .price-main,
+  .price-side {
+    padding: 20px;
+  }
+  .included {
+    font-size: 16px;
+  }
+  .note {
+    padding-top: 56px;
+  }
+  .note-card blockquote p {
+    font-size: 20px;
+    line-height: 1.45;
+  }
+  .brand-end {
+    padding-top: 56px;
+  }
+  /* (round C, Astra #14) the closing section: a 68 px mark, 16 px to the name, 22 to the headline, 18 to the button,
+     56 px before the footer */
+  .brand-end {
+    padding-bottom: 56px;
+  }
+  .brand-stage,
+  .brand-stage .stage-world {
+    width: 68px;
+    height: 68px;
+  }
+  .brand-stage .stage-static img {
+    width: 68px;
+    height: 68px;
+  }
+  .brand-word {
+    margin-top: 16px;
+  }
+  .end-copy h2 {
+    margin-top: 22px;
+  }
+  .end-copy .cta-row {
+    margin-top: 18px;
+  }
+  /* (round C, Astra #12) utility type: the chapter numbers 12 px, the header's link labels 14 px */
+  .step {
+    font-size: 12px;
+  }
+  .nav a {
+    font-size: 14px;
+  }
+}
+/* (F1c) a short phone-story pin (a < 640 px window under 600 px tall: 375 x 548 measured a 493 px card in a 492 px pin):
+   the offer card, which now also holds the sub line and the tour, tightens its spacing so it fits with the release gap
+   (sizes and the trial line's 15 px unchanged; nothing hidden) */
+@media (max-width: 639px) and (max-height: 600px) {
+  .captions > .end-copy {
+    padding: 16px 16px 12px;
+  }
+  .captions > .end-copy h2 {
+    font-size: 28px;
+  }
+  .captions > .end-copy > .sub {
+    margin-top: 6px;
+    line-height: 18px;
+  }
+  .captions > .end-copy .cta-row {
+    margin-top: 12px;
+  }
+  .captions > .end-copy .btn {
+    min-height: 44px;
+  }
+  .captions > .end-copy .disclose {
+    margin-top: 8px;
+  }
+  .captions > .end-copy > [data-tour-quick] {
+    margin-top: 6px;
   }
 }
 
@@ -2231,6 +2839,28 @@ html.tq-locked {
   .tq-dialog[open] .tq-box,
   .tq-dialog[open]::backdrop {
     animation: none !important;
+  }
+}
+/* (F1c, Sol F1c #2) on a phone (< 640 px, or a short touch screen) site.js moves the hero's sub line and tour into the
+   offer card and takes its CTA row, trial line and fine print off the page (ctaEnd), once the engine starts (fonts, up
+   to 1.8 s): until then they are not shown, so the opening never flashes the old CTA block. Only while html has
+   .motion/.calm, which the head script's 4 s safety net removes if the engine never starts, so they come back then. */
+@media (max-width: 639px) {
+  html.js:not(.fx-ready):is(.motion, .calm) [data-copy="make"] > :is(.sub, .cta-row, .disclose, .fine) {
+    visibility: hidden;
+  }
+}
+html.short-touch:not(.fx-ready):is(.motion, .calm) [data-copy="make"] > :is(.sub, .cta-row, .disclose, .fine) {
+  visibility: hidden;
+}
+/* (Sol F1c r3) and while site.js waits for download.js before moving them (html.cta-pending), on any phone */
+html.cta-pending [data-copy="make"] > :is(.sub, .cta-row, .disclose, .fine) {
+  visibility: hidden;
+}
+/* (Sol F1c r2) a short touch screen with reduced motion is .calm without .short-touch: the same rule, by its media */
+@media (pointer: coarse) and (max-height: 599px) {
+  html.calm:not(.fx-ready) [data-copy="make"] > :is(.sub, .cta-row, .disclose, .fine) {
+    visibility: hidden;
   }
 }
 

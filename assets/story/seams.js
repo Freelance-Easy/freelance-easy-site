@@ -211,7 +211,7 @@
      The Paid list's other rows, its header and tabs leave; its last row lifts (Grow's own card, starting as that row:
      the list's colour, no shadow, the row's text above it) and grows into the chart card while the row's text gives way
      to the chart's real labels. The bars are still down at the hand-over and rise right after it (Grow's own wave). */
-  SEAMS.knowGrow = function ({ A, B, layer, dark }) {
+  SEAMS.knowGrow = function ({ A, B, layer, dark, tall }) {
     const a = A.inst.X, b = B.inst.X;
     // Grow is held at t 0.22 (its labels in, the bars down) until the labels have arrived here (u = BARS), then its own
     // clock runs: its first bar starts 0.04 s later and is a quarter up ~0.1 s after the labels; the wave runs on into
@@ -240,6 +240,9 @@
         placeSt(rowSt, fadeOut(u, 0.14, 0.1), cb.x, cb.y, S.z);
         B.show(true);
         B.seek(G0 + Math.max(0, u - BARS));
+        // (phones, Sol mobile #11 / Astra pA #9: the KPI cards' shells and labels arrive over u 0.16-0.30, so the frame
+        // always reads as a dashboard; their values count up afterwards, on Grow's own clock)
+        if (tall) { const kk = P(u, 0.16, 0.14, E.DECEL); css(b.kpis, "opacity", kk >= 0.999 ? "1" : kk.toFixed(3)); }
         const g = GS(u), k = kOf(u);
         drawShape(b.shape, g, { fill: mixC(a.surf, b.surf, k), line: b.line, lineA: k, dark, sh: P(u, 0.03, 0.16) });
         place(b.st, P(u, 0.16, 0.16, E.DECEL), g, b.size, "center", b.zc);
@@ -251,7 +254,7 @@
      whole stage (that field is the bar's own colour, so the hand-over is invisible), then the colour floods the page
      from the stage outwards and becomes Chase's band. Every step is a pure function of u, so it scrubs both ways.
      (v2.1: unchanged; a mount it has hidden is no longer seeked.) */
-  SEAMS.ride = function ({ A, B, W, H }) {
+  SEAMS.ride = function ({ A, B, W, H, tall }) {
     const grow = A.inst;
     const bR = grow.octR;
     const fy = 0.12;
@@ -282,7 +285,12 @@
         }
         const bOn = u >= DIVE;
         B.show(bOn);
-        if (bOn) B.seek(0);
+        if (bOn) {
+          B.seek(0);
+          // (phones: Chase's opener is populated from its first frame, so it crossfades in over the dive's own FADE,
+          // as the zoomed bar leaves, instead of appearing at once; desktop's opener is invisible at 0 and untouched)
+          if (tall) { const a = clamp((u - DIVE) / FADE); css(B.rootEl, "opacity", a >= 0.999 ? "1" : a.toFixed(3)); }
+        }
       },
       globals(u) {
         return { field: u >= DIVE - 0.0005 ? 1 : 0, band: u < FLOOD0 ? 0 : flood(clamp((u - FLOOD0) / FLOOD)) };
@@ -296,12 +304,15 @@
      storage card is revealed over it from its folder icon (the house ink's soft circle, 0.16 s: the outgoing and
      incoming content overlap that long, and the folder path is the first thing it shows). Meanwhile the band draws back
      into the stage (the Ride backwards) and the colour gathers into the card, gone behind it. Never an empty panel. */
-  SEAMS.chaseYours = function ({ A, B, dark }) {
+  SEAMS.chaseYours = function ({ A, B, dark, tall }) {
     const a = A.inst.X, b = B.inst.X;
     const DUR = 0.9;
     const Y = b.R;
     const G = geom([[0, a.RR], [0.04, Y, 2.4, 0.88]]);
-    const D0 = 0.18, DD = 0.16;
+    // (phones, F2d, judge F2 fix 1) the folder's circle starts 0.02 s earlier on phones, under the Recent rows' last
+    // fifth, so the card is never empty between the rows leaving and the path arriving (u 0.17-0.20 was blank)
+    const D0 = tall ? 0.16 : 0.18, DD = 0.16, DR = 0.18;
+    const DECEL = bezier(0.2, 0, 0, 1);
     const outScale = (g) => Math.min(1, g.w / a.RR.w, g.h / a.RR.h);
     const inScale = (g) => Math.min(1, g.w / Y.w, g.h / Y.h);
     return {
@@ -319,12 +330,17 @@
           css(a.stR, "left", `${((g.w - a.szR.cw) / 2 / a.zR).toFixed(2)}px`);
           css(a.stR, "top", `${((g.h - a.szR.ch) / 2 / a.zR).toFixed(2)}px`);
           css(a.stR, "transform", ks >= 0.9999 ? "none" : `scale(${ks.toFixed(5)})`);
+          // (phones, F2c) the Recent rows dissolve as the folder's circle starts (under a third by D0, gone by D0 + 0.02):
+          // at phone size the circle's soft edge left the paths and the client rows legible on top of each other
+          if (tall) dim(a.stR, 1 - P(u, DR - 0.04, 0.06, E.SMOOTH));
         }
         const inOn = u >= D0;
         B.show(inOn);
         if (!inOn) return;
         B.seek(B.inst.START);
-        drawShape(b.shape, g, { fill: b.surf, line: b.line, lineA: 1, dark });
+        // (phones, F2d) the card's own outline arrives as the band (by then the card's colour) lands on it, so no inner
+        // outline shows inside the closing band
+        drawShape(b.shape, g, { fill: b.surf, line: b.line, lineA: tall ? P(u, 0.34, 0.08) : 1, dark, lite: b.lite && b.lite() });
         const ki = inScale(g);
         css(b.st, "left", `${((g.w - b.size.cw) / 2 / b.Z).toFixed(2)}px`);
         css(b.st, "top", `${((g.h - b.size.ch) / 2 / b.Z).toFixed(2)}px`);
@@ -336,6 +352,14 @@
       globals(u) {
         // the Ride, mirrored: the band draws back into the stage once the Chase caption has left; the field then
         // gathers into the Data storage card and is gone behind it
+        // (phones, F2d, Astra F2: "nested boxes", "a small table stranded in a big blue field") one silhouette: the band
+        // gathers straight from the page into the Data storage card (site.js bandTo; the stage's own box is gone,
+        // .pin.own), quickly at first so the scene keeps its mass around the card, its colour turning into the card's as
+        // it closes, so it lands without a rim. The header leaves the band's colour as it starts (band = 1 - k).
+        if (tall) {
+          const k = P(u, 0.06, 0.36, DECEL);
+          return { field: u < 0.64 ? 1 : 0, band: 1 - k, bandTo: Y, bandK: k, bandC: b.surf, bandMix: P(u, 0.12, 0.22, E.SMOOTH) };
+        }
         const fk = P(u, 0.3, 0.32, bezier(0.5, 0, 0.2, 1));
         return { field: u < 0.64 ? 1 : 0, fieldTo: Y, fieldK: fk, band: 1 - P(u, 0.08, 0.42, bezier(0.4, 0, 0.6, 1)) };
       },
@@ -366,6 +390,34 @@
           stage: 1 - P(u, 0.12, 0.42, E.SMOOTH),
           card: u < LIFT ? null : { from: "yours", k: clamp(spring(u - LIFT, 2.8, 0.9)) },
         };
+      },
+    };
+  };
+
+  /* ---------------- Yours -> Offer (phones, phase F2): the folder's card becomes the offer card ----------------
+     yoursPrice's phone sibling (Daniel 2026-10-10: "i like the your data but i also want it to end with a call to
+     action"). The Data storage card's content leaves, the card is lifted out of the stage at its exact screen rect (the
+     page-level overlay, site.js) and springs to the offer card's rect in the full pin while the stage dims away. The
+     offer's copy is the End section's own (a caption): it arrives once the card covers 98 % of its box, a moment site.js
+     measures on the real rects from this same spring (K), so no text ever sits over an empty or moving edge. */
+  SEAMS.yoursOffer = function ({ A }) {
+    const a = A.inst.X;
+    const DUR = 1.25, LIFT = 0.1;
+    // (F2b) a quicker spring than yoursPrice's (4.0 Hz, from 2.8): the card is empty while it flies (its content leaves
+    // first, the copy waits for 98 % cover), so the flight is kept short: ~0.11 s of story, from ~0.16
+    const K = (u) => (u < LIFT ? null : clamp(spring(u - LIFT, 4.0, 0.9)));
+    return {
+      DUR, LIFT, K,
+      seek(u) {
+        const aOn = u < LIFT;
+        A.show(aOn);
+        if (!aOn) return;
+        A.seek(A.inst.END);
+        dim(a.st, fadeOut(u, 0, 0.1), "inline-block");
+      },
+      globals(u) {
+        const k = K(u);
+        return { stage: 1 - P(u, 0.12, 0.42, E.SMOOTH), card: k == null ? null : { from: "yours", to: "offer", k } };
       },
     };
   };

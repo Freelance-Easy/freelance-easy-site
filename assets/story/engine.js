@@ -127,21 +127,58 @@
     d.innerHTML = markup.trim();
     return d.firstElementChild;
   }
+  // THE VISUAL RECT of an element (phones, round E). The states are CSS-zoomed wrappers, and the shapes are sized from
+  // their rects. Chromium and WebKit with evaluation-time zoom return getBoundingClientRect() as drawn (zoom applied);
+  // shipping iOS WebKit returns it DIVIDED by the element's effective zoom, so every shape came out 1/zoom of its
+  // content (the founder's iPhone, 2026-10-10: the Make card at 1/1.36, the Create pill at 1/1.75, Know's tabs pushed
+  // off the card, Grow's KPIs past the stage). A zoom:2 probe tells the model once; on a legacy engine the rect is
+  // scaled back by the element's own zoom product. Elsewhere it is the plain call (byte-identical frames). Every preset:
+  // desktop and iPad Safari measure the same way. The probe runs once at startup; per frame it costs one test.
+  // (Sol, round E: the probe compares a zoom:2 box with an unzoomed control beside it, so a zoomed page can't fool it,
+  // and it caches only a real measurement: a page hidden at startup (width 0) is asked again on the next call)
+  let zoomLegacy = null;
+  function legacyZoom() {
+    if (zoomLegacy !== null) return zoomLegacy;
+    const host = document.createElement("div"), ctl = document.createElement("div"), zo = document.createElement("div"), zi = document.createElement("div");
+    host.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none";
+    ctl.style.cssText = "width:50px;height:10px";
+    zo.style.cssText = "zoom:2";
+    zi.style.cssText = "width:50px;height:10px";
+    zo.appendChild(zi);
+    host.append(ctl, zo);
+    (document.body || document.documentElement).appendChild(host);
+    const c = ctl.getBoundingClientRect().width, w = zi.getBoundingClientRect().width;
+    host.remove();
+    if (!(c > 0) || !(w > 0)) return false;              // not laid out yet: no answer cached
+    zoomLegacy = w / c < 1.5;                             // modern: the zoomed box measures 2x its control; legacy: 1x
+    return zoomLegacy;
+  }
+  function vrect(el) {
+    const r = el.getBoundingClientRect();
+    if (!(zoomLegacy !== null ? zoomLegacy : legacyZoom())) return r;
+    let z = 1;
+    for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const v = parseFloat(getComputedStyle(e).zoom); if (v > 0) z *= v; }
+    if (Math.abs(z - 1) < 1e-6) return r;
+    return { left: r.left * z, top: r.top * z, right: r.right * z, bottom: r.bottom * z, width: r.width * z, height: r.height * z,
+      x: r.x * z, y: r.y * z };
+  }
   // element rect in the scene's canvas units (the scene root is measured at scale 1)
   function rectIn(el, root) {
-    const r = el.getBoundingClientRect(), o = root.getBoundingClientRect();
+    const r = vrect(el), o = vrect(root);
     return { x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height, cx: r.left - o.left + r.width / 2,
       cy: r.top - o.top + r.height / 2 };
   }
   const even = (v) => 2 * Math.round(v / 2);
   // a real element's own skin, read from its computed style; zoom = the wrapper's CSS zoom (rects are zoomed already)
   function skin(el, zoom = 1) {
-    const b = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    const b = vrect(el), cs = getComputedStyle(el);
     return { w: even(b.width), h: even(b.height), r: parseFloat(cs.borderTopLeftRadius) * zoom,
       bw: parseFloat(cs.borderTopWidth) * zoom, bc: rgba(cs.borderTopColor), bg: rgba(cs.backgroundColor),
       color: rgba(cs.color) };
   }
-  Object.assign(FX, { css, div, frag, rectIn, skin, even });
+  Object.assign(FX, { css, div, frag, rectIn, skin, even, vrect });
+  if (document.body) legacyZoom();
+  else document.addEventListener("DOMContentLoaded", legacyZoom, { once: true });
 
   /* ---------------- the shape: one surface whose skin rides springs ---------------- */
   // the long soft shadow that grows with the shape (house style § 2; dark: deeper, with a top rim and a light hairline)
@@ -155,7 +192,12 @@
       `0 ${(6 + 0.03 * h).toFixed(1)}px ${(18 + 0.06 * h).toFixed(1)}px -6px rgba(0,0,0,${(0.22 * k).toFixed(3)}), ` +
       `0 ${(18 + 0.07 * h).toFixed(1)}px ${(48 + 0.14 * h).toFixed(1)}px -18px rgba(0,0,0,${(0.26 * k).toFixed(3)})`;
   }
-  // g = {cx, cy, w, h, r, bw}; look = {fill, line, lineA, dark, sq (press squash 0..1), sh (shadow strength), rimA}
+  // (phones, round C, Astra #13) a small floating card or pill: one short, light shadow instead of the long one.
+  // lite = {y, b} in canvas px (the scene converts its screen target with --demo-scale); k = the shadow strength
+  function liteShadow(lite, dark, k = 1) {
+    return `0 ${lite.y.toFixed(2)}px ${lite.b.toFixed(2)}px rgba(0,0,0,${((dark ? 0.32 : 0.1) * k).toFixed(3)})`;
+  }
+  // g = {cx, cy, w, h, r, bw}; look = {fill, line, lineA, dark, sq (press squash 0..1), sh (shadow strength), rimA, lite}
   function drawShape(el, g, look) {
     const { fill, line, dark } = look;
     const lineA = look.lineA == null ? 1 : look.lineA;
@@ -168,7 +210,9 @@
     css(el, "height", `${Math.max(0, g.h).toFixed(2)}px`);
     css(el, "background", cssC(fill));
     css(el, "border-radius", `${Math.max(0, Math.min(g.r, g.h / 2, g.w / 2)).toFixed(2)}px`);
-    css(el, "box-shadow", `inset 0 0 0 ${Math.max(0, g.bw).toFixed(2)}px ${cssC(line, lineA)}${rim}, ${shadow(g.h, dark, look.sh == null ? 1 : look.sh)}`);
+    const shk = look.sh == null ? 1 : look.sh;
+    const drop = look.lite ? liteShadow(look.lite, dark, shk) : shadow(g.h, dark, shk);
+    css(el, "box-shadow", `inset 0 0 0 ${Math.max(0, g.bw).toFixed(2)}px ${cssC(line, lineA)}${rim}, ${drop}`);
     css(el, "transform", sq === 1 ? "none" : `scale(${sq.toFixed(5)})`);
     css(el, "opacity", look.alpha == null || look.alpha >= 0.999 ? "1" : look.alpha.toFixed(3));
     css(el, "display", look.alpha === 0 ? "none" : "block");
@@ -324,6 +368,8 @@
       css(this.el, "transform-origin", `${this.tip}px ${this.tip}px`);
       let a = 1;
       if (this.fade) a = P(t, this.fade[0], 0.2, E.DECEL) * (1 - P(t, this.fade[1], 0.3, E.DECEL));
+      // (phones, round B2: gaps [[tOut, tIn], ...]: hidden between two actions, with the same fade curves; unset elsewhere)
+      if (this.gaps) for (const [g0, g1] of this.gaps) a *= 1 - (1 - P(t, g1, 0.2, E.DECEL)) * P(t, g0, 0.3, E.DECEL);
       // the hand never walks backwards: while the story reverses it fades out (FX.gate, driven by the page's loop)
       a *= FX.gate.cursor;
       css(this.el, "opacity", a >= 0.999 ? "1" : a.toFixed(3));
