@@ -1,53 +1,48 @@
 /* =============================================================
-   Freelance Easy — landing page (v2.3, 2026-09)
+   Freelance Easy — landing page (v2.3, 2026-09; Tier-1 premium pass 2026-10)
    Dark default. Tokens mirror the app's own design system so the page feels
    like the product, not marketing chrome. Each section is one moment of use:
    a one-line lede, one product image (the making-an-invoice loop, the
    dashboard) at full content width following the page theme, a little prose.
-   Headings are short; the serif italic lives in the wordmark only; each fact
-   is said once.
+   Headings are short; each fact is said once.
+
+   Tier-1 pass (house style "One Shape", vault 05 - Reference/Marketing and
+   Video): the app's own typeface (Inter), one ink pill for the action,
+   monochrome chrome so the invoice's teal is the page's first colour, a lit
+   stage instead of a flat fill (a key-light pool in dark, a warm-grey stage
+   with 4 % grain in light), long soft shadows, hairlines instead of
+   underlines on standalone links, one spacing scale.
    ============================================================= */
 
-/* ---------- Fonts (self-hosted; no third-party request before sign-in) ---------- */
+/* ---------- Fonts (self-hosted; no third-party request) ----------
+   Inter 4.001 variable (wght 100–900), the same two files the app ships
+   (InvoiceGenerator static/fonts), SIL Open Font License 1.1 (assets/fonts/
+   OFL.txt). They are the homepage story's own files (assets/story/fonts/,
+   byte-identical), so a visitor's browser fetches Inter once for the whole
+   site. The latin subset is the only one most pages fetch; latin-ext loads
+   on demand. */
 @font-face {
-  font-family: "Lato";
-  src: url("/assets/fonts/Lato-Regular.woff2") format("woff2");
-  font-weight: 400;
+  font-family: "Inter";
   font-style: normal;
+  font-weight: 100 900;
   font-display: swap;
+  src: url("/assets/story/fonts/Inter-Variable-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Lato";
-  src: url("/assets/fonts/Lato-Bold.woff2") format("woff2");
-  font-weight: 700;
+  font-family: "Inter";
   font-style: normal;
+  font-weight: 100 900;
   font-display: swap;
+  src: url("/assets/story/fonts/Inter-Variable-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-@font-face {
-  font-family: "Montserrat";
-  src: url("/assets/fonts/Montserrat-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Montserrat";
-  src: url("/assets/fonts/Montserrat-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+/* Playfair stays declared for the doc pages' optional serif accent only
+   (`.doc h1 em`); nothing on the landing page asks for it, so it never loads. */
 @font-face {
   font-family: "Playfair Display";
   src: url("/assets/fonts/PlayfairDisplay-Regular.woff2") format("woff2");
   font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Playfair Display";
-  src: url("/assets/fonts/PlayfairDisplay-Bold.woff2") format("woff2");
-  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -63,8 +58,8 @@
   --bg-4: #252a36;
 
   --line-1: rgba(255, 255, 255, 0.07);
-  --line-2: rgba(255, 255, 255, 0.12);
-  --line-3: rgba(255, 255, 255, 0.22);
+  --line-2: rgba(255, 255, 255, 0.11);
+  --line-3: rgba(255, 255, 255, 0.2);
 
   --text-0: #f2f3f6;
   --text-1: #cfd3dc;
@@ -75,20 +70,79 @@
   --accent-strong: #1a5456;
   --accent-soft: rgba(44, 122, 123, 0.16);
   --accent-on: #ffffff;
+  --link: #4fb3b4; /* text links on --bg-0: ≥ 4.5:1 (the accent is 3.93:1 here) */
+
+  /* The action: one ink pill, the app's base .btn-primary rule
+     (--text-primary fill, --text-inverse label, pill geometry). Colour is
+     kept for the payoff: the invoice's teal totals box. */
+  --ink: #f2f3f6;
+  --ink-hover: #ffffff;
+  --ink-on: #0b0d12;
+  --focus: #f2f3f6;
+
+  /* The stage: a soft key-light pool behind the product (house style, dark) */
+  --key: 120, 150, 205;
+  --stage:
+    radial-gradient(1120px 760px at 74% 300px, rgba(var(--key), 0.17) 0%, rgba(var(--key), 0.06) 42%, rgba(var(--key), 0) 72%),
+    radial-gradient(900px 520px at 12% -120px, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 70%);
+  --grain: 0.03; /* also dithers the gradient, so the pool never bands */
+
+  /* Long soft shadows (house style § 2), tuned per theme */
+  --shadow-window:
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 24px 48px -16px rgba(0, 0, 0, 0.6),
+    0 64px 120px -40px rgba(0, 0, 0, 0.7);
+  --shadow-sheet:
+    0 1px 2px rgba(0, 0, 0, 0.22),
+    0 12px 28px -12px rgba(0, 0, 0, 0.5),
+    0 30px 60px -26px rgba(0, 0, 0, 0.55);
+  --shadow-sheet-front:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 18px 40px -14px rgba(0, 0, 0, 0.6),
+    0 48px 90px -30px rgba(0, 0, 0, 0.65);
+  --shadow-sheet-moving:
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 26px 52px -18px rgba(0, 0, 0, 0.62),
+    0 60px 110px -36px rgba(0, 0, 0, 0.68);
 
   --paper: #ffffff;
 
   --r-sm: 6px;
-  --r-md: 8px;
-  --r-lg: 12px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
 
   --ease-swift: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  --max-w: 1120px;
-  --shell-pad: clamp(20px, 3vw, 32px);
+  /* One spacing scale (4 px base) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --s-10: 128px;
+  --s-section: 112px; /* between sections: more air than v2.3's 72, not a scroll marathon */
 
-  --font-sans: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Montserrat", "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* One type scale: few steps, real contrast between them */
+  --fs-xs: 13px; /* micro: captions, fine print, labels, footer */
+  --fs-sm: 15px; /* UI and secondary prose: nav, buttons, lists, terms */
+  --fs-md: 16px; /* reading prose */
+  --fs-lg: 18px; /* leads: the offer, section ledes */
+  --fs-h3: 24px;
+  --fs-h2: clamp(30px, 1.9vw + 15px, 42px);
+  --fs-h1: clamp(40px, 3.4vw + 17px, 66px);
+  --fs-price: clamp(52px, 3.6vw + 22px, 72px);
+
+  --max-w: 1200px;
+  --shell-pad: clamp(20px, 3vw, 40px);
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-sans);
   --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
@@ -102,7 +156,7 @@
   --bg-4: #e2e3de;
 
   --line-1: rgba(20, 20, 24, 0.08);
-  --line-2: rgba(20, 20, 24, 0.14);
+  --line-2: rgba(20, 20, 24, 0.13);
   --line-3: rgba(20, 20, 24, 0.26);
 
   --text-0: #0f1014;
@@ -113,6 +167,38 @@
   --accent: #2c7a7b;
   --accent-strong: #1a5456;
   --accent-soft: rgba(44, 122, 123, 0.1);
+  --link: #2c7a7b; /* ≥ 4.5:1 on --bg-0 */
+
+  /* the app's light primary: the black pill */
+  --ink: #0f1014;
+  --ink-hover: #26282e;
+  --ink-on: #ffffff;
+  --focus: #0f1014;
+
+  /* the warm-grey lit stage (house style, light): a bright pool behind the
+     product, warm grey toward the top edges, fading into the page */
+  --stage:
+    radial-gradient(1120px 760px at 72% 300px, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.35) 45%, rgba(255, 255, 255, 0) 72%),
+    linear-gradient(180deg, #e8e7e2 0px, #eeede9 420px, rgba(243, 243, 240, 0) 980px);
+  --grain: 0.04;
+
+  --shadow-window:
+    0 0 0 1px rgba(20, 20, 24, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 18px 40px -14px rgba(0, 0, 0, 0.16),
+    0 54px 100px -36px rgba(0, 0, 0, 0.22);
+  --shadow-sheet:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 10px 24px -10px rgba(0, 0, 0, 0.14),
+    0 26px 56px -24px rgba(0, 0, 0, 0.18);
+  --shadow-sheet-front:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 16px 34px -12px rgba(0, 0, 0, 0.18),
+    0 44px 84px -28px rgba(0, 0, 0, 0.24);
+  --shadow-sheet-moving:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 24px 48px -16px rgba(0, 0, 0, 0.2),
+    0 56px 100px -34px rgba(0, 0, 0, 0.26);
 }
 
 /* ---------- Reset ---------- */
@@ -129,18 +215,36 @@ html {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
-  scroll-padding-top: 80px; /* anchors land below the sticky header */
+  scroll-padding-top: 88px; /* anchors land below the sticky header */
+  /* no background here: body's stage propagates to the canvas, so the grain
+     (a z-index -1 layer) paints above it and below the content */
 }
 
 body {
   font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.55;
-  background: var(--bg-0);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  letter-spacing: -0.006em;
+  font-feature-settings: "kern" 1, "calt" 1;
+  background: var(--stage), var(--bg-0);
+  background-repeat: no-repeat;
   color: var(--text-0);
   min-height: 100vh;
+  position: relative; /* the grain below covers the whole page, not just the viewport */
   /* the theme toggle fades instead of snapping (off under reduced motion, below) */
   transition: background-color 0.3s var(--ease-swift), color 0.3s var(--ease-swift);
+}
+/* Film grain: one small static tile behind the content and above the stage,
+   so it reads as the stage's surface (and dithers the gradients). It scrolls
+   with the page like paper; nothing animates it. */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.6 -0.3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 img,
@@ -167,9 +271,13 @@ button {
   color: var(--accent-on);
 }
 
+/* One focus ring everywhere: high contrast in both themes, offset so it never
+   sits on the element's own edge. It follows each element's radius. */
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+a:not(.btn):not(.sheet):focus-visible {
   border-radius: 4px;
 }
 
@@ -205,11 +313,19 @@ button {
   top: 0;
   z-index: 10;
   background: var(--bg-0);
-  background: color-mix(in srgb, var(--bg-0) 84%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--bg-0) 82%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s, background-color 0.3s var(--ease-swift);
+}
+/* With JS (html.js, set by the head script) the header is clear over the
+   stage at the top and frosts once the page scrolls under it; without JS it
+   stays frosted, so text never runs under bare text. */
+.js .site-header:not(.is-stuck) {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .site-header.is-stuck {
   border-bottom-color: var(--line-1);
@@ -218,34 +334,30 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 16px;
-  padding-bottom: 16px;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 
+/* The lockup: the app icon and the name in the app's own type, as the ads set
+   it (one voice; no tracked capitals, no synthesized italic). */
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  letter-spacing: -0.015em;
   color: var(--text-0);
-  font-weight: 700;
 }
 .brand .brand-fe {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: var(--text-2);
-  font-size: 15px;
-  margin-left: 2px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 .brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -253,26 +365,37 @@ button {
 .nav {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 .nav a {
-  font-size: 14px;
-  color: var(--text-1);
-  padding: 10px 12px;
-  border-radius: var(--r-sm);
-  transition: color 0.15s, background 0.15s;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 8px 12px;
+  border-radius: var(--r-pill);
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 .nav a:hover {
   color: var(--text-0);
+}
+/* the way to the download, as a quiet outlined pill */
+.nav a[href="#download"] {
+  color: var(--text-0);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  margin-left: 4px;
+}
+.nav a[href="#download"]:hover {
   background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-3);
 }
 .theme-toggle {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  margin-left: 4px;
   display: grid;
   place-items: center;
-  border-radius: var(--r-sm);
-  color: var(--text-1);
+  border-radius: var(--r-pill);
+  color: var(--text-2);
   transition: color 0.15s, background 0.15s;
 }
 .theme-toggle:hover {
@@ -298,82 +421,135 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 650;
   color: var(--text-0);
 }
 h2 {
-  font-size: clamp(24px, 2.6vw, 28px);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: var(--fs-h2);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 h3 {
-  font-size: 18px;
+  font-size: var(--fs-h3);
   line-height: 1.3;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 p {
   text-wrap: pretty;
 }
 .lede {
-  font-size: 17px;
+  font-size: var(--fs-lg);
   line-height: 1.6;
-  color: var(--text-1);
-  max-width: 58ch;
+  color: var(--text-2);
+  max-width: 54ch;
 }
 .small {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   line-height: 1.5;
   color: var(--text-2);
 }
+/* Standalone links: no permanent rule; the rule arrives on hover / focus. */
+.text-link,
+.dl-alt,
+.stack-open,
+.contact a,
+.site-footer a {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.text-link:hover,
+.dl-alt:hover,
+.stack-open:hover,
+.contact a:hover,
+.site-footer a:hover {
+  text-decoration-color: var(--line-3);
+}
 .text-link {
   color: var(--text-1);
-  border-bottom: 1px solid var(--line-3);
-  transition: color 0.15s, border-color 0.15s;
 }
 .text-link:hover {
   color: var(--text-0);
-  border-color: var(--text-2);
+}
+/* Links inside running text keep a visible rule (WCAG 1.4.1), drawn thin and
+   offset instead of a border under the whole line box. */
+.qa-row dd a,
+.col-know .disclosure a,
+.dl-support a,
+.disclosure p a {
+  color: var(--text-0);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-3);
+  transition: text-decoration-color 0.15s;
+}
+.qa-row dd a:hover,
+.col-know .disclosure a:hover,
+.dl-support a:hover,
+.disclosure p a:hover {
+  text-decoration-color: currentColor;
 }
 
 /* ---------- Hero ---------- */
 .hero {
-  padding: 24px 0 32px;
+  padding: var(--s-8) 0 var(--s-9);
 }
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  align-items: start;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: 72px;
 }
 .hero-kicker {
-  font-size: 14px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
   color: var(--text-2);
-  margin-bottom: 18px;
+  margin-bottom: var(--s-4);
 }
 .hero h1 {
-  font-size: clamp(34px, 4vw, 48px);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  max-width: 20ch;
-  text-wrap: balance; /* three even lines rather than an orphaned "seconds" */
+  font-size: var(--fs-h1);
+  font-weight: 680;
+  line-height: 1.03;
+  letter-spacing: -0.038em;
+  max-width: 12ch;
+  text-wrap: balance;
 }
 .hero .offer {
-  margin-top: 20px;
-  font-size: 20px;
+  margin-top: var(--s-5);
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+  letter-spacing: -0.012em;
+  color: var(--text-1);
+  max-width: 36ch;
+  text-wrap: balance; /* /mac: the offer's two lines wrap evenly */
+}
+.hero .offer .keep {
+  white-space: nowrap; /* /mac: phones break after "included.", never before "no card." */
+}
+/* /mac's offer note (legal G10 v3): directly under the offer line, always
+   visible, body-text colour, ≥ 15 px, ≥ 4.5:1 in both themes. Folded in from
+   mac.html's page-scoped style with Tier 1. */
+.hero .offer-note {
+  margin-top: 6px;
+  font-size: var(--fs-md);
   line-height: 1.45;
-  color: var(--text-0);
-  max-width: 40ch;
+  color: var(--text-1);
 }
 .hero .lede {
-  margin-top: 14px;
-  max-width: 46ch;
+  margin-top: var(--s-3);
+  font-size: var(--fs-md);
+  max-width: 44ch;
 }
 
 .hero-invoice {
   width: 100%;
-  max-width: 548px;
+  max-width: 600px;
   justify-self: end;
-  margin: 4px 0 0;
+  margin: 0;
 }
 /* The deck: four real sheets, each an <a> holding one template's raster
    (scripts/build-hero-collage.py sheets), in four fixed slots. The deck is
@@ -399,11 +575,9 @@ p {
   display: block;
   width: 85.366cqw;
   background: #fff;
-  border: 1px solid rgba(20, 20, 24, 0.16);
-  border-radius: 2px;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.14),
-    0 14px 28px -14px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(20, 20, 24, 0.14);
+  border-radius: 3px;
+  box-shadow: var(--shadow-sheet);
   /* the slot (transform) and, on top of it, the hover lift or the drag follow
      (translate), so the whole sheet moves: paper, edge and shadow together */
   transform: translate(calc(var(--x) * 1cqw), calc(var(--y) * 1cqw)) scale(var(--s));
@@ -421,6 +595,7 @@ p {
   display: block;
   width: 100%;
   height: auto;
+  border-radius: 2px;
   pointer-events: none;
 }
 /* A sheet is an invitation: it nudges up under the pointer (the ones behind
@@ -432,9 +607,7 @@ p {
   --lift-y: -2px;
 }
 .sheet.is-front {
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.14),
-    0 24px 48px -20px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-sheet-front);
 }
 /* The front sheet follows a sideways drag a little; no easing while it does. */
 .sheet.is-dragging {
@@ -454,9 +627,7 @@ p {
   z-index: 9;
   will-change: transform, clip-path;
   animation: sheet-pull 0.44s cubic-bezier(0.22, 0.61, 0.36, 1);
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.16),
-    0 32px 52px -22px rgba(0, 0, 0, 0.58);
+  box-shadow: var(--shadow-sheet-moving);
 }
 @keyframes sheet-pull {
   0% {
@@ -475,138 +646,183 @@ p {
   }
 }
 .hero-invoice figcaption {
-  margin-top: 10px;
-  font-size: 14px;
-  color: var(--text-2);
-  line-height: 1.45;
+  margin-top: var(--s-5);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.5;
 }
-.hero-invoice figcaption a {
-  color: var(--text-1);
-  border-bottom: 1px solid var(--line-3);
-  transition: color 0.15s, border-color 0.15s;
-}
-.hero-invoice figcaption a:hover {
-  color: var(--text-0);
-  border-color: var(--text-2);
-}
-/* The picker is its own row under the caption. Without JS the names are the
-   four PDF links; once script.js has wired it they act as buttons, the front
-   template is marked in the accent, and the "Open the … PDF" link follows. */
+/* The picker: a segmented control under the caption. Without JS the names
+   are the four PDF links; once script.js has wired them they act as buttons
+   and the front template is the raised segment; "Open the … PDF" follows. */
 .stack-picker {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 18px;
-  margin-top: 8px;
+  align-items: center;
+  gap: 0;
+  margin-top: var(--s-3);
 }
-.stack-picker a {
+.stack-picker a[data-pick] {
   display: inline-block;
-  padding: 6px 0;
-  border-bottom: 2px solid transparent;
-  color: var(--text-1);
+  padding: 6px 14px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 var(--line-1), inset 0 -1px 0 var(--line-1);
+  transition: color 0.15s, background 0.15s;
+}
+.stack-picker a[data-pick="modern"] {
+  border-radius: var(--r-pill) 0 0 var(--r-pill);
+  padding-left: 16px;
+  box-shadow: inset 1px 0 0 var(--line-1), inset 0 1px 0 var(--line-1), inset 0 -1px 0 var(--line-1);
+}
+.stack-picker a[data-pick="minimal"] {
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
+  padding-right: 16px;
+  box-shadow: inset -1px 0 0 var(--line-1), inset 0 1px 0 var(--line-1), inset 0 -1px 0 var(--line-1);
 }
 .stack-picker a[aria-pressed] {
   cursor: pointer;
 }
-.stack-picker a:hover {
+.stack-picker a[data-pick]:hover {
   color: var(--text-0);
-  border-bottom-color: var(--line-3);
 }
-.stack-picker a[aria-pressed="true"] {
+/* the front template: the raised thumb on the track */
+.stack-picker a[data-pick][aria-pressed="true"] {
   color: var(--text-0);
-  border-bottom-color: var(--accent); /* colour only: a weight change would re-flow the row */
+  background: var(--bg-4);
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--line-2), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+[data-theme="light"] .stack-picker a[data-pick] {
+  background: rgba(20, 20, 24, 0.045);
+}
+[data-theme="light"] .stack-picker a[data-pick][aria-pressed="true"] {
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--line-1), 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .stack-picker .stack-open {
   margin-left: auto;
-  border-bottom: 1px solid var(--line-3);
-  padding: 6px 0 5px;
+  font-size: var(--fs-xs);
+  color: var(--text-1);
+  padding: 6px 0;
+}
+.stack-picker .stack-open:hover {
+  color: var(--text-0);
 }
 @media (hover: none) {
-  .stack-picker a {
-    padding: 10px 0; /* a finger-sized target on touch screens */
+  .stack-picker a[data-pick] {
+    padding-top: 10px; /* a finger-sized target on touch screens */
+    padding-bottom: 10px;
   }
 }
 
 /* ---------- Download block (one instance, in the hero) ---------- */
 .dl {
-  margin-top: 26px;
+  margin-top: var(--s-6);
   max-width: 48ch;
 }
 .dl-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px 18px;
+  gap: 14px 24px;
 }
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 12px 22px;
-  border-radius: var(--r-sm);
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: -0.005em;
-  border: 1px solid transparent;
-  transition: background 0.18s var(--ease-swift), border-color 0.18s var(--ease-swift), transform 0.18s var(--ease-swift);
+  min-height: 50px;
+  padding: 12px 26px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  letter-spacing: -0.01em;
+  border: 0;
+  transition: background 0.18s var(--ease-swift), box-shadow 0.18s var(--ease-swift), transform 0.18s var(--ease-swift);
   white-space: nowrap;
 }
-.btn:hover {
-  transform: translateY(-1px);
-}
 .btn:active {
-  transform: translateY(1px);
+  transform: scale(0.98);
 }
 .btn-primary {
-  background: var(--accent);
-  color: var(--accent-on);
-  border-color: var(--accent);
+  background: var(--ink);
+  color: var(--ink-on);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px -10px rgba(0, 0, 0, 0.5);
 }
 .btn-primary:hover {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
+  background: var(--ink-hover);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 12px 30px -10px rgba(0, 0, 0, 0.55);
+}
+[data-theme="light"] .btn-primary {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 8px 22px -10px rgba(0, 0, 0, 0.35);
 }
 .btn .platform-icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
+  margin-top: -1px;
 }
 .dl-alt {
-  font-size: 15px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
   color: var(--text-1);
-  border-bottom: 1px solid var(--line-3);
-  padding-bottom: 1px;
 }
 .dl-alt:hover {
   color: var(--text-0);
-  border-color: var(--text-2);
 }
 .dl-support {
-  margin-top: 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-2);
-}
-.dl-support a {
-  color: var(--text-1);
-  border-bottom: 1px solid var(--line-3);
+  margin-top: var(--s-4);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+  color: var(--text-3);
+  max-width: 46ch;
 }
 .dl-support details {
-  margin-top: 6px;
+  margin-top: var(--s-2);
 }
 .dl-support summary {
-  cursor: pointer;
   color: var(--text-2);
-  font-size: 14px;
+  font-size: var(--fs-xs);
 }
 .dl-support summary:hover {
   color: var(--text-0);
 }
 .dl-support details p {
-  margin-top: 6px;
+  margin-top: var(--s-2);
   color: var(--text-2);
+}
+
+/* Disclosures: a quiet chevron instead of the browser's triangle */
+.dl-support summary,
+.disclosure summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.dl-support summary::-webkit-details-marker,
+.disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.dl-support summary::before,
+.disclosure summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin: 0 2px 2px 1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s var(--ease-swift);
+  flex-shrink: 0;
+}
+details[open] > summary::before {
+  transform: rotate(45deg);
+  margin-bottom: 4px;
 }
 
 /* Phones: the desktop actions are replaced by the share/copy handoff. */
@@ -618,14 +834,14 @@ p {
   white-space: normal;
 }
 .dl-mobile p {
-  margin-top: 10px;
-  font-size: 14px;
-  color: var(--text-1);
+  margin-top: var(--s-3);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
   line-height: 1.5;
 }
 .dl-status {
-  margin-top: 8px;
-  font-size: 14px;
+  margin-top: var(--s-2);
+  font-size: var(--fs-sm);
   color: var(--text-0);
   word-break: break-all;
 }
@@ -641,52 +857,94 @@ body[data-os="mobile"] .dl-mobile {
 
 /* ---------- Sections ---------- */
 .section {
-  padding: 72px 0 0;
+  padding: var(--s-section) 0 0;
 }
 #how {
-  padding-top: 40px;
+  padding-top: var(--s-8);
 }
 .section h2 + .lede {
-  margin-top: 12px;
+  margin-top: var(--s-4);
+}
+/* Desktop: an editorial split header — the heading on the left, its one-line
+   lede on the right, the product image across both. */
+@media (min-width: 901px) {
+  .section > .shell:not(.two-col) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    column-gap: 72px;
+    align-items: end;
+  }
+  .section > .shell:not(.two-col) > * {
+    grid-column: 1 / -1;
+  }
+  .section > .shell:not(.two-col) > h2 {
+    grid-column: 1;
+  }
+  .section > .shell:not(.two-col) > h2 + .lede {
+    grid-column: 2;
+    margin-top: 0;
+    padding-bottom: 2px;
+  }
+  .section > .shell:not(.two-col) > .product-copy {
+    grid-column: 2;
+  }
 }
 /* A full-bleed band in the same theme, one shade up, to mark a stop on the page. */
 .band {
-  margin-top: 72px;
-  padding: 64px 0;
-  background: var(--bg-1);
+  margin-top: var(--s-section);
+  padding: var(--s-9) 0;
+  background:
+    radial-gradient(900px 420px at 22% 0%, rgba(var(--key, 120, 150, 205), 0.07), transparent 70%),
+    var(--bg-1);
   border-top: 1px solid var(--line-1);
   border-bottom: 1px solid var(--line-1);
   transition: background-color 0.3s var(--ease-swift), border-color 0.3s var(--ease-swift);
 }
+[data-theme="light"] .band {
+  background: var(--bg-1);
+}
 .band + .section {
-  padding-top: 64px;
+  padding-top: var(--s-9);
 }
 
-/* Product screenshots: full content width, theme-matched, phone detail crops */
+/* Product screenshots: full content width, theme-matched, phone detail crops.
+   The window sits on the stage: a lit pool under it, a long soft shadow. */
 .figure {
-  margin: 24px 0 0;
+  position: relative;
+  isolation: isolate;
+  margin: var(--s-7) 0 0;
+}
+.figure::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 6%;
+  right: 6%;
+  top: -6%;
+  height: 86%;
+  background: radial-gradient(closest-side, rgba(120, 150, 205, 0.11), rgba(120, 150, 205, 0));
+  pointer-events: none;
+}
+[data-theme="light"] .figure::before {
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
 }
 .figure img {
   width: 100%;
   height: auto;
-  border: 1px solid var(--line-2);
-  border-radius: 6px;
+  border: 0;
+  border-radius: var(--r-md);
   background: var(--bg-1);
-  box-shadow: 0 32px 64px -32px rgba(0, 0, 0, 0.6); /* the window sits on the page, not in it */
-  transition: background-color 0.3s var(--ease-swift), border-color 0.3s var(--ease-swift);
-}
-[data-theme="light"] .figure img {
-  box-shadow: 0 32px 64px -32px rgba(20, 20, 24, 0.3);
+  box-shadow: var(--shadow-window); /* the window sits on the page, not in it */
+  transition: background-color 0.3s var(--ease-swift);
 }
 .figure figcaption {
-  margin-top: 10px;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--text-2);
+  margin-top: var(--s-4);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--text-3);
 }
 .figure figcaption a {
   color: var(--text-1);
-  border-bottom: 1px solid var(--line-3);
 }
 .shot .shot-light {
   display: none;
@@ -699,128 +957,131 @@ body[data-os="mobile"] .dl-mobile {
 }
 .product-copy {
   max-width: 62ch;
-  margin-top: 22px;
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--text-1);
+  margin-top: var(--s-6);
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  color: var(--text-2);
 }
 .product-copy p + p {
-  margin-top: 12px;
+  margin-top: var(--s-3);
 }
 
 /* Making an invoice: the silent loop (autoplays; script.js falls back to controls
    under prefers-reduced-motion or when autoplay is refused), then the three
-   moments in one row under a rule, like a caption */
+   moments in one row, each under its own hairline, like a caption */
 .demo {
-  margin-top: 28px;
+  margin-top: var(--s-7);
 }
 /* The caption's Pause / Play button (shown by script.js in place of the native controls) */
 .demo-toggle {
-  margin-left: 8px;
-  padding: 2px 0;
+  margin-left: 10px;
+  padding: 3px 12px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
   color: var(--text-1);
-  border-bottom: 1px solid var(--line-3);
-  transition: color 0.15s, border-color 0.15s;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  transition: color 0.15s, box-shadow 0.15s;
 }
 .demo-toggle:hover {
   color: var(--text-0);
-  border-color: var(--text-2);
+  box-shadow: inset 0 0 0 1px var(--line-3);
 }
 .demo video {
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--line-2);
-  border-radius: 6px;
+  border: 0;
+  border-radius: var(--r-md);
   background: var(--bg-1);
-  box-shadow: 0 32px 64px -32px rgba(0, 0, 0, 0.6);
-}
-[data-theme="light"] .demo video {
-  box-shadow: 0 32px 64px -32px rgba(20, 20, 24, 0.3);
+  box-shadow: var(--shadow-window);
 }
 .process {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px 40px;
-  margin-top: 28px;
-  padding-top: 22px;
-  border-top: 1px solid var(--line-2);
+  margin-top: var(--s-7);
 }
 .process li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 12px;
+  gap: 14px;
   align-items: baseline;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-2);
 }
 .step-num {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 22px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-xs);
   line-height: 1;
-  color: var(--accent);
+  color: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
 .process p {
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--text-1);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--text-2);
 }
 .process b {
+  font-weight: 600;
   color: var(--text-0);
 }
 
 /* Pricing: the two prices on the left, the terms on the right, on a band */
 .pricing {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 40px 64px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 40px 80px;
   align-items: start;
-  margin-top: 20px;
-  font-size: 17px;
+  margin-top: var(--s-7);
+  font-size: var(--fs-md);
   line-height: 1.6;
-  color: var(--text-1);
+  color: var(--text-2);
 }
 .pricing .lead {
   color: var(--text-0);
-  font-weight: 700;
-  max-width: 34ch;
-  margin-top: 18px;
+  font-weight: 600;
+  font-size: var(--fs-md);
+  max-width: 32ch;
+  margin-top: var(--s-5);
 }
 .bill {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(2, max-content);
-  gap: 16px 40px;
-  margin: 6px 0 0;
+  gap: 16px 48px;
+  margin: 0;
 }
 .bill li {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 10px;
 }
 .bill .price {
   font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.025em;
+  font-size: var(--fs-price);
+  font-weight: 680;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
   color: var(--text-0);
 }
 .bill .per {
-  font-size: 16px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .pricing-note {
-  margin-top: 12px;
-  font-size: 16px;
-  color: var(--text-1);
-  max-width: 40ch;
+  margin-top: var(--s-3);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  max-width: 42ch;
 }
-/* What the price includes: a plain two-column list with a small accent dot */
+/* What the price includes: a spec list, one item per hairline row */
 .included-label {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--fs-xs);
+  font-weight: 600;
   color: var(--text-2);
 }
 /* Two columns the items flow through (not a grid: a wrapped item would
@@ -828,39 +1089,30 @@ body[data-os="mobile"] .dl-mobile {
 .included {
   list-style: none;
   columns: 2;
-  column-gap: 28px;
-  margin: 10px 0 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line-2);
-  font-size: 16px;
-  line-height: 1.5;
+  column-gap: 32px;
+  margin: var(--s-3) 0 var(--s-5);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text-1);
 }
 .included li {
-  position: relative;
-  padding-left: 16px;
-  margin-bottom: 8px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line-1);
   break-inside: avoid;
 }
-.included li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.62em;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
+.terms > p {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
 }
 .terms p + p {
-  margin-top: 12px;
+  margin-top: var(--s-3);
 }
 .disclosure {
-  margin-top: 14px;
-  font-size: 15px;
+  margin-top: var(--s-4);
+  font-size: var(--fs-sm);
   line-height: 1.55;
 }
 .disclosure summary {
-  cursor: pointer;
   color: var(--text-2);
   padding: 8px 0;
 }
@@ -869,78 +1121,88 @@ body[data-os="mobile"] .dl-mobile {
 }
 .disclosure p {
   max-width: 58ch;
-  margin-top: 4px;
-  color: var(--text-1);
+  margin-top: var(--s-1);
+  color: var(--text-2);
 }
 .pricing-action {
-  margin-top: 14px;
-  font-size: 16px;
+  margin-top: var(--s-4);
+  font-size: var(--fs-sm);
 }
 
 /* The close: things to know on the left, the maker's note on the right */
 .two-col {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  gap: 40px 72px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 48px 80px;
   align-items: start;
 }
 
 /* You're in control: three statements, each with its plain explanation */
 .qa {
   max-width: 720px;
-  margin-top: 8px;
+  margin-top: var(--s-5);
 }
 .qa-row {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr);
   gap: 6px 32px;
   padding: 20px 0;
-  border-bottom: 1px solid var(--line-1);
+  border-top: 1px solid var(--line-1);
 }
 .qa-row dt {
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-0);
 }
 .qa-row dd {
-  font-size: 16px;
+  font-size: var(--fs-md);
   line-height: 1.6;
-  color: var(--text-1);
+  color: var(--text-2);
 }
 .col-know .disclosure {
-  margin-top: 18px;
-}
-.qa-row dd a,
-.col-know .disclosure a,
-.maker a {
-  color: var(--text-0);
-  border-bottom: 1px solid var(--line-3);
+  margin-top: var(--s-3);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-1);
 }
 
-/* Maker: one paragraph and the support address */
+/* Maker: one paragraph and the support address, set as a note */
+.maker {
+  padding: 36px 36px 32px;
+  border-radius: var(--r-lg);
+  background: var(--bg-1);
+  box-shadow: 0 0 0 1px var(--line-1), 0 30px 60px -40px rgba(0, 0, 0, 0.6);
+}
+[data-theme="light"] .maker {
+  box-shadow: 0 0 0 1px var(--line-1), 0 24px 50px -36px rgba(0, 0, 0, 0.18);
+}
 .maker h2 {
-  font-size: clamp(24px, 2.6vw, 28px);
+  font-size: var(--fs-h3);
   line-height: 1.2;
+  letter-spacing: -0.025em;
 }
 .maker p {
   max-width: 52ch;
-  margin-top: 14px;
-  font-size: 17px;
+  margin-top: var(--s-4);
+  font-size: var(--fs-md);
   line-height: 1.65;
   color: var(--text-1);
 }
 .maker .contact {
-  font-size: 16px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.maker .contact a {
+  color: var(--text-0);
 }
 
 /* ---------- Footer ---------- */
 .site-footer {
-  margin-top: 72px;
+  margin-top: var(--s-section);
   border-top: 1px solid var(--line-1);
-  padding: 28px 0 40px;
-  color: var(--text-2);
-  font-size: 14px;
+  padding: var(--s-6) 0 var(--s-7);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
 }
 .site-footer .shell {
   display: flex;
@@ -953,10 +1215,10 @@ body[data-os="mobile"] .dl-mobile {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 20px;
+  gap: 4px 22px;
 }
 .site-footer a {
-  color: var(--text-1);
+  color: var(--text-2);
   padding: 6px 0;
   display: inline-block;
 }
@@ -965,26 +1227,38 @@ body[data-os="mobile"] .dl-mobile {
 }
 
 /* ---------- Docs (privacy, terms, install, 404) ---------- */
+/* A reading page gets a quieter stage, centred over the column */
+body:has(> main.doc) {
+  --stage: radial-gradient(1000px 560px at 50% -120px, rgba(var(--key), 0.11) 0%, rgba(var(--key), 0) 70%);
+}
+[data-theme="light"] body:has(> main.doc) {
+  --stage:
+    radial-gradient(1000px 620px at 50% -120px, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, #ebeae6 0px, rgba(243, 243, 240, 0) 640px);
+}
 .doc {
   max-width: 720px;
   margin: 0 auto;
-  padding: 48px 24px 96px;
+  padding: 56px 24px 112px;
 }
 .doc .back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   color: var(--text-2);
-  font-size: 14px;
-  margin-bottom: 32px;
+  text-decoration: none; /* a standalone navigation link, not a link in running text */
+  font-size: var(--fs-sm);
+  margin-bottom: 40px;
 }
 .doc .back:hover {
   color: var(--text-0);
 }
 .doc h1 {
-  font-size: clamp(30px, 4vw, 42px);
-  letter-spacing: -0.025em;
-  margin-bottom: 12px;
+  font-size: clamp(34px, 2.4vw + 18px, 48px);
+  font-weight: 680;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  margin-bottom: 14px;
 }
 .doc h1 em {
   font-family: var(--font-serif);
@@ -993,80 +1267,97 @@ body[data-os="mobile"] .dl-mobile {
 }
 .doc p {
   color: var(--text-1);
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: var(--fs-md);
+  line-height: 1.7;
   margin-bottom: 16px;
 }
 .doc p.muted {
   color: var(--text-2);
 }
 .doc .updated {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 .doc .tldr {
-  padding: 16px 18px;
-  border: 1px solid var(--line-2);
-  border-left: 3px solid var(--accent);
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
   background: var(--bg-1);
-  border-radius: var(--r-md);
-  margin-bottom: 28px;
+  box-shadow: 0 0 0 1px var(--line-2);
+  margin-bottom: 32px;
 }
 .doc .tldr p {
   margin: 0;
 }
 .doc h2 {
-  font-size: 20px;
-  margin: 36px 0 10px;
+  font-size: var(--fs-lg);
+  letter-spacing: -0.02em;
+  margin: 44px 0 12px;
 }
 .doc h3 {
-  font-size: 16px;
-  margin: 22px 0 8px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  margin: 24px 0 8px;
 }
 .doc ul,
 .doc ol {
   margin: 0 0 16px 22px;
   color: var(--text-1);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .doc li {
   margin-bottom: 6px;
 }
+.doc li::marker {
+  color: var(--text-3);
+}
 .doc a {
-  color: var(--accent);
+  /* Links inside running text need more than color to stand out (WCAG
+     1.4.1): underlined, and bright enough on the dark background. */
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+/* the 404's button: `.doc a` must not repaint its label (live today: teal on teal) */
+.doc a.btn {
+  color: var(--ink-on);
+  text-decoration: none;
+}
+.doc code {
+  font-size: 0.92em;
 }
 .doc table {
   width: 100%;
   border-collapse: collapse;
   margin: 8px 0 20px;
-  font-size: 14.5px;
+  font-size: var(--fs-sm);
 }
 .doc th,
 .doc td {
   text-align: left;
   vertical-align: top;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-bottom: 1px solid var(--line-1);
   color: var(--text-1);
 }
 .doc th {
   color: var(--text-2);
-  font-weight: 700;
-  font-size: 12.5px;
+  font-weight: 600;
+  font-size: var(--fs-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 .doc details {
   margin: 16px 0 24px;
-  border: 1px solid var(--line-2);
   border-radius: var(--r-md);
   padding: 12px 16px;
   background: var(--bg-1);
+  box-shadow: 0 0 0 1px var(--line-2);
 }
 .doc summary {
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-0);
 }
 .doc .shot {
@@ -1079,12 +1370,11 @@ body[data-os="mobile"] .dl-mobile {
 @media (max-width: 900px) {
   .hero-grid {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 32px;
   }
   .hero-invoice {
     justify-self: start;
-    max-width: 528px;
-    margin-top: 0;
+    max-width: 560px;
   }
   .process {
     grid-template-columns: 1fr;
@@ -1092,60 +1382,71 @@ body[data-os="mobile"] .dl-mobile {
   }
   .pricing {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 32px;
   }
   .two-col {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 56px;
   }
 }
 
 @media (max-width: 640px) {
+  :root {
+    --fs-h1: 38px;
+    --fs-h2: 28px;
+    --fs-price: 52px;
+  }
   .site-header .shell {
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
   .hero {
-    padding: 8px 0 24px;
+    padding: var(--s-4) 0 var(--s-8);
   }
   .hero h1 {
-    font-size: 34px;
-    line-height: 1.12;
+    line-height: 1.06;
+    letter-spacing: -0.032em;
   }
   .hero .offer {
-    font-size: 17px;
+    margin-top: var(--s-4);
+    font-size: var(--fs-md);
+    letter-spacing: -0.014em;
   }
-  .hero .lede,
-  .product-copy,
-  .pricing,
-  .maker p {
-    font-size: 16px;
+  .hero .lede {
+    font-size: var(--fs-sm);
     line-height: 1.55;
   }
+  .dl {
+    margin-top: var(--s-5);
+  }
+  .product-copy,
+  .maker p {
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+  }
   .section {
-    padding-top: 56px;
+    padding-top: var(--s-9);
   }
   #how {
-    padding-top: 32px;
+    padding-top: var(--s-7);
+  }
+  .figure,
+  .demo {
+    margin-top: var(--s-6);
+  }
+  .figure img,
+  .demo video {
+    border-radius: 8px;
   }
   .band {
-    margin-top: 56px;
-    padding: 48px 0;
+    margin-top: var(--s-9);
+    padding: var(--s-8) 0;
   }
   .band + .section {
-    padding-top: 48px;
-  }
-  h2 {
-    font-size: 25px;
-  }
-  .maker h2 {
-    font-size: 25px;
+    padding-top: var(--s-8);
   }
   .bill {
-    gap: 12px 28px;
-  }
-  .bill .price {
-    font-size: 34px;
+    gap: 12px 32px;
   }
   .included {
     columns: 1;
@@ -1155,14 +1456,17 @@ body[data-os="mobile"] .dl-mobile {
     gap: 4px;
     padding: 16px 0;
   }
+  .maker {
+    padding: 28px 24px 24px;
+  }
   .dl-actions .btn {
     width: 100%;
   }
   .site-footer {
-    margin-top: 56px;
+    margin-top: var(--s-9);
   }
   .doc {
-    padding: 28px 20px 72px;
+    padding: 32px 20px 80px;
   }
 }
 
@@ -1193,7 +1497,7 @@ body[data-os="mobile"] .dl-mobile {
   }
   .btn:hover,
   .btn:active {
-    transform: none; /* no lifts either; they would jump without the transition */
+    transform: none; /* no squash either; it would jump without the transition */
   }
   .sheet:hover,
   .sheet.is-front:hover {
@@ -1201,13 +1505,43 @@ body[data-os="mobile"] .dl-mobile {
   }
 }
 
-/* Phones: keep the wordmark on one line and tighten the nav. */
+/* Phones: keep the wordmark on one line and tighten the nav, so the header
+   fits 360 px with air between the name and the links (today's header
+   overflows at 360–375 px). */
 @media (max-width: 420px) {
   .brand > span {
     white-space: nowrap;
   }
+  .brand {
+    font-size: 14.5px;
+    gap: 8px;
+  }
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+  }
+  .nav {
+    gap: 0;
+  }
   .nav a {
-    padding: 10px 8px;
-    font-size: 13.5px;
+    padding: 8px 7px;
+    font-size: var(--fs-xs);
+  }
+  .nav a[href="#download"] {
+    margin-left: 2px;
+    padding: 6px 11px;
+  }
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    margin-left: 0;
+  }
+}
+@media (max-width: 374px) {
+  :root {
+    --shell-pad: 16px;
+  }
+  .brand {
+    font-size: 14px;
   }
 }
