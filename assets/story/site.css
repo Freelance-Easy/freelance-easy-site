@@ -126,6 +126,11 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* (Daniel 10-11, iPhone: the Chase compose modal "jumps down weirdly as the mouse moves to click": iOS Safari's text
+     autosizing enlarged the modal's small field labels on some layout passes and not others, pushing the form down
+     past its footer) every word renders at its designed size; the phone sizes are already set in screen px */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   scroll-padding-top: calc(var(--header-h) + 16px);
   overflow-x: clip;
 }
