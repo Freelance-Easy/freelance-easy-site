@@ -28,9 +28,6 @@
     </script>
     <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="/assets/fx/gradual-blur.css" />
-    <link rel="stylesheet" href="/assets/fx/reveal.css" />
-    <script src="/assets/fx/gradual-blur.js" defer></script>
     <script async src="/js/script.js"></script>
     <script>
       window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
@@ -55,9 +52,6 @@
         </nav>
       </div>
     </header>
-    <!-- Gradual Blur under the sticky header (assets/fx/gradual-blur.css; gradual-blur.js sets --fx-hh, the
-         header's height) -->
-    <div class="fx-gb fx-gb--top" data-fx="gradual-blur" data-fx-props="--fx-hh" aria-hidden="true"><i data-fx="gradual-blur" data-fx-props=""></i><i data-fx="gradual-blur" data-fx-props=""></i><i data-fx="gradual-blur" data-fx-props=""></i><i data-fx="gradual-blur" data-fx-props=""></i></div>
 
     <main>
       <div data-header-sentinel aria-hidden="true"></div>
@@ -143,7 +137,7 @@
         <div class="shell">
           <h2>Making an invoice</h2>
           <p class="lede">The job's done and it's time to bill it: from a new invoice to a PDF ready to send, in about a minute.</p>
-          <figure class="figure demo" data-fx="reveal" data-fx-props="">
+          <figure class="figure demo">
             <!-- The recording exists in both app themes; script.js picks the page theme's
                  set, starts it (unless the visitor prefers reduced motion) and swaps the
                  native controls for the small Pause button in the caption. Without JS:
@@ -168,7 +162,7 @@
         <div class="shell">
           <h2>Keeping track</h2>
           <p class="lede">An invoice is outstanding until the money arrives and you mark it paid. The dashboard shows what came in, what's still out and what's overdue.</p>
-          <figure class="figure shot" data-fx="reveal" data-fx-props="">
+          <figure class="figure shot">
             <picture class="shot-dark">
               <source media="(max-width: 640px)" srcset="/assets/screenshots/dashboard-attention-dark.png" width="875" height="503" />
               <img src="/assets/screenshots/dashboard-dark.png" width="2880" height="1800" alt="The Freelance Easy dashboard, including a fictional overdue invoice that needs attention." loading="lazy" />
@@ -283,7 +277,6 @@
       </div>
     </footer>
 
-    <script src="/assets/fx/reveal.js"></script>
     <script src="./script.js"></script>
   </body>
 </html>
