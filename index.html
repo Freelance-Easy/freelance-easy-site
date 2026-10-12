@@ -64,6 +64,8 @@
     </script>
     <link rel="stylesheet" href="/assets/story/app.css" />
     <link rel="stylesheet" href="/assets/story/site.css" />
+    <link rel="stylesheet" href="/assets/fx/gradual-blur.css" />
+    <link rel="stylesheet" href="/assets/fx/border-glow.css" />
 
     <script type="application/ld+json">
     {
@@ -117,6 +119,8 @@
     </nav>
   </div>
 </header>
+<!-- Gradual Blur under the sticky header (assets/fx/gradual-blur.css): the Standard recipe, 4 layers -->
+<div class="fx-gb fx-gb--top fx-gb--phone" data-fx="gradual-blur" data-fx-props="" aria-hidden="true"><i data-fx="gradual-blur" data-fx-props=""></i><i data-fx="gradual-blur" data-fx-props=""></i><i data-fx="gradual-blur" data-fx-props=""></i><i data-fx="gradual-blur" data-fx-props=""></i></div>
 
 <main id="top">
   <div data-header-sentinel aria-hidden="true"></div>
@@ -318,6 +322,7 @@
         <div class="section-head">
           <h2 id="price-title">One price</h2>
         </div>
+        <div class="fx-glow fx-glow--card" data-fx="border-glow" data-fx-props="--edge-proximity,--cursor-angle"><!-- Border Glow host (bg-price): a wrapper, because .price-card clips its children -->
         <div class="price-card">
           <div class="price-main">
             <div class="price-figure"><span class="amount">$5</span><span class="per">a month</span></div>
@@ -350,6 +355,7 @@
             </details>
           </div>
         </div>
+        </div><!-- /Border Glow host -->
       </div>
     </div>
   </section>
@@ -411,6 +417,7 @@
 <script src="/assets/story/seams.js"></script>
 <script src="/assets/story/site.js"></script>
 <script src="/assets/story/download.js"></script>
+<script src="/assets/fx/border-glow.js"></script>
 <!-- the 25-second tour's dialog: native <dialog> + showModal() (Esc, inertness, top layer). tour-modal.js creates the
      tour's iframe (/tour/quick/) on open and removes it on close, so it restarts every time and costs nothing until
      it's asked for. -->

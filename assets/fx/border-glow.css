@@ -1,0 +1,122 @@
+/* Ported from React Bits BorderGlow (reactbits.dev), MIT + Commons Clause. */
+/* FINAL (P2, 2026-10-12; from B2's bg-price, tuned per J1-bg). One host: the index price card.
+   Only React Bits' .edge-light layer is ported (its 13-shadow ::before, the conic mask and the proximity opacity).
+   Dropped: the mesh border and mesh fill, translate3d, and plus-lighter (blend is normal in both themes), and B2's
+   button hosts and one-time sweep (not picked). The colour is the page's own accent (--ride) mixed to React Bits'
+   alpha steps times a per-theme k.
+
+   Layers on the host (.fx-glow.fx-glow--card, tagged data-fx="border-glow"):
+   - span.fx-glow-edge (appended by border-glow.js): the pointer glow. Hidden at rest.
+   - the host's own ::after: the static faint edge (touch, and hover under reduced motion). No mask, no JS, no
+     transition.
+
+   Tuning (J1-bg, "noticed but not obtrusive"): --edge-sensitivity 30 -> 20. Light theme: the 1 px ring and the
+   inset steps at k 1.0 (was 0.85), and the two widest outer steps halved (20% -> 10%, 10% -> 5%), which removes the
+   grey-teal haze on the card's drop shadow. Dark theme, radius, pad and the touch edge are unchanged. */
+
+.fx-glow {
+  --fx-glow: var(--ride);
+  --fx-k: 0.85;     /* the outer steps and the touch edge */
+  --fx-k-ring: 1;   /* the 1 px ring and the inset steps */
+  --fx-wide: 0.5;   /* the two widest outer steps (light only) */
+  --fx-ease: var(--ease, cubic-bezier(0.2, 0.7, 0.2, 1));
+  --edge-proximity: 0;
+  --cursor-angle: 45deg;
+  position: relative;
+  isolation: isolate;
+}
+[data-theme="dark"] .fx-glow {
+  --fx-k: 1;
+  --fx-k-ring: 1;
+  --fx-wide: 1;
+}
+
+/* host geometry: the card (a wrapper round .price-card, which clips its own children) */
+.fx-glow--card {
+  --edge-sensitivity: 20;
+  --glow-padding: 40px;
+  --glow-radius: 24px;
+  border-radius: 24px;
+}
+
+/* ---------- the pointer glow (React Bits .edge-light) ---------- */
+.fx-glow > .fx-glow-edge {
+  position: absolute;
+  inset: calc(var(--glow-padding) * -1);
+  z-index: 1;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  -webkit-mask-image: conic-gradient(from var(--cursor-angle) at center, #000 2.5%, transparent 10%, transparent 90%, #000 97.5%);
+  mask-image: conic-gradient(from var(--cursor-angle) at center, #000 2.5%, transparent 10%, transparent 90%, #000 97.5%);
+  transition: opacity 0.6s var(--fx-ease), visibility 0s linear 0.6s;
+}
+.fx-glow > .fx-glow-edge::before {
+  content: "";
+  position: absolute;
+  inset: var(--glow-padding);
+  border-radius: var(--glow-radius);
+}
+.fx-glow--card > .fx-glow-edge::before {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--fx-glow) calc(100% * var(--fx-k-ring)), transparent),
+    inset 0 0 1px 0 color-mix(in srgb, var(--fx-glow) calc(60% * var(--fx-k-ring)), transparent),
+    inset 0 0 3px 0 color-mix(in srgb, var(--fx-glow) calc(50% * var(--fx-k-ring)), transparent),
+    inset 0 0 6px 0 color-mix(in srgb, var(--fx-glow) calc(40% * var(--fx-k-ring)), transparent),
+    inset 0 0 15px 0 color-mix(in srgb, var(--fx-glow) calc(30% * var(--fx-k-ring)), transparent),
+    inset 0 0 25px 2px color-mix(in srgb, var(--fx-glow) calc(20% * var(--fx-k-ring)), transparent),
+    inset 0 0 50px 2px color-mix(in srgb, var(--fx-glow) calc(10% * var(--fx-k-ring)), transparent),
+    0 0 1px 0 color-mix(in srgb, var(--fx-glow) calc(60% * var(--fx-k)), transparent),
+    0 0 3px 0 color-mix(in srgb, var(--fx-glow) calc(50% * var(--fx-k)), transparent),
+    0 0 6px 0 color-mix(in srgb, var(--fx-glow) calc(40% * var(--fx-k)), transparent),
+    0 0 15px 0 color-mix(in srgb, var(--fx-glow) calc(30% * var(--fx-k)), transparent),
+    0 0 25px 2px color-mix(in srgb, var(--fx-glow) calc(20% * var(--fx-k) * var(--fx-wide)), transparent),
+    0 0 50px 2px color-mix(in srgb, var(--fx-glow) calc(10% * var(--fx-k) * var(--fx-wide)), transparent);
+}
+/* hover (set by border-glow.js only under a fine hovering pointer and without reduced motion) */
+.fx-glow.is-glow > .fx-glow-edge {
+  visibility: visible;
+  opacity: calc((var(--edge-proximity) - var(--edge-sensitivity)) / (100 - var(--edge-sensitivity)));
+  transition: opacity 0.24s var(--fx-ease), visibility 0s;
+}
+
+/* ---------- the static faint edge (the touch fallback): full ring, no mask, outer glow only ---------- */
+.fx-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--glow-radius);
+  pointer-events: none;
+  visibility: hidden;
+  transition: none;
+}
+.fx-glow--card::after {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--fx-glow) calc(40% * var(--fx-k)), transparent),
+    0 0 6px 0 color-mix(in srgb, var(--fx-glow) calc(16% * var(--fx-k)), transparent),
+    0 0 15px 0 color-mix(in srgb, var(--fx-glow) calc(10% * var(--fx-k)), transparent),
+    0 0 25px 2px color-mix(in srgb, var(--fx-glow) calc(6% * var(--fx-k)), transparent);
+}
+@media (hover: none), (pointer: coarse) {
+  .fx-glow::after {
+    visibility: visible;
+  }
+}
+
+/* ---------- the pinned story: nothing glows while its caption is off or switching ---------- */
+.captions > .beat-copy:not(.is-on) .fx-glow > .fx-glow-edge,
+.captions > .beat-copy:not(.is-on) .fx-glow::after {
+  visibility: hidden;
+}
+
+/* ---------- reduced motion: fully static (border-glow.js tracks nothing) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .fx-glow > .fx-glow-edge {
+    visibility: hidden !important;
+    transition: none !important;
+  }
+  .fx-glow:hover::after {
+    visibility: visible;
+  }
+}
