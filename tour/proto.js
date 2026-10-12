@@ -311,7 +311,8 @@
   $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
     const next = root.dataset.theme === 'light' ? 'dark' : 'light';
     try { localStorage.setItem('fe-theme', next); } catch (e) { /* storage blocked: this visit still flips */ }
-    if (location.hash === '#light' || location.hash === '#dark') try { history.replaceState(null, '', '#' + next); } catch (e) { /* file:// */ }
+    const f = location.hash.slice(1).split(/[&,]/).filter(Boolean);   // the head script reads a theme among any flags
+    if (f.includes('light') || f.includes('dark')) try { history.replaceState(null, '', '#' + f.map(x => (x === 'light' || x === 'dark' ? next : x)).join('&')); } catch (e) { /* file:// */ }
     setTheme(next);
   }));
   document.addEventListener('keydown', e => {
