@@ -14,9 +14,12 @@ a:hover { text-decoration: underline; }
 button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 8px 14px; }
 button:hover { border-color: var(--muted); }
 button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-.theme-switch { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; }
-.theme-switch button { background: transparent; border: 0; padding: 3px 9px; font-size: 11px; color: var(--muted); }
-.theme-switch button[aria-pressed="true"] { background: var(--line); color: var(--ink); }
+/* the theme toggle (2026-10-12): the site's one round icon button (styles.css .theme-toggle), moon in dark, sun in light */
+.theme-toggle { width: 40px; height: 40px; display: grid; place-items: center; flex: none; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--muted); }
+.theme-toggle:hover { color: var(--ink); background: var(--line); }
+.theme-toggle svg { width: 16px; height: 16px; }
+.theme-toggle .icon-sun, :root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-sun { display: block; }
 .intro { margin: 43px 0 27px; }
 .eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .15em; color: var(--muted); margin: 0 0 9px; }
 h1 { font-size: clamp(32px, 4vw, 46px); line-height: 1.12; font-weight: 550; letter-spacing: -.055em; margin: 0 0 12px; }

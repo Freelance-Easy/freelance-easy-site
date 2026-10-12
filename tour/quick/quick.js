@@ -113,7 +113,6 @@
   }
   function setTheme(theme) {
     root.dataset.theme = theme;
-    $$('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === theme)));
     if (!doc) return;
     if ($('.app', screen) && !reduced) {             // main's app shell crossfades its theme for 240 ms
       doc.documentElement.classList.add('theme-transitioning');
@@ -319,7 +318,13 @@
   };
   $('#play').addEventListener('click', () => Q.playing ? pause() : play());
   $('#replay').addEventListener('click', replay);
-  $$('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
+  // the theme toggle: flips, remembers (fe-theme, shared with the site) and keeps a #light / #dark in the URL in step
+  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
+    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+    try { localStorage.setItem('fe-theme', next); } catch (e) { /* storage blocked: this visit still flips */ }
+    if (flags.has('light') || flags.has('dark')) { flags.delete('light'); flags.delete('dark'); flags.add(next); try { history.replaceState(null, '', '#' + [...flags].join('&')); } catch (e) { /* file:// */ } }
+    setTheme(next);
+  }));
   document.addEventListener('keydown', e => {
     if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('button, a, input, textarea, select, [contenteditable]')) return;
     e.preventDefault();
@@ -348,7 +353,7 @@
     if (reduced) Q.t = Q.total;
     render(true);
   });
-  root.dataset.theme = flags.has('light') ? 'light' : 'dark';
+  root.dataset.theme = root.dataset.theme === 'light' ? 'light' : 'dark';   // the head script's pick (#light, fe-theme, ...)
   root.classList.toggle('embed', embed);
   $('#progress').setAttribute('aria-valuemax', String(TOTAL));
   if (embed) $$('a[data-full-tour]').forEach(a => { a.target = '_top'; });   // in the dialog: leave the homepage for it

@@ -32,10 +32,12 @@
          Files: /assets/story/ (see HANDOFF.md). All fonts are self-hosted; the page makes no third-party request. -->
     <script>
       (function () {
-        // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages), else dark
+        // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
+        // then this visit's theme from /mac (fe-theme-visit, the audio pages' contract), else dark
         var d = document.documentElement, t = null, h = location.hash.slice(1);
         if (h === "dark" || h === "light") t = h;
         if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
         d.setAttribute("data-theme", t === "light" ? "light" : "dark");
         var calm = false;
         try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { calm = false; }
@@ -106,16 +108,10 @@
       <a href="#how" data-tour-quick>How it works</a><!-- NEW COPY (nav label) -->
       <a href="#pricing">Pricing</a>
       <a class="nav-cta" href="#download">Download</a>
-      <div class="theme-switch" role="group" aria-label="Theme">
-        <button type="button" data-set-theme="light" aria-pressed="false" aria-label="Light">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1"/></svg>
-          <span class="lbl">Light</span>
-        </button>
-        <button type="button" data-set-theme="dark" aria-pressed="true" aria-label="Dark">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z"/></svg>
-          <span class="lbl">Dark</span>
-        </button>
-      </div>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
+        <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
+      </button>
     </nav>
   </div>
 </header>

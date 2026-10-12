@@ -82,7 +82,6 @@
   function fitFrame() { frame.style.transform = `scale(${$('#pframe-box').clientWidth / 1440})`; }
   function setTheme(theme) {
     root.dataset.theme = theme;
-    $$('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === theme)));
     if (!doc) return;
     // Main's standalone auth pages change theme immediately; its app shell crossfades for 240ms.
     if ($('.app', screen) && !reduced) {
@@ -308,7 +307,13 @@
   $('#play').addEventListener('click', () => TOUR.playing ? pause() : play());
   $('#replay').addEventListener('click', replay);
   $$('[data-chapter]').forEach(b => b.addEventListener('click', () => jump(+b.dataset.chapter)));
-  $$('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
+  // the theme toggle: flips, remembers (fe-theme, shared with the site) and keeps a #light / #dark in the URL in step
+  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
+    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+    try { localStorage.setItem('fe-theme', next); } catch (e) { /* storage blocked: this visit still flips */ }
+    if (location.hash === '#light' || location.hash === '#dark') try { history.replaceState(null, '', '#' + next); } catch (e) { /* file:// */ }
+    setTheme(next);
+  }));
   document.addEventListener('keydown', e => {
     if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
     e.preventDefault();
@@ -323,7 +328,7 @@
     doc.documentElement.dataset.motion = reduced ? 'reduced' : 'full';
     pause(); jump(TOUR.chapter);
   });
-  root.dataset.theme = location.hash === '#light' ? 'light' : 'dark';
+  root.dataset.theme = root.dataset.theme === 'light' ? 'light' : 'dark';   // the head script's pick (#light, fe-theme, ...)
   frame.addEventListener('load', async () => {
     doc = frame.contentDocument;
     screen = $('#screen', doc); cursor = $('#fe-cursor', doc); ghost = $('#page-ghost', doc);

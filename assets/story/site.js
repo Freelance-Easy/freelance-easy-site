@@ -29,10 +29,11 @@
   const { css, div, clamp, mix, E, P, rgba, drawShape, drawInk } = FX;
 
   /* ---------------- theme: dark by default (Daniel, 2026-10-05); #dark / #light; remembered (try/catch) ---------------- */
+  // (2026-10-12, Daniel: "one button, not a slider pill") one toggle, [data-theme-toggle], the audio pages' button; the
+  // head script picks the first theme (#dark / #light, then fe-theme, then fe-theme-visit, else dark)
   const KEY = "fe-theme";
   const theme = () => (doc.getAttribute("data-theme") === "light" ? "light" : "dark");
   function syncSwitch() {
-    for (const b of $$("[data-set-theme]")) b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme()));
     const m = $('meta[name="theme-color"]');
     if (m) m.setAttribute("content", theme() === "dark" ? "#080a0f" : "#f3f3f0");
   }
@@ -67,9 +68,10 @@
       if (themeVT === vt) themeVT = null;
     });
   }
-  for (const b of $$("[data-set-theme]")) b.addEventListener("click", () => {
-    themeReveal(b, b.dataset.setTheme);
-    try { history.replaceState(null, "", "#" + b.dataset.setTheme); } catch (e) { /* file:// may refuse */ }
+  for (const b of $$("[data-theme-toggle]")) b.addEventListener("click", () => {
+    const next = theme() === "light" ? "dark" : "light";
+    themeReveal(b, next);
+    try { history.replaceState(null, "", "#" + next); } catch (e) { /* file:// may refuse */ }
   });
   window.addEventListener("hashchange", () => {
     const h = location.hash.slice(1);

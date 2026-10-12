@@ -288,45 +288,39 @@ p {
   background: var(--bg-2);
   box-shadow: inset 0 0 0 1px var(--line-3);
 }
-/* the theme switch: an obvious two-segment control, the raised thumb on the active side */
-.theme-switch {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 10px;
-  padding: 3px;
+/* the theme toggle (2026-10-12, Daniel: "one button, not a slider pill"): the audio pages' round icon button
+   (styles.css .theme-toggle), the moon in dark, the sun in light */
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  margin-left: 4px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--text-0) 6%, transparent);
-  box-shadow: inset 0 0 0 1px var(--line-1);
-}
-.theme-switch button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 11px;
-  border-radius: var(--r-pill);
-  font-size: 13px;
-  font-weight: 560;
+  background: transparent;
   color: var(--text-2);
-  transition: color 0.15s, background 0.2s, box-shadow 0.2s;
+  transition: color 0.15s, background 0.15s;
 }
-.theme-switch button svg {
-  width: 14px;
-  height: 14px;
-}
-.theme-switch button[aria-pressed="true"] {
+.theme-toggle:hover {
   color: var(--text-0);
-  background: var(--bg-1);
-  box-shadow: 0 0 0 1px var(--line-1), 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-[data-theme="dark"] .theme-switch button[aria-pressed="true"] {
   background: var(--bg-3);
-  box-shadow: 0 0 0 1px var(--line-2), 0 1px 3px rgba(0, 0, 0, 0.4);
 }
-.theme-switch button:hover {
-  color: var(--text-0);
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
 }
-.no-js .theme-switch {
+.theme-toggle .icon-sun {
+  display: none;
+}
+[data-theme="light"] .theme-toggle .icon-sun {
+  display: block;
+}
+[data-theme="light"] .theme-toggle .icon-moon {
+  display: none;
+}
+.no-js .theme-toggle {
   display: none;
 }
 
@@ -1958,14 +1952,10 @@ details.disclosure p a {
   .nav a:not(.nav-cta) {
     display: none;
   }
-  .theme-switch {
-    margin-left: 6px;
-  }
-  .theme-switch button {
-    padding: 0 9px;
-  }
-  .theme-switch button .lbl {
-    display: none;
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    margin-left: 2px;
   }
   .stage {
     aspect-ratio: 5 / 6;
@@ -2186,17 +2176,12 @@ html.on-band:where(:not(.past-band)) .site-header .nav a {
 html.on-band:where(:not(.past-band)) .site-header .nav a.nav-cta {
   box-shadow: inset 0 0 0 1px var(--ride-line);
 }
-html.on-band:where(:not(.past-band)) .theme-switch {
-  background: color-mix(in srgb, var(--ride-text) 9%, transparent);
-  box-shadow: inset 0 0 0 1px var(--ride-line);
-}
-html.on-band:where(:not(.past-band)) .theme-switch button {
+html.on-band:where(:not(.past-band)) .theme-toggle {
   color: var(--ride-text-2);
 }
-html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
+html.on-band:where(:not(.past-band)) .theme-toggle:hover {
   color: var(--ride-text);
   background: color-mix(in srgb, var(--ride-text) 14%, transparent);
-  box-shadow: none;
 }
 /* the page-level layer: the card that leaves the stage to become the price card, and the real FE mark */
 .pin-over {
@@ -2658,11 +2643,11 @@ html.on-band:where(:not(.past-band)) .theme-switch button[aria-pressed="true"] {
     line-height: 1.4;
   }
   /* (Astra pA #16, Sol #16) 44 px hit areas for the header's controls; the pills keep their size */
-  .theme-switch button,
+  .theme-toggle,
   .nav a.nav-cta {
     position: relative;
   }
-  .theme-switch button::after,
+  .theme-toggle::after,
   .nav a.nav-cta::after {
     content: "";
     position: absolute;

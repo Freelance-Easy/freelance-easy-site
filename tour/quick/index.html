@@ -4,6 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
+  <script>
+    (function () {
+      // the theme, before the first paint (the site's contract, as on /audio and the homepage): #light / #dark first
+      // (the homepage's dialog passes its theme so), then the visitor's stored choice (fe-theme), then this visit's
+      // theme from /mac (fe-theme-visit), else dark
+      var t = null, f = location.hash.slice(1).split(/[&,]/);
+      if (f.indexOf("light") >= 0) t = "light"; else if (f.indexOf("dark") >= 0) t = "dark";
+      if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+      if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+      document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+    })();
+  </script>
   <!-- NEW COPY (page title, from the homepage button) -->
   <title>Watch the 25-second tour · Freelance Easy</title>
   <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
@@ -19,10 +31,10 @@
   <main class="tour-page">
     <header class="tour-header">
       <a class="back" href="/">← Back to the homepage</a>
-      <div class="theme-switch" role="group" aria-label="Colour theme">
-        <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
-        <button type="button" data-theme-set="dark" aria-pressed="true">Dark</button>
-      </div>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
+        <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
+      </button>
     </header>
     <section class="intro" aria-labelledby="tour-title">
       <p class="eyebrow">Freelance Easy · Desktop app</p>
