@@ -52,6 +52,12 @@
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
 
+# The site effects (2026-10-12: header blur, price-card glow, picture reveal) keep
+# their names across deploys like the story's CSS/JS, so they revalidate too.
+/assets/fx/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
 # CSS/JS revalidate on every load (an ETag 304 when unchanged), so a deploy
 # shows on a plain reload. An hour of max-age left returning visitors on the
 # old stylesheet against new HTML.
