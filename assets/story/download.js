@@ -103,8 +103,7 @@
   // device's (an iPad can't install either).
   var PHONE_MQ = "(max-width: 639px), (pointer: coarse) and (max-height: 599px)";
 
-  function headerLabel() {
-    var a = document.querySelector(".site-header .nav-cta");
+  function headerLabel(a) {
     if (!a || !window.matchMedia) return;
     var mq = window.matchMedia(PHONE_MQ);
     function set() {
@@ -116,7 +115,90 @@
     else if (mq.addListener) mq.addListener(set);
   }
 
+  // (A9) a single Download link (the homepage header's): a Mac or Windows visitor gets /dl/<os>/<campaign>, which the
+  // site answers as an attachment (worker.js's Mac proxy; _redirects for Windows), so the file downloads and the page
+  // stays. The note beside it keeps the platform next to the button and, once clicked, the status line under the
+  // header says the download is starting, with the requirement or the Windows warning and the install help (R5: they
+  // stay next to every download). Phones keep "send to computer": the link still jumps to the download block, whose
+  // button shares the page, and on a phone it reads "Get it on Mac". An OS the placement doesn't offer (Linux, or
+  // Windows on a Mac-only page) keeps the plain link. Options: placement, platforms (["mac"] for a Mac-only page);
+  // without them, data-placement and data-platforms="mac,win" (the default).
+  var NOTES = {
+    mac: "Apple Silicon Macs (M1 or later)" /* NEW COPY */,
+    win: "Windows 10 or 11, 64-bit" /* NEW COPY */,
+  };
+  var STATUS = {
+    mac: {
+      text: "Your download is starting. Freelance Easy runs on Apple Silicon Macs (M1 or later) with macOS 12 or later. Intel Macs aren't supported." /* NEW COPY */,
+      href: "/install#mac",
+    },
+    win: {
+      text: "Your download is starting. For Windows 10 and 11, 64-bit. The installer isn't code-signed yet, so Windows shows a security warning the first time you open it." /* NEW COPY */,
+      href: "/install#windows",
+    },
+  };
+  var HELP = "Install help" /* NEW COPY */;
+  var CLOSE = "Close" /* NEW COPY (the close button's accessible name) */;
+
+  function platformList(value) {
+    var list = (Array.isArray(value) ? value : String(value || "mac,win").split(","))
+      .map(function (s) {
+        return String(s).trim().toLowerCase();
+      })
+      .filter(function (s) {
+        return s === "mac" || s === "win";
+      });
+    return list.length ? list : ["mac", "win"];
+  }
+
+  function showStatus(os, placement) {
+    var box = document.querySelector('[data-dl-status][data-for="' + placement + '"]');
+    if (!box) return;
+    var s = STATUS[os];
+    box.textContent = "";
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(s.text + " "));
+    var help = document.createElement("a");
+    help.href = s.href;
+    help.textContent = HELP;
+    p.appendChild(help);
+    var close = document.createElement("button");
+    close.type = "button";
+    close.setAttribute("aria-label", CLOSE);
+    close.textContent = "×";
+    close.addEventListener("click", function () {
+      box.hidden = true;
+    });
+    box.appendChild(p);
+    box.appendChild(close);
+    box.setAttribute("data-os", os);
+    box.hidden = false;
+  }
+
+  function wireLink(a, os, campaign, opts) {
+    opts = opts || {};
+    var placement = opts.placement || a.getAttribute("data-placement") || "header";
+    var platforms = platformList(opts.platforms || a.getAttribute("data-platforms"));
+    if (os === "mobile") {
+      headerLabel(a);
+      return;
+    }
+    if (platforms.indexOf(os) < 0) return;
+    a.setAttribute("data-platform", os);
+    a.setAttribute("href", "/dl/" + os + "/" + campaign);
+    var note = document.querySelector('[data-dl-note][data-for="' + placement + '"]');
+    if (note) {
+      note.textContent = NOTES[os];
+      note.hidden = false;
+    }
+    a.addEventListener("click", function () {
+      track("Download Click", { os: os, campaign: campaign, page: pageId(), placement: placement });
+      showStatus(os, placement);
+    });
+  }
+
   function wire(block, os, campaign) {
+    if (block.tagName === "A") return wireLink(block, os, campaign);
     var placement = block.getAttribute("data-placement") || "";
     var primary = block.querySelector('[data-role="primary"]');
     var alt = block.querySelector('[data-role="alt"]');
@@ -198,9 +280,18 @@
     document.querySelectorAll("[data-dl]").forEach(function (block) {
       wire(block, os, campaign);
     });
-    // (piece M) the header's "Download" says where the app goes, on a phone only (it still jumps to the download block)
-    if (os === "mobile") headerLabel();
+    // (piece M) the header's "Download" says where the app goes, on a phone only (it still jumps to the download block);
+    // (A9) wireLink does it for a [data-dl] header link, this covers a header without one
+    var cta = document.querySelector(".site-header .nav-cta");
+    if (os === "mobile" && cta && !cta.hasAttribute("data-dl")) headerLabel(cta);
   }
+
+  // (A9) for a page that wires its own link, e.g. a Mac-only page: FEDownload.wire(el, {placement, platforms: ["mac"]})
+  window.FEDownload = {
+    wire: function (el, opts) {
+      if (el) wireLink(el, detectPlatform(), campaignId(), opts);
+    },
+  };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

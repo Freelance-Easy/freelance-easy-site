@@ -13,7 +13,13 @@ events with what the weekly report expects:
     page's own label;
   * Download Click carries exactly {os, campaign, page, placement};
   * the Windows link on Mac-only pages sends nothing;
-  * no other analytics event fires (the compatibility help is opened too).
+  * no other analytics event fires (the compatibility help is opened too);
+  * the homepage header's Download (A9), as a Mac, a Windows and a phone
+    visitor: /dl/<os>/<campaign> with placement "header" and a status line
+    linking the install help, or on a phone the jump to the download block,
+    labelled "Get it on Mac", and no event; a Mac-only link
+    (FEDownload.wire, platforms ["mac"]) downloads for a Mac and stays the
+    plain link for Windows.
 
 It also checks the Worker's analytics route: on a preview, /js/script.js must
 answer the empty "analytics off here" script (previews never count); a local
@@ -139,6 +145,101 @@ def check_cases(browser, base: str, suffix: str) -> tuple[int, int]:
     return failures, checked
 
 
+# (A9) the homepage header's Download, per visitor: (name, UA, navigator.platform, phone?, query, header href, label,
+# events, status line: (install link, words it must show) or None). The click is cancelled like the others.
+MAC_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36"
+WIN_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36"
+PHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+
+
+def hev(os_: str, campaign: str) -> list:
+    return ["Download Click", {"os": os_, "campaign": campaign, "page": "home", "placement": "header"}]
+
+
+HEADER_CASES = [
+    ("mac", MAC_UA, "MacIntel", False, "utm_campaign=f1", "/dl/mac/f1", "Download", [hev("mac", "f1")],
+     ("/install#mac", ["Apple Silicon", "M1 or later"])),
+    ("win", WIN_UA, "Win32", False, "", "/dl/win/site", "Download", [hev("win", "site")],
+     ("/install#windows", ["Windows 10 and 11", "security warning"])),
+    ("phone", PHONE_UA, "iPhone", True, "", "#download", "Get it on Mac", [], None),
+]
+
+# (A9) a Mac-only placement (G1's platforms: ["mac"]): wired on a link added to the homepage. (visitor, want href)
+PLATFORM_CASES = [("mac", MAC_UA, "MacIntel", "/dl/mac/site"), ("win", WIN_UA, "Win32", "#download")]
+WIRE_MAC_ONLY = """() => {
+  var a = document.createElement('a');
+  a.href = '#download'; a.id = 'mac-only-fixture'; a.textContent = 'Download';
+  document.body.appendChild(a);
+  if (!window.FEDownload) return 'no FEDownload.wire';
+  window.FEDownload.wire(a, { placement: 'fixture', platforms: ['mac'] });
+  return a.getAttribute('href');
+}"""
+
+
+def visitor(browser, ua: str, platform: str, phone: bool):
+    if phone:
+        context = browser.new_context(user_agent=ua, viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+    else:
+        context = browser.new_context(user_agent=ua, viewport={"width": 1280, "height": 900})
+    context.add_init_script(f"Object.defineProperty(Navigator.prototype, 'platform', {{ get: () => {json.dumps(platform)} }});")
+    context.add_init_script(RECORDER)
+    return context
+
+
+def check_header(browser, base: str) -> tuple[int, int]:
+    failures = checked = 0
+    for name, ua, platform, phone, query, want_href, want_label, want_events, want_status in HEADER_CASES:
+        label = f"header [{name}] /{'?' + query if query else ''}"
+        context = visitor(browser, ua, platform, phone)
+        page = context.new_page()
+        page.goto(base + "/" + ("?" + query if query else ""), wait_until="load")
+        cta = page.locator(".site-header .nav-cta")
+        got_href = cta.get_attribute("href")
+        got_label = cta.inner_text().strip()
+        cta.click()
+        page.wait_for_timeout(100)
+        got_events = page.evaluate("window.__calls")
+        problems = []
+        if got_href != want_href:
+            problems.append(f"href {got_href!r}, want {want_href!r}")
+        if got_label != want_label:
+            problems.append(f"label {got_label!r}, want {want_label!r}")
+        if got_events != want_events:
+            problems.append(f"events {got_events}, want {want_events}")
+        status = page.locator('.site-header [data-dl-status][data-for="header"]')
+        if want_status:
+            link, words = want_status
+            if not status.count() or not status.is_visible():
+                problems.append("no visible status line after the click")
+            else:
+                text = status.inner_text()
+                problems += [f"status line lacks {w!r}" for w in words if w not in text]
+                if status.locator(f'a[href="{link}"]').count() != 1:
+                    problems.append(f"status line has no link to {link}")
+        elif status.count() and status.is_visible():
+            problems.append("a status line shows on a phone")
+        if problems:
+            failures += 1
+            print(f"FAIL {label}: " + "; ".join(problems))
+        else:
+            print(f"ok   {label}: {got_href} {got_label!r}, {len(got_events)} event(s)")
+        checked += 1
+        context.close()
+    for name, ua, platform, want_href in PLATFORM_CASES:
+        context = visitor(browser, ua, platform, False)
+        page = context.new_page()
+        page.goto(base + "/", wait_until="load")
+        got = page.evaluate(WIRE_MAC_ONLY)
+        checked += 1
+        if got != want_href:
+            failures += 1
+            print(f"FAIL platforms ['mac'] [{name}]: {got!r}, want {want_href!r}")
+        else:
+            print(f"ok   platforms ['mac'] [{name}]: {got}")
+        context.close()
+    return failures, checked
+
+
 def check_off_route(browser, base: str, local: bool) -> int:
     # A plain request, like the page's own <script src>: Cloudflare answers a
     # top-level navigation to /js/script.js with the 404 page without running
@@ -244,6 +345,9 @@ def main() -> int:
         suffix = "" if first and first.status == 200 else ".html"
         probe.close()
         failures, checked = check_cases(browser, base, suffix)
+        h_failures, h_checked = check_header(browser, base)
+        failures += h_failures
+        checked += h_checked
         failures += check_off_route(browser, base, local)
         if tracker:
             failures += check_real_tracker(browser, base, suffix, tracker, public)

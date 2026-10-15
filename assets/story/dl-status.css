@@ -1,0 +1,78 @@
+/* Freelance Easy — the homepage header Download's platform note and status line (A9, 2026-10-14).
+   download.js shows them to a Mac or Windows visitor only: the note beside the button (the platform stays next to the
+   download, R5) and the status line under the header once the download starts (the requirement or the Windows
+   warning, and the install help). Tokens only (site.css). The status line hangs out of the header's flow: site.js
+   measures the header's height, which must not change. */
+.dl-note[hidden],
+.dl-header-status[hidden] {
+  display: none;
+}
+.dl-note {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text-3);
+  white-space: nowrap;
+  margin: 0 2px 0 10px;
+}
+.dl-header-status {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: max(var(--pad), calc((100% - var(--shell)) / 2 + var(--pad)));
+  max-width: min(420px, calc(100% - 2 * var(--pad)));
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 8px 10px 14px;
+  border-radius: 12px;
+  background: var(--bg-1);
+  box-shadow: var(--shadow-card);
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+.dl-header-status p {
+  margin: 0;
+}
+.site-header .dl-header-status a {
+  color: var(--text-0);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--line-3);
+  white-space: nowrap;
+}
+.site-header .dl-header-status a:hover {
+  text-decoration-color: currentColor;
+}
+.dl-header-status button {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: -2px 0 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-3);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dl-header-status button:hover {
+  color: var(--text-0);
+  background: var(--bg-2);
+}
+/* while the Ride's band is the page the header takes its colour (site.css); the note follows it */
+html.on-band:where(:not(.past-band)) .dl-note {
+  color: var(--ride-text-2);
+}
+/* a narrow window: the note would crowd the nav; the status line still carries the platform after the click */
+@media (max-width: 759px) {
+  .dl-note {
+    display: none;
+  }
+}
