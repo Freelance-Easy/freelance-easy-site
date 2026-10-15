@@ -75,11 +75,18 @@ class _LocalRedirects(urllib.request.HTTPRedirectHandler):
 _OPENER = urllib.request.build_opener(_LocalRedirects)
 
 
+# Routes that answer with an installer or a release redirect (_redirects + worker.js): the
+# harness never requests them, so a local Wrangler cannot be made to proxy a real download.
+_DOWNLOAD_RX = re.compile(r"^/(dl(/|$)|download(/|$)|releases(/|$))")
+
+
 def _get(url: str):
     """(status, body bytes) for a local URL. Redirects are followed only to local hosts;
     a redirect to anything else raises Fail and nothing external is requested."""
     if urlparse(url).hostname not in LOCAL:
         raise Fail(f"refusing non-local URL: {url}")
+    if _DOWNLOAD_RX.match(urlparse(url).path):
+        raise Fail(f"refusing to fetch a download route: {url}")
     try:
         with _OPENER.open(url, timeout=15) as r:
             return r.status, r.read()
@@ -406,6 +413,10 @@ def check_LINKS(browser, url):
                 ok += 1
             continue
         path = urlparse(target).path
+        # classify BEFORE any fetch: a routed path (_redirects / worker.js) is never requested
+        if _DOWNLOAD_RX.match(path) or any(r.match(path) for r in rules):
+            routed.add(path)
+            continue
         cands = [target, target.rstrip("/") + ".html", target.rstrip("/") + "/index.html"]
         try:
             found200 = any(_get(c)[0] == 200 for c in cands)

@@ -204,6 +204,10 @@ STUB_PAGES = {
                  "<a href='/page'>home</a><button>ok</button></main></body></html>",
     "/css": "<!doctype html><html lang=en><title>c</title><link rel=stylesheet href='/a.css'>"
             "<body><main><h1 style='color:#ff00aa'>Styled</h1><a href='/page'>x</a></main></body></html>",
+    "/routes": "<!doctype html><html lang=en><title>r</title><body><main><h1>Routes</h1>"
+               "<a href='/dl/mac/site'>m</a><a href='/dl/win/site'>w</a>"
+               "<a href='/download/win'>d</a><a href='/releases'>r</a>"
+               "<a href='/page'>ordinary</a></main></body></html>",
     "/a.css": "@import url('/b.css');\n.ok { color: var(--app-fg); }\n",
     "/b.css": ".imported { color: #123456; }\n",
 }
@@ -253,6 +257,24 @@ def test_links_refuse_redirect_to_external_host(stub_url):
     assert r.returncode == 1, r.stdout + r.stderr
     assert "refusing redirect to non-local host: http://example.invalid/never-fetched" in r.stdout
     assert hits.count("/go") >= 1  # the local hop was made; the external target never was (no DNS, no fetch)
+
+
+def test_links_never_request_download_routes(stub_url):
+    url, hits = stub_url
+    hits.clear()
+    r = fidelity(url + "/routes", "LINKS")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "4 routed" in r.stdout, r.stdout
+    bad = [h for h in hits if h.startswith(("/dl/", "/download")) or h == "/releases"]
+    assert bad == [], f"download routes were requested: {bad}"
+
+
+def test_get_refuses_download_routes():
+    sys.path.insert(0, str(CHECKS))
+    import fidelity as f
+    for p in ("/dl/mac/site", "/download/win", "/download", "/releases"):
+        with pytest.raises(f.Fail, match="refusing to fetch a download route"):
+            f._get("http://127.0.0.1:1" + p)
 
 
 @pytest.mark.parametrize("check", ["F1", "F3", "F5", "F7", "F8", "F10", "F11", "LINKS"])
