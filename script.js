@@ -28,17 +28,50 @@
   // ---- Theme ----
   var STORAGE_KEY = "fe-theme";
   var root = document.documentElement;
+  // The ad pages (/mac, /mac-audio, /audio) load the shared theme module
+  // (assets/shared/theme.js) just before this file: it owns data-theme (always
+  // an explicit "dark" or "light"), the toggle, the stored choice and the
+  // circle reveal. The pages that don't load it (install, privacy, terms and
+  // the dated archives, until B7) keep applyTheme below unchanged (CF-11).
+  var FET = window.FETheme || null;
 
   function applyTheme(t) {
     if (t === "light") root.setAttribute("data-theme", "light");
     else root.removeAttribute("data-theme");
   }
+
+  // Both theme-color metas take the shown theme's colour after a switch (each
+  // keeps its own colour, by its media query, until then).
+  var themeColors = {};
+  document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+    var media = m.getAttribute("media") || "";
+    if (/dark/.test(media)) themeColors.dark = m.getAttribute("content");
+    else if (/light/.test(media)) themeColors.light = m.getAttribute("content");
+  });
+  function syncThemeColor(t) {
+    var c = themeColors[t];
+    if (!c) return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+      m.setAttribute("content", c);
+    });
+  }
+
   // Each page's head script has already chosen the theme before the first paint
   // (the visitor's stored choice, else the page's default: dark, or light on
-  // /mac); keep it rather than recomputing.
-  applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
+  // /mac); keep it rather than recomputing. The ad pages read no theme hash.
+  if (FET) {
+    document.addEventListener("fe:themechange", function (e) {
+      var t = e.detail && e.detail.theme;
+      syncThemeColor(t);
+      restartDemos(syncDemoTheme(t));
+    });
+    FET.init({ hashPolicy: "none" });
+  } else {
+    applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
+  }
 
   function bindToggle() {
+    if (FET) return; // FETheme handles the toggle's click
     var btn = document.querySelector("[data-theme-toggle]");
     if (!btn) return;
     btn.addEventListener("click", function () {
