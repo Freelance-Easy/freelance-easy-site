@@ -98,6 +98,10 @@ LEFTOVERS = (r"on your Mac(?! or PC)", r"Mac-only", r"single-platform")
 
 DERIVED = {"audio.html": "mac-audio.html"}
 
+# The generator owns a fixed list of outputs: every declared page needs src/pages/<name>, and a
+# source with no declared output is refused, so a deleted or stray source never slips past --check.
+PAGES = ("index.html", "install.html", "privacy.html", "terms.html", "404.html", "mac.html", "mac-audio.html")
+
 
 class BuildError(Exception):
     pass
@@ -113,12 +117,35 @@ def read_text(path: pathlib.Path) -> str:
     return data.decode("utf-8")
 
 
-def render_partial(src: pathlib.Path, rel: str, args: str, where: str) -> str:
-    path = (src / rel).resolve()
-    if src.resolve() not in path.parents:
+def source_file(src: pathlib.Path, path: pathlib.Path, where: str) -> pathlib.Path:
+    """A source must be a regular file inside src/: no symlink anywhere below src/, and its
+    strictly resolved path must stay inside the resolved src/ folder."""
+    root = src.resolve(strict=True)
+    try:
+        rel = path.relative_to(src)
+    except ValueError:
+        raise BuildError(f"{where}: {path} is outside the source folder") from None
+    if ".." in rel.parts:
         raise BuildError(f"{where}: include path leaves the source folder: {rel}")
+    node = src
+    for part in rel.parts:
+        node = node / part
+        if node.is_symlink():
+            raise BuildError(f"{where}: {node} is a symlink; sources must be regular files inside {src}")
     if not path.is_file():
+        raise BuildError(f"{where}: no such file: {rel}")
+    resolved = path.resolve(strict=True)
+    if root not in resolved.parents:
+        raise BuildError(f"{where}: {rel} resolves outside the source folder")
+    return resolved
+
+
+def render_partial(src: pathlib.Path, rel: str, args: str, where: str) -> str:
+    if ".." in pathlib.PurePosixPath(rel).parts:
+        raise BuildError(f"{where}: include path leaves the source folder: {rel}")
+    if not (src / rel).is_file() and not (src / rel).is_symlink():
         raise BuildError(f"{where}: no such partial: {rel}")
+    path = source_file(src, src / rel, where)
     text = read_text(path)
     if INCLUDE_ANY.search(text):
         raise BuildError(f"{rel}: partials cannot include other partials")
@@ -127,7 +154,12 @@ def render_partial(src: pathlib.Path, rel: str, args: str, where: str) -> str:
         key = m.group(1)
         if key in values:
             raise BuildError(f"{where}: {key} given twice")
-        values[key] = m.group(2) if m.group(2) is not None else m.group(3)
+        value = m.group(2) if m.group(2) is not None else m.group(3)
+        # values are refused, not re-validated after substitution: a value can never carry a
+        # comment or an include directive into the page
+        if "<!--" in value or "-->" in value or "#include" in value:
+            raise BuildError(f"{where}: the value for {key} may not contain '<!--', '-->' or '#include'")
+        values[key] = value
     used: set[str] = set()
 
     def fill(m: re.Match) -> str:
@@ -146,7 +178,8 @@ def render_partial(src: pathlib.Path, rel: str, args: str, where: str) -> str:
 
 def render_page(src: pathlib.Path, page: pathlib.Path) -> str:
     out: list[str] = []
-    for n, line in enumerate(read_text(page).splitlines(keepends=True), 1):
+    path = source_file(src, page, page.name)
+    for n, line in enumerate(read_text(path).splitlines(keepends=True), 1):
         where = f"{page.name}:{n}"
         m = INCLUDE_LINE.match(line)
         if m:
@@ -177,15 +210,22 @@ def derive_audio(html: str) -> str:
 
 def build(src: pathlib.Path) -> dict[str, bytes]:
     pages_dir = src / "pages"
-    pages = sorted(pages_dir.glob("*.html"))
-    if not pages:
-        raise BuildError(f"no pages in {pages_dir}")
-    html = {p.name: render_page(src, p) for p in pages}
+    if not src.is_dir() or not pages_dir.is_dir():
+        raise BuildError(f"no pages folder: {pages_dir}")
+    if pages_dir.is_symlink():
+        raise BuildError(f"{pages_dir} is a symlink; sources must be regular files inside {src}")
+    found = sorted(p.name for p in pages_dir.iterdir() if p.name.endswith(".html"))
+    derived = sorted(set(found) & set(DERIVED))
+    if derived:
+        raise BuildError(f"{', '.join(derived)} is derived, not built from a source; remove it from {pages_dir}")
+    missing = sorted(set(PAGES) - set(found))
+    if missing:
+        raise BuildError(f"declared pages with no source in {pages_dir}: {', '.join(missing)}")
+    stray = sorted(set(found) - set(PAGES))
+    if stray:
+        raise BuildError(f"page sources with no declared output (add them to PAGES): {', '.join(stray)}")
+    html = {name: render_page(src, pages_dir / name) for name in PAGES}
     for name, base in DERIVED.items():
-        if name in html:
-            raise BuildError(f"{name} is derived from {base}; remove {pages_dir / name}")
-        if base not in html:
-            raise BuildError(f"{name} is derived from {base}, which is missing from {pages_dir}")
         html[name] = derive_audio(html[base])
     return {name: text.encode("utf-8") for name, text in html.items()}
 
