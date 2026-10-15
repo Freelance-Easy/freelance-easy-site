@@ -72,12 +72,15 @@ def lint_text(text: str, name: str = "<css>", allow: list[str] | None = None) ->
         src_line = src_lines[line0] if line0 < len(src_lines) else ""
         if "token-lint: allow" in ctx or any(a in src_line for a in allow):
             continue
-        if is_tokens and prop.startswith("--"):
-            v = value.strip()
-            if not (v.startswith("var(--app-") or "SITE-ONLY" in ctx or "DEVIATION:" in ctx):
-                out.append({"file": name, "line": line0 + 1, "rule": "site-tokens-line",
-                            "text": body.strip()[:100]})
+        if (is_tokens and prop.startswith("--")
+                and not (value.strip().startswith("var(--app-")
+                         or "SITE-ONLY" in ctx or "DEVIATION:" in ctx)):
+            out.append({"file": name, "line": line0 + 1, "rule": "site-tokens-line",
+                        "text": body.strip()[:100]})
             continue
+        if is_tokens and prop.startswith("--") and not value.strip().startswith("var(--app-"):
+            continue  # marked SITE-ONLY / DEVIATION: an allowed raw value
+        # raw values are checked everywhere, including fallbacks inside var(--app-x, #fff)
         v = re.sub(r"url\([^)]*\)", "url()", value)  # url(#frag) is not a colour
         for rule, rx in RAW:
             for hit in rx.finditer(v):

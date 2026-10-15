@@ -41,7 +41,8 @@ import token_lint  # noqa: E402
 ROOT = HERE.parent.parent
 LOCAL = {"127.0.0.1", "localhost"}
 PHONE_WIDTHS = (360, 390, 430)
-LAYOUT_SELECTORS = "header, [data-rail], [data-stage], .rail, .stage"
+LAYOUT_SELECTORS = ("header, .site-header, .theme-toggle, .story-nav, .nav, .nav-cta, "
+                    "[data-rail], [data-stage], .rail, .stage")
 PRIMARY_SELECTOR = ".btn-primary, [data-primary], [data-role=primary]"
 
 
@@ -60,14 +61,62 @@ def _new_page(browser, width=1280, height=900, **kw):
     return ctx, ctx.new_page(), blocked
 
 
+class Fail(Exception):
+    """A check failed for a reason other than a rule violation (bad status, nothing to check, ...)."""
+
+
+class _LocalRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if urlparse(newurl).hostname not in LOCAL:
+            raise Fail(f"refusing redirect to non-local host: {newurl}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_LocalRedirects)
+
+
 def _get(url: str):
-    """(status, body bytes) for a local URL; never used on external hosts."""
-    assert urlparse(url).hostname in LOCAL, url
+    """(status, body bytes) for a local URL. Redirects are followed only to local hosts;
+    a redirect to anything else raises Fail and nothing external is requested."""
+    if urlparse(url).hostname not in LOCAL:
+        raise Fail(f"refusing non-local URL: {url}")
     try:
-        with urllib.request.urlopen(url, timeout=15) as r:
+        with _OPENER.open(url, timeout=15) as r:
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, b""
+
+
+def _goto(page, url: str):
+    """Navigate; fail on a non-2xx main document or an empty body."""
+    resp = page.goto(url, wait_until="load")
+    if resp is None or not (200 <= resp.status < 300):
+        raise Fail(f"main document status {resp.status if resp else 'none'} for {url}")
+    if not page.evaluate("document.body && (document.body.innerText.trim().length > 0 "
+                         "|| document.body.querySelector('img,svg,canvas,video') !== null)"):
+        raise Fail(f"nothing to check: empty document at {url}")
+    return resp
+
+
+_IMPORT_RX = re.compile(r"@import\s+(?:url\(\s*)?[\"']?([^\"')\s;]+)", re.I)
+
+
+def _collect_css(href: str, seen: set, found: list, depth: int = 0):
+    if href in seen:
+        return
+    seen.add(href)
+    if urlparse(href).hostname not in LOCAL:
+        found.append({"file": href, "line": 0, "rule": "third-party-css", "text": href})
+        return
+    status, body = _get(href)
+    if status != 200:
+        found.append({"file": href, "line": 0, "rule": "css-unreachable", "text": str(status)})
+        return
+    text = body.decode("utf-8", "replace")
+    found += token_lint.lint_text(text, urlparse(href).path)
+    if depth < 5:
+        for imp in _IMPORT_RX.findall(text):
+            _collect_css(urljoin(href, imp), seen, found, depth + 1)
 
 
 # ---------------------------------------------------------------- checks ----
@@ -75,33 +124,39 @@ def _get(url: str):
 def check_F1(browser, url):
     ctx, page, _ = _new_page(browser)
     try:
-        page.goto(url, wait_until="load")
+        _goto(page, url)
         sheets = page.evaluate(
             "Array.from(document.querySelectorAll('link[rel~=stylesheet]')).map(l => l.href)")
         inline = page.evaluate(
             "Array.from(document.querySelectorAll('style')).map(s => s.textContent)")
+        attrs = page.evaluate(
+            "Array.from(document.querySelectorAll('[style]')).map(e => e.getAttribute('style'))")
     finally:
         ctx.close()
-    found = []
+    if not (sheets or inline or attrs):
+        raise Fail("nothing to check: the page has no stylesheet, <style> or style attribute")
+    found: list[dict] = []
+    seen: set = set()
     for href in sheets:
-        if urlparse(href).hostname not in LOCAL:
-            found.append({"file": href, "line": 0, "rule": "third-party-css", "text": href})
-            continue
-        status, body = _get(href)
-        if status != 200:
-            found.append({"file": href, "line": 0, "rule": "css-unreachable", "text": str(status)})
-            continue
-        found += token_lint.lint_text(body.decode("utf-8", "replace"), urlparse(href).path)
+        _collect_css(href, seen, found)
     for i, css in enumerate(inline):
         found += token_lint.lint_text(css, f"<style #{i}>")
-    return not found, [f"{v['file']}:{v['line']} {v['rule']} {v['text']}" for v in found[:20]]
+        for imp in _IMPORT_RX.findall(css):
+            _collect_css(urljoin(url, imp), seen, found, 1)
+    for i, a in enumerate(attrs):
+        found += token_lint.lint_text("x{" + a + "}", f"<style attr #{i}>")
+    return (not found, [f"{len(found)} violation(s)"] + [
+        f"{v['file']}:{v['line']} {v['rule']} {v['text']}" for v in found[:20]], len(found))
 
 
 def check_F3(browser, url):
     found = []
     for theme in ("dark", "light"):
         for w in (390, 1440):
-            found += run_axe.run_axe(browser, url, theme, w)
+            try:
+                found += run_axe.run_axe(browser, url, theme, w)
+            except RuntimeError as e:
+                raise Fail(str(e))
     return not found, [f"{v['impact']} {v['id']} x{v['nodes']} @{v['width']} {v['theme']}"
                        for v in found]
 
@@ -112,7 +167,7 @@ def check_F5(browser, url):
     page.on("request", lambda r: fonts.append(r.url) if (
         r.resource_type == "font" or re.search(r"\.(woff2?|ttf|otf)(\?|$)", r.url)) else None)
     try:
-        page.goto(url, wait_until="load")
+        _goto(page, url)
         page.wait_for_timeout(800)
     finally:
         ctx.close()
@@ -124,6 +179,8 @@ def check_F5(browser, url):
     names = [Path(urlparse(u).path).name for u in fonts if urlparse(u).hostname in LOCAL]
     for n in sorted({n for n in names if names.count(n) > 1}):
         bad.append(f"font file requested more than once: {n}")
+    if not bad and not names:
+        raise Fail("nothing to check: the page loaded no font file (F5 does not allow empty)")
     return not bad, bad or [f"{len(set(names))} local font file(s)"]
 
 
@@ -149,11 +206,13 @@ def check_F7(browser, url):
     bad = []
     try:
         page.add_init_script("(" + _CLS_JS + ")()")
-        page.goto(url, wait_until="load")
+        _goto(page, url)
         page.wait_for_timeout(1500)
         cls = page.evaluate("window.__cls")
         if cls >= 0.02:
             bad.append(f"CLS {cls:.4f} >= 0.02 ({'; '.join(page.evaluate('window.__shifts'))})")
+        # An empty box set is allowed here (the doc pages have no header/rail/stage; CLS above
+        # is still measured); the seeded F7 page and the home page do have boxes.
         before = page.evaluate(_RECTS_JS, LAYOUT_SELECTORS)
         toggle = page.query_selector("[data-theme-toggle]")
         if toggle and toggle.is_visible():
@@ -174,40 +233,63 @@ def _is_mac(url):
     return urlparse(url).path.rstrip("/") in ("/mac", "/mac.html")
 
 
-def check_F8(browser, url):
-    ctx, page, _ = _new_page(browser, color_scheme="dark")
+_THEME_STATE_JS = """() => {
+  const metas = Array.from(document.querySelectorAll('meta[name=theme-color]'));
+  const plain = metas.filter(m => !m.media);
+  const m = plain.length ? plain[plain.length - 1] : metas.find(m => matchMedia(m.media).matches);
+  return {theme: document.documentElement.getAttribute('data-theme'),
+          color: m ? m.content : null, metas: metas.length};
+}"""
+
+
+def _color_is_dark(c: str):
+    h = c.strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(ch * 2 for ch in h)
     try:
-        page.goto(url.split("#")[0], wait_until="load")
-        page.wait_for_timeout(300)
-        theme = page.evaluate("document.documentElement.getAttribute('data-theme')")
-        metas = page.evaluate("""() => Array.from(document.querySelectorAll('meta[name=theme-color]'))
-          .map(m => ({c: m.content, media: m.media || ''}))""")
-        active = page.evaluate("""() => { const m = Array.from(document.querySelectorAll('meta[name=theme-color]'))
-          .find(m => !m.media || matchMedia(m.media).matches); return m ? m.content : null; }""")
-    finally:
-        ctx.close()
-    want = "light" if _is_mac(url) else "dark"
-    bad = []
-    if theme != want:
-        bad.append(f'data-theme={theme!r}, want {want!r}')
-    if active:
-        h = active.lstrip("#")
-        if len(h) == 3:
-            h = "".join(c * 2 for c in h)
+        return sum(int(h[i:i + 2], 16) for i in (0, 2, 4)) / 3 < 128
+    except ValueError:
+        return None
+
+
+def check_F8(browser, url):
+    """Fresh profile, no hash/storage: data-theme="dark" ("light" on /mac) whatever the OS
+    scheme (both prefers-color-scheme values are run); then, when the page has a visible
+    theme toggle, click it and require the opposite theme. Each state must also carry a
+    matching theme-color meta (when the page has any; doc pages have none)."""
+    want0 = "light" if _is_mac(url) else "dark"
+    bad, seen = [], []
+
+    def judge(tag, st, want):
+        seen.append(f"{tag}: data-theme={st['theme']!r}")
+        if st["theme"] != want:
+            bad.append(f"[{tag}] data-theme={st['theme']!r}, want {want!r}")
+        if st["color"]:
+            d = _color_is_dark(st["color"])
+            if d is not None and d != (want == "dark"):
+                bad.append(f"[{tag}] theme-color {st['color']} does not follow {want}")
+
+    for scheme in ("dark", "light"):
+        ctx, page, _ = _new_page(browser, color_scheme=scheme)
         try:
-            lum = sum(int(h[i:i + 2], 16) for i in (0, 2, 4)) / 3
-            is_dark = lum < 128
-            if is_dark != (want == "dark"):
-                bad.append(f"theme-color {active} does not follow {want}")
-        except ValueError:
-            pass
-    return not bad, bad or [f"data-theme={theme!r}; theme-color metas: {len(metas)}"]
+            _goto(page, url.split("#")[0])
+            page.wait_for_timeout(300)
+            judge(f"os={scheme}", page.evaluate(_THEME_STATE_JS), want0)
+            toggle = page.query_selector("[data-theme-toggle]")
+            if toggle and toggle.is_visible():
+                toggle.click()
+                page.wait_for_timeout(700)
+                judge(f"os={scheme},toggled", page.evaluate(_THEME_STATE_JS),
+                      "dark" if want0 == "light" else "light")
+        finally:
+            ctx.close()
+    return not bad, bad + seen
 
 
 def check_F10(browser, url):
     ctx, page, _ = _new_page(browser, reduced_motion="reduce")
     try:
-        page.goto(url, wait_until="load")
+        _goto(page, url)
         page.wait_for_timeout(1000)
         running = page.evaluate("""() => document.getAnimations()
           .filter(a => a.playState === 'running')
@@ -246,7 +328,7 @@ _F11_JS = """primary => {
       out.push((e.tagName.toLowerCase() + '.' + (e.className || '') + ' ' + Math.round(r.width) + 'x' +
                 Math.round(r.height) + ' < ' + need).slice(0, 90));
   }
-  return {sw: document.documentElement.scrollWidth, iw: innerWidth, small: out};
+  return {sw: document.documentElement.scrollWidth, iw: innerWidth, small: out, n: all.length};
 }"""
 
 
@@ -255,11 +337,14 @@ def check_F11(browser, url):
     for w in PHONE_WIDTHS:
         ctx, page, _ = _new_page(browser, width=w, height=800)
         try:
-            page.goto(url, wait_until="load")
+            _goto(page, url)
             page.wait_for_timeout(500)
             r = page.evaluate(_F11_JS, PRIMARY_SELECTOR)
         finally:
             ctx.close()
+        if r["n"] == 0:
+            raise Fail("nothing to check: no visible link/button/input at "
+                       f"{w}px (F11 does not allow empty)")
         if r["sw"] > r["iw"]:
             bad.append(f"@{w}: scrollWidth {r['sw']} > innerWidth {r['iw']}")
         bad += [f"@{w}: target {s}" for s in r["small"][:5]]
@@ -293,14 +378,15 @@ def _redirect_rules():
 def check_LINKS(browser, url):
     ctx, page, _ = _new_page(browser)
     try:
-        page.goto(url, wait_until="load")
+        _goto(page, url)
         hrefs = page.evaluate("""() => Array.from(document.querySelectorAll('a[href]'))
           .map(a => a.getAttribute('href'))""")
         ids = set(page.evaluate("Array.from(document.querySelectorAll('[id]')).map(e => e.id)"))
     finally:
         ctx.close()
+    if not hrefs:
+        raise Fail("nothing to check: the page has no <a href> (LINKS does not allow empty)")
     rules = _redirect_rules()
-    base_host = urlparse(url).hostname
     bad, ok, external, routed = [], 0, set(), set()
     for h in sorted(set(hrefs)):
         if re.match(r"(mailto|tel|javascript|sms):", h, re.I):
@@ -321,7 +407,12 @@ def check_LINKS(browser, url):
             continue
         path = urlparse(target).path
         cands = [target, target.rstrip("/") + ".html", target.rstrip("/") + "/index.html"]
-        if any(_get(c)[0] == 200 for c in cands):
+        try:
+            found200 = any(_get(c)[0] == 200 for c in cands)
+        except Fail as e:
+            bad.append(f"link {h}: {e}")
+            continue
+        if found200:
             ok += 1
         elif any(r.match(path) for r in rules):
             routed.add(path)
@@ -343,8 +434,17 @@ def run_checks(url: str, names: list[str]) -> list[dict]:
         browser = p.chromium.launch()
         try:
             for n in names:
-                ok, details = CHECKS[n](browser, url)
-                results.append({"check": n, "ok": bool(ok), "details": details})
+                try:
+                    out = CHECKS[n](browser, url)
+                    res = {"check": n, "ok": bool(out[0]), "details": out[1]}
+                    if len(out) > 2:
+                        res["count"] = out[2]
+                except Fail as e:
+                    res = {"check": n, "ok": False, "details": [str(e)]}
+                except Exception as e:  # a crash or timeout is a FAIL, never a pass
+                    res = {"check": n, "ok": False,
+                           "details": [f"harness error: {type(e).__name__}: {str(e)[:300]}"]}
+                results.append(res)
         finally:
             browser.close()
     return results

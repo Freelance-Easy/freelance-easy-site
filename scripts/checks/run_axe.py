@@ -47,7 +47,11 @@ def run_axe(browser, url: str, theme: str, width: int) -> list[dict]:
         ctx.add_init_script(
             "try{localStorage.setItem('fe-theme'," + json.dumps(theme) + ")}catch(e){}")
         page = ctx.new_page()
-        page.goto(url, wait_until="load")
+        resp = page.goto(url, wait_until="load")
+        if resp is None or not (200 <= resp.status < 300):
+            raise RuntimeError(f"main document status {resp.status if resp else 'none'} for {url}")
+        if not page.evaluate("document.body && document.body.innerText.trim().length > 0"):
+            raise RuntimeError(f"nothing to check: empty document at {url}")
         page.wait_for_timeout(600)
         page.evaluate("document.fonts ? document.fonts.ready.then(() => true) : true")
         page.add_script_tag(content=axe_source())
@@ -94,6 +98,9 @@ def main(argv: list[str]) -> int:
         try:
             for w in widths:
                 found += run_axe(browser, url, theme, w)
+        except RuntimeError as e:
+            print(f"run_axe: FAIL {e}", file=sys.stderr)
+            return 1
         finally:
             browser.close()
     if as_json:
