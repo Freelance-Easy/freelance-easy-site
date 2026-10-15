@@ -7,5 +7,10 @@ README.md
 HANDOFF.md
 scripts/
 references/
+# page sources (scripts/build-site.py writes the root pages from them), tests, docs, spikes
+src/
+tests/
+docs/
+scratch/
 .git/
 .DS_Store
