@@ -231,6 +231,13 @@ assert.equal(d1.headers.get("cache-control"), "no-store, no-transform");
 results.push("ok  the Worker sets only our UA (+ identity) for GitHub: no label, query, cookie, IP header or visitor UA; latest resolved to the tag");
 await check("DL /download/mac streams the DMG", off, dlReq("/download/mac"), DL_OK);
 await check("DL /dl/mac/site (homepage) streams the DMG", off, dlReq("/dl/mac/site"), DL_OK);
+// (A9) the homepage header's Download downloads in place: the same proxy answers a header path, with or without a
+// stray query, as an attachment, and nothing after /dl/mac/ reaches GitHub.
+for (const path of ["/dl/mac/header", "/dl/mac/header?x=1"]) {
+  const dh = await check(`DL ${path} (header) streams the DMG as an attachment`, off, dlReq(path), DL_OK);
+  assert.equal(dh.headers.get("content-disposition"), 'attachment; filename="Freelance-Easy.dmg"');
+  for (const s of dh.sent) assert.ok(!/header|x=1|\?/.test(s.url), `query-free upstream for ${path}: ${s.url}`);
+}
 await check("DL works with analytics ON too", on, dlReq("/dl/mac/mac"), DL_OK);
 const d2 = await check("DL HEAD: same headers, no body", off, dlReq("/dl/mac/f1", { method: "HEAD" }), DL_OK);
 assert.equal(d2.body, "");
