@@ -220,7 +220,9 @@ reload) and history traversal (popstate) never push or replace. Hash = the check
 The theme toggle never writes the hash.
 
 - **ICX-HIST.1** A step changes `location.hash` to `dest`'s slug with `history.length` unchanged.
-- **ICX-HIST.2** A rail, menu, Home/End or logo jump adds exactly one history entry, whose hash is the target's slug.
+- **ICX-HIST.2** A rail, menu, Home/End or logo jump that moves (`target ≠ rendered`, ICX-JUMP.1/.2) adds exactly one
+  history entry, whose hash is the target's slug. A zero-distance jump at rest (ICX-JUMP.0) leaves `location.hash` and
+  `history.length` unchanged.
 - **ICX-HIST.3** Load with a hash, reload, and popstate make no `pushState`/`replaceState` call (spy on both).
 - **ICX-HIST.4** Toggling the theme leaves `location.hash` and `history.length` unchanged.
 - **ICX-HIST.5** Every hash the story writes is one of the nine slugs (or empty, OPEN-10).
