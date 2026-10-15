@@ -287,6 +287,12 @@ def build():
                    "target": "body"})
     sm.append({"type": "touchend", "t": 16 + 16 * 10 + 8, "touches": [], "target": "body"})
     F["touch-second-finger-move"] = fixture("touch-second-finger-move", sm)
+    # Sol C1-sol-1 repros (post-hoc rows in LABELS.md)
+    F["tp-reverse-jitter-after"] = fixture("tp-reverse-jitter-after", wheels([(0, 20), (16, -12), (32, 1)]))
+    F["bp-nested-reverse-up"] = fixture("bp-nested-reverse-up", [notch(0, target="p", tag="down"), notch(150, -1, target="p")],
+                                        dom=nodes(box=box_end, p={"tag": "P", "parent": "box"}))
+    trickle = [(0, 60)] + [(100 * i, round(1.0 - (i - 1) * 0.24 / 9, 4)) for i in range(1, 11)]
+    F["d1-trickle"] = fixture("d1-trickle", wheels(trickle))
     tap = [{"type": "touchstart", "t": 0, "touches": [{"x": 200, "y": 600}], "target": "body"},
            {"type": "touchstart", "t": 20, "touches": [{"x": 200, "y": 600}, {"x": 240, "y": 600}], "target": "body"},
            {"type": "touchend", "t": 60, "touches": [{"x": 200, "y": 600}], "target": "body"}]

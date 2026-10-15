@@ -117,10 +117,15 @@ trackpad inertia is C7's job. Times are integer ms (`ev.timeStamp`).
 
 ### Added after the detector existed (sabotage coverage; label straight from the contract row named)
 
-The rows above were committed before the module. This one was added in a later commit because the sabotage pass
-showed a guard no fixture reached; its label comes from ICX-BYPASS.2 alone.
+The rows above were committed before the module. These were added in later commits: the two `touch-second-finger-*`
+rows because the sabotage pass showed touch guards no fixture reached (label: ICX-BYPASS.2), and the three "Sol" rows
+as the repros of Sol's C1-sol-1 HIGH findings (labels: REVERSE_PX, ICX-BYPASS.4, ICX-SETTLE-D1); the Sol rows
+were committed red, before their fix.
 
 | fixture | scenario | steps | jumps | prevented | classes |
 |---|---|---|---|---|---|
 | `touch-second-finger-move` | one finger moves 6 px, then moves carry two touches (no second `touchstart` seen) for 120 px | — | — | 0 | — |
+| `tp-reverse-jitter-after` | Sol C1-sol-1 #1: +20 px at 0, -12 px at 16, +1 px at 32 ms (a 1 px jitter after a reversal) | +1 -1 | — | all | smooth |
+| `bp-nested-reverse-up` | Sol C1-sol-1 #2: box at its bottom; notch down at 0 (tagged `down`), notch up at 150 ms (the box can scroll up: ICX-BYPASS.4) | +1 | — | tag:down | notch |
+| `d1-trickle` | Sol C1-sol-1 #3: 60 px opener, then 1 px … 0.76 px every 100 ms to 1000 ms (a decaying tail, ICX-SETTLE-D1) | +1 | — | all | notch |
 | `touch-second-finger-tap` | one finger down, a second finger taps (down, up) before any move, then the first finger moves 120 px | — | — | 0 | — |
