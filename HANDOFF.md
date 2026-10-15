@@ -28,14 +28,15 @@ uv run --with playwright python3 scripts/check-download-wiring.py http://127.0.0
 ```
 **WRANGLER** — worker-faithful local routing on 8787:
 ```
-npx wrangler dev --port 8787
+npx --yes wrangler@4.86.0 dev --port 8787 --ip 127.0.0.1 --compatibility-date 2026-05-03
 ```
+(Node 20 on the Mac: wrangler ≥ the Node-22-only releases won't start, and 4.86.0's runtime stops at 2026-05-03, one day before `wrangler.toml`'s 2026-05-04 — the override doesn't change `_redirects`/`_headers`/assets handling. With Node 22+, plain `npx wrangler dev --port 8787` works.)
 
 **Landing (Daniel's "merge")**: pieces merge into the integration branch (`integration/site-ux`); Daniel says OK; only then does it reach `main`, and a push to `main` **is** the production deploy. Never open a PR unless asked. Steps: detached worktree at fresh `origin/main` → `git merge --no-ff integration/site-ux` → run the tests → `git push origin HEAD:main` → read-only production check.
 
 **Rollback**: `git revert -m 1 <merge-sha>`, then push the same way.
 
-wrangler dev honours _redirects/_headers: unknown — not run in A2 (sandbox denied starting servers); re-prove once (2026-10-15)
+wrangler dev honours _redirects/_headers: **yes** (2026-10-15, wrangler 4.86.0 as above): `/releases` → 302 to the GitHub releases page; `/assets/story/site.js` → `Cache-Control: public, max-age=0, must-revalidate`; `.assetsignore` holds (`/src/…`, `/tests/…`, `/scripts/…` → 404). Routing checks (B7, B12, PR-1) can run locally under WRANGLER.
 
 ---
 
