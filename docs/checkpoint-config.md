@@ -65,11 +65,11 @@ the bound is the range ceiling and the contract wins.
 |---|---|---|---|---|
 | `RATE_MAX` | 3× | fixed (contract) | — (Daniel's ceiling: nothing plays faster, anywhere) | decisions §C; ICX-SIGNED.7 |
 | `RUSH` | 2.5× | unset (R1); never above `RATE_MAX` | — | R1 §3.4; ICX-SIGNED.5 |
-| `RUSH_MAX` | 0.6 s at ≤ `RATE_MAX` (a rush only if the rest of the seam at 1× is ≤ 1.8 s) | fixed (contract) | — | decisions §C (R1 started at 0.35 s at `RUSH`; superseded); ICX-SIGNED.5 |
+| `RUSH_MAX` | 0.6 s, acceleration-aware: a rush only if `T_3(R) ≤ 0.6 s`, the rest `R` played with the rate ramp from the current rate up to ≤ `RATE_MAX` at `RATE_ACCEL` (formula in ICX-SIGNED.5; at 1× and 12 /s², `R ≤ 1.633 s`; a reversal from 1.5×, `R ≤ 1.706 s`) | fixed (contract) | — | decisions §C + main's ruling 2026-10-15 (R1 started at 0.35 s at `RUSH`; superseded); ICX-SIGNED.5, ICX-BACK.3 |
 | `CONTENT_FINISH_MAX` (R1's `CONTENT_RUSH_MAX`) | 0.6 s of content left → it finishes at **1×** (never rushed); more → the 220 ms skip dip | fixed (contract) | — | decisions #13; ICX-STEP.7 |
 | `DIP` | 100 ms out + 120 ms in | the total is fixed at 220 ms (ICX-DIP); the split is unset (R1) | — | R1 §3.3/§3.4 |
 | `ABORT_RATE` | 1.5× | fixed as the floor; never above `RATE_MAX` (ICX-BACK.3, ICX-SIGNED.5) | — | R1 §3.4 |
-| Rate easing | 12 /s² | unset (R1) | — | R1 §3.2/§3.4 |
+| `RATE_ACCEL` (R1's "rate easing") | 12 /s² | unset (R1) | — (a change moves the rush cut-off: ICX-SIGNED.5 recomputes it, never approximates) | R1 §3.2/§3.4; ICX-SIGNED.5 |
 
 ## Nav (decided)
 
@@ -103,10 +103,10 @@ The values the spike ran with (`docs/cp-spike-verdict.md`, "Settle rules"). Evid
 |---|---|
 | Back step fade 220 ms | ICX-BACK.1 |
 | Dip 220 ms total; cooldown 600 ms | ICX-DIP.1, .4 |
-| Remaining time after a `dest`-changing gesture during a transition ≤ 0.6 s at ≤ 3×, else the 220 ms dip; reversal ≥ 1.5× | ICX-SIGNED.5 |
+| Remaining time after a `dest`-changing gesture during a transition ≤ 0.6 s, computed with the rate ramp (≤ 3× at `RATE_ACCEL`), else the 220 ms dip; reversal from 1.5×, same formula | ICX-SIGNED.5, ICX-BACK.3 |
 | Rate ceiling 3× (`RATE_MAX`) everywhere | ICX-SIGNED.7 |
 | Scroll-spy line 40 % of the viewport height (`SPY_LINE`) | ICX-HL.4 |
 | Idle allowance before the rest invariant: transition + content + 1 s of visible time | ICX-REST.1 |
-| **DEC-8 dead-time rule** — DECIDED (DEC-8, 2026-10-15): the ceilings apply to dead time only, never to motion speed. Moving parts keep the base 9471605's durations and easing; holds, waits and pauses are trimmed until each transition ≤ 1.5 s; named exceptions (expected: Make→Look) are judged on frame strips; the Ride 1.45 s ± 0.1 s; caption ≤ 0.7 s | ICX-STEP.2, .3 |
+| **DEC-8 dead-time rule** — DECIDED (DEC-8, 2026-10-15): the ceilings apply to dead time only, never to motion speed. Moving parts keep the base 9471605's durations and easing; holds, waits and pauses are trimmed until each transition ≤ 1.5 s; named exceptions (expected: Make→Look) are judged on frame strips; the Ride 1.45 s ± 0.1 s; caption ≤ 0.7 s for every step (named caption-exception list empty in v1) | ICX-STEP.2, .3 |
 | Content run ≤ 5 s where feasible (pauses cut, same dead-time rule); typing ≥ 90 ms/char — DECIDED (DEC-6, 2026-10-15) | ICX-STEP.4, .5 |
 | Mode breakpoints: desktop ≥ 1024 px, tablet 640–1023 px, phone < 640 px | ICX-DEST |
