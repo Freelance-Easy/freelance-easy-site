@@ -112,9 +112,6 @@ KNOWN_BASE_FAILS = {
     ("/404", "F8"): ("base: 404.html's head script sets data-theme only for light, so dark has "
                      "no attribute (CF-11's shape, not covered by it)",
                      "F8 FAIL [os=dark] data-theme=None"),
-    ("/", "F8"): ("base: index.html's theme-color metas are media-split on the OS scheme, so with "
-                  "an OS-light visitor on the dark default the chrome colour is the light one",
-                  "F8 FAIL [os=light] theme-color #f3f3f0 does not follow dark"),
     ("/", "F7"): ("base: CLS 0.0228 (>= 0.02) from div.fx-shape shifts at ~0.8-1.6 s",
                   "F7 FAIL CLS 0.02"),
     ("/terms", "F7"): ("base: CLS 0.0227 (>= 0.02), one 45 ms shift of ul/p/h2 (font swap)",

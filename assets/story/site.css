@@ -2141,23 +2141,6 @@ details.disclosure p a {
   background: color-mix(in srgb, var(--ride-text) 12%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
 }
-/* v2.1 (Daniel: "the same light and dark mode circle effect … on the website and the app"): the theme switch reveals the
-   new theme through a soft-edged circle from the toggle (site.js themeReveal animates --vt-r on the new root snapshot;
-   the old snapshot stays opaque underneath). Same numbers as the app: feather ~22% of the radius, 48–220 px. */
-@property --vt-r {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 0px;
-}
-html.vt-theme::view-transition-group(root),
-html.vt-theme::view-transition-old(root) {
-  animation: none;
-}
-html.vt-theme::view-transition-new(root) {
-  animation: none;
-  -webkit-mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
-  mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
-}
 /* v2.1 (Daniel: "you can see the edges of the shadows on this section"): while the band is the page and the field fills
    the stage, the stage box is invisible, so it must not clip: a tall card's shadow (Chase's email card) would end in a
    hard rounded edge at the box. Let it fall onto the band instead. */

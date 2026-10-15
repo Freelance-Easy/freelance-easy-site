@@ -132,7 +132,7 @@ def growth_ms(p: dict) -> float | None:
     return last["t"] - start
 
 
-def reveal_failures(p: dict) -> list[str]:
+def reveal_failures(p: dict, max_start_ms: float = MAX_START_MS) -> list[str]:
     """Why a probe of a reveal fails the A5 contract; [] when it passes."""
     if p.get("error"):
         return [p["error"]]
@@ -149,9 +149,9 @@ def reveal_failures(p: dict) -> list[str]:
     if p.get("easing") != EASING:
         bad.append(f"easing {p.get('easing')!r}, expected {EASING!r}")
     start = start_ms(p)
-    if start is None or start > MAX_START_MS:
+    if start is None or start > max_start_ms:
         bad.append(f"the circle started {start if start is None else round(start)} ms after the click, "
-                   f"expected <= {MAX_START_MS}")
+                   f"expected <= {max_start_ms:g}")
     took = growth_ms(p)
     if p.get("finishedAt") is None or took is None:
         bad.append("the reveal never reached full radius")
@@ -213,7 +213,7 @@ def describe(p: dict) -> str:
             f"click), centre ({p['vtX']:.1f}, {p['vtY']:.1f}), end r {p['rEnd']:.1f} px")
 
 
-def run(url: str, toggle: str, widths: list[int], browser_name: str) -> int:
+def run(url: str, toggle: str, widths: list[int], browser_name: str, max_start_ms: float = MAX_START_MS) -> int:
     from playwright.sync_api import sync_playwright
 
     host = (urllib.parse.urlsplit(url).hostname or "").lower()
@@ -247,7 +247,7 @@ def run(url: str, toggle: str, widths: list[int], browser_name: str) -> int:
                     else:
                         for leg in ("first", "back"):
                             p = probe(page, toggle)
-                            report(f"{w}px reveal {leg}", reveal_failures(p), p)
+                            report(f"{w}px reveal {leg}", reveal_failures(p, max_start_ms), p)
                             page.wait_for_timeout(150)
                     ctx.close()
         finally:
@@ -265,8 +265,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--toggle", default="[data-theme-toggle]", help="CSS selector of the theme toggle")
     ap.add_argument("--width", type=int, action="append", help="viewport width (repeatable; default 1440 and 390)")
     ap.add_argument("--browser", default="chromium", choices=("chromium", "webkit"))
+    ap.add_argument("--max-start-ms", type=float, default=MAX_START_MS,
+                    help=f"latest the circle may start after the click (default {MAX_START_MS:g})")
     a = ap.parse_args(argv)
-    return run(a.url, a.toggle, a.width or [1440, 390], a.browser)
+    return run(a.url, a.toggle, a.width or [1440, 390], a.browser, a.max_start_ms)
 
 
 if __name__ == "__main__":

@@ -31,51 +31,23 @@
   /* ---------------- theme: dark by default (Daniel, 2026-10-05); #dark / #light; remembered (try/catch) ---------------- */
   // (2026-10-12, Daniel: "one button, not a slider pill") one toggle, [data-theme-toggle], the audio pages' button; the
   // head script picks the first theme (#dark / #light, then fe-theme, then fe-theme-visit, else dark)
-  const KEY = "fe-theme";
   const theme = () => (doc.getAttribute("data-theme") === "light" ? "light" : "dark");
+  // BOTH theme-color metas (the dark- and light-scheme ones) follow the page theme, whatever the OS scheme is
   function syncSwitch() {
-    const m = $('meta[name="theme-color"]');
-    if (m) m.setAttribute("content", theme() === "dark" ? "#080a0f" : "#f3f3f0");
+    const c = theme() === "dark" ? "#080a0f" : "#f3f3f0";
+    for (const m of $$('meta[name="theme-color"]')) m.setAttribute("content", c);
   }
-  function setTheme(th, persist) {
-    if (th !== "dark" && th !== "light") return;
-    if (persist) { try { localStorage.setItem(KEY, th); } catch (e) { /* storage blocked: the hash still works */ } }
-    if (th === theme()) { syncSwitch(); return; }
-    doc.setAttribute("data-theme", th);
-    syncSwitch();
-    refresh();
-  }
-  // v2.1 (Daniel: "id like the same light and dark mode circle effect to be on the website and the app"): the switch
-  // reveals the other theme through an expanding, soft-edged circle from the button, with the app's numbers: 420 ms,
-  // cubic-bezier(.55,0,.25,1) (it eases in), a feather of ~22% of the radius (48–220 px). The old theme stays opaque
-  // underneath (no dip, no grey). start() rebuilds the story synchronously, so the new snapshot is a finished frame.
-  let themeVT = null;
-  function themeReveal(btn, th) {
-    if (th === theme() || themeVT || !document.startViewTransition || !motion() ||
-        matchMedia("(prefers-reduced-motion: reduce)").matches) { setTheme(th, true); return; }
-    const r = btn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
-    const far = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-    const end = far + Math.min(220, Math.max(48, far * 0.22)) + 4;
-    doc.style.setProperty("--vt-x", `${x.toFixed(1)}px`);
-    doc.style.setProperty("--vt-y", `${y.toFixed(1)}px`);
-    doc.classList.add("vt-theme");
-    const vt = (themeVT = document.startViewTransition(() => setTheme(th, true)));
-    vt.ready.then(() => doc.animate({ "--vt-r": ["0px", `${end.toFixed(1)}px`] },
-      { duration: 420, easing: "cubic-bezier(.55,0,.25,1)", fill: "forwards", pseudoElement: "::view-transition-new(root)" }))
-      .catch(() => { /* skipped or unsupported: the theme has still changed */ });
-    vt.finished.catch(() => {}).then(() => {
-      doc.classList.remove("vt-theme"); doc.style.removeProperty("--vt-x"); doc.style.removeProperty("--vt-y");
-      if (themeVT === vt) themeVT = null;
-    });
-  }
-  for (const b of $$("[data-theme-toggle]")) b.addEventListener("click", () => {
-    const next = theme() === "light" ? "dark" : "light";
-    themeReveal(b, next);
-    try { history.replaceState(null, "", "#" + next); } catch (e) { /* file:// may refuse */ }
-  });
-  window.addEventListener("hashchange", () => {
-    const h = location.hash.slice(1);
-    if (h === "dark" || h === "light") setTheme(h, true);
+  // FETheme (assets/shared/theme.js, A5) owns the switch: data-theme, fe-theme, the #dark/#light read (home never writes
+  // a hash) and the circle reveal. "fe:themechange" fires INSIDE the view-transition update, so the scenes rebuild
+  // with the new palette synchronously and land in the new snapshot.
+  document.addEventListener("fe:themechange", () => { syncSwitch(); refresh(); });
+  // the circle plays only where the story is in motion (not on short touch phones): to give those the circle too,
+  // flip this one line to `{ from: b }` (A8 html.motion gate)
+  const revealOpts = (b) => (motion() ? { from: b } : undefined);
+  FETheme.init({ hashPolicy: "home", toggle: "[data-fe-no-auto-toggle]" });   // we bind the toggle ourselves, below
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-theme-toggle]");
+    if (b) FETheme.set(theme() === "light" ? "dark" : "light", revealOpts(b));
   });
   syncSwitch();
 
