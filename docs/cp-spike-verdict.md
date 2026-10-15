@@ -10,8 +10,10 @@ The spike is `scratch/cp-spike/` (never deployed). It implements R1 §3.2's "A2"
 
 ## Go / no-go
 
-**GO WITH WORKAROUNDS for C3's sticky-track model.** In the final full run (2026-10-15, all 127 probes on the final
-code 801bae3, every probe passing on its first attempt) every row passes or passes with a workaround on all three
+**GO WITH WORKAROUNDS for C3's sticky-track model.** In the final full run (2026-10-15, 127 probes on the final code
+801bae3, none needing its automatic retry: 64 PASS · 52 WORKAROUND · 11 FAIL, where all 11 FAILs are the intentional
+failure-mode variants — 9 × R6 `-nograce` (what breaks without S3) and 2 × S1 `-r1notch` (what breaks without D1) —
+which never count toward a cell) every row passes or passes with a workaround on all three
 Playwright proxies once the settle rules S1–S9 below are in place. One cell is **intermittent**: Chromium 1440×900 R3
 (settle cancellation) failed on both attempts in the earlier post-Sol rerun and passed in the final run (footnote 3) —
 C3 must treat it as a real race, not a pass. No proxy result argues against the model. The workarounds are local
@@ -64,7 +66,8 @@ Counts over R1–R9 (final run, 2026-10-15; evidence files regenerated on 801bae
 - WebKit iPhone-emulation: 3 PASS · 6 WORKAROUND · 0 FAIL.
 - All three real-device columns: UNVERIFIED-DEVICE.
 - Final-run command: `uv run --with playwright==1.63.0 python3 scratch/cp-spike/run_probes.py` (≈18 min); no probe needed
-  its automatic retry (no evidence file carries `first_attempt_failed`).
+  its automatic retry (no evidence file carries `first_attempt_failed`). Run totals: 64 PASS · 52 WORKAROUND ·
+  11 FAIL, the 11 being the intentional `-nograce` / `-r1notch` variants only.
 
 The `-nograce` and `-r1notch` variants record failure modes on purpose (S3, D1) and do not count toward the cells.
 
