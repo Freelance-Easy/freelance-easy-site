@@ -1,0 +1,592 @@
+{
+ "row": "R5",
+ "item": "scrollbar hold",
+ "column": "webkit-iphone",
+ "browser": "webkit 26.6",
+ "viewport": [
+  360,
+  640,
+  "iphone"
+ ],
+ "variant": "classicbar",
+ "status": "WORKAROUND",
+ "workaround": [
+  "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+ ],
+ "synthesised": [
+  "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+ ],
+ "checks": [
+  {
+   "name": "synthetic hold: FREE, no settle while held",
+   "ok": true,
+   "detail": {
+    "phase": "free",
+    "rendered": 0,
+    "dest": 0,
+    "busy": false,
+    "held": true,
+    "free": true,
+    "ack": null,
+    "gest": null,
+    "y": 300,
+    "aligned": 300
+   }
+  },
+  {
+   "name": "release: exactly one settle, aligned",
+   "ok": true,
+   "detail": [
+    {
+     "scroll": 16,
+     "acked": 1,
+     "foreign": 15,
+     "scrollend": 16,
+     "settles": 1,
+     "lands": 1,
+     "barDown": 1,
+     "barUp": 1
+    },
+    {
+     "phase": "rest",
+     "rendered": 1,
+     "dest": 1,
+     "busy": false,
+     "held": false,
+     "free": false,
+     "ack": {
+      "y": 584,
+      "events": 1
+     },
+     "gest": null,
+     "y": 584,
+     "aligned": 0
+    }
+   ]
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {
+  "scrollbar_px": 0,
+  "logs_before_reload": [
+   [
+    {
+     "t": 12,
+     "ev": "boot",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "P": 584,
+     "svh": 640,
+     "nativeScrollend": true,
+     "hasScrollend": true
+    },
+    {
+     "t": 13,
+     "ev": "vv-resize",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "scale": 1,
+     "h": 623
+    },
+    {
+     "t": 195,
+     "ev": "mousedown",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "x": 144,
+     "cw": 360,
+     "onBar": false,
+     "trusted": true
+    },
+    {
+     "t": 198,
+     "ev": "mousedown",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "x": 360,
+     "cw": 360,
+     "onBar": true,
+     "trusted": false
+    },
+    {
+     "t": 222,
+     "ev": "free-enter",
+     "y": 20,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "from": "rest"
+    },
+    {
+     "t": 223,
+     "ev": "scrollend",
+     "y": 20,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 239,
+     "ev": "scrollend",
+     "y": 40,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 256,
+     "ev": "scrollend",
+     "y": 60,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 273,
+     "ev": "scrollend",
+     "y": 80,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 289,
+     "ev": "scrollend",
+     "y": 100,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 306,
+     "ev": "scrollend",
+     "y": 120,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 322,
+     "ev": "scrollend",
+     "y": 140,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 339,
+     "ev": "scrollend",
+     "y": 160,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 356,
+     "ev": "scrollend",
+     "y": 180,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 372,
+     "ev": "scrollend",
+     "y": 200,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 389,
+     "ev": "scrollend",
+     "y": 220,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 405,
+     "ev": "scrollend",
+     "y": 240,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 420,
+     "ev": "scrollend",
+     "y": 260,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 437,
+     "ev": "scrollend",
+     "y": 280,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 455,
+     "ev": "scrollend",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 506,
+     "ev": "settle-wait-hold",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "trigger": "scrollend"
+    },
+    {
+     "t": 1155,
+     "ev": "settle-wait-hold",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "trigger": "backstop"
+    },
+    {
+     "t": 1455,
+     "ev": "hold-end",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "why": "mouseup"
+    },
+    {
+     "t": 1455,
+     "ev": "settle",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "trigger": "hold-end",
+     "to": 1,
+     "quiet": 150
+    },
+    {
+     "t": 1455,
+     "ev": "goto",
+     "y": 300,
+     "ph": "rest",
+     "r": 0,
+     "d": 1,
+     "src": "settle",
+     "to": 1
+    },
+    {
+     "t": 1455,
+     "ev": "sync",
+     "y": 584,
+     "ph": "rest",
+     "r": 0,
+     "d": 1,
+     "to": 584,
+     "why": "goto:settle",
+     "syncY": 584
+    },
+    {
+     "t": 1471,
+     "ev": "scroll-ack",
+     "y": 584,
+     "ph": "play",
+     "r": 0,
+     "d": 1,
+     "n": 1
+    },
+    {
+     "t": 1488,
+     "ev": "scrollend",
+     "y": 584,
+     "ph": "play",
+     "r": 0,
+     "d": 1,
+     "native": true
+    },
+    {
+     "t": 2656,
+     "ev": "land",
+     "y": 584,
+     "ph": "rest",
+     "r": 1,
+     "d": 1,
+     "aligned": 0
+    }
+   ]
+  ],
+  "undetected_hold_settles_after_1s": 1
+ },
+ "log": [
+  {
+   "t": 10,
+   "ev": "boot",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "P": 584,
+   "svh": 640,
+   "nativeScrollend": true,
+   "hasScrollend": true
+  },
+  {
+   "t": 13,
+   "ev": "geometry",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "why": "resize",
+   "P": 584,
+   "oldP": 584,
+   "svh": 640,
+   "iw": 360,
+   "ih": 640,
+   "same": true,
+   "rawY": 0,
+   "usedY": 0
+  },
+  {
+   "t": 13,
+   "ev": "vv-resize",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "scale": 1,
+   "h": 640
+  },
+  {
+   "t": 231,
+   "ev": "free-enter",
+   "y": 20,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "from": "rest"
+  },
+  {
+   "t": 231,
+   "ev": "scrollend",
+   "y": 20,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 248,
+   "ev": "scrollend",
+   "y": 40,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 266,
+   "ev": "scrollend",
+   "y": 60,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 281,
+   "ev": "scrollend",
+   "y": 80,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 299,
+   "ev": "scrollend",
+   "y": 100,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 315,
+   "ev": "scrollend",
+   "y": 120,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 331,
+   "ev": "scrollend",
+   "y": 140,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 346,
+   "ev": "scrollend",
+   "y": 160,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 365,
+   "ev": "scrollend",
+   "y": 180,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 382,
+   "ev": "scrollend",
+   "y": 200,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 396,
+   "ev": "scrollend",
+   "y": 220,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 417,
+   "ev": "scrollend",
+   "y": 240,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 430,
+   "ev": "scrollend",
+   "y": 260,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 447,
+   "ev": "scrollend",
+   "y": 280,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 464,
+   "ev": "scrollend",
+   "y": 300,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 515,
+   "ev": "settle",
+   "y": 300,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "trigger": "scrollend",
+   "to": 1,
+   "quiet": 52
+  },
+  {
+   "t": 515,
+   "ev": "goto",
+   "y": 300,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "src": "settle",
+   "to": 1
+  },
+  {
+   "t": 516,
+   "ev": "sync",
+   "y": 584,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "to": 584,
+   "why": "goto:settle",
+   "syncY": 584
+  },
+  {
+   "t": 519,
+   "ev": "scroll-ack",
+   "y": 584,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "n": 1
+  },
+  {
+   "t": 529,
+   "ev": "scrollend",
+   "y": 584,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "native": true
+  }
+ ]
+}

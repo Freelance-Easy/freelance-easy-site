@@ -1,0 +1,245 @@
+{
+ "row": "R9",
+ "item": "zoom",
+ "column": "webkit-iphone",
+ "browser": "webkit 26.6",
+ "viewport": [
+  360,
+  640,
+  "iphone"
+ ],
+ "variant": "",
+ "status": "WORKAROUND",
+ "workaround": [
+  "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+ ],
+ "synthesised": [],
+ "checks": [
+  {
+   "name": "Ctrl+wheel is never intercepted (no step)",
+   "ok": true,
+   "detail": [
+    {
+     "phase": "rest",
+     "rendered": 0,
+     "dest": 0,
+     "busy": false,
+     "held": false,
+     "free": false,
+     "ack": null,
+     "gest": null,
+     "y": 0,
+     "aligned": 0
+    },
+    {}
+   ]
+  },
+  {
+   "name": "CSS zoom on the stage leaves the beat geometry unchanged",
+   "ok": true,
+   "detail": [
+    584,
+    584
+   ]
+  },
+  {
+   "name": "steps under CSS zoom land aligned",
+   "ok": true,
+   "detail": {
+    "phase": "rest",
+    "rendered": 2,
+    "dest": 2,
+    "busy": false,
+    "held": false,
+    "free": false,
+    "ack": {
+     "y": 1168,
+     "events": 1
+    },
+    "gest": null,
+    "y": 1168,
+    "aligned": 0
+   }
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {
+  "ctrl_wheel": {
+   "counters": {},
+   "vvScale": 1
+  },
+  "logs_before_reload": [
+   [
+    {
+     "t": 15,
+     "ev": "boot",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "P": 584,
+     "svh": 640,
+     "nativeScrollend": true,
+     "hasScrollend": true
+    },
+    {
+     "t": 16,
+     "ev": "vv-resize",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "scale": 1,
+     "h": 640
+    }
+   ]
+  ],
+  "legacyZoom": {
+   "ratio": 2,
+   "legacy": false
+  }
+ },
+ "log": [
+  {
+   "t": 11,
+   "ev": "boot",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "P": 584,
+   "svh": 640,
+   "nativeScrollend": true,
+   "hasScrollend": true
+  },
+  {
+   "t": 15,
+   "ev": "geometry",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "why": "resize",
+   "P": 584,
+   "oldP": 584,
+   "svh": 640,
+   "iw": 360,
+   "ih": 640,
+   "same": true,
+   "rawY": 0,
+   "usedY": 0
+  },
+  {
+   "t": 15,
+   "ev": "vv-resize",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "scale": 1,
+   "h": 640
+  },
+  {
+   "t": 206,
+   "ev": "step",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "src": "key",
+   "delta": 1,
+   "from": 0
+  },
+  {
+   "t": 207,
+   "ev": "sync",
+   "y": 584,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "to": 584,
+   "why": "dest:key",
+   "syncY": 584
+  },
+  {
+   "t": 215,
+   "ev": "scroll-ack",
+   "y": 584,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "n": 1
+  },
+  {
+   "t": 230,
+   "ev": "scrollend",
+   "y": 584,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "native": true
+  },
+  {
+   "t": 1409,
+   "ev": "land",
+   "y": 584,
+   "ph": "rest",
+   "r": 1,
+   "d": 1,
+   "aligned": 0
+  },
+  {
+   "t": 1586,
+   "ev": "step",
+   "y": 584,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "src": "key",
+   "delta": 1,
+   "from": 1
+  },
+  {
+   "t": 1587,
+   "ev": "sync",
+   "y": 1168,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "to": 1168,
+   "why": "dest:key",
+   "syncY": 1168
+  },
+  {
+   "t": 1599,
+   "ev": "scroll-ack",
+   "y": 1168,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "n": 1
+  },
+  {
+   "t": 1614,
+   "ev": "scrollend",
+   "y": 1168,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "native": true
+  },
+  {
+   "t": 2787,
+   "ev": "land",
+   "y": 1168,
+   "ph": "rest",
+   "r": 2,
+   "d": 2,
+   "aligned": 0
+  }
+ ]
+}
