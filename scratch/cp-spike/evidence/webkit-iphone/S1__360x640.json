@@ -1,0 +1,51 @@
+{
+ "row": "S1",
+ "item": "wheel grouping (supplementary, R1 \u00a73.4 detector)",
+ "column": "webkit-iphone",
+ "browser": "webkit 26.6",
+ "viewport": [
+  360,
+  640,
+  "iphone"
+ ],
+ "variant": "",
+ "status": "FAIL",
+ "workaround": [],
+ "checks": [
+  {
+   "name": "probe ran",
+   "ok": false,
+   "detail": "Error('Mouse.wheel: Mouse wheel is not supported in mobile WebKit')"
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {},
+ "log": [
+  {
+   "t": 10,
+   "ev": "boot",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "P": 584,
+   "svh": 640,
+   "nativeScrollend": true,
+   "hasScrollend": true
+  },
+  {
+   "t": 11,
+   "ev": "vv-resize",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "scale": 1,
+   "h": 640
+  }
+ ]
+}

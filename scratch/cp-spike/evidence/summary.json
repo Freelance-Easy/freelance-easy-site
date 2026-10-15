@@ -1,0 +1,2315 @@
+{
+ "results": [
+  {
+   "row": "R1",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R1__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R2__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R3__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R4__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R5__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "classicbar",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R5__1440x900-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 58x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R6__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/chromium/R6__1440x900-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R7__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R8__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1440x900-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1440x900-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/S1__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "r1notch",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/S1__1440x900-r1notch.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R1__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R2__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R3__1280x720.json",
+   "retried": true
+  },
+  {
+   "row": "R4",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R4__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R5__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "classicbar",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R5__1280x720-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R6__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/chromium/R6__1280x720-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R7__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R8__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1280x720-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1280x720-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/S1__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "r1notch",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/S1__1280x720-r1notch.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R1__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R2__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R3__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "FAIL",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [],
+   "failed": [
+    "a released reader keeps their distance below the story"
+   ],
+   "file": "evidence/chromium/R4__360x640.json",
+   "retried": true
+  },
+  {
+   "row": "R5",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R5__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "classicbar",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R5__360x640-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R6__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/chromium/R6__360x640-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R7__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "trusted CDP touch drags (Chromium): real native scroll on release",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/chromium/R8__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__360x640-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__360x640-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/S1__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "r1notch",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/S1__360x640-r1notch.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R1__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R2__1440x900.json",
+   "retried": true
+  },
+  {
+   "row": "R3",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R3__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R4__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit/R5__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "classicbar",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R5__1440x900-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R6__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/webkit/R6__1440x900-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R7__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/webkit/R8__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1440x900-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1440x900-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/S1__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "r1notch",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "a flick opening >= 50 px with a long decaying tail = 1 step"
+   ],
+   "file": "evidence/webkit/S1__1440x900-r1notch.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R1__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R2__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R3__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R4__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit/R5__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "classicbar",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R5__1280x720-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R6__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/webkit/R6__1280x720-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R7__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/webkit/R8__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1280x720-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1280x720-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/S1__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "S1",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "r1notch",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "a flick opening >= 50 px with a long decaying tail = 1 step"
+   ],
+   "file": "evidence/webkit/S1__1280x720-r1notch.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R1__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R2__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "classicbar",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__390x664-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R6__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/webkit-iphone/R6__390x664-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R7__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R8__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__390x664-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__390x664-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R1__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R2__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "classicbar",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__375x548-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R6__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/webkit-iphone/R6__375x548-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R7__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R8__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__375x548-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__375x548-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R1__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R2__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "classicbar",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__360x640-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R6__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/webkit-iphone/R6__360x640-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R7__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R8__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__360x640-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__360x640-zoom175.json",
+   "retried": false
+  },
+  {
+   "row": "R1",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R1__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R2",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R2__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R5",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "classicbar",
+   "status": "WORKAROUND",
+   "workaround": [
+    "overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback"
+   ],
+   "synthesised": [
+    "hold synthesised: a real button down on content + a dispatched mousedown at clientX = clientWidth"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R5__844x390-classicbar.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R6__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R6",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "nograce",
+   "status": "FAIL",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
+    "exactly one settle, after the stream"
+   ],
+   "file": "evidence/webkit-iphone/R6__844x390-nograce.json",
+   "retried": false
+  },
+  {
+   "row": "R7",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "scrollend forced off (?noscrollend) to exercise the Safari path"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R7__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R8",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)"
+   ],
+   "synthesised": [
+    "touch synthesised in JS (untrusted): interception logic only; no native scroll, no momentum",
+    "iOS momentum stood in by a decaying window.scrollBy stream"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R8__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__844x390-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__844x390-zoom175.json",
+   "retried": false
+  }
+ ],
+ "cells": {
+  "R1|chromium": "PASS",
+  "R2|chromium": "PASS",
+  "R3|chromium": "PASS",
+  "R4|chromium": "FAIL",
+  "R5|chromium": "WORKAROUND",
+  "R6|chromium": "WORKAROUND",
+  "R7|chromium": "WORKAROUND",
+  "R8|chromium": "WORKAROUND",
+  "R9|chromium": "PASS",
+  "S1|chromium": "PASS",
+  "R1|webkit": "PASS",
+  "R2|webkit": "PASS",
+  "R3|webkit": "PASS",
+  "R4|webkit": "WORKAROUND",
+  "R5|webkit": "WORKAROUND",
+  "R6|webkit": "WORKAROUND",
+  "R7|webkit": "WORKAROUND",
+  "R8|webkit": "WORKAROUND",
+  "R9|webkit": "PASS",
+  "S1|webkit": "PASS",
+  "R1|webkit-iphone": "PASS",
+  "R2|webkit-iphone": "PASS",
+  "R3|webkit-iphone": "PASS",
+  "R4|webkit-iphone": "WORKAROUND",
+  "R5|webkit-iphone": "WORKAROUND",
+  "R6|webkit-iphone": "WORKAROUND",
+  "R7|webkit-iphone": "WORKAROUND",
+  "R8|webkit-iphone": "WORKAROUND",
+  "R9|webkit-iphone": "PASS"
+ }
+}

@@ -1,0 +1,354 @@
+{
+ "row": "R9",
+ "item": "zoom",
+ "column": "webkit",
+ "browser": "webkit 26.6",
+ "viewport": [
+  1440,
+  900,
+  "desk"
+ ],
+ "variant": "",
+ "status": "PASS",
+ "workaround": [],
+ "synthesised": [],
+ "checks": [
+  {
+   "name": "Ctrl+wheel is never intercepted (no step)",
+   "ok": true,
+   "detail": [
+    {
+     "phase": "rest",
+     "rendered": 0,
+     "dest": 0,
+     "busy": false,
+     "held": false,
+     "free": false,
+     "ack": {
+      "y": 0,
+      "events": 1
+     },
+     "gest": null,
+     "y": 0,
+     "aligned": 0
+    },
+    {
+     "scroll": 4,
+     "acked": 1,
+     "foreign": 3,
+     "scrollend": 2,
+     "settles": 1,
+     "lands": 1,
+     "wheel": 3,
+     "wheelPassed": 3
+    }
+   ]
+  },
+  {
+   "name": "CSS zoom on the stage leaves the beat geometry unchanged",
+   "ok": true,
+   "detail": [
+    844,
+    844
+   ]
+  },
+  {
+   "name": "steps under CSS zoom land aligned",
+   "ok": true,
+   "detail": {
+    "phase": "rest",
+    "rendered": 2,
+    "dest": 2,
+    "busy": false,
+    "held": false,
+    "free": false,
+    "ack": {
+     "y": 1688,
+     "events": 1
+    },
+    "gest": null,
+    "y": 1688,
+    "aligned": 0
+   }
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {
+  "ctrl_wheel": {
+   "counters": {
+    "scroll": 4,
+    "acked": 1,
+    "foreign": 3,
+    "scrollend": 2,
+    "settles": 1,
+    "lands": 1,
+    "wheel": 3,
+    "wheelPassed": 3
+   },
+   "vvScale": 1
+  },
+  "logs_before_reload": [
+   [
+    {
+     "t": 18,
+     "ev": "boot",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "P": 844,
+     "svh": 900,
+     "nativeScrollend": true,
+     "hasScrollend": true
+    },
+    {
+     "t": 19,
+     "ev": "vv-resize",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "scale": 1,
+     "h": 900
+    },
+    {
+     "t": 206,
+     "ev": "wheel-bypass",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "why": "ctrl",
+     "dy": 100
+    },
+    {
+     "t": 221,
+     "ev": "free-enter",
+     "y": 100,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "from": "rest"
+    },
+    {
+     "t": 271,
+     "ev": "wheel-bypass",
+     "y": 100,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "why": "ctrl",
+     "dy": 100
+    },
+    {
+     "t": 338,
+     "ev": "wheel-bypass",
+     "y": 200,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "why": "ctrl",
+     "dy": 100
+    },
+    {
+     "t": 454,
+     "ev": "scrollend",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "native": true
+    },
+    {
+     "t": 505,
+     "ev": "settle",
+     "y": 300,
+     "ph": "free",
+     "r": 0,
+     "d": 0,
+     "trigger": "scrollend",
+     "to": 0,
+     "quiet": 150
+    },
+    {
+     "t": 505,
+     "ev": "goto",
+     "y": 300,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "src": "settle",
+     "to": 0
+    },
+    {
+     "t": 505,
+     "ev": "sync",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "to": 0,
+     "why": "goto:settle",
+     "syncY": 0
+    },
+    {
+     "t": 505,
+     "ev": "land",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "aligned": 0
+    },
+    {
+     "t": 506,
+     "ev": "scroll-ack",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "n": 1
+    },
+    {
+     "t": 522,
+     "ev": "scrollend",
+     "y": 0,
+     "ph": "rest",
+     "r": 0,
+     "d": 0,
+     "native": true
+    }
+   ]
+  ],
+  "legacyZoom": {
+   "ratio": 2,
+   "legacy": false
+  }
+ },
+ "log": [
+  {
+   "t": 7,
+   "ev": "boot",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "P": 844,
+   "svh": 900,
+   "nativeScrollend": true,
+   "hasScrollend": true
+  },
+  {
+   "t": 8,
+   "ev": "vv-resize",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "scale": 1,
+   "h": 900
+  },
+  {
+   "t": 191,
+   "ev": "step",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "src": "key",
+   "delta": 1,
+   "from": 0
+  },
+  {
+   "t": 191,
+   "ev": "sync",
+   "y": 844,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "to": 844,
+   "why": "dest:key",
+   "syncY": 844
+  },
+  {
+   "t": 201,
+   "ev": "scroll-ack",
+   "y": 844,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "n": 1
+  },
+  {
+   "t": 218,
+   "ev": "scrollend",
+   "y": 844,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "native": true
+  },
+  {
+   "t": 1392,
+   "ev": "land",
+   "y": 844,
+   "ph": "rest",
+   "r": 1,
+   "d": 1,
+   "aligned": 0
+  },
+  {
+   "t": 1586,
+   "ev": "step",
+   "y": 844,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "src": "key",
+   "delta": 1,
+   "from": 1
+  },
+  {
+   "t": 1586,
+   "ev": "sync",
+   "y": 1688,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "to": 1688,
+   "why": "dest:key",
+   "syncY": 1688
+  },
+  {
+   "t": 1601,
+   "ev": "scroll-ack",
+   "y": 1688,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "n": 1
+  },
+  {
+   "t": 1618,
+   "ev": "scrollend",
+   "y": 1688,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "native": true
+  },
+  {
+   "t": 2786,
+   "ev": "land",
+   "y": 1688,
+   "ph": "rest",
+   "r": 2,
+   "d": 2,
+   "aligned": 0
+  }
+ ]
+}

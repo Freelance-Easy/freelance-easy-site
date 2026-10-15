@@ -1,0 +1,882 @@
+{
+ "row": "R3",
+ "item": "settle cancellation",
+ "column": "webkit-iphone",
+ "browser": "webkit 26.6",
+ "viewport": [
+  844,
+  390,
+  "iphone"
+ ],
+ "variant": "",
+ "status": "PASS",
+ "workaround": [],
+ "synthesised": [
+  "mobile WebKit has no wheel: gestures are synthetic swipes"
+ ],
+ "checks": [
+  {
+   "name": "a foreign scroll enters FREE",
+   "ok": true,
+   "detail": {
+    "phase": "free",
+    "rendered": 2,
+    "dest": 2,
+    "busy": false,
+    "held": false,
+    "free": true,
+    "ack": null,
+    "gest": null,
+    "y": 868,
+    "aligned": 200
+   }
+  },
+  {
+   "name": "a key during a pending settle cancels it (0 settles, 1 cancel)",
+   "ok": true,
+   "detail": {
+    "scroll": 2,
+    "acked": 1,
+    "foreign": 1,
+    "scrollend": 2,
+    "settleCancel": 1,
+    "steps": 1,
+    "lands": 1,
+    "dips": 1
+   }
+  },
+  {
+   "name": "the step counts from the nearest beat (2.6 -> 3, +1 = 4)",
+   "ok": true,
+   "detail": {
+    "phase": "rest",
+    "rendered": 4,
+    "dest": 4,
+    "busy": false,
+    "held": false,
+    "free": false,
+    "ack": {
+     "y": 1336,
+     "events": 1
+    },
+    "gest": null,
+    "y": 1336,
+    "aligned": 0
+   }
+  },
+  {
+   "name": "a wheel right after a foreign scroll ends on nearest-1 (4 -> 3), one step",
+   "ok": true,
+   "detail": [
+    {
+     "scroll": 2,
+     "acked": 2,
+     "scrollend": 1,
+     "settles": 1,
+     "steps": 1,
+     "lands": 2,
+     "dips": 1,
+     "touchSteps": 1
+    },
+    {
+     "phase": "rest",
+     "rendered": 3,
+     "dest": 3,
+     "busy": false,
+     "held": false,
+     "free": false,
+     "ack": {
+      "y": 1002,
+      "events": 1
+     },
+     "gest": null,
+     "y": 1002,
+     "aligned": 0
+    }
+   ]
+  },
+  {
+   "name": "exactly one settle for the stream",
+   "ok": true,
+   "detail": [
+    {
+     "t": 5216,
+     "ev": "settle",
+     "y": 1267,
+     "ph": "free",
+     "r": 3,
+     "d": 3,
+     "trigger": "scrollend",
+     "to": 4,
+     "quiet": 51
+    }
+   ]
+  },
+  {
+   "name": "the settle came after the stream's last scroll",
+   "ok": true,
+   "detail": [
+    {
+     "first": 4664,
+     "last": 5149,
+     "y": 1267
+    },
+    [
+     {
+      "t": 5216,
+      "ev": "settle",
+      "y": 1267,
+      "ph": "free",
+      "r": 3,
+      "d": 3,
+      "trigger": "scrollend",
+      "to": 4,
+      "quiet": 51
+     }
+    ]
+   ]
+  },
+  {
+   "name": "one FREE entry (the settle's own scroll did not re-enter FREE)",
+   "ok": true,
+   "detail": 1
+  },
+  {
+   "name": "lands aligned on the nearest beat",
+   "ok": true,
+   "detail": [
+    {
+     "phase": "rest",
+     "rendered": 4,
+     "dest": 4,
+     "busy": false,
+     "held": false,
+     "free": false,
+     "ack": {
+      "y": 1336,
+      "events": 1
+     },
+     "gest": null,
+     "y": 1336,
+     "aligned": 0
+    },
+    {
+     "first": 4664,
+     "last": 5149,
+     "y": 1267
+    }
+   ]
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {
+  "wheel_path": "settle fired first, then the step",
+  "stream": {
+   "first": 4664,
+   "last": 5149,
+   "y": 1267
+  },
+  "settle": [
+   {
+    "t": 5216,
+    "ev": "settle",
+    "y": 1267,
+    "ph": "free",
+    "r": 3,
+    "d": 3,
+    "trigger": "scrollend",
+    "to": 4,
+    "quiet": 51
+   }
+  ],
+  "counters": {
+   "scroll": 31,
+   "acked": 1,
+   "foreign": 30,
+   "scrollend": 31,
+   "settles": 1,
+   "lands": 1
+  },
+  "free_enters": 1,
+  "settle_latency_ms": 67,
+  "settle_trigger": "scrollend"
+ },
+ "log": [
+  {
+   "t": 16,
+   "ev": "boot",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "P": 334,
+   "svh": 390,
+   "nativeScrollend": true,
+   "hasScrollend": true
+  },
+  {
+   "t": 17,
+   "ev": "vv-resize",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "scale": 1,
+   "h": 390
+  },
+  {
+   "t": 200,
+   "ev": "step",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "src": "key",
+   "delta": 1,
+   "from": 0
+  },
+  {
+   "t": 201,
+   "ev": "sync",
+   "y": 334,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "to": 334,
+   "why": "dest:key",
+   "syncY": 334
+  },
+  {
+   "t": 214,
+   "ev": "scroll-ack",
+   "y": 334,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "n": 1
+  },
+  {
+   "t": 231,
+   "ev": "scrollend",
+   "y": 334,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "native": true
+  },
+  {
+   "t": 1401,
+   "ev": "land",
+   "y": 334,
+   "ph": "rest",
+   "r": 1,
+   "d": 1,
+   "aligned": 0
+  },
+  {
+   "t": 1586,
+   "ev": "step",
+   "y": 334,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "src": "key",
+   "delta": 1,
+   "from": 1
+  },
+  {
+   "t": 1587,
+   "ev": "sync",
+   "y": 668,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "to": 668,
+   "why": "dest:key",
+   "syncY": 668
+  },
+  {
+   "t": 1598,
+   "ev": "scroll-ack",
+   "y": 668,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "n": 1
+  },
+  {
+   "t": 1615,
+   "ev": "scrollend",
+   "y": 668,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "native": true
+  },
+  {
+   "t": 2787,
+   "ev": "land",
+   "y": 668,
+   "ph": "rest",
+   "r": 2,
+   "d": 2,
+   "aligned": 0
+  },
+  {
+   "t": 2998,
+   "ev": "free-enter",
+   "y": 868,
+   "ph": "free",
+   "r": 2,
+   "d": 2,
+   "from": "rest"
+  },
+  {
+   "t": 3015,
+   "ev": "scrollend",
+   "y": 868,
+   "ph": "free",
+   "r": 2,
+   "d": 2,
+   "native": true
+  },
+  {
+   "t": 3039,
+   "ev": "settle-cancel",
+   "y": 868,
+   "ph": "free",
+   "r": 2,
+   "d": 2,
+   "src": "key",
+   "b0": 3
+  },
+  {
+   "t": 3039,
+   "ev": "step",
+   "y": 868,
+   "ph": "rest",
+   "r": 2,
+   "d": 4,
+   "src": "key",
+   "delta": 1,
+   "from": 3
+  },
+  {
+   "t": 3040,
+   "ev": "sync",
+   "y": 1336,
+   "ph": "rest",
+   "r": 2,
+   "d": 4,
+   "to": 1336,
+   "why": "dest:key",
+   "syncY": 1336
+  },
+  {
+   "t": 3048,
+   "ev": "scroll-ack",
+   "y": 1336,
+   "ph": "dip",
+   "r": 2,
+   "d": 4,
+   "n": 1
+  },
+  {
+   "t": 3065,
+   "ev": "scrollend",
+   "y": 1336,
+   "ph": "dip",
+   "r": 2,
+   "d": 4,
+   "native": true
+  },
+  {
+   "t": 3964,
+   "ev": "land",
+   "y": 1336,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "aligned": 0
+  },
+  {
+   "t": 4165,
+   "ev": "free-enter",
+   "y": 1235,
+   "ph": "free",
+   "r": 4,
+   "d": 4,
+   "from": "rest"
+  },
+  {
+   "t": 4181,
+   "ev": "scrollend",
+   "y": 1235,
+   "ph": "free",
+   "r": 4,
+   "d": 4,
+   "native": true
+  },
+  {
+   "t": 4216,
+   "ev": "touch-decide",
+   "y": 1235,
+   "ph": "free",
+   "r": 4,
+   "d": 4,
+   "decided": "intercept",
+   "trusted": false
+  },
+  {
+   "t": 4232,
+   "ev": "settle",
+   "y": 1235,
+   "ph": "free",
+   "r": 4,
+   "d": 4,
+   "trigger": "scrollend",
+   "to": 4,
+   "quiet": 67
+  },
+  {
+   "t": 4232,
+   "ev": "goto",
+   "y": 1235,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "src": "settle",
+   "to": 4
+  },
+  {
+   "t": 4232,
+   "ev": "sync",
+   "y": 1336,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "to": 1336,
+   "why": "goto:settle",
+   "syncY": 1336
+  },
+  {
+   "t": 4232,
+   "ev": "land",
+   "y": 1336,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "aligned": 0
+  },
+  {
+   "t": 4233,
+   "ev": "scroll-ack",
+   "y": 1336,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "n": 1
+  },
+  {
+   "t": 4233,
+   "ev": "step",
+   "y": 1336,
+   "ph": "rest",
+   "r": 4,
+   "d": 3,
+   "src": "touch",
+   "delta": -1,
+   "from": 4
+  },
+  {
+   "t": 4234,
+   "ev": "sync",
+   "y": 1002,
+   "ph": "rest",
+   "r": 4,
+   "d": 3,
+   "to": 1002,
+   "why": "dest:touch",
+   "syncY": 1002
+  },
+  {
+   "t": 4249,
+   "ev": "scroll-ack",
+   "y": 1002,
+   "ph": "dip",
+   "r": 4,
+   "d": 3,
+   "n": 1
+  },
+  {
+   "t": 4264,
+   "ev": "scrollend",
+   "y": 1002,
+   "ph": "dip",
+   "r": 4,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4366,
+   "ev": "touch-end",
+   "y": 1002,
+   "ph": "dip",
+   "r": 3,
+   "d": 3,
+   "decided": "intercept",
+   "stepped": true
+  },
+  {
+   "t": 4455,
+   "ev": "land",
+   "y": 1002,
+   "ph": "rest",
+   "r": 3,
+   "d": 3,
+   "aligned": 0
+  },
+  {
+   "t": 4682,
+   "ev": "free-enter",
+   "y": 1016,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "from": "rest"
+  },
+  {
+   "t": 4682,
+   "ev": "scrollend",
+   "y": 1016,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4698,
+   "ev": "scrollend",
+   "y": 1029,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4717,
+   "ev": "scrollend",
+   "y": 1042,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4732,
+   "ev": "scrollend",
+   "y": 1054,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4748,
+   "ev": "scrollend",
+   "y": 1066,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4766,
+   "ev": "scrollend",
+   "y": 1078,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4784,
+   "ev": "scrollend",
+   "y": 1089,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4800,
+   "ev": "scrollend",
+   "y": 1100,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4816,
+   "ev": "scrollend",
+   "y": 1110,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4832,
+   "ev": "scrollend",
+   "y": 1120,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4850,
+   "ev": "scrollend",
+   "y": 1130,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4867,
+   "ev": "scrollend",
+   "y": 1140,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4882,
+   "ev": "scrollend",
+   "y": 1149,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4900,
+   "ev": "scrollend",
+   "y": 1158,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4916,
+   "ev": "scrollend",
+   "y": 1167,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4933,
+   "ev": "scrollend",
+   "y": 1175,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4949,
+   "ev": "scrollend",
+   "y": 1183,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4966,
+   "ev": "scrollend",
+   "y": 1191,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4984,
+   "ev": "scrollend",
+   "y": 1199,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5001,
+   "ev": "scrollend",
+   "y": 1206,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5016,
+   "ev": "scrollend",
+   "y": 1213,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5032,
+   "ev": "scrollend",
+   "y": 1220,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5049,
+   "ev": "scrollend",
+   "y": 1227,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5066,
+   "ev": "scrollend",
+   "y": 1233,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5082,
+   "ev": "scrollend",
+   "y": 1239,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5098,
+   "ev": "scrollend",
+   "y": 1245,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5115,
+   "ev": "scrollend",
+   "y": 1251,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5132,
+   "ev": "scrollend",
+   "y": 1257,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5149,
+   "ev": "scrollend",
+   "y": 1262,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5166,
+   "ev": "scrollend",
+   "y": 1267,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 5216,
+   "ev": "settle",
+   "y": 1267,
+   "ph": "free",
+   "r": 3,
+   "d": 3,
+   "trigger": "scrollend",
+   "to": 4,
+   "quiet": 51
+  },
+  {
+   "t": 5216,
+   "ev": "goto",
+   "y": 1267,
+   "ph": "rest",
+   "r": 3,
+   "d": 4,
+   "src": "settle",
+   "to": 4
+  },
+  {
+   "t": 5216,
+   "ev": "sync",
+   "y": 1336,
+   "ph": "rest",
+   "r": 3,
+   "d": 4,
+   "to": 1336,
+   "why": "goto:settle",
+   "syncY": 1336
+  },
+  {
+   "t": 5232,
+   "ev": "scroll-ack",
+   "y": 1336,
+   "ph": "play",
+   "r": 3,
+   "d": 4,
+   "n": 1
+  },
+  {
+   "t": 5249,
+   "ev": "scrollend",
+   "y": 1336,
+   "ph": "play",
+   "r": 3,
+   "d": 4,
+   "native": true
+  },
+  {
+   "t": 6416,
+   "ev": "land",
+   "y": 1336,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "aligned": 0
+  }
+ ]
+}
