@@ -16,6 +16,10 @@ node_modules/
 dist/
 .cache/
 
+# Local tool state and review evidence: wrangler dev's cache, builders' screenshots/logs
+.wrangler/
+.qa-evidence/
+
 # Dependency lock files left untracked unless we ever add a framework
 # (mirrors the InvoiceGenerator/electron convention)
 package-lock.json
