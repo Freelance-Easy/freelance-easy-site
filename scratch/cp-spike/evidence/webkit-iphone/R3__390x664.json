@@ -100,7 +100,7 @@
    "ok": true,
    "detail": [
     {
-     "t": 5423,
+     "t": 5156,
      "ev": "settle",
      "y": 2089,
      "ph": "free",
@@ -117,13 +117,13 @@
    "ok": true,
    "detail": [
     {
-     "first": 4873,
-     "last": 5354,
+     "first": 4605,
+     "last": 5089,
      "y": 2089
     },
     [
      {
-      "t": 5423,
+      "t": 5156,
       "ev": "settle",
       "y": 2089,
       "ph": "free",
@@ -161,8 +161,8 @@
      "aligned": 0
     },
     {
-     "first": 4873,
-     "last": 5354,
+     "first": 4605,
+     "last": 5089,
      "y": 2089
     }
    ]
@@ -176,13 +176,13 @@
  "data": {
   "wheel_path": "settle fired first, then the step",
   "stream": {
-   "first": 4873,
-   "last": 5354,
+   "first": 4605,
+   "last": 5089,
    "y": 2089
   },
   "settle": [
    {
-    "t": 5423,
+    "t": 5156,
     "ev": "settle",
     "y": 2089,
     "ph": "free",
@@ -202,12 +202,12 @@
    "lands": 1
   },
   "free_enters": 1,
-  "settle_latency_ms": 69,
+  "settle_latency_ms": 67,
   "settle_trigger": "scrollend"
  },
  "log": [
   {
-   "t": 25,
+   "t": 15,
    "ev": "boot",
    "y": 0,
    "ph": "rest",
@@ -219,7 +219,7 @@
    "hasScrollend": true
   },
   {
-   "t": 370,
+   "t": 17,
    "ev": "vv-resize",
    "y": 0,
    "ph": "rest",
@@ -229,7 +229,7 @@
    "h": 664
   },
   {
-   "t": 378,
+   "t": 190,
    "ev": "step",
    "y": 0,
    "ph": "rest",
@@ -240,7 +240,7 @@
    "from": 0
   },
   {
-   "t": 379,
+   "t": 190,
    "ev": "sync",
    "y": 608,
    "ph": "rest",
@@ -251,7 +251,7 @@
    "syncY": 608
   },
   {
-   "t": 415,
+   "t": 204,
    "ev": "scroll-ack",
    "y": 608,
    "ph": "play",
@@ -260,7 +260,7 @@
    "n": 1
   },
   {
-   "t": 421,
+   "t": 222,
    "ev": "scrollend",
    "y": 608,
    "ph": "play",
@@ -269,7 +269,7 @@
    "native": true
   },
   {
-   "t": 1581,
+   "t": 1391,
    "ev": "land",
    "y": 608,
    "ph": "rest",
@@ -278,7 +278,7 @@
    "aligned": 0
   },
   {
-   "t": 1760,
+   "t": 1563,
    "ev": "step",
    "y": 608,
    "ph": "rest",
@@ -289,7 +289,7 @@
    "from": 1
   },
   {
-   "t": 1760,
+   "t": 1564,
    "ev": "sync",
    "y": 1216,
    "ph": "rest",
@@ -300,7 +300,7 @@
    "syncY": 1216
   },
   {
-   "t": 1771,
+   "t": 1572,
    "ev": "scroll-ack",
    "y": 1216,
    "ph": "play",
@@ -309,7 +309,7 @@
    "n": 1
   },
   {
-   "t": 1788,
+   "t": 1587,
    "ev": "scrollend",
    "y": 1216,
    "ph": "play",
@@ -318,7 +318,7 @@
    "native": true
   },
   {
-   "t": 2961,
+   "t": 2764,
    "ev": "land",
    "y": 1216,
    "ph": "rest",
@@ -327,7 +327,7 @@
    "aligned": 0
   },
   {
-   "t": 3188,
+   "t": 2971,
    "ev": "free-enter",
    "y": 1580,
    "ph": "free",
@@ -336,7 +336,7 @@
    "from": "rest"
   },
   {
-   "t": 3204,
+   "t": 2989,
    "ev": "scrollend",
    "y": 1580,
    "ph": "free",
@@ -345,7 +345,7 @@
    "native": true
   },
   {
-   "t": 3221,
+   "t": 3019,
    "ev": "settle-cancel",
    "y": 1580,
    "ph": "free",
@@ -355,7 +355,7 @@
    "b0": 3
   },
   {
-   "t": 3221,
+   "t": 3019,
    "ev": "step",
    "y": 1580,
    "ph": "rest",
@@ -366,7 +366,7 @@
    "from": 3
   },
   {
-   "t": 3222,
+   "t": 3019,
    "ev": "sync",
    "y": 2432,
    "ph": "rest",
@@ -377,7 +377,7 @@
    "syncY": 2432
   },
   {
-   "t": 3238,
+   "t": 3021,
    "ev": "scroll-ack",
    "y": 2432,
    "ph": "dip",
@@ -386,7 +386,7 @@
    "n": 1
   },
   {
-   "t": 3254,
+   "t": 3040,
    "ev": "scrollend",
    "y": 2432,
    "ph": "dip",
@@ -395,7 +395,7 @@
    "native": true
   },
   {
-   "t": 4146,
+   "t": 3944,
    "ev": "land",
    "y": 2432,
    "ph": "rest",
@@ -404,7 +404,7 @@
    "aligned": 0
   },
   {
-   "t": 4355,
+   "t": 4121,
    "ev": "free-enter",
    "y": 2249,
    "ph": "free",
@@ -413,7 +413,7 @@
    "from": "rest"
   },
   {
-   "t": 4371,
+   "t": 4140,
    "ev": "scrollend",
    "y": 2249,
    "ph": "free",
@@ -422,7 +422,7 @@
    "native": true
   },
   {
-   "t": 4413,
+   "t": 4182,
    "ev": "touch-decide",
    "y": 2249,
    "ph": "free",
@@ -432,7 +432,7 @@
    "trusted": false
   },
   {
-   "t": 4423,
+   "t": 4190,
    "ev": "settle",
    "y": 2249,
    "ph": "free",
@@ -440,10 +440,10 @@
    "d": 4,
    "trigger": "scrollend",
    "to": 4,
-   "quiet": 68
+   "quiet": 69
   },
   {
-   "t": 4423,
+   "t": 4190,
    "ev": "goto",
    "y": 2249,
    "ph": "rest",
@@ -453,7 +453,7 @@
    "to": 4
   },
   {
-   "t": 4424,
+   "t": 4191,
    "ev": "sync",
    "y": 2432,
    "ph": "rest",
@@ -464,7 +464,7 @@
    "syncY": 2432
   },
   {
-   "t": 4424,
+   "t": 4191,
    "ev": "land",
    "y": 2432,
    "ph": "rest",
@@ -473,7 +473,7 @@
    "aligned": 0
   },
   {
-   "t": 4430,
+   "t": 4200,
    "ev": "step",
    "y": 2432,
    "ph": "rest",
@@ -484,7 +484,7 @@
    "from": 4
   },
   {
-   "t": 4430,
+   "t": 4200,
    "ev": "sync",
    "y": 1824,
    "ph": "rest",
@@ -495,7 +495,7 @@
    "syncY": 1824
   },
   {
-   "t": 4436,
+   "t": 4205,
    "ev": "scroll-ack",
    "y": 1824,
    "ph": "dip",
@@ -504,7 +504,7 @@
    "n": 1
   },
   {
-   "t": 4454,
+   "t": 4220,
    "ev": "scrollend",
    "y": 1824,
    "ph": "dip",
@@ -513,7 +513,7 @@
    "native": true
   },
   {
-   "t": 4570,
+   "t": 4337,
    "ev": "touch-end",
    "y": 1824,
    "ph": "dip",
@@ -523,7 +523,7 @@
    "stepped": true
   },
   {
-   "t": 4655,
+   "t": 4422,
    "ev": "land",
    "y": 1824,
    "ph": "rest",
@@ -532,7 +532,7 @@
    "aligned": 0
   },
   {
-   "t": 4888,
+   "t": 4621,
    "ev": "free-enter",
    "y": 1838,
    "ph": "free",
@@ -541,7 +541,7 @@
    "from": "rest"
   },
   {
-   "t": 4888,
+   "t": 4621,
    "ev": "scrollend",
    "y": 1838,
    "ph": "free",
@@ -550,7 +550,7 @@
    "native": true
   },
   {
-   "t": 4905,
+   "t": 4640,
    "ev": "scrollend",
    "y": 1851,
    "ph": "free",
@@ -559,7 +559,7 @@
    "native": true
   },
   {
-   "t": 4921,
+   "t": 4656,
    "ev": "scrollend",
    "y": 1864,
    "ph": "free",
@@ -568,7 +568,7 @@
    "native": true
   },
   {
-   "t": 4939,
+   "t": 4673,
    "ev": "scrollend",
    "y": 1876,
    "ph": "free",
@@ -577,7 +577,7 @@
    "native": true
   },
   {
-   "t": 4954,
+   "t": 4691,
    "ev": "scrollend",
    "y": 1888,
    "ph": "free",
@@ -586,7 +586,7 @@
    "native": true
   },
   {
-   "t": 4970,
+   "t": 4706,
    "ev": "scrollend",
    "y": 1900,
    "ph": "free",
@@ -595,7 +595,7 @@
    "native": true
   },
   {
-   "t": 4991,
+   "t": 4722,
    "ev": "scrollend",
    "y": 1911,
    "ph": "free",
@@ -604,7 +604,7 @@
    "native": true
   },
   {
-   "t": 5003,
+   "t": 4739,
    "ev": "scrollend",
    "y": 1922,
    "ph": "free",
@@ -613,7 +613,7 @@
    "native": true
   },
   {
-   "t": 5022,
+   "t": 4759,
    "ev": "scrollend",
    "y": 1932,
    "ph": "free",
@@ -622,7 +622,7 @@
    "native": true
   },
   {
-   "t": 5039,
+   "t": 4772,
    "ev": "scrollend",
    "y": 1942,
    "ph": "free",
@@ -631,7 +631,7 @@
    "native": true
   },
   {
-   "t": 5060,
+   "t": 4790,
    "ev": "scrollend",
    "y": 1952,
    "ph": "free",
@@ -640,7 +640,7 @@
    "native": true
   },
   {
-   "t": 5072,
+   "t": 4806,
    "ev": "scrollend",
    "y": 1962,
    "ph": "free",
@@ -649,7 +649,7 @@
    "native": true
   },
   {
-   "t": 5087,
+   "t": 4823,
    "ev": "scrollend",
    "y": 1971,
    "ph": "free",
@@ -658,7 +658,7 @@
    "native": true
   },
   {
-   "t": 5104,
+   "t": 4838,
    "ev": "scrollend",
    "y": 1980,
    "ph": "free",
@@ -667,7 +667,7 @@
    "native": true
   },
   {
-   "t": 5123,
+   "t": 4856,
    "ev": "scrollend",
    "y": 1989,
    "ph": "free",
@@ -676,7 +676,7 @@
    "native": true
   },
   {
-   "t": 5139,
+   "t": 4873,
    "ev": "scrollend",
    "y": 1997,
    "ph": "free",
@@ -685,7 +685,7 @@
    "native": true
   },
   {
-   "t": 5154,
+   "t": 4889,
    "ev": "scrollend",
    "y": 2005,
    "ph": "free",
@@ -694,7 +694,7 @@
    "native": true
   },
   {
-   "t": 5172,
+   "t": 4904,
    "ev": "scrollend",
    "y": 2013,
    "ph": "free",
@@ -703,7 +703,7 @@
    "native": true
   },
   {
-   "t": 5189,
+   "t": 4924,
    "ev": "scrollend",
    "y": 2021,
    "ph": "free",
@@ -712,7 +712,7 @@
    "native": true
   },
   {
-   "t": 5204,
+   "t": 4939,
    "ev": "scrollend",
    "y": 2028,
    "ph": "free",
@@ -721,7 +721,7 @@
    "native": true
   },
   {
-   "t": 5221,
+   "t": 4959,
    "ev": "scrollend",
    "y": 2035,
    "ph": "free",
@@ -730,7 +730,7 @@
    "native": true
   },
   {
-   "t": 5239,
+   "t": 4972,
    "ev": "scrollend",
    "y": 2042,
    "ph": "free",
@@ -739,7 +739,7 @@
    "native": true
   },
   {
-   "t": 5254,
+   "t": 4991,
    "ev": "scrollend",
    "y": 2049,
    "ph": "free",
@@ -748,7 +748,7 @@
    "native": true
   },
   {
-   "t": 5271,
+   "t": 5007,
    "ev": "scrollend",
    "y": 2055,
    "ph": "free",
@@ -757,7 +757,7 @@
    "native": true
   },
   {
-   "t": 5289,
+   "t": 5023,
    "ev": "scrollend",
    "y": 2061,
    "ph": "free",
@@ -766,7 +766,7 @@
    "native": true
   },
   {
-   "t": 5304,
+   "t": 5039,
    "ev": "scrollend",
    "y": 2067,
    "ph": "free",
@@ -775,7 +775,7 @@
    "native": true
   },
   {
-   "t": 5320,
+   "t": 5057,
    "ev": "scrollend",
    "y": 2073,
    "ph": "free",
@@ -784,7 +784,7 @@
    "native": true
   },
   {
-   "t": 5337,
+   "t": 5072,
    "ev": "scrollend",
    "y": 2079,
    "ph": "free",
@@ -793,7 +793,7 @@
    "native": true
   },
   {
-   "t": 5353,
+   "t": 5088,
    "ev": "scrollend",
    "y": 2084,
    "ph": "free",
@@ -802,7 +802,7 @@
    "native": true
   },
   {
-   "t": 5373,
+   "t": 5106,
    "ev": "scrollend",
    "y": 2089,
    "ph": "free",
@@ -811,7 +811,7 @@
    "native": true
   },
   {
-   "t": 5423,
+   "t": 5156,
    "ev": "settle",
    "y": 2089,
    "ph": "free",
@@ -822,7 +822,7 @@
    "quiet": 51
   },
   {
-   "t": 5423,
+   "t": 5156,
    "ev": "goto",
    "y": 2089,
    "ph": "rest",
@@ -832,7 +832,7 @@
    "to": 3
   },
   {
-   "t": 5424,
+   "t": 5157,
    "ev": "sync",
    "y": 1824,
    "ph": "rest",
@@ -843,7 +843,7 @@
    "syncY": 1824
   },
   {
-   "t": 5424,
+   "t": 5157,
    "ev": "land",
    "y": 1824,
    "ph": "rest",
@@ -852,7 +852,7 @@
    "aligned": 0
   },
   {
-   "t": 5438,
+   "t": 5171,
    "ev": "scroll-ack",
    "y": 1824,
    "ph": "rest",
@@ -861,7 +861,7 @@
    "n": 1
   },
   {
-   "t": 5453,
+   "t": 5187,
    "ev": "scrollend",
    "y": 1824,
    "ph": "rest",

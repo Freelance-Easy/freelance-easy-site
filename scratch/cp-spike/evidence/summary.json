@@ -33,6 +33,40 @@
    "retried": false
   },
   {
+   "row": "R3",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R3__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R4__1440x900.json",
+   "retried": false
+  },
+  {
    "row": "R5",
    "column": "chromium",
    "viewport": [
@@ -79,7 +113,7 @@
    "variant": "",
    "status": "WORKAROUND",
    "workaround": [
-    "scrollend fired 58x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
+    "scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)"
    ],
    "synthesised": [],
    "failed": [],
@@ -145,6 +179,54 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1440x900-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1440x900-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "S1",
    "column": "chromium",
    "viewport": [
@@ -206,6 +288,38 @@
    "synthesised": [],
    "failed": [],
    "file": "evidence/chromium/R2__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R3__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R4__1280x720.json",
    "retried": false
   },
   {
@@ -321,6 +435,54 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1280x720-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__1280x720-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "S1",
    "column": "chromium",
    "viewport": [
@@ -382,6 +544,40 @@
    "synthesised": [],
    "failed": [],
    "file": "evidence/chromium/R2__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R3__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R4__360x640.json",
    "retried": false
   },
   {
@@ -502,6 +698,54 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__360x640-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "chromium",
+   "viewport": [
+    360,
+    640,
+    "android"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/chromium/R9__360x640-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "S1",
    "column": "chromium",
    "viewport": [
@@ -563,7 +807,41 @@
    "synthesised": [],
    "failed": [],
    "file": "evidence/webkit/R2__1440x900.json",
-   "retried": true
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R3__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R4__1440x900.json",
+   "retried": false
   },
   {
    "row": "R5",
@@ -678,6 +956,54 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1440x900.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1440x900-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1440,
+    900,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1440x900-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "S1",
    "column": "webkit",
    "viewport": [
@@ -741,6 +1067,38 @@
    "synthesised": [],
    "failed": [],
    "file": "evidence/webkit/R2__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R3__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R4__1280x720.json",
    "retried": false
   },
   {
@@ -856,6 +1214,54 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1280x720.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1280x720-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit",
+   "viewport": [
+    1280,
+    720,
+    "desk"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit/R9__1280x720-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "S1",
    "column": "webkit",
    "viewport": [
@@ -924,6 +1330,45 @@
    ],
    "failed": [],
    "file": "evidence/webkit-iphone/R2__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__390x664.json",
    "retried": false
   },
   {
@@ -997,6 +1442,7 @@
    "workaround": [],
    "synthesised": [],
    "failed": [
+    "the stage holds its frame during the stream (FREE, beat 1)",
     "exactly one settle, after the stream"
    ],
    "file": "evidence/webkit-iphone/R6__390x664-nograce.json",
@@ -1042,6 +1488,60 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__390x664.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__390x664-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    390,
+    664,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__390x664-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "R1",
    "column": "webkit-iphone",
    "viewport": [
@@ -1076,6 +1576,45 @@
    ],
    "failed": [],
    "file": "evidence/webkit-iphone/R2__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__375x548.json",
    "retried": false
   },
   {
@@ -1195,6 +1734,60 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__375x548.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__375x548-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    375,
+    548,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__375x548-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "R1",
    "column": "webkit-iphone",
    "viewport": [
@@ -1229,6 +1822,45 @@
    ],
    "failed": [],
    "file": "evidence/webkit-iphone/R2__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__360x640.json",
    "retried": false
   },
   {
@@ -1348,6 +1980,60 @@
    "retried": false
   },
   {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+   ],
+   "synthesised": [],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__360x640.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "zoom125",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__360x640-zoom125.json",
+   "retried": false
+  },
+  {
+   "row": "R9",
+   "column": "webkit-iphone",
+   "viewport": [
+    360,
+    640,
+    "iphone"
+   ],
+   "variant": "zoom175",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R9__360x640-zoom175.json",
+   "retried": false
+  },
+  {
    "row": "R1",
    "column": "webkit-iphone",
    "viewport": [
@@ -1382,6 +2068,45 @@
    ],
    "failed": [],
    "file": "evidence/webkit-iphone/R2__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R3",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "PASS",
+   "workaround": [],
+   "synthesised": [
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R3__844x390.json",
+   "retried": false
+  },
+  {
+   "row": "R4",
+   "column": "webkit-iphone",
+   "viewport": [
+    844,
+    390,
+    "iphone"
+   ],
+   "variant": "",
+   "status": "WORKAROUND",
+   "workaround": [
+    "2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
+   ],
+   "synthesised": [
+    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
+    "mobile WebKit has no wheel: gestures are synthetic swipes"
+   ],
+   "failed": [],
+   "file": "evidence/webkit-iphone/R4__844x390.json",
    "retried": false
   },
   {
@@ -1501,733 +2226,6 @@
    "retried": false
   },
   {
-   "row": "R3",
-   "column": "chromium",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "",
-   "status": "FAIL",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [
-    "a foreign scroll enters FREE",
-    "a key during a pending settle cancels it (0 settles, 1 cancel)"
-   ],
-   "file": "evidence/chromium/R3__1440x900.json",
-   "retried": true
-  },
-  {
-   "row": "R4",
-   "column": "chromium",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R4__1440x900.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__1440x900.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__1440x900-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__1440x900-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "chromium",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R3__1280x720.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "chromium",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R4__1280x720.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__1280x720.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__1280x720-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__1280x720-zoom175.json",
-   "retried": true
-  },
-  {
-   "row": "R3",
-   "column": "chromium",
-   "viewport": [
-    360,
-    640,
-    "android"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R3__360x640.json",
-   "retried": true
-  },
-  {
-   "row": "R4",
-   "column": "chromium",
-   "viewport": [
-    360,
-    640,
-    "android"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R4__360x640.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    360,
-    640,
-    "android"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__360x640.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    360,
-    640,
-    "android"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__360x640-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "chromium",
-   "viewport": [
-    360,
-    640,
-    "android"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/chromium/R9__360x640-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "webkit",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R3__1440x900.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "webkit",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R4__1440x900.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R9__1440x900.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R9__1440x900-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit",
-   "viewport": [
-    1440,
-    900,
-    "desk"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R9__1440x900-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "webkit",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R3__1280x720.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "webkit",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R4__1280x720.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R9__1280x720.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R9__1280x720-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit",
-   "viewport": [
-    1280,
-    720,
-    "desk"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit/R9__1280x720-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "webkit-iphone",
-   "viewport": [
-    390,
-    664,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R3__390x664.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "webkit-iphone",
-   "viewport": [
-    390,
-    664,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [
-    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R4__390x664.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    390,
-    664,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
-   ],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__390x664.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    390,
-    664,
-    "iphone"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__390x664-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    390,
-    664,
-    "iphone"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__390x664-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "webkit-iphone",
-   "viewport": [
-    375,
-    548,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R3__375x548.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "webkit-iphone",
-   "viewport": [
-    375,
-    548,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [
-    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R4__375x548.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    375,
-    548,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
-   ],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__375x548.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    375,
-    548,
-    "iphone"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__375x548-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    375,
-    548,
-    "iphone"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__375x548-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "webkit-iphone",
-   "viewport": [
-    360,
-    640,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R3__360x640.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "webkit-iphone",
-   "viewport": [
-    360,
-    640,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [
-    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R4__360x640.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    360,
-    640,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
-   ],
-   "synthesised": [],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__360x640.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    360,
-    640,
-    "iphone"
-   ],
-   "variant": "zoom125",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__360x640-zoom125.json",
-   "retried": false
-  },
-  {
-   "row": "R9",
-   "column": "webkit-iphone",
-   "viewport": [
-    360,
-    640,
-    "iphone"
-   ],
-   "variant": "zoom175",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R9__360x640-zoom175.json",
-   "retried": false
-  },
-  {
-   "row": "R3",
-   "column": "webkit-iphone",
-   "viewport": [
-    844,
-    390,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "PASS",
-   "workaround": [],
-   "synthesised": [
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R3__844x390.json",
-   "retried": false
-  },
-  {
-   "row": "R4",
-   "column": "webkit-iphone",
-   "viewport": [
-    844,
-    390,
-    "iphone"
-   ],
-   "variant": "",
-   "status": "WORKAROUND",
-   "workaround": [
-    "2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)"
-   ],
-   "synthesised": [
-    "mobile WebKit: the native scroll after a passed swipe is stood in by a window.scrollBy stream",
-    "mobile WebKit has no wheel: gestures are synthetic swipes"
-   ],
-   "failed": [],
-   "file": "evidence/webkit-iphone/R4__844x390.json",
-   "retried": false
-  },
-  {
    "row": "R9",
    "column": "webkit-iphone",
    "viewport": [
@@ -2285,32 +2283,32 @@
  "cells": {
   "R1|chromium": "PASS",
   "R2|chromium": "PASS",
+  "R3|chromium": "PASS",
+  "R4|chromium": "WORKAROUND",
   "R5|chromium": "WORKAROUND",
   "R6|chromium": "WORKAROUND",
   "R7|chromium": "WORKAROUND",
   "R8|chromium": "WORKAROUND",
+  "R9|chromium": "PASS",
   "S1|chromium": "PASS",
   "R1|webkit": "PASS",
   "R2|webkit": "PASS",
+  "R3|webkit": "PASS",
+  "R4|webkit": "WORKAROUND",
   "R5|webkit": "WORKAROUND",
   "R6|webkit": "WORKAROUND",
   "R7|webkit": "WORKAROUND",
   "R8|webkit": "WORKAROUND",
+  "R9|webkit": "PASS",
   "S1|webkit": "PASS",
   "R1|webkit-iphone": "PASS",
   "R2|webkit-iphone": "PASS",
+  "R3|webkit-iphone": "PASS",
+  "R4|webkit-iphone": "WORKAROUND",
   "R5|webkit-iphone": "WORKAROUND",
   "R6|webkit-iphone": "WORKAROUND",
   "R7|webkit-iphone": "WORKAROUND",
   "R8|webkit-iphone": "WORKAROUND",
-  "R3|chromium": "FAIL",
-  "R4|chromium": "WORKAROUND",
-  "R9|chromium": "PASS",
-  "R3|webkit": "PASS",
-  "R4|webkit": "WORKAROUND",
-  "R9|webkit": "PASS",
-  "R3|webkit-iphone": "PASS",
-  "R4|webkit-iphone": "WORKAROUND",
   "R9|webkit-iphone": "WORKAROUND"
  }
 }

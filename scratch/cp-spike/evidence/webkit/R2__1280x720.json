@@ -112,7 +112,10 @@
     "busy": false,
     "held": false,
     "free": false,
-    "ack": null,
+    "ack": {
+     "y": 5312,
+     "events": 1
+    },
     "gest": "pass",
     "y": 5992,
     "aligned": 680
@@ -148,7 +151,7 @@
  },
  "log": [
   {
-   "t": 15,
+   "t": 20,
    "ev": "boot",
    "y": 0,
    "ph": "rest",
@@ -160,7 +163,7 @@
    "hasScrollend": true
   },
   {
-   "t": 16,
+   "t": 21,
    "ev": "vv-resize",
    "y": 0,
    "ph": "rest",
@@ -170,7 +173,7 @@
    "h": 720
   },
   {
-   "t": 203,
+   "t": 206,
    "ev": "goto",
    "y": 0,
    "ph": "rest",
@@ -180,7 +183,7 @@
    "to": 8
   },
   {
-   "t": 203,
+   "t": 207,
    "ev": "sync",
    "y": 5312,
    "ph": "rest",
@@ -191,7 +194,7 @@
    "syncY": 5312
   },
   {
-   "t": 217,
+   "t": 222,
    "ev": "scroll-ack",
    "y": 5312,
    "ph": "dip",
@@ -200,7 +203,7 @@
    "n": 1
   },
   {
-   "t": 234,
+   "t": 237,
    "ev": "scrollend",
    "y": 5312,
    "ph": "dip",
@@ -209,7 +212,7 @@
    "native": true
   },
   {
-   "t": 1126,
+   "t": 1133,
    "ev": "land",
    "y": 5312,
    "ph": "rest",
@@ -218,7 +221,7 @@
    "aligned": 0
   },
   {
-   "t": 1353,
+   "t": 1338,
    "ev": "gesture",
    "y": 5312,
    "ph": "rest",
@@ -230,7 +233,7 @@
    "dy": 7
   },
   {
-   "t": 1368,
+   "t": 1355,
    "ev": "released",
    "y": 5319,
    "ph": "released",
@@ -239,7 +242,7 @@
    "why": "foreign-below"
   },
   {
-   "t": 2268,
+   "t": 2323,
    "ev": "scrollend",
    "y": 5999,
    "ph": "released",
@@ -248,7 +251,7 @@
    "native": true
   },
   {
-   "t": 2785,
+   "t": 2855,
    "ev": "gesture",
    "y": 5999,
    "ph": "released",
@@ -260,7 +263,7 @@
    "dy": -30
   },
   {
-   "t": 3519,
+   "t": 3622,
    "ev": "sync",
    "y": 5312,
    "ph": "rest",
@@ -271,7 +274,7 @@
    "syncY": 5312
   },
   {
-   "t": 3519,
+   "t": 3622,
    "ev": "reentry",
    "y": 5312,
    "ph": "rest",
@@ -279,7 +282,7 @@
    "d": 8
   },
   {
-   "t": 3534,
+   "t": 3637,
    "ev": "scroll-ack",
    "y": 5312,
    "ph": "rest",
@@ -288,7 +291,7 @@
    "n": 1
   },
   {
-   "t": 3551,
+   "t": 3655,
    "ev": "scrollend",
    "y": 5312,
    "ph": "rest",
@@ -297,7 +300,7 @@
    "native": true
   },
   {
-   "t": 5019,
+   "t": 5223,
    "ev": "gesture",
    "y": 5312,
    "ph": "rest",
@@ -309,7 +312,7 @@
    "dy": -5
   },
   {
-   "t": 5052,
+   "t": 5256,
    "ev": "step",
    "y": 5312,
    "ph": "rest",
@@ -320,7 +323,7 @@
    "from": 8
   },
   {
-   "t": 5052,
+   "t": 5256,
    "ev": "sync",
    "y": 4648,
    "ph": "rest",
@@ -331,7 +334,7 @@
    "syncY": 4648
   },
   {
-   "t": 5069,
+   "t": 5272,
    "ev": "scroll-ack",
    "y": 4648,
    "ph": "dip",
@@ -340,7 +343,7 @@
    "n": 1
   },
   {
-   "t": 5085,
+   "t": 5290,
    "ev": "scrollend",
    "y": 4648,
    "ph": "dip",
@@ -349,7 +352,7 @@
    "native": true
   },
   {
-   "t": 5274,
+   "t": 5479,
    "ev": "land",
    "y": 4648,
    "ph": "rest",
@@ -358,7 +361,7 @@
    "aligned": 0
   },
   {
-   "t": 6022,
+   "t": 6256,
    "ev": "goto",
    "y": 4648,
    "ph": "rest",
@@ -368,7 +371,7 @@
    "to": 8
   },
   {
-   "t": 6022,
+   "t": 6256,
    "ev": "sync",
    "y": 5312,
    "ph": "rest",
@@ -379,7 +382,7 @@
    "syncY": 5312
   },
   {
-   "t": 6035,
+   "t": 6270,
    "ev": "scroll-ack",
    "y": 5312,
    "ph": "play",
@@ -388,7 +391,7 @@
    "n": 1
   },
   {
-   "t": 6050,
+   "t": 6289,
    "ev": "scrollend",
    "y": 5312,
    "ph": "play",
@@ -397,7 +400,7 @@
    "native": true
   },
   {
-   "t": 7223,
+   "t": 7457,
    "ev": "land",
    "y": 5312,
    "ph": "rest",
@@ -406,7 +409,7 @@
    "aligned": 0
   },
   {
-   "t": 7436,
+   "t": 7656,
    "ev": "gesture",
    "y": 5312,
    "ph": "rest",
@@ -418,7 +421,7 @@
    "dy": 7
   },
   {
-   "t": 7451,
+   "t": 7671,
    "ev": "released",
    "y": 5319,
    "ph": "released",
@@ -427,7 +430,7 @@
    "why": "foreign-below"
   },
   {
-   "t": 8351,
+   "t": 8571,
    "ev": "scrollend",
    "y": 5999,
    "ph": "released",
@@ -436,7 +439,7 @@
    "native": true
   },
   {
-   "t": 8568,
+   "t": 8838,
    "ev": "free-enter",
    "y": 5046,
    "ph": "free",
@@ -445,7 +448,7 @@
    "from": "released"
   },
   {
-   "t": 8584,
+   "t": 8855,
    "ev": "scrollend",
    "y": 5046,
    "ph": "free",
@@ -454,7 +457,7 @@
    "native": true
   },
   {
-   "t": 8634,
+   "t": 8906,
    "ev": "settle",
    "y": 5046,
    "ph": "free",
@@ -462,10 +465,10 @@
    "d": 8,
    "trigger": "scrollend",
    "to": 8,
-   "quiet": 66
+   "quiet": 68
   },
   {
-   "t": 8634,
+   "t": 8906,
    "ev": "goto",
    "y": 5046,
    "ph": "rest",
@@ -475,7 +478,7 @@
    "to": 8
   },
   {
-   "t": 8634,
+   "t": 8907,
    "ev": "sync",
    "y": 5312,
    "ph": "rest",
@@ -486,7 +489,7 @@
    "syncY": 5312
   },
   {
-   "t": 8634,
+   "t": 8907,
    "ev": "land",
    "y": 5312,
    "ph": "rest",
@@ -495,7 +498,7 @@
    "aligned": 0
   },
   {
-   "t": 8650,
+   "t": 8921,
    "ev": "scroll-ack",
    "y": 5312,
    "ph": "rest",
@@ -504,7 +507,7 @@
    "n": 1
   },
   {
-   "t": 8668,
+   "t": 8937,
    "ev": "scrollend",
    "y": 5312,
    "ph": "rest",
@@ -513,7 +516,7 @@
    "native": true
   },
   {
-   "t": 8839,
+   "t": 9076,
    "ev": "key-pass",
    "y": 5312,
    "ph": "rest",
@@ -523,115 +526,115 @@
    "why": "release"
   },
   {
-   "t": 8868,
+   "t": 9106,
    "ev": "released",
-   "y": 5338,
+   "y": 5341,
    "ph": "released",
    "r": 8,
    "d": 8,
    "why": "foreign-below"
   },
   {
-   "t": 8869,
+   "t": 9107,
    "ev": "scrollend",
-   "y": 5338,
+   "y": 5341,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8885,
+   "t": 9120,
    "ev": "scrollend",
-   "y": 5431,
+   "y": 5439,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8901,
+   "t": 9137,
    "ev": "scrollend",
-   "y": 5555,
+   "y": 5543,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8917,
+   "t": 9155,
    "ev": "scrollend",
-   "y": 5670,
+   "y": 5664,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8935,
+   "t": 9171,
    "ev": "scrollend",
-   "y": 5765,
+   "y": 5773,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8951,
+   "t": 9189,
    "ev": "scrollend",
-   "y": 5842,
+   "y": 5838,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8968,
+   "t": 9204,
    "ev": "scrollend",
-   "y": 5894,
+   "y": 5896,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 8985,
+   "t": 9221,
    "ev": "scrollend",
-   "y": 5932,
+   "y": 5931,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 9001,
+   "t": 9237,
    "ev": "scrollend",
-   "y": 5959,
+   "y": 5958,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 9018,
+   "t": 9253,
    "ev": "scrollend",
-   "y": 5977,
+   "y": 5975,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 9035,
+   "t": 9271,
    "ev": "scrollend",
-   "y": 5987,
+   "y": 5986,
    "ph": "released",
    "r": 8,
    "d": 8,
    "native": true
   },
   {
-   "t": 9050,
+   "t": 9287,
    "ev": "scrollend",
    "y": 5991,
    "ph": "released",
@@ -640,7 +643,7 @@
    "native": true
   },
   {
-   "t": 9067,
+   "t": 9304,
    "ev": "scrollend",
    "y": 5992,
    "ph": "released",
@@ -649,7 +652,7 @@
    "native": true
   },
   {
-   "t": 9345,
+   "t": 9584,
    "ev": "goto",
    "y": 5992,
    "ph": "rest",
@@ -659,7 +662,7 @@
    "to": 0
   },
   {
-   "t": 9345,
+   "t": 9584,
    "ev": "sync",
    "y": 0,
    "ph": "rest",
@@ -670,7 +673,7 @@
    "syncY": 0
   },
   {
-   "t": 9351,
+   "t": 9597,
    "ev": "scroll-ack",
    "y": 0,
    "ph": "dip",
@@ -679,7 +682,7 @@
    "n": 1
   },
   {
-   "t": 9367,
+   "t": 9613,
    "ev": "scrollend",
    "y": 0,
    "ph": "dip",
@@ -688,7 +691,7 @@
    "native": true
   },
   {
-   "t": 9567,
+   "t": 9808,
    "ev": "land",
    "y": 0,
    "ph": "rest",

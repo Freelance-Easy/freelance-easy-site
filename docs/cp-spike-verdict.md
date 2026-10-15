@@ -10,10 +10,12 @@ The spike is `scratch/cp-spike/` (never deployed). It implements R1 §3.2's "A2"
 
 ## Go / no-go
 
-**GO WITH WORKAROUNDS for C3's sticky-track model.** Every row passes or passes with a workaround on all three
-Playwright proxies once the settle rules S1–S9 below are in place. Any remaining FAIL is listed in the table with its
-footnote. No proxy result argues against the model. The workarounds are local rules in
-the input/settle layer, not changes to the model.
+**GO WITH WORKAROUNDS for C3's sticky-track model.** In the final full run (2026-10-15, all 127 probes on the final
+code 801bae3, every probe passing on its first attempt) every row passes or passes with a workaround on all three
+Playwright proxies once the settle rules S1–S9 below are in place. One cell is **intermittent**: Chromium 1440×900 R3
+(settle cancellation) failed on both attempts in the earlier post-Sol rerun and passed in the final run (footnote 3) —
+C3 must treat it as a real race, not a pass. No proxy result argues against the model. The workarounds are local
+rules in the input/settle layer, not changes to the model.
 
 **What a late device no-go would change** (the M1 gate's device session):
 - **Detector feel** (trackpad inertia, Magic Mouse, Windows notches): constants only (C7 tuning). The model stands.
@@ -48,7 +50,7 @@ The matrix is in `evidence/summary.json` / `summary.md`.
 |---|---|---|---|---|---|---|---|
 | R1 programmatic-scroll acknowledgement | PASS | PASS | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Mac trackpad (Safari + Chrome), Magic Mouse, Windows notch: a step never shows a jump or a one-frame flash of the pinned stage. iPhone: the same with a swipe. |
 | R2 FREE/RELEASED boundaries | PASS ¹ | PASS ² | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Trackpad flick at the end card: it scrolls out with its own inertia. Scrolling back up: a soft stop on the end card, never a wall or a bounce into beat 7. Windows notch at the last beat: releases one notch. iPhone: swipe out, then fling back. |
-| R3 settle cancellation | **FAIL** ³ | PASS | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Drag the scrollbar, then wheel or press a key at once: one move, no double jump. |
+| R3 settle cancellation | PASS, **intermittent** ³ | PASS | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Drag the scrollbar, then wheel or press a key at once: one move, no double jump. |
 | R4 resize/rotation | WORKAROUND (S7) ⁴ | WORKAROUND (S7) | WORKAROUND (S7) | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Rotate the iPhone on a beat, and again below the story. Resize the Mac window mid-transition. Snap a Windows window to half the screen. |
 | R5 scrollbar hold | WORKAROUND ⁵ | WORKAROUND ⁵ | WORKAROUND ⁵ | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Windows classic scrollbar: drag and hold still, and the page waits; release, and one transition plays. Mac Safari overlay scrollbar: drag, then hold still for more than 0.2 s. Does it snap mid-hold? |
 | R6 autoscroll | WORKAROUND (S3) | WORKAROUND (S3) | WORKAROUND (S3) | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Windows middle-click autoscroll through the story: the stage holds its frame, and one transition plays when it stops. Mac has no autoscroll. |
@@ -56,11 +58,13 @@ The matrix is in `evidence/summary.json` / `summary.md`.
 | R8 iOS momentum + address bar | WORKAROUND (S4) ⁷ | WORKAROUND (S4) | WORKAROUND (S4) | n/a | n/a | UNVERIFIED-DEVICE | Real iPhone: a momentum fling from below lands on the end card with no visible fight. The address bar collapsing or expanding mid-story keeps the beat. A real finger swipe = one step. Pull-to-refresh at beat 0 still works. Landscape. |
 | R9 zoom | PASS | PASS | WORKAROUND ⁸ (partial) | UNVERIFIED-DEVICE (zoom-sensitive) | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Safari and Chrome ⌘+/− at 110–175 %, then step: beats stay aligned. A trackpad pinch (a ctrl+wheel) never steps. Shipping Safari's unzoomed `getBoundingClientRect` (the `vrect` trap) does not reproduce in Playwright WebKit (`legacyZoom()` → `legacy: false` on all three proxies). The spike measures only with offsets and `scrollY`. iPhone: pinch-zoom, then a swipe pans. |
 
-Counts over R1–R9:
-- Playwright Chromium: 3 PASS · 5 WORKAROUND · 1 FAIL.
+Counts over R1–R9 (final run, 2026-10-15; evidence files regenerated on 801bae3, summary in `evidence/summary.md`):
+- Playwright Chromium: 4 PASS (R3 intermittent, footnote 3) · 5 WORKAROUND · 0 FAIL.
 - Playwright WebKit: 4 PASS · 5 WORKAROUND · 0 FAIL.
 - WebKit iPhone-emulation: 3 PASS · 6 WORKAROUND · 0 FAIL.
 - All three real-device columns: UNVERIFIED-DEVICE.
+- Final-run command: `uv run --with playwright==1.63.0 python3 scratch/cp-spike/run_probes.py` (≈18 min); no probe needed
+  its automatic retry (no evidence file carries `first_attempt_failed`).
 
 The `-nograce` and `-r1notch` variants record failure modes on purpose (S3, D1) and do not count toward the cells.
 
@@ -68,11 +72,14 @@ Footnotes:
 1. 360×640 Android (CDP touch): trusted touch drags stepped once inside the story and scrolled natively at the last
    beat.
 2. WebKit 1440×900 R2 failed on its first attempt and passed on the automatic rerun. Host jitter can split a
-   synthetic flick past `QUIET_SMOOTH`; `first_attempt_failed` is kept in the evidence file.
+   synthetic flick past `QUIET_SMOOTH`. The final full run (2026-10-15) passed it on the first attempt, so the
+   regenerated evidence file no longer carries `first_attempt_failed`.
 3. Chromium 1440×900 R3 **FAILED on both attempts** in the post-Sol rerun (`run-solfix.log`,
    `evidence/chromium/R3__1440x900.json`): FREE was not yet entered 40 ms after a foreign `scrollTo`, so the key
-   step ran outside FREE. This is undiagnosed: probe timing or the FREE-freeze change. Every other R3 run passed.
-   **Open item for C3.**
+   step ran outside FREE. This is undiagnosed: probe timing or the FREE-freeze change. Every other R3 run passed,
+   and the final full run (2026-10-15) passed it on the first attempt — so it is **intermittent**, not fixed.
+   **Open item for C3:** prove FREE is entered synchronously on a foreign `scrollTo` (or within one frame) under load;
+   a 40 ms window that sometimes misses is a real race on slow machines.
 4. Chromium 360×640 Android (isMobile): the first runs FAILed because a reader below the story could not keep
    their old distance below `storyEnd` after the rotation: the document end clamps it (699 → 621 px). After Sol
    C0a-1 the check expects min(old distance, the new room below the story), and it passes (`run-solfix.log`).

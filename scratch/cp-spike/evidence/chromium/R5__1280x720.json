@@ -75,7 +75,7 @@
   "logs_before_reload": [
    [
     {
-     "t": 25.3,
+     "t": 26.3,
      "ev": "boot",
      "y": 0,
      "ph": "rest",
@@ -87,7 +87,7 @@
      "hasScrollend": true
     },
     {
-     "t": 212.2,
+     "t": 215.4,
      "ev": "mousedown",
      "y": 0,
      "ph": "rest",
@@ -99,7 +99,7 @@
      "trusted": true
     },
     {
-     "t": 213.4,
+     "t": 216.7,
      "ev": "mousedown",
      "y": 0,
      "ph": "rest",
@@ -111,7 +111,7 @@
      "trusted": false
     },
     {
-     "t": 268.1,
+     "t": 280.5,
      "ev": "free-enter",
      "y": 20,
      "ph": "free",
@@ -120,7 +120,7 @@
      "from": "rest"
     },
     {
-     "t": 268.5,
+     "t": 281,
      "ev": "scrollend",
      "y": 20,
      "ph": "free",
@@ -129,7 +129,7 @@
      "native": true
     },
     {
-     "t": 269.1,
+     "t": 281.8,
      "ev": "scrollend",
      "y": 40,
      "ph": "free",
@@ -138,7 +138,7 @@
      "native": true
     },
     {
-     "t": 272.2,
+     "t": 289.4,
      "ev": "scrollend",
      "y": 60,
      "ph": "free",
@@ -147,7 +147,7 @@
      "native": true
     },
     {
-     "t": 288.9,
+     "t": 305.7,
      "ev": "scrollend",
      "y": 80,
      "ph": "free",
@@ -156,7 +156,7 @@
      "native": true
     },
     {
-     "t": 305.6,
+     "t": 323.5,
      "ev": "scrollend",
      "y": 100,
      "ph": "free",
@@ -165,7 +165,7 @@
      "native": true
     },
     {
-     "t": 322.2,
+     "t": 339.8,
      "ev": "scrollend",
      "y": 120,
      "ph": "free",
@@ -174,7 +174,7 @@
      "native": true
     },
     {
-     "t": 339,
+     "t": 357.1,
      "ev": "scrollend",
      "y": 140,
      "ph": "free",
@@ -183,7 +183,7 @@
      "native": true
     },
     {
-     "t": 355.3,
+     "t": 374,
      "ev": "scrollend",
      "y": 160,
      "ph": "free",
@@ -192,7 +192,7 @@
      "native": true
     },
     {
-     "t": 372.2,
+     "t": 390,
      "ev": "scrollend",
      "y": 180,
      "ph": "free",
@@ -201,7 +201,7 @@
      "native": true
     },
     {
-     "t": 388.9,
+     "t": 406.7,
      "ev": "scrollend",
      "y": 200,
      "ph": "free",
@@ -210,7 +210,7 @@
      "native": true
     },
     {
-     "t": 405.2,
+     "t": 424.1,
      "ev": "scrollend",
      "y": 220,
      "ph": "free",
@@ -219,7 +219,7 @@
      "native": true
     },
     {
-     "t": 421.8,
+     "t": 440.9,
      "ev": "scrollend",
      "y": 240,
      "ph": "free",
@@ -228,7 +228,7 @@
      "native": true
     },
     {
-     "t": 438.1,
+     "t": 457.5,
      "ev": "scrollend",
      "y": 260,
      "ph": "free",
@@ -237,7 +237,7 @@
      "native": true
     },
     {
-     "t": 455.6,
+     "t": 473.2,
      "ev": "scrollend",
      "y": 280,
      "ph": "free",
@@ -246,7 +246,7 @@
      "native": true
     },
     {
-     "t": 472.2,
+     "t": 489.3,
      "ev": "scrollend",
      "y": 300,
      "ph": "free",
@@ -255,7 +255,7 @@
      "native": true
     },
     {
-     "t": 523.5,
+     "t": 541.8,
      "ev": "settle-wait-hold",
      "y": 300,
      "ph": "free",
@@ -264,7 +264,7 @@
      "trigger": "scrollend"
     },
     {
-     "t": 1172.3,
+     "t": 1189.9,
      "ev": "settle-wait-hold",
      "y": 300,
      "ph": "free",
@@ -273,7 +273,7 @@
      "trigger": "backstop"
     },
     {
-     "t": 1465.5,
+     "t": 1490.1,
      "ev": "hold-end",
      "y": 300,
      "ph": "free",
@@ -282,7 +282,7 @@
      "why": "mouseup"
     },
     {
-     "t": 1465.5,
+     "t": 1490.1,
      "ev": "settle",
      "y": 300,
      "ph": "free",
@@ -293,7 +293,7 @@
      "quiet": 150
     },
     {
-     "t": 1465.5,
+     "t": 1490.1,
      "ev": "goto",
      "y": 300,
      "ph": "rest",
@@ -303,7 +303,7 @@
      "to": 0
     },
     {
-     "t": 1465.7,
+     "t": 1490.2,
      "ev": "sync",
      "y": 0,
      "ph": "rest",
@@ -314,7 +314,7 @@
      "syncY": 0
     },
     {
-     "t": 1465.7,
+     "t": 1490.3,
      "ev": "land",
      "y": 0,
      "ph": "rest",
@@ -323,7 +323,7 @@
      "aligned": 0
     },
     {
-     "t": 1472,
+     "t": 1505.8,
      "ev": "scroll-ack",
      "y": 0,
      "ph": "rest",
@@ -332,7 +332,7 @@
      "n": 1
     },
     {
-     "t": 1472,
+     "t": 1505.8,
      "ev": "scrollend",
      "y": 0,
      "ph": "rest",
@@ -346,7 +346,7 @@
  },
  "log": [
   {
-   "t": 7.5,
+   "t": 6.1,
    "ev": "boot",
    "y": 0,
    "ph": "rest",
@@ -358,7 +358,7 @@
    "hasScrollend": true
   },
   {
-   "t": 223.4,
+   "t": 228.6,
    "ev": "free-enter",
    "y": 20,
    "ph": "free",
@@ -367,7 +367,7 @@
    "from": "rest"
   },
   {
-   "t": 224.3,
+   "t": 229.5,
    "ev": "scrollend",
    "y": 20,
    "ph": "free",
@@ -376,7 +376,7 @@
    "native": true
   },
   {
-   "t": 240.8,
+   "t": 244.7,
    "ev": "scrollend",
    "y": 40,
    "ph": "free",
@@ -385,7 +385,7 @@
    "native": true
   },
   {
-   "t": 257.7,
+   "t": 262.6,
    "ev": "scrollend",
    "y": 60,
    "ph": "free",
@@ -394,7 +394,7 @@
    "native": true
   },
   {
-   "t": 273.8,
+   "t": 278.5,
    "ev": "scrollend",
    "y": 80,
    "ph": "free",
@@ -403,7 +403,7 @@
    "native": true
   },
   {
-   "t": 290.2,
+   "t": 295.1,
    "ev": "scrollend",
    "y": 100,
    "ph": "free",
@@ -412,7 +412,7 @@
    "native": true
   },
   {
-   "t": 306.9,
+   "t": 311,
    "ev": "scrollend",
    "y": 120,
    "ph": "free",
@@ -421,7 +421,7 @@
    "native": true
   },
   {
-   "t": 324.7,
+   "t": 327.8,
    "ev": "scrollend",
    "y": 140,
    "ph": "free",
@@ -430,7 +430,7 @@
    "native": true
   },
   {
-   "t": 340.6,
+   "t": 344.8,
    "ev": "scrollend",
    "y": 160,
    "ph": "free",
@@ -439,7 +439,7 @@
    "native": true
   },
   {
-   "t": 357.9,
+   "t": 360.4,
    "ev": "scrollend",
    "y": 180,
    "ph": "free",
@@ -448,7 +448,7 @@
    "native": true
   },
   {
-   "t": 373.2,
+   "t": 377.6,
    "ev": "scrollend",
    "y": 200,
    "ph": "free",
@@ -457,7 +457,7 @@
    "native": true
   },
   {
-   "t": 390,
+   "t": 395.4,
    "ev": "scrollend",
    "y": 220,
    "ph": "free",
@@ -466,7 +466,7 @@
    "native": true
   },
   {
-   "t": 406.7,
+   "t": 410,
    "ev": "scrollend",
    "y": 240,
    "ph": "free",
@@ -475,7 +475,7 @@
    "native": true
   },
   {
-   "t": 424,
+   "t": 428.1,
    "ev": "scrollend",
    "y": 260,
    "ph": "free",
@@ -484,7 +484,7 @@
    "native": true
   },
   {
-   "t": 440.7,
+   "t": 445,
    "ev": "scrollend",
    "y": 280,
    "ph": "free",
@@ -493,7 +493,7 @@
    "native": true
   },
   {
-   "t": 457.2,
+   "t": 462.1,
    "ev": "scrollend",
    "y": 300,
    "ph": "free",
@@ -502,7 +502,7 @@
    "native": true
   },
   {
-   "t": 508.4,
+   "t": 513.3,
    "ev": "settle",
    "y": 300,
    "ph": "free",
@@ -510,10 +510,10 @@
    "d": 0,
    "trigger": "scrollend",
    "to": 0,
-   "quiet": 51.7
+   "quiet": 51.6
   },
   {
-   "t": 508.4,
+   "t": 513.3,
    "ev": "goto",
    "y": 300,
    "ph": "rest",
@@ -523,7 +523,7 @@
    "to": 0
   },
   {
-   "t": 508.6,
+   "t": 513.4,
    "ev": "sync",
    "y": 0,
    "ph": "rest",
@@ -534,7 +534,7 @@
    "syncY": 0
   },
   {
-   "t": 508.6,
+   "t": 513.4,
    "ev": "land",
    "y": 0,
    "ph": "rest",
@@ -543,7 +543,7 @@
    "aligned": 0
   },
   {
-   "t": 524.4,
+   "t": 528.3,
    "ev": "scroll-ack",
    "y": 0,
    "ph": "rest",
@@ -552,7 +552,7 @@
    "n": 1
   },
   {
-   "t": 524.4,
+   "t": 528.4,
    "ev": "scrollend",
    "y": 0,
    "ph": "rest",

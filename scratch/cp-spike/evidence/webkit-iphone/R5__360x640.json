@@ -75,7 +75,7 @@
   "logs_before_reload": [
    [
     {
-     "t": 16,
+     "t": 15,
      "ev": "boot",
      "y": 0,
      "ph": "rest",
@@ -87,7 +87,7 @@
      "hasScrollend": true
     },
     {
-     "t": 17,
+     "t": 16,
      "ev": "vv-resize",
      "y": 0,
      "ph": "rest",
@@ -97,7 +97,7 @@
      "h": 640
     },
     {
-     "t": 199,
+     "t": 192,
      "ev": "mousedown",
      "y": 0,
      "ph": "rest",
@@ -109,7 +109,7 @@
      "trusted": true
     },
     {
-     "t": 201,
+     "t": 194,
      "ev": "mousedown",
      "y": 0,
      "ph": "rest",
@@ -121,7 +121,7 @@
      "trusted": false
     },
     {
-     "t": 225,
+     "t": 218,
      "ev": "free-enter",
      "y": 20,
      "ph": "free",
@@ -130,7 +130,7 @@
      "from": "rest"
     },
     {
-     "t": 226,
+     "t": 219,
      "ev": "scrollend",
      "y": 20,
      "ph": "free",
@@ -139,7 +139,7 @@
      "native": true
     },
     {
-     "t": 242,
+     "t": 235,
      "ev": "scrollend",
      "y": 40,
      "ph": "free",
@@ -148,7 +148,7 @@
      "native": true
     },
     {
-     "t": 258,
+     "t": 252,
      "ev": "scrollend",
      "y": 60,
      "ph": "free",
@@ -157,7 +157,7 @@
      "native": true
     },
     {
-     "t": 275,
+     "t": 269,
      "ev": "scrollend",
      "y": 80,
      "ph": "free",
@@ -166,7 +166,7 @@
      "native": true
     },
     {
-     "t": 291,
+     "t": 286,
      "ev": "scrollend",
      "y": 100,
      "ph": "free",
@@ -175,7 +175,7 @@
      "native": true
     },
     {
-     "t": 308,
+     "t": 303,
      "ev": "scrollend",
      "y": 120,
      "ph": "free",
@@ -184,7 +184,7 @@
      "native": true
     },
     {
-     "t": 325,
+     "t": 318,
      "ev": "scrollend",
      "y": 140,
      "ph": "free",
@@ -193,7 +193,7 @@
      "native": true
     },
     {
-     "t": 341,
+     "t": 335,
      "ev": "scrollend",
      "y": 160,
      "ph": "free",
@@ -202,7 +202,7 @@
      "native": true
     },
     {
-     "t": 358,
+     "t": 353,
      "ev": "scrollend",
      "y": 180,
      "ph": "free",
@@ -211,7 +211,7 @@
      "native": true
     },
     {
-     "t": 375,
+     "t": 370,
      "ev": "scrollend",
      "y": 200,
      "ph": "free",
@@ -220,7 +220,7 @@
      "native": true
     },
     {
-     "t": 392,
+     "t": 387,
      "ev": "scrollend",
      "y": 220,
      "ph": "free",
@@ -229,7 +229,7 @@
      "native": true
     },
     {
-     "t": 409,
+     "t": 404,
      "ev": "scrollend",
      "y": 240,
      "ph": "free",
@@ -238,7 +238,7 @@
      "native": true
     },
     {
-     "t": 425,
+     "t": 419,
      "ev": "scrollend",
      "y": 260,
      "ph": "free",
@@ -247,7 +247,7 @@
      "native": true
     },
     {
-     "t": 442,
+     "t": 437,
      "ev": "scrollend",
      "y": 280,
      "ph": "free",
@@ -256,7 +256,7 @@
      "native": true
     },
     {
-     "t": 459,
+     "t": 453,
      "ev": "scrollend",
      "y": 300,
      "ph": "free",
@@ -265,7 +265,7 @@
      "native": true
     },
     {
-     "t": 510,
+     "t": 504,
      "ev": "settle-wait-hold",
      "y": 300,
      "ph": "free",
@@ -274,7 +274,7 @@
      "trigger": "scrollend"
     },
     {
-     "t": 1159,
+     "t": 1154,
      "ev": "settle-wait-hold",
      "y": 300,
      "ph": "free",
@@ -283,7 +283,7 @@
      "trigger": "backstop"
     },
     {
-     "t": 1459,
+     "t": 1452,
      "ev": "hold-end",
      "y": 300,
      "ph": "free",
@@ -292,7 +292,7 @@
      "why": "mouseup"
     },
     {
-     "t": 1459,
+     "t": 1452,
      "ev": "settle",
      "y": 300,
      "ph": "free",
@@ -303,7 +303,7 @@
      "quiet": 150
     },
     {
-     "t": 1459,
+     "t": 1452,
      "ev": "goto",
      "y": 300,
      "ph": "rest",
@@ -313,7 +313,7 @@
      "to": 1
     },
     {
-     "t": 1460,
+     "t": 1452,
      "ev": "sync",
      "y": 584,
      "ph": "rest",
@@ -324,7 +324,7 @@
      "syncY": 584
     },
     {
-     "t": 1475,
+     "t": 1453,
      "ev": "scroll-ack",
      "y": 584,
      "ph": "play",
@@ -333,7 +333,7 @@
      "n": 1
     },
     {
-     "t": 1491,
+     "t": 1469,
      "ev": "scrollend",
      "y": 584,
      "ph": "play",
@@ -342,7 +342,7 @@
      "native": true
     },
     {
-     "t": 2660,
+     "t": 2653,
      "ev": "land",
      "y": 584,
      "ph": "rest",
@@ -368,7 +368,7 @@
    "hasScrollend": true
   },
   {
-   "t": 8,
+   "t": 7,
    "ev": "geometry",
    "y": 0,
    "ph": "rest",
@@ -385,7 +385,7 @@
    "usedY": 0
   },
   {
-   "t": 8,
+   "t": 7,
    "ev": "vv-resize",
    "y": 0,
    "ph": "rest",
@@ -395,7 +395,7 @@
    "h": 640
   },
   {
-   "t": 222,
+   "t": 223,
    "ev": "free-enter",
    "y": 20,
    "ph": "free",
@@ -404,7 +404,7 @@
    "from": "rest"
   },
   {
-   "t": 223,
+   "t": 224,
    "ev": "scrollend",
    "y": 20,
    "ph": "free",
@@ -422,7 +422,7 @@
    "native": true
   },
   {
-   "t": 256,
+   "t": 257,
    "ev": "scrollend",
    "y": 60,
    "ph": "free",
@@ -440,7 +440,7 @@
    "native": true
   },
   {
-   "t": 290,
+   "t": 288,
    "ev": "scrollend",
    "y": 100,
    "ph": "free",
@@ -458,7 +458,7 @@
    "native": true
   },
   {
-   "t": 322,
+   "t": 324,
    "ev": "scrollend",
    "y": 140,
    "ph": "free",
@@ -476,7 +476,7 @@
    "native": true
   },
   {
-   "t": 357,
+   "t": 358,
    "ev": "scrollend",
    "y": 180,
    "ph": "free",
@@ -485,7 +485,7 @@
    "native": true
   },
   {
-   "t": 372,
+   "t": 374,
    "ev": "scrollend",
    "y": 200,
    "ph": "free",
@@ -503,7 +503,7 @@
    "native": true
   },
   {
-   "t": 406,
+   "t": 407,
    "ev": "scrollend",
    "y": 240,
    "ph": "free",
@@ -521,7 +521,7 @@
    "native": true
   },
   {
-   "t": 439,
+   "t": 438,
    "ev": "scrollend",
    "y": 280,
    "ph": "free",
@@ -530,7 +530,7 @@
    "native": true
   },
   {
-   "t": 456,
+   "t": 457,
    "ev": "scrollend",
    "y": 300,
    "ph": "free",
@@ -547,7 +547,7 @@
    "d": 0,
    "trigger": "scrollend",
    "to": 1,
-   "quiet": 52
+   "quiet": 51
   },
   {
    "t": 507,
@@ -571,7 +571,7 @@
    "syncY": 584
   },
   {
-   "t": 522,
+   "t": 521,
    "ev": "scroll-ack",
    "y": 584,
    "ph": "play",
@@ -580,7 +580,7 @@
    "n": 1
   },
   {
-   "t": 538,
+   "t": 539,
    "ev": "scrollend",
    "y": 584,
    "ph": "play",
