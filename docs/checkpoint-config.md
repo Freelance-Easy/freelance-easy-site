@@ -12,7 +12,8 @@ Status: DRAFT version 1, part of the ICX v1 draft (`docs/interaction-contract.md
   verdict does not list as run. Any change after C7 bumps the version and names the device and evidence that drove it.
 - **Range** = where C7 may tune without a contract change. "unset (R1)" = R1 gives no range; C7 sets one from the
   device session.
-- **"tune in C7"** marks a value or range C0b picked because R1 left it open.
+- **"PICKED by C0b per PLAN (not from R1); tune in C7"** marks the only two ranges C0b chose (`REVERSE_PX`,
+  `KEY_REPEAT_MS`), because PLAN § C0b tells it to. Every other range R1 leaves open stays "unset (R1)".
 - Numbers fixed by the contract (220 ms dip, 600 ms cooldown, 0.6 s rush cap, 1.5× reversal, the DEC-8 budgets) are
   listed at the end for reference only. They are not tunable here.
 
@@ -35,14 +36,14 @@ Status: DRAFT version 1, part of the ICX v1 draft (`docs/interaction-contract.md
 | `MIN_STEP_MS` | 250 ms | 150–400 ms | a double step at gesture onset → raise | R1 §3.4 |
 | `REPEAT_MS` | 850 ms | 600–1200 ms | a long spin feels sluggish → lower; one long trackpad drag goes too far → raise | R1 §3.4 |
 | `SUSTAIN_K` | 0.7 (smooth **and notch** gestures, ICX-SETTLE-D1) | 0.5–0.9 | a long notch spin stops repeating → lower | R1 §3.4; C0a D1 (`S1__*-r1notch.json`) |
-| `REVERSE_PX` | 12 px summed within 80 ms | 8–20 px (window fixed at 80 ms) — **tune in C7** | a deliberate reversal during a tail is missed → lower; trackpad jitter reverses a step → raise | R1 §3.4 (value; range unset in R1, picked here) |
+| `REVERSE_PX` | 12 px summed within 80 ms | 8–20 px (window fixed at 80 ms) — **PICKED by C0b per PLAN (not from R1); tune in C7** | a deliberate reversal during a tail is missed → lower; trackpad jitter reverses a step → raise | value: R1 §3.4 (and C0a ran it); range: PICKED by C0b per PLAN § C0b, R1 leaves it unset |
 | Notch hint: first delta | ≥ 50 px with no event in the previous 30 ms | unset (R1) | smooth flicks get the notch hint too often → raise (D1 already guards the repeat) | R1 §3.4 normalisation; C0a D1 |
 
 ## Keyboard (R1 §3.4)
 
 | Constant | Value | Range | Turn it when… | Source |
 |---|---|---|---|---|
-| `KEY_REPEAT_MS` | 420 ms | 300–600 ms — **tune in C7** | a held arrow or PageDown travels too fast to read → raise; it feels sluggish → lower | R1 §3.4 (value; range unset in R1, picked here); ICX-KEY.4 |
+| `KEY_REPEAT_MS` | 420 ms | 300–600 ms — **PICKED by C0b per PLAN (not from R1); tune in C7** | a held arrow or PageDown travels too fast to read → raise; it feels sluggish → lower | value: R1 §3.4 (and C0a ran it); range: PICKED by C0b per PLAN § C0b, R1 leaves it unset; ICX-KEY.4 |
 
 ## Touch (R1 §3.4)
 
@@ -95,6 +96,6 @@ The values the spike ran with (`docs/cp-spike-verdict.md`, "Settle rules"). Evid
 | Dip 220 ms total; cooldown 600 ms | ICX-DIP.1, .4 |
 | Remaining time after a gesture during a transition ≤ 0.6 s; reversal ≥ 1.5× | ICX-SIGNED.5 |
 | Idle allowance before the rest invariant: transition + content + 1 s | ICX-REST.1 |
-| Transition ≤ 1.5 s; Make→Look ≤ 1.6 s; the Ride ≈ 1.45 s; caption ≤ 0.7 s — DEFAULT (DEC-8), pending Daniel | ICX-STEP.2, .3 |
+| Transition ≤ 1.5 s; Make→Look ≤ 1.6 s; the Ride 1.45 s ± 0.1 s; caption ≤ 0.7 s — DEFAULT (DEC-8), pending Daniel | ICX-STEP.2, .3 |
 | Content run ≤ 5 s where feasible; typing ≥ 90 ms/char — DEFAULT (DEC-6), pending Daniel | ICX-STEP.4, .5 |
 | Mode breakpoints: desktop ≥ 1024 px, tablet 640–1023 px, phone < 640 px | ICX-DEST |
