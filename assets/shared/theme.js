@@ -121,7 +121,7 @@
     var sel = opts.toggle || "[data-theme-toggle]";
     d.addEventListener("click", function (e) {
       var b = e.target && e.target.closest ? e.target.closest(sel) : null;
-      if (b) set((running ? want : get()) === "light" ? "dark" : "light", { from: b });
+      if (b) set(target() === "light" ? "dark" : "light", { from: b });
     });
     w.addEventListener("hashchange", function () {
       var h = hashTheme();
@@ -130,6 +130,10 @@
     return api;
   }
 
-  var api = { init: init, set: set, get: get };
+  // the theme the page is heading to: the latest request while a reveal runs, else the page's own; a toggle that
+  // handles its own click (the homepage) flips from this, so a second press mid-reveal flips back, as here
+  function target() { return running ? want : get(); }
+
+  var api = { init: init, set: set, get: get, target: target };
   w.FETheme = api;
 })(window, document);

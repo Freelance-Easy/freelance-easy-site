@@ -47,7 +47,7 @@
   FETheme.init({ hashPolicy: "home", toggle: "[data-fe-no-auto-toggle]" });   // we bind the toggle ourselves, below
   document.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("[data-theme-toggle]");
-    if (b) FETheme.set(theme() === "light" ? "dark" : "light", revealOpts(b));
+    if (b) FETheme.set(FETheme.target() === "light" ? "dark" : "light", revealOpts(b));
   });
   syncSwitch();
 
