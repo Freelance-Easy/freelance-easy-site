@@ -280,6 +280,20 @@ def build():
                    "target": "body"})
     sf.append({"type": "touchend", "t": 24 + 16 * 10 + 8, "touches": [], "target": "body"})
     F["touch-second-finger"] = fixture("touch-second-finger", sf)
+    sm = touch_seq([(0, -6)])[:-1]  # the second finger's touchstart is never seen (e.g. it landed elsewhere)
+    for i in range(1, 11):
+        y = 594 - 12 * i
+        sm.append({"type": "touchmove", "t": 16 + 16 * i, "touches": [{"x": 200, "y": y}, {"x": 240, "y": y}],
+                   "target": "body"})
+    sm.append({"type": "touchend", "t": 16 + 16 * 10 + 8, "touches": [], "target": "body"})
+    F["touch-second-finger-move"] = fixture("touch-second-finger-move", sm)
+    tap = [{"type": "touchstart", "t": 0, "touches": [{"x": 200, "y": 600}], "target": "body"},
+           {"type": "touchstart", "t": 20, "touches": [{"x": 200, "y": 600}, {"x": 240, "y": 600}], "target": "body"},
+           {"type": "touchend", "t": 60, "touches": [{"x": 200, "y": 600}], "target": "body"}]
+    for i in range(1, 11):
+        tap.append({"type": "touchmove", "t": 60 + 16 * i, "touches": [{"x": 200, "y": 600 - 12 * i}], "target": "body"})
+    tap.append({"type": "touchend", "t": 60 + 16 * 10 + 8, "touches": [], "target": "body"})
+    F["touch-second-finger-tap"] = fixture("touch-second-finger-tap", tap)
     F["touch-zoomed"] = fixture("touch-zoomed", touch_seq([(0, -12 * i) for i in range(1, 11)]),
                                 env={"visualScale": 1.5})
     return F

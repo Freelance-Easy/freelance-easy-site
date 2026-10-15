@@ -114,3 +114,13 @@ trackpad inertia is C7's job. Times are integer ms (`ev.timeStamp`).
 | `touch-pinch` | two-finger touch (pinch) moving 120 px | — | — | 0 | — |
 | `touch-second-finger` | one finger moves 6 px, a second finger lands, both move 120 px | — | — | 0 | — |
 | `touch-zoomed` | swipe up 120 px while `visualViewport.scale` = 1.5 (pans, ICX-SETTLE-9) | — | — | 0 | — |
+
+### Added after the detector existed (sabotage coverage; label straight from the contract row named)
+
+The rows above were committed before the module. This one was added in a later commit because the sabotage pass
+showed a guard no fixture reached; its label comes from ICX-BYPASS.2 alone.
+
+| fixture | scenario | steps | jumps | prevented | classes |
+|---|---|---|---|---|---|
+| `touch-second-finger-move` | one finger moves 6 px, then moves carry two touches (no second `touchstart` seen) for 120 px | — | — | 0 | — |
+| `touch-second-finger-tap` | one finger down, a second finger taps (down, up) before any move, then the first finger moves 120 px | — | — | 0 | — |
