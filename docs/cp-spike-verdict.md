@@ -48,7 +48,7 @@ The matrix is in `evidence/summary.json` / `summary.md`.
 |---|---|---|---|---|---|---|---|
 | R1 programmatic-scroll acknowledgement | PASS | PASS | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Mac trackpad (Safari + Chrome), Magic Mouse, Windows notch: a step never shows a jump or a one-frame flash of the pinned stage. iPhone: the same with a swipe. |
 | R2 FREE/RELEASED boundaries | PASS ¹ | PASS ² | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Trackpad flick at the end card: it scrolls out with its own inertia. Scrolling back up: a soft stop on the end card, never a wall or a bounce into beat 7. Windows notch at the last beat: releases one notch. iPhone: swipe out, then fling back. |
-| R3 settle cancellation | PASS ³ | PASS | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Drag the scrollbar, then wheel or press a key at once: one move, no double jump. |
+| R3 settle cancellation | **FAIL** ³ | PASS | PASS | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Drag the scrollbar, then wheel or press a key at once: one move, no double jump. |
 | R4 resize/rotation | WORKAROUND (S7) ⁴ | WORKAROUND (S7) | WORKAROUND (S7) | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Rotate the iPhone on a beat, and again below the story. Resize the Mac window mid-transition. Snap a Windows window to half the screen. |
 | R5 scrollbar hold | WORKAROUND ⁵ | WORKAROUND ⁵ | WORKAROUND ⁵ | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Windows classic scrollbar: drag and hold still, and the page waits; release, and one transition plays. Mac Safari overlay scrollbar: drag, then hold still for more than 0.2 s. Does it snap mid-hold? |
 | R6 autoscroll | WORKAROUND (S3) | WORKAROUND (S3) | WORKAROUND (S3) | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | UNVERIFIED-DEVICE | Windows middle-click autoscroll through the story: the stage holds its frame, and one transition plays when it stops. Mac has no autoscroll. |
@@ -69,7 +69,10 @@ Footnotes:
    beat.
 2. WebKit 1440×900 R2 failed on its first attempt and passed on the automatic rerun. Host jitter can split a
    synthetic flick past `QUIET_SMOOTH`; `first_attempt_failed` is kept in the evidence file.
-3. Chromium 1280×720 R3: the same first-attempt jitter, then PASS on the rerun.
+3. Chromium 1440×900 R3 **FAILED on both attempts** in the post-Sol rerun (`run-solfix.log`,
+   `evidence/chromium/R3__1440x900.json`): FREE was not yet entered 40 ms after a foreign `scrollTo`, so the key
+   step ran outside FREE. This is undiagnosed: probe timing or the FREE-freeze change. Every other R3 run passed.
+   **Open item for C3.**
 4. Chromium 360×640 Android (isMobile): the first runs FAILed because a reader below the story could not keep
    their old distance below `storyEnd` after the rotation: the document end clamps it (699 → 621 px). After Sol
    C0a-1 the check expects min(old distance, the new room below the story), and it passes (`run-solfix.log`).
