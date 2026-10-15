@@ -1,0 +1,18 @@
+/* FETheme circle reveal (A5): the new theme's root snapshot is masked by a soft-edged circle from the toggle's centre
+   (--vt-x, --vt-y set by theme.js; --vt-r animated by theme.js for 420 ms). The old snapshot stays opaque underneath:
+   no dip, no cross-fade. The feather is 22% of the radius, clamped to 48-220 px, the app's numbers. Token-only: no
+   colour, duration or easing lives here (the mask only reads alpha). */
+@property --vt-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+html.vt-theme::view-transition-group(root),
+html.vt-theme::view-transition-old(root) {
+  animation: none;
+}
+html.vt-theme::view-transition-new(root) {
+  animation: none;
+  -webkit-mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), black calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
+  mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), black calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
+}
