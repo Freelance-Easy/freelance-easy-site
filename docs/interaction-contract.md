@@ -387,9 +387,10 @@ label is NEW COPY for fe:claims.
 - **ICX-CLASSIC.8** With `prefers-reduced-motion: reduce` and no stored choice, the page starts in classic. A stored
   choice wins over the media query, so a reduced-motion visitor who switches the story on gets it on the next visit
   too. With the story on under reduced motion, native anchor scrolls stay instant (ICX-JUMP.5).
-- **ICX-CLASSIC.9** Short touch screens stay calm automatically (ICX-DEST.6, decisions #22). What the toggle does on
-  them is not decided by decisions #22/#23 — flagged to main 2026-10-15; until main rules, today's behaviour holds
-  (the calm layout stays).
+- **ICX-CLASSIC.9** Short touch screens stay calm automatically (ICX-DEST.6, decisions #22). Decided by main
+  2026-10-15: on a screen where calm is automatic the classic toggle is **not shown** (there is no autoplay to stop and
+  no story to switch to, so it would be a dead control); the stored `fe-classic` choice is kept untouched for larger
+  screens. Test: at 375×548 coarse pointer the toggle is absent from the accessibility tree and the page is calm.
 
 ### ICX-HIDDEN — Hidden tab
 
@@ -475,8 +476,11 @@ Not questions: work C3 must do and prove.
 
 ## OPEN for Daniel
 
-None — all decided 2026-10-15 (decisions-2026-10-15.md, by main under Daniel's delegation). One gap in those
-decisions is flagged to main, not to Daniel: what the classic toggle does on a short touch screen (ICX-CLASSIC.9).
+None — all decided 2026-10-15 (decisions-2026-10-15.md, by main under Daniel's delegation), including main's
+follow-up rulings: the classic toggle is hidden where calm is automatic (ICX-CLASSIC.9); a skipped demo cuts to this
+chapter's rest frame and the normal transition still plays (the seam, the Ride included, is never skipped); the
+≤ 0.7 s caption applies to every step incl. Make→Look (moving a caption earlier changes no motion; C5 may claim a
+frame-strip exception if it clashes with the reveal).
 
 
 Device-only items for the M1 device session (C0a, every real-device cell UNVERIFIED-DEVICE; Mac Safari, Windows
