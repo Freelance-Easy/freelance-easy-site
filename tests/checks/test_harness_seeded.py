@@ -208,6 +208,9 @@ STUB_PAGES = {
                "<a href='/dl/mac/site'>m</a><a href='/dl/win/site'>w</a>"
                "<a href='/download/win'>d</a><a href='/releases'>r</a>"
                "<a href='/page'>ordinary</a></main></body></html>",
+    "/badroutes": "<!doctype html><html lang=en><title>b</title><body><main><h1>Bad routes</h1>"
+                  "<a href='/download/linux'>l</a><a href='/dl/linux/site'>dl</a>"
+                  "<a href='/releases/missing'>r</a><a href='/page'>ordinary</a></main></body></html>",
     "/a.css": "@import url('/b.css');\n.ok { color: var(--app-fg); }\n",
     "/b.css": ".imported { color: #123456; }\n",
 }
@@ -228,6 +231,11 @@ def stub_url():
             if self.path == "/go":
                 self.send_response(302)
                 self.send_header("Location", "http://example.invalid/never-fetched")
+                self.end_headers()
+                return
+            if self.path == "/hop":  # a LOCAL redirect into a download route
+                self.send_response(302)
+                self.send_header("Location", "/dl/mac/site")
                 self.end_headers()
                 return
             body = STUB_PAGES.get(self.path)
@@ -267,6 +275,28 @@ def test_links_never_request_download_routes(stub_url):
     assert "4 routed" in r.stdout, r.stdout
     bad = [h for h in hits if h.startswith(("/dl/", "/download")) or h == "/releases"]
     assert bad == [], f"download routes were requested: {bad}"
+
+
+def test_links_undefined_download_routes_are_broken(stub_url):
+    # a download-looking path with no _redirects/worker.js rule is a broken link, reported without a fetch
+    url, hits = stub_url
+    hits.clear()
+    r = fidelity(url + "/badroutes", "LINKS")
+    assert r.returncode == 1, r.stdout + r.stderr
+    for p in ("/download/linux", "/dl/linux/site", "/releases/missing"):
+        assert f"broken link {p}" in r.stdout, r.stdout
+    bad = [h for h in hits if h.startswith(("/dl/", "/download", "/releases"))]
+    assert bad == [], f"download routes were requested: {bad}"
+
+
+def test_get_refuses_local_redirect_into_download_route(stub_url):
+    url, hits = stub_url
+    hits.clear()
+    sys.path.insert(0, str(CHECKS))
+    import fidelity as f
+    with pytest.raises(f.Fail, match="refusing redirect to a download route"):
+        f._get(url + "/hop")
+    assert "/dl/mac/site" not in hits, hits
 
 
 def test_get_refuses_download_routes():
