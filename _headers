@@ -52,6 +52,27 @@
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
 
+# New UX asset dirs (2026-10-14): revalidate every load, like /assets/story/*.
+/assets/shared/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/site/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/fe/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/account/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/tour/*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
 # CSS/JS revalidate on every load (an ETag 304 when unchanged), so a deploy
 # shows on a plain reload. An hour of max-age left returning visitors on the
 # old stylesheet against new HTML.
