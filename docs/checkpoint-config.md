@@ -1,6 +1,7 @@
 # Checkpoint input config — version 1
 
-Status: DRAFT version 1, part of the ICX v1 draft (`docs/interaction-contract.md`); not approved.
+Status: version 1, part of ICX v1 (`docs/interaction-contract.md`) — DECIDED 2026-10-15 by main under Daniel's
+delegation (decisions-2026-10-15.md in the run dir); not yet implemented.
 
 - **What this is:** every tunable constant of the checkpoint input layer: the R1 §3.4 gesture detector, keyboard
   and touch, the story playhead, and C0a's settle rules. C3 implements them as one table (R1 §3.6's `tune`). C7 tunes
@@ -14,8 +15,8 @@ Status: DRAFT version 1, part of the ICX v1 draft (`docs/interaction-contract.md
   device session.
 - **"PICKED by C0b per PLAN (not from R1); tune in C7"** marks the only two ranges C0b chose (`REVERSE_PX`,
   `KEY_REPEAT_MS`), because PLAN § C0b tells it to. Every other range R1 leaves open stays "unset (R1)".
-- Numbers fixed by the contract (220 ms dip, 600 ms cooldown, 0.6 s rush cap, 1.5× reversal, the DEC-8 budgets) are
-  listed at the end for reference only. They are not tunable here.
+- Numbers fixed by the contract (220 ms dip, 600 ms cooldown, 0.6 s rush cap, 1.5× reversal, the 3× rate ceiling,
+  the 40 % scroll-spy line, the DEC-8 dead-time ceilings) are listed at the end and are not tunable here.
 
 ## Detector: wheel (R1 §3.4)
 
@@ -57,16 +58,24 @@ Status: DRAFT version 1, part of the ICX v1 draft (`docs/interaction-contract.md
 
 ## Story playhead (R1 §3.4 "story" rows)
 
-R1's values. Where the contract fixes a bound, the bound is the range ceiling and the contract wins.
+R1's values, bounded by the decided contract (decisions-2026-10-15.md §B #13, §C). Where the contract fixes a bound,
+the bound is the range ceiling and the contract wins.
 
 | Constant | Value | Range | Turn it when… | Source |
 |---|---|---|---|---|
-| `RUSH` | 2.5× | unset (R1) | — | R1 §3.4 |
-| `RUSH_MAX` | 0.35 s | ≤ 0.6 s (ICX-SIGNED.5) | — | R1 §3.4; contract cap; OPEN-6 |
-| `CONTENT_RUSH_MAX` | 0.6 s | ≤ 0.6 s (ICX-SIGNED.5) | — | R1 §3.4; contract cap; OPEN-6 |
+| `RATE_MAX` | 3× | fixed (contract) | — (Daniel's ceiling: nothing plays faster, anywhere) | decisions §C; ICX-SIGNED.7 |
+| `RUSH` | 2.5× | unset (R1); never above `RATE_MAX` | — | R1 §3.4; ICX-SIGNED.5 |
+| `RUSH_MAX` | 0.6 s at ≤ `RATE_MAX` (a rush only if the rest of the seam at 1× is ≤ 1.8 s) | fixed (contract) | — | decisions §C (R1 started at 0.35 s at `RUSH`; superseded); ICX-SIGNED.5 |
+| `CONTENT_FINISH_MAX` (R1's `CONTENT_RUSH_MAX`) | 0.6 s of content left → it finishes at **1×** (never rushed); more → the 220 ms skip dip | fixed (contract) | — | decisions #13; ICX-STEP.7 |
 | `DIP` | 100 ms out + 120 ms in | the total is fixed at 220 ms (ICX-DIP); the split is unset (R1) | — | R1 §3.3/§3.4 |
-| `ABORT_RATE` | 1.5× | fixed as the floor (ICX-BACK.3, ICX-SIGNED.5) | — | R1 §3.4 |
+| `ABORT_RATE` | 1.5× | fixed as the floor; never above `RATE_MAX` (ICX-BACK.3, ICX-SIGNED.5) | — | R1 §3.4 |
 | Rate easing | 12 /s² | unset (R1) | — | R1 §3.2/§3.4 |
+
+## Nav (decided)
+
+| Constant | Value | Range | Turn it when… | Source |
+|---|---|---|---|---|
+| `SPY_LINE` | 40 % of the viewport height: a native section is current once its top has crossed this line | fixed (contract) | — | decisions §C (was OPEN-17); ICX-HL.4 |
 
 ## Settle (C0a)
 
@@ -94,8 +103,10 @@ The values the spike ran with (`docs/cp-spike-verdict.md`, "Settle rules"). Evid
 |---|---|
 | Back step fade 220 ms | ICX-BACK.1 |
 | Dip 220 ms total; cooldown 600 ms | ICX-DIP.1, .4 |
-| Remaining time after a gesture during a transition ≤ 0.6 s; reversal ≥ 1.5× | ICX-SIGNED.5 |
-| Idle allowance before the rest invariant: transition + content + 1 s | ICX-REST.1 |
-| Transition ≤ 1.5 s; Make→Look ≤ 1.6 s; the Ride 1.45 s ± 0.1 s; caption ≤ 0.7 s — DEFAULT (DEC-8), pending Daniel | ICX-STEP.2, .3 |
-| Content run ≤ 5 s where feasible; typing ≥ 90 ms/char — DEFAULT (DEC-6), pending Daniel | ICX-STEP.4, .5 |
+| Remaining time after a `dest`-changing gesture during a transition ≤ 0.6 s at ≤ 3×, else the 220 ms dip; reversal ≥ 1.5× | ICX-SIGNED.5 |
+| Rate ceiling 3× (`RATE_MAX`) everywhere | ICX-SIGNED.7 |
+| Scroll-spy line 40 % of the viewport height (`SPY_LINE`) | ICX-HL.4 |
+| Idle allowance before the rest invariant: transition + content + 1 s of visible time | ICX-REST.1 |
+| **DEC-8 dead-time rule** — DECIDED (DEC-8, 2026-10-15): the ceilings apply to dead time only, never to motion speed. Moving parts keep the base 9471605's durations and easing; holds, waits and pauses are trimmed until each transition ≤ 1.5 s; named exceptions (expected: Make→Look) are judged on frame strips; the Ride 1.45 s ± 0.1 s; caption ≤ 0.7 s | ICX-STEP.2, .3 |
+| Content run ≤ 5 s where feasible (pauses cut, same dead-time rule); typing ≥ 90 ms/char — DECIDED (DEC-6, 2026-10-15) | ICX-STEP.4, .5 |
 | Mode breakpoints: desktop ≥ 1024 px, tablet 640–1023 px, phone < 640 px | ICX-DEST |

@@ -1,8 +1,11 @@
 # Interaction contract (ICX v1)
 
-Status: DRAFT v1 — defaults pending Daniel (DEC-4/6/7/8); not approved
+Status: v1 — DECIDED 2026-10-15 by main under Daniel's delegation (decisions-2026-10-15.md in the run dir); not yet implemented
 
-- **Binding once approved.** Every piece that moves people between checkpoints (story, rail, menu, tour, deep links)
+Decisions: `.orchestrate/2026-10-14-site-ux/decisions-2026-10-15.md` (§A DEC answers, §B the scroll rulebook #12–#26,
+§C technical). Cited below as "decisions #n" or "decisions §C".
+
+- **Binding.** Every piece that moves people between checkpoints (story, rail, menu, tour, deep links)
   implements this file. Later DONE WHENs cite a row id (e.g. `ICX-DIP.2`). C3 owns the destination table's
   implementation; C1, C4, B5, B6 and K1 consume it.
 - **Source of truth:** vault "Site UX Consolidation — Build Plan (2026-10-14)" §3 (the ICX table and the destination
@@ -10,11 +13,13 @@ Status: DRAFT v1 — defaults pending Daniel (DEC-4/6/7/8); not approved
 - **Settle rules:** ICX-SETTLE-1…9 and ICX-SETTLE-D1 come from C0a's verdict (`docs/cp-spike-verdict.md`,
   "Settle rules: the ICX patch for C0b"). Each cites its evidence row.
 - **Constants:** every number a test needs that is tunable lives in `docs/checkpoint-config.md` (version 1). Numbers
-  written here (220 ms, 600 ms, 0.6 s, 1.5×, the DEC-8 budgets) are contract values: changing one is a contract change.
-- **Defaults:** each spot marked "DEFAULT (DEC-n), pending Daniel" uses the default offered to Daniel on 2026-10-15.
-  An answer is a find-and-edit on that marker.
-- **OPEN:** where the vault table is silent, the row says "OPEN-n" and the question is in "OPEN for Daniel" at the end.
-  Builders do not pick an answer for an OPEN item; they ask main.
+  written here (220 ms, 600 ms, 0.6 s, 1.5×, 3×, 40 %, the DEC-8 dead-time ceilings) are contract values: changing one
+  is a contract change.
+- **Decided:** each spot marked "DECIDED (DEC-n, 2026-10-15)" is a DEC answer; each rule that was an OPEN question in
+  the draft cites its decisions number. No question is left open (see "OPEN for Daniel"); two C3 build tasks remain
+  ("Build tasks for C3").
+- **Global rate ceiling (ICX-SIGNED.7):** nothing on the story or tour stage ever plays faster than 3× (decisions §C,
+  Daniel's ceiling). Every rate below is bounded by it.
 
 ## Terms
 
@@ -29,9 +34,11 @@ Status: DRAFT v1 — defaults pending Daniel (DEC-4/6/7/8); not approved
 | `phase` | The engine state; `"rest"` means resting on a checkpoint with nothing playing |
 | transition | The seam from one checkpoint toward the next (ends where the next checkpoint's content starts) |
 | content | The checkpoint's own autoplay, from the end of its transition to its rest frame |
-| dip | The 220 ms fade out → cut → fade in (ICX-DIP) |
+| dip | The 220 ms fade out → cut → fade in (ICX-DIP). Used by ICX-DIP (distance ≥ 2), ICX-BACK (the back-fade), ICX-STEP.7 (skipping content) and ICX-SIGNED.5 (a transition that cannot finish within 0.6 s at ≤ 3×) |
+| rest-entry | A checkpoint's content start (the end of its seam; R1 §3.3 `S_b`). A dip that lands on a checkpoint's rest-entry then plays its content (decisions §C, was OPEN-7) |
+| dead time | Story time during which the rendered stage frame does not change (no moving element): holds, waits and pauses. DEC-8's ceilings trim only dead time (ICX-STEP.2) |
 | step | One gesture (wheel gesture, swipe, step key): ±1 |
-| jump | An explicit target: rail/menu click, Home/End, logo, deep link, popstate (ICX-JUMP); a FREE settle uses the same visual rule (ICX-SETTLE-4) |
+| jump | An explicit target: rail/menu click, Home/End, logo, deep link, popstate (ICX-JUMP); a FREE settle uses the same visual rule (ICX-SETTLE-4); a jump to a `native` row is a native anchor scroll (ICX-JUMP.5) |
 | FREE / RELEASED | C0a states: a foreign scroll inside the track / native scroll below the pinned track (ICX-SETTLE-2) |
 | last pinned | The last `pinned` row in the current mode: desktop `end`, tablet `chase`, phone `end` |
 
@@ -39,20 +46,31 @@ Status: DRAFT v1 — defaults pending Daniel (DEC-4/6/7/8); not approved
 
 Owned by C3; consumed by C4, B5, B6 and K1. One row per destination, in beat order (`BEATS` in `assets/story/site.js`).
 
-Names: DEFAULT (DEC-4), pending Daniel. Slug = the name kebab-cased. No numbers, counters, fills or progress UI
+Names: DECIDED (DEC-4, 2026-10-15). Slug = the name kebab-cased. No numbers, counters, fills or progress UI
 anywhere (ICX-NOPROG).
 
-| beat id | name (rail label, caption eyebrow) | slug (URL hash) | anchor (`src/pages/index.html` section id) | rest (story time of the rest frame) | desktop ≥1024 | tablet 640–1023 | phone <640 | classic / calm / static / no-JS |
-|---|---|---|---|---|---|---|---|---|
-| `make` | New invoice | `new-invoice` | — no section id (the section sits in `main#top`); OPEN-13 | `TL.HOLD` (desktop dark ≈ 3.60 s) | pinned | pinned | pinned | native |
-| `look` | Templates | `templates` | `how` | segment end − 0.02 (≈ 11.11 s) | pinned | pinned | pinned | native |
-| `know` | Invoices | `invoices` | — no section id; OPEN-13 | segment end − 0.02 (≈ 15.06 s) | pinned | pinned | pinned | native |
-| `grow` | Dashboard | `dashboard` | — no section id; OPEN-13 | segment end − 0.02 (≈ 17.44 s) | pinned | pinned | pinned | native |
-| `chase` | Email | `email` | — no section id; OPEN-13 | segment end − 0.02 (≈ 24.94 s) | pinned | pinned (last pinned) | pinned | native |
-| `yours` | Your data | `your-data` | — no section id; OPEN-13 | `yours` segment start + 0.28 (≈ 26.14 s) | pinned | native | pinned | native |
-| `price` | Price | `price` | `pricing` | `price` segment start + 0.3 (≈ 28.01 s) | pinned | native | native | native |
-| `note` | A note | `a-note` | — no section id; OPEN-13 | `brand` segment start + 0.2 (≈ 29.81 s) | pinned | native | native | native |
-| `end` | Get the app | `get-the-app` | `download` | desktop: `brand` segment end − 0.05 (≈ 30.56 s); phone: `TL.T1 − END_REST` | pinned (last pinned) | native | pinned (last pinned); OPEN-14 | native |
+Anchors (decisions #20): every chapter section in `src/pages/index.html` gets `id` = its slug, so `/#<slug>` works
+with no JS. The legacy hashes keep tiny anchors of their own so old links work with no JS; with JS they land on their
+chapter and the URL is replaced by the slug (ICX-HIST.6). Today's ids `how`, `pricing`, `download` sit on the
+sections; they move to those legacy anchors. `#top` stays `main#top`.
+
+| beat id | name (rail label, caption eyebrow) | slug (URL hash) | anchor (section `id`) | legacy anchor | rest (story time of the rest frame) | desktop ≥1024 | tablet 640–1023 | phone <640 | classic / calm / static / no-JS |
+|---|---|---|---|---|---|---|---|---|---|
+| `make` | New invoice | `new-invoice` (the story writes plain `/`, ICX-HIST.5) | `new-invoice` | `#top` (`main#top`) | `TL.HOLD` (desktop dark ≈ 3.60 s) | pinned | pinned | pinned | native |
+| `look` | Templates | `templates` | `templates` | `#how` | segment end − 0.02 (≈ 11.11 s) | pinned | pinned | pinned | native |
+| `know` | Invoices | `invoices` | `invoices` | — | segment end − 0.02 (≈ 15.06 s) | pinned | pinned | pinned | native |
+| `grow` | Dashboard | `dashboard` | `dashboard` | — | segment end − 0.02 (≈ 17.44 s) | pinned | pinned | pinned | native |
+| `chase` | Email | `email` | `email` | — | segment end − 0.02 (≈ 24.94 s) | pinned | pinned (last pinned) | pinned | native |
+| `yours` | Your data | `your-data` | `your-data` | — | `yours` segment start + 0.28 (≈ 26.14 s) | pinned | native | pinned | native |
+| `price` | Price | `price` | `price` | `#pricing` | `price` segment start + 0.3 (≈ 28.01 s) | pinned | native | native | native |
+| `note` | A note | `a-note` | `a-note` | — | `brand` segment start + 0.2 (≈ 29.81 s) | pinned | native | native | native |
+| `end` | Get the app | `get-the-app` | `get-the-app` | `#download` | desktop: `brand` segment end − 0.05 (≈ 30.56 s); phone: `TL.T1 − END_REST` | pinned (last pinned) | native | pinned (last pinned) | native |
+
+- **Phone order (decisions #21): as shipped 10-10.** The story is pinned through Your data → the Get the app card
+  (`end`, the last pinned; site.js `TALL_PIN`); Price and A note follow as native sections after the release. With JS,
+  `/#get-the-app` on a phone targets the pinned card. Revisit only in the M1 device session.
+- **Short touch screens (decisions #22): calm automatically, as today** (coarse pointer and 100svh < 600 px, site.js
+  `SHORT_TOUCH`): every row native, as in the last column.
 
 - **rest:** the expression is today's hold `T` in `site.js` (`holds`, ~:680-692), which R1 §3.2 turns into
   `REST_T[beat]`. The seconds are R1 §2.6's computed desktop dark-theme values, not re-measured here. Light theme: every
@@ -61,13 +79,17 @@ anywhere (ICX-NOPROG).
 - **Mode counts:** desktop 9 pinned; tablet 5 pinned (make…chase), 4 native; phone 7 pinned (make…chase, yours, end),
   2 native (price, note); classic / calm / static / no-JS 0 pinned, 9 native.
 - The vault's mode breakpoints are the ones `site.js` uses today: `desktop()` = width ≥ 1024, `preset()` = "tall"
-  below 640. Calm today also covers a short touch screen (OPEN-15).
+  below 640. Calm also covers a short touch screen (above).
 
 Assertions:
 - **ICX-DEST.1** At a desktop, a tablet and a phone viewport, and in classic/reduced-motion/no-JS, the engine's
   list of pinned destinations equals the table's pinned set for that mode, in beat order.
 - **ICX-DEST.2** Each slug equals the kebab-case of its name; the nine slugs are unique; no slug contains a digit.
 - **ICX-DEST.3** Rail, menu and caption eyebrows show exactly the table's names (fe:claims checks the words).
+- **ICX-DEST.5** `src/pages/index.html` has one element per row with `id` = the slug, and one element each with `id`
+  `how`, `pricing`, `download` inside (or at the start of) the `look`, `price` and `end` sections; with JS off, loading
+  `/#<slug>` or a legacy hash scrolls to that chapter.
+- **ICX-DEST.6** A short touch screen (coarse pointer, 100svh < 600 px) gets the calm layout on load, as today.
 - **ICX-DEST.4** Mode flips (resize or rotation across 640 or 1024, the classic toggle, a reduced-motion change) keep
   the reading place (`readingPlace`/`restorePlace`): the destination in view before the flip is the one in view after,
   and `document.activeElement` is unchanged.
@@ -84,32 +106,48 @@ Rule: a checkpoint is a rest frame: a story page (mode-aware, see ICX-DEST) or a
   `native` row is never a checkpoint: no input is intercepted on it.
 - **ICX-CHECKPOINT.2** When `phase == "rest"` on checkpoint `b`: `rendered == dest == b`, the story time equals `b`'s
   `rest` exactly, `b`'s caption is the active one, and `scrollY` is within 1 px of `b`'s track position.
-- **ICX-CHECKPOINT.3** Tour chapters are checkpoints under the same rules. Their list is not in this table (OPEN-1).
+- **ICX-CHECKPOINT.3** Tour chapters are checkpoints under the same rules. Their names are the story's names where
+  the two overlap (decisions #26: one vocabulary site-wide); the tour's own destination table comes with child F.
 
 ### ICX-STEP — Step +1 (one gesture)
 
 Rule: play the transition to the next checkpoint at the designed speed. Then the checkpoint's content autoplays and
 rests.
 
-Budgets — DEFAULT (DEC-8), pending Daniel (Daniel judges the feel by eye on frame strips; tests check only the numbers):
-every transition ≤ 1.5 s; Make→Look ≤ 1.6 s; the Ride (the Dashboard → Email seam, `ride`) 1.45 s ± 0.1 s; caption
-≤ 0.7 s after the gesture.
-Content — DEFAULT (DEC-6), pending Daniel: each automatic content run ≤ 5 s where feasible; typing pace
-≥ 90 ms per character.
+Timing — DECIDED (DEC-8, 2026-10-15; decisions #6, #12): the budgets are **ceilings on dead time, never on motion
+speed**. The moving part of every seam keeps today's duration and easing (the shipped base, 9471605; the Ride and
+the PDF→Look circle untouched). Only holds, waits and pauses (dead time, Terms) are trimmed, until each transition
+is ≤ 1.5 s. A seam that cannot reach 1.5 s without speeding up its motion is a **named exception**, judged by Daniel
+on frame strips (expected: Make→Look). The Ride stays 1.45 s ± 0.1 s. Caption ≤ 0.7 s after the gesture. C5 shows
+before/after as a live A/B switch for Daniel.
+Content — DECIDED (DEC-6, 2026-10-15): each automatic content run ≤ 5 s where feasible (trimmed by cutting pauses,
+under the same dead-time rule; Email's content is brought to ≤ 5 s this way); typing pace ≥ 90 ms per character.
+
+Named exceptions (transition > 1.5 s allowed; each judged on frame strips, not by a number): Make→Look (expected).
+C5 adds a row here only with before/after frame strips showing the seam has no dead time left.
 
 - **ICX-STEP.1** From `REST(b)` with `b` not last pinned, one gesture sets `dest = b + 1`, plays exactly one
   transition, lands `b + 1` at the seam's end (`rendered = b + 1`), plays `b + 1`'s content, and ends in
   `REST(b + 1)`. No dip.
-- **ICX-STEP.2** Transition length (gesture → the end of the seam), at 1×: ≤ 1.5 s, except Make→Look ≤ 1.6 s.
-  The Ride: DEFAULT (DEC-8), pending Daniel: 1.45 s ± 0.1 s. Daniel still judges the Ride by eye (see "Not
-  machine-testable").
+- **ICX-STEP.2** Motion is untouched: in a step with no further input, for every seam and content, each moving segment (a story-time interval in which
+  some stage element changes) has the same duration (± one frame) and the same easing as on the base 9471605
+  (compared on `__fxTrace` or frame strips). Only dead-time intervals differ. With that: every transition (gesture →
+  the end of its seam, at 1×) is ≤ 1.5 s, except a named exception; the Ride is 1.45 s ± 0.1 s.
 - **ICX-STEP.3** The incoming caption becomes the active caption ≤ 0.7 s after the gesture event.
-- **ICX-STEP.4** Each checkpoint's content run is ≤ 5 s, except rows listed as "not feasible" (OPEN-2).
+- **ICX-STEP.4** Each checkpoint's content run is ≤ 5 s (Email included), except a content run listed as a named
+  exception under the same dead-time rule (none expected).
 - **ICX-STEP.5** Any typed text in content advances at ≥ 90 ms per character.
 - **ICX-STEP.6** The playhead never runs faster than 1× in a step with no further input (the "designed speed").
-- **ICX-STEP.7** A forward gesture during `b`'s content (landed, not yet at rest): `dest = b + 1`, `distance = 1`, so
-  the next move is a step to `b + 1`; two or more such gestures make `distance ≥ 2` → ICX-DIP. A back gesture during
-  content is ICX-BACK.2. What happens to the rest of `b`'s content before the forward step: OPEN-25.
+- **ICX-STEP.7** Input during `b`'s content (landed, not yet at rest) — decisions #13, R1 §3.3's hybrid. A forward
+  gesture sets `dest = b + 1` (`distance = 1`); for `b` = last pinned it is dropped instead (ICX-RELEASE.4). Content
+  is never fast-forwarded:
+  - if ≤ 0.6 s of `b`'s content is left (`CONTENT_FINISH_MAX`), it finishes at 1×, then the `b → b + 1` transition
+    plays (ICX-STEP.1);
+  - if more is left, one 220 ms dip skips the rest of it: the cut lands on `b`'s rest frame (no new landing,
+    `rendered` stays `b`), then the `b → b + 1` transition plays.
+  - Either way, if further gestures make `distance ≥ 2` by the decision point (the end of the finishing content, or
+    the dip's dark frame), it is ICX-DIP to `dest` instead.
+  - A back gesture during content is ICX-BACK.2. The dip cooldown (ICX-DIP.4) applies to the skip dip.
 
 ### ICX-BACK — Step −1
 
@@ -120,9 +158,12 @@ seam is still running, it plays backwards at 1.5× instead.
   straight to `b − 1`'s `rest`; no frame of `b − 1`'s content plays.
 - **ICX-BACK.2** During `b`'s content (its seam has finished), one back gesture: the same 220 ms fade to `REST(b − 1)`.
 - **ICX-BACK.3** During a forward seam toward `b`, one back gesture: no dip; the seam plays backwards at 1.5× (or
-  faster, per ICX-SIGNED.5) and lands on `REST(b − 1)`.
+  faster, per ICX-SIGNED.5, never above 3×) and lands on `REST(b − 1)`. If the played part cannot be undone within
+  0.6 s at ≤ 3×, it is the 220 ms fade to `REST(b − 1)` instead (ICX-SIGNED.5).
 - **ICX-BACK.4** The same three behaviours hold in the tour.
-- **ICX-BACK.5** A back gesture at the first checkpoint: OPEN-3.
+- **ICX-BACK.5** At `REST(first)`, a back gesture (wheel, key, swipe) is not intercepted: the page scrolls natively,
+  and pull-to-refresh works on phones (decisions #16). At any other time a back gesture never takes `dest` below the
+  first checkpoint (ICX-SIGNED.1).
 
 ### ICX-SIGNED — Gestures during a transition (signed)
 
@@ -133,9 +174,15 @@ Reversal precedence: a gesture opposite to the running transition first cancels 
 completes and is followed by a forward step. The running transition rushes (≤ 0.6 s left).
 Precedence: the ≤ 0.6 s cap wins, so a reversal plays at max(1.5×, the rate needed to finish within 0.6 s).
 Checkpoints passed through skip their content.
+Decided (decisions §C, was OPEN-4/6): the rush and the ≤ 0.6 s cap are bounded by the 3× ceiling. A rush happens only
+when a gesture **changes** `dest` and the rest of the running transition fits in ≤ 0.6 s at ≤ 3×; otherwise the
+calm 220 ms dip. Decided (decisions #17, was OPEN-5): `dest` is clamped at the last pinned checkpoint.
 
-- **ICX-SIGNED.1** N same-direction gestures during a transition move `dest` by exactly N (subject to OPEN-5 at the
-  ends); `rendered` changes only at a landing (Terms).
+- **ICX-SIGNED.1** N same-direction gestures during a transition move `dest` by exactly N, clamped to
+  [first checkpoint, last pinned]; `rendered` changes only at a landing (Terms). A forward gesture whose `+1` would
+  pass the last pinned is dropped: it does not change `dest`, does not rush, and does not release (decisions #17).
+  Only a forward gesture that starts at `REST(last pinned)` releases (ICX-RELEASE.1). The same clamp holds at the first
+  checkpoint (ICX-BACK.5).
 - **ICX-SIGNED.2** Forward seam from origin `o` toward `o + 1`, `dest = o + 1`, one opposite gesture: `dest = o`, the
   seam plays backwards and lands on `REST(o)`.
 - **ICX-SIGNED.3** Back-fade from `o` toward `o − 1`, one forward gesture: the fade completes, then a forward step
@@ -143,12 +190,22 @@ Checkpoints passed through skip their content.
 - **ICX-SIGNED.4** The arithmetic is always ±1 per gesture; an opposite gesture removes one pending same-direction
   step before any reversal can happen. Example: forward seam `o → o + 1` with `dest = o + 3`. One back gesture →
   `dest = o + 2` (no reversal: `dest` is not the origin). A second → `dest = o + 1` (all pending steps cancelled; the
-  seam keeps going to `o + 1`). A third → `dest = o` (the origin) → the seam plays backwards (ICX-SIGNED.2). When the
-  "distance ≥ 2" decision is taken while a transition runs (so whether the first back gesture lands inside a dip
-  already under way): OPEN-4.
-- **ICX-SIGNED.5** After any gesture during a running transition, its remaining play time is ≤ 0.6 s (OPEN-6 for the
-  trigger). A reversal runs at max(1.5×, remaining / 0.6 s).
+  seam keeps going to `o + 1`). A third → `dest = o` (the origin) → the seam plays backwards (ICX-SIGNED.2).
+  Decision time (decisions §C, was OPEN-4): the dip decision is taken when a gesture changes `dest` during a transition
+  and again at each landing. If the running transition can rush (ICX-SIGNED.5), it rushes to its landing and
+  `distance` is judged from the new `rendered` there (1 → step, ≥ 2 → ICX-DIP); so in the example, a seam that can
+  rush lands `o + 1` and then steps to `o + 2`. If it cannot rush, the 220 ms dip to `dest` starts at once, and the
+  back gesture during its fade-out moves the cut to `o + 2` (ICX-DIP.2).
+- **ICX-SIGNED.5** Rush (decisions §C): when a gesture changes `dest` during a running transition and the rest of
+  that transition at 1× is ≤ 1.8 s (so it fits in ≤ 0.6 s at ≤ 3×), it plays at max(`RUSH`, rest / 0.6 s), never above
+  3×, and finishes within 0.6 s. A gesture that does not change `dest` (clamped, ICX-SIGNED.1) does not rush. If the
+  rest does not fit, the transition is cut by the 220 ms dip to `dest` (to its rest-entry; or to the origin's rest
+  frame when `dest` is the origin), subject to the dip cooldown (ICX-DIP.4). A reversal (ICX-SIGNED.2) runs at max(1.5×, played part / 0.6 s), never above
+  3×; if that would need more than 3×, the 220 ms fade to the origin's rest frame instead.
 - **ICX-SIGNED.6** A checkpoint passed through on the way to `dest` renders none of its content frames.
+- **ICX-SIGNED.7** Rate ceiling (decisions §C): story time on the story or tour stage never advances or reverses
+  faster than 3× in any mode, input or phase (checked on `__fxTrace` story time per frame, dips excluded since a cut
+  is not playback).
 
 ### ICX-DIP — Dip rule
 
@@ -158,11 +215,12 @@ cut counts as a new step from the new `rendered`. Cooldown: at most one dip per 
 still update `dest` (which is preserved); when the cooldown ends, `distance = 1` → step, `≥ 2` → dip.
 
 - **ICX-DIP.1** `distance ≥ 2` at decision time → exactly one dip, 220 ms total; no intermediate checkpoint renders
-  (ICX-SIGNED.6). After the cut, `dest`'s content plays from its rest-entry (OPEN-7) to its rest.
+  (ICX-SIGNED.6). After the cut, `dest`'s content plays from its rest-entry (its content start, decisions §C) to its rest.
 - **ICX-DIP.2** A gesture during the fade-out changes where the cut lands: the cut target is `dest` as it stands at the
   dark frame.
 - **ICX-DIP.3** The cut is the dip's landing: `rendered` becomes the dip's target there (onLand, `aria-current`). A
-  gesture during the fade-in or after the cut is a new step from that `rendered`.
+  gesture during the fade-in or after the cut is a new step from that `rendered`; since the target's content is then
+  playing, ICX-STEP.7 (forward) or ICX-BACK.2 (back) says how it plays out.
 - **ICX-DIP.4** Two dips never start less than 600 ms apart. Gestures inside the cooldown still change `dest`. At the
   cooldown's end: `distance == 1` → a step (ICX-STEP/ICX-BACK), `distance ≥ 2` → a dip, `distance == 0` → nothing.
 - **ICX-DIP.5** "3 gestures = 3 pages": three gestures in quick succession from `REST(b)` land on `REST(b + 3)`.
@@ -176,15 +234,22 @@ moves nothing and writes no history.
 
 - **ICX-JUMP.0** Zero distance: a jump at rest whose target is the checkpoint already landed (`target == rendered`,
   e.g. a rail click on the current chapter, or End at `REST(last pinned)`, ICX-KEY.6) moves nothing: no dip, no content
-  replay, no history write. DEFAULT, pending Daniel (OPEN-26). During a transition, `target == rendered` is ordinary
-  signed input (ICX-SIGNED: `dest` becomes the target).
+  replay, no history write. DECIDED (decisions #14, 2026-10-15): clicking the current chapter does nothing (no
+  replay). During a transition, `target == rendered` is ordinary signed input (ICX-SIGNED: `dest` becomes the
+  target).
 - **ICX-JUMP.1** A jump to `rendered + 1` behaves exactly as ICX-STEP; to `rendered − 1` exactly as ICX-BACK.
 - **ICX-JUMP.2** Any other pinned target (`|target − rendered| ≥ 2`): one dip (ICX-DIP) to the target, then its content
   plays to rest, in either direction.
-- **ICX-JUMP.3** A deep link (`/#<slug>` on load) to a pinned row plays that row's content and rests there. How it
-  starts (dip or not) and what reload does: OPEN-8.
-- **ICX-JUMP.4** popstate: the same visuals as .1/.2, and no `pushState`/`replaceState` call (ICX-HIST.3).
-- **ICX-JUMP.5** A jump to a row that is `native` in the current mode: OPEN-9.
+- **ICX-JUMP.3** Deep link vs reload (decisions #25). A deep link (a fresh load of `/#<slug>` to a pinned row) plays
+  that chapter's demo: no other checkpoint's frame or content is shown first, the target's content plays from its
+  rest-entry to its rest, and `rendered` is the target from the first frame. A reload (navigation type `reload`) lands
+  on that chapter's finished rest frame: no content plays, no dip. Neither writes history (ICX-HIST.3). A deep link or
+  reload whose row is `native` in the current mode (or in classic) is the browser's own anchor scroll to its `id`.
+- **ICX-JUMP.4** popstate: the same visuals as .0/.1/.2, and no `pushState`/`replaceState` call (ICX-HIST.3).
+- **ICX-JUMP.5** A rail/menu jump to a row that is `native` in the current mode (e.g. tablet "Price", phone "A note")
+  is a smooth native anchor scroll to its anchor (`behavior: "smooth"`); instant under reduced motion and in classic
+  (ICX-CLASSIC.3). It pushes one history entry like any jump, written when the scroll arrives (ICX-HIST.2). Decisions
+  §C (was OPEN-9).
 
 ### ICX-REST — Never rest mid-transition
 
@@ -196,8 +261,8 @@ while the tab is visible.
 
 - **ICX-REST.1** Fuzz (random wheel, key, touch, rail clicks, popstate, foreign `scrollTo`, resize), pinned mode, tab
   visible: after the last input, within the target checkpoint's transition + content + 1 s of visible time,
-  `phase == "rest"`, `rendered == dest`, and ICX-CHECKPOINT.2 holds. Whether RELEASED (below the pin) also satisfies
-  it: OPEN-16.
+  `phase == "rest"`, `rendered == dest`, and ICX-CHECKPOINT.2 holds — or the phase is RELEASED with `scrollY` below
+  the pinned track, which also satisfies the invariant (decisions §C, was OPEN-16; nothing can be mid-transition there).
 - **ICX-REST.2** The phase never stays mid-transition or mid-dip with no input while the tab is visible (no stall).
 - **ICX-REST.3** Tab hidden: the invariant is suspended and ICX-HIDDEN.1 holds instead (time stops). Time spent hidden
   does not count toward the allowance; after return, ICX-REST.1 applies again from the moment the tab became visible.
@@ -214,8 +279,13 @@ Scrolling back into the pin re-enters at the last checkpoint. (C0a's mechanics: 
 - **ICX-RELEASE.2** Scrolling back up into the pin (wheel, key, swipe or momentum) lands on `REST(last pinned)`, never
   mid-transition and never on an earlier checkpoint; the next back gesture is an ordinary ICX-BACK. One exception, from
   C0a (ICX-SETTLE-4): a **scrollbar drag** from below that is held at an earlier beat is an explicit choice and settles on
-  that beat (`nearest`). DEFAULT, pending Daniel (OPEN-27).
-- **ICX-RELEASE.3** Last pinned per mode: desktop `end`, tablet `chase`, phone `end` (OPEN-14 on the phone's order).
+  that beat (`nearest`): it lands where the reader stopped. DECIDED (decisions #15, 2026-10-15).
+- **ICX-RELEASE.3** Last pinned per mode: desktop `end`, tablet `chase`, phone `end` (the phone order as shipped,
+  ICX-DEST).
+- **ICX-RELEASE.4** Clamp before release (decisions #17): forward gestures that arrive during the transition into, or
+  the content of, the last pinned checkpoint are dropped (ICX-SIGNED.1): the page never scrolls past the pin, and it
+  rests on the last pinned (the Get the app card on desktop and phone). The next forward gesture from
+  `REST(last pinned)` releases.
 
 ### ICX-HIST — History (by navigation source)
 
@@ -224,15 +294,30 @@ Initialization (deep link, reload) and history traversal (popstate) never push o
 from the destination table. Read with ICX-JUMP.0: a zero-distance jump at rest is not a move and writes nothing.
 The theme toggle never writes the hash.
 
-- **ICX-HIST.1** A step changes `location.hash` to `dest`'s slug with `history.length` unchanged.
-- **ICX-HIST.2** A rail, menu, Home/End or logo jump that moves (`target ≠ rendered`, ICX-JUMP.1/.2) adds exactly one
-  history entry, whose hash is the target's slug. A zero-distance jump at rest (ICX-JUMP.0) leaves `location.hash` and
-  `history.length` unchanged.
-- **ICX-HIST.3** Load with a hash, reload, and popstate make no `pushState`/`replaceState` call (spy on both).
-- **ICX-HIST.4** Toggling the theme leaves `location.hash` and `history.length` unchanged.
-- **ICX-HIST.5** Every hash the story writes is one of the nine slugs (or empty, OPEN-10).
-- Not stated by the vault: the first checkpoint's hash (OPEN-10), legacy and theme hashes (OPEN-11), FREE settles and
-  native-mode scrolling, and whether the URL is written on the decision or on the landing (OPEN-12).
+Decided (decisions §C, was OPEN-12): history is written **on landing** (Terms), never when `dest` changes:
+`replaceState` for steps, FREE settles and scroll-spy; `pushState` only for explicit jumps. A checkpoint passed
+through is never landed, so it is never written.
+
+- **ICX-HIST.1** A step writes, at its landing, `dest`'s URL with `replaceState` (`history.length` unchanged). While
+  the transition runs, the URL still shows the previous checkpoint.
+- **ICX-HIST.2** A rail, menu, Home/End or logo jump that moves (`target ≠ rendered`, ICX-JUMP.1/.2/.5) adds exactly
+  one history entry with `pushState` at its landing (the seam's end, the dip's cut, or the native scroll's arrival),
+  carrying the target's URL. A zero-distance jump at rest (ICX-JUMP.0) leaves the URL and `history.length` unchanged.
+- **ICX-HIST.3** Load with a hash, reload, and popstate make no `pushState`/`replaceState` call (spy on both). The one
+  exception is a legacy hash (ICX-HIST.6).
+- **ICX-HIST.4** Toggling the theme leaves the URL and `history.length` unchanged.
+- **ICX-HIST.5** The first checkpoint's URL is plain `/` with no hash (decisions #18): landing on it writes
+  `location.pathname` with no `#`. Every other URL the story writes is `/#<slug>` with one of the other eight slugs.
+  The story never writes a legacy or theme hash.
+- **ICX-HIST.6** Legacy hashes (decisions #19): when the URL carries `#top`, `#how`, `#pricing` or `#download` (on
+  load or on `hashchange`), the page lands on that chapter (`top` → New invoice, `how` → Templates, `pricing` → Price,
+  `download` → Get the app; site.js `ANCHOR`) under the deep-link/reload rule (ICX-JUMP.3), and `replaceState` swaps
+  the URL for the chapter's own (`/` for `#top`). `history.length` is unchanged.
+- **ICX-HIST.7** Theme hashes `#dark`/`#light` keep working on load (A5 reads them); home never writes them. They are
+  not chapter hashes: the page starts on the first chapter, and nothing is written until the next landing.
+- **ICX-HIST.8** A FREE settle writes its landing with `replaceState`; a distance-0 re-alignment writes nothing
+  (ICX-SETTLE-4). In native sections (classic/calm, or the native rows of a pinned mode) the scroll-spy
+  (ICX-HL.4) writes the current section's URL with `replaceState` each time the current section changes.
 
 ### ICX-HL — Highlight
 
@@ -246,7 +331,9 @@ scroll-spy (IntersectionObserver) on the destination anchors.
   landing as defined in Terms (a step's seam end; a dip's or back-fade's cut), so it never waits for content.
 - **ICX-HL.3** In FREE, the highlight is the destination nearest `scrollY` (ICX-SETTLE-2's `nearest`).
 - **ICX-HL.4** In calm/classic/native sections, highlight and `aria-current` follow an IntersectionObserver on the
-  destination anchors (threshold OPEN-17).
+  destination anchors. A native section is current when its top has crossed 40 % of the viewport height
+  (`SPY_LINE`): the current one is the last anchor, in beat order, whose top is at or above that line (decisions §C,
+  was OPEN-17).
 - **ICX-HL.5** Only `rail.js` sets the highlight or `aria-current` on nav items (a source grep finds no other
   writer).
 
@@ -270,52 +357,73 @@ Rule: no counters, numbers, fills, progress bars, timecodes or Pause anywhere (D
 - **ICX-NOPROG.2** No `<progress>`, `role="progressbar"`, `role="meter"` or `aria-valuenow` on the homepage or tour;
   no element whose size or fill tracks the story or tour position.
 - **ICX-NOPROG.3** No timecode and no Pause/Play control. The WCAG 2.2.2 stop control is the classic-view toggle
-  (ICX-CLASSIC.6), DEFAULT (DEC-6), pending Daniel.
+  (ICX-CLASSIC.6), DECIDED (DEC-6, 2026-10-15). The fe:claims / a11y sign-off that this meets WCAG 2.2.2 is a QA task
+  on K1 (decisions §C, was OPEN-22).
 
 ### ICX-CLASSIC — Classic view / reduced motion
 
 Rule: no autoplay. The story = native sections with anchors. The tour = chapter end states. Steps and jumps are
-instant.
-Classic view — DEFAULT (DEC-7), pending Daniel: a visible, persistent toggle switches to the calm/static layout
+instant. (Decisions #23: reduced motion now sets only the starting state, ICX-CLASSIC.8; the rule applies whenever
+classic is on.)
+Classic view — DECIDED (DEC-7, 2026-10-15): a visible, persistent toggle switches to the calm/static layout
 (native sections, no autoplay); it keeps the reading place and is remembered per visitor.
-Global stop — DEFAULT (DEC-6), pending Daniel: the classic-view toggle is the global stop control.
+Global stop — DECIDED (DEC-6, 2026-10-15): the classic-view toggle is the global stop control.
+Toggle — DECIDED (decisions #23, DEC-1): in the slim top bar (sticky, never hides) next to the theme toggle; icon +
+"Classic" at ≥ 1024 px, icon-only below (the label in `aria-label` and a tooltip); also on `/tour/`; reduced-motion
+visitors start in classic but may switch the story on; remembered per visitor in `localStorage` `fe-classic`. The
+label is NEW COPY for fe:claims.
 
-- **ICX-CLASSIC.1** With `prefers-reduced-motion: reduce`, or with classic view on: nothing autoplays; every
-  destination is `native` (ICX-DEST); each has its anchor.
-- **ICX-CLASSIC.2** The tour shows each chapter's end state, with no autoplay.
+- **ICX-CLASSIC.1** With classic view on: nothing autoplays; every destination is `native` (ICX-DEST); each has its
+  anchor.
+- **ICX-CLASSIC.2** The tour with classic on shows each chapter's end state, with no autoplay.
 - **ICX-CLASSIC.3** Steps and jumps are instant: no transition, no dip, no smooth scroll.
-- **ICX-CLASSIC.4** The toggle is visible without scrolling in every mode and stays reachable while the page scrolls.
+- **ICX-CLASSIC.4** The toggle sits in the top bar next to the theme toggle on the homepage and on `/tour/`, so it is
+  visible without scrolling in every mode and while the page scrolls. At ≥ 1024 px it shows the icon and the visible
+  text "Classic"; below 1024 px the icon only, with an `aria-label` and a tooltip carrying the label.
 - **ICX-CLASSIC.5** Switching either way keeps the reading place and focus (ICX-DEST.4).
-- **ICX-CLASSIC.6** Switching to classic stops every running autoplay at once.
-- **ICX-CLASSIC.7** The choice survives a reload and a new visit in the same browser. Placement, label, storage and
-  scope: OPEN-18.
+- **ICX-CLASSIC.6** Switching to classic stops every running autoplay at once (story and tour).
+- **ICX-CLASSIC.7** The choice is stored in `localStorage` `fe-classic` and survives a reload and a new visit in the
+  same browser, on the homepage and `/tour/` alike.
+- **ICX-CLASSIC.8** With `prefers-reduced-motion: reduce` and no stored choice, the page starts in classic. A stored
+  choice wins over the media query, so a reduced-motion visitor who switches the story on gets it on the next visit
+  too. With the story on under reduced motion, native anchor scrolls stay instant (ICX-JUMP.5).
+- **ICX-CLASSIC.9** Short touch screens stay calm automatically (ICX-DEST.6, decisions #22). What the toggle does on
+  them is not decided by decisions #22/#23 — flagged to main 2026-10-15; until main rules, today's behaviour holds
+  (the calm layout stays).
 
 ### ICX-HIDDEN — Hidden tab
 
-Rule: autoplay pauses and resumes at rest. DEFAULT (DEC-6), pending Daniel: autoplay pauses when the tab is hidden.
+Rule: autoplay pauses and resumes at rest. DECIDED (DEC-6, 2026-10-15): autoplay pauses when the tab is hidden.
+DECIDED (decisions #24): on return it resumes from where it paused (no replay, no jump).
 
 - **ICX-HIDDEN.1** On `visibilitychange` to hidden, story and tour time stop advancing.
-- **ICX-HIDDEN.2** After returning to visible, the page ends at rest on the same `dest`. Whether it finishes the
-  paused run or goes straight to the rest frame: OPEN-19.
+- **ICX-HIDDEN.2** On return to visible, story time continues from the exact value it had when hidden (the first
+  visible frame shows the paused frame; no replay, no jump to the rest frame), at the rate it had (≤ 3×), and the run
+  ends at rest on the same `dest`. Hidden time does not count toward ICX-REST.1.
 
 ### ICX-KEY — Keyboard
 
 Rule: arrows, PgUp/PgDn, Space/Shift+Space, Home/End → steps and jumps inside the pinned story. `aria-live` announces
-the landed checkpoint name. Focus is not moved. DEFAULT (DEC-6), pending Daniel: `aria-live` announces keyboard
-landings without moving focus.
+the landed checkpoint name. Focus is not moved. DECIDED (DEC-6, 2026-10-15): `aria-live` announces landings without
+moving focus. Decided (decisions §C, was OPEN-20): only Up/Down/PgUp/PgDn/Space/Home/End are intercepted; R1 §3.4's
+ignore list is adopted; the polite `aria-live` announces every landing, whatever caused it.
 
 - **ICX-KEY.1** Inside the pinned story: ArrowDown, PageDown, Space → step +1; ArrowUp, PageUp, Shift+Space →
-  step −1; Home → jump to the first checkpoint; End → jump to the last pinned. (Left/Right: OPEN-20.)
-- **ICX-KEY.2** On a keyboard landing, an `aria-live` region's text becomes the landed checkpoint's name
-  (ICX-DEST); nothing is announced mid-transition.
+  step −1; Home → jump to the first checkpoint; End → jump to the last pinned. ArrowLeft and ArrowRight are never
+  intercepted.
+- **ICX-KEY.2** On every landing (key, wheel, touch, rail/menu, settle, popstate), an `aria-live="polite"` region's
+  text becomes the landed checkpoint's name (ICX-DEST); nothing is announced mid-transition.
 - **ICX-KEY.3** `document.activeElement` is the same before and after any key step or jump.
 - **ICX-KEY.4** A held key (`e.repeat`) steps at most once per `KEY_REPEAT_MS` (config).
 - **ICX-KEY.5** At the last pinned, a forward step key (ArrowDown, PageDown, Space) passes natively
-  (ICX-RELEASE.1). The ignore list and announcements for non-keyboard landings: OPEN-20.
+  (ICX-RELEASE.1), unless it arrives before `REST(last pinned)` (dropped, ICX-RELEASE.4).
 - **ICX-KEY.6** Home and End always jump (vault Keyboard row; C0a S8 / ICX-SETTLE-8), from the pinned story and from
   below it (RELEASED): Home → the first checkpoint, End → the last pinned. End at `REST(last pinned)` is a jump to the
   checkpoint already landed (`distance == 0`): nothing moves, and End is not passed to the page. R1 §3.4's "End at the
   last beat passes through to the page end" is superseded (vault §3 supersedes R1–R3).
+- **ICX-KEY.7** Ignored (never intercepted, never step; R1 §3.4): `e.defaultPrevented` (the rail's own arrow and
+  Home/End roving); Alt, Ctrl or Meta held; focus in `input`, `textarea`, `select` or `[contenteditable]`; Space while
+  focus is on `a`, `button`, `summary` or `[role=button]`; an open dialog.
 
 ### ICX-BYPASS — Bypass
 
@@ -325,7 +433,9 @@ Rule: Ctrl/⌘ + wheel (zoom), pinch, and input inside dialogs or form fields ar
 - **ICX-BYPASS.2** A pinch (a second finger) never steps; a touch while pinch-zoomed pans (ICX-SETTLE-9).
 - **ICX-BYPASS.3** Wheel, key and touch whose target is inside an open dialog, `input`, `textarea`, `select` or
   `[contenteditable]` are never `preventDefault`ed and never step.
-- **ICX-BYPASS.4** Horizontal wheel and nested scroll containers: OPEN-21.
+- **ICX-BYPASS.4** Decided (decisions §C, was OPEN-21; R1 §3.4): a wheel event with `abs(dx) > abs(dy)` (horizontal
+  swipes, macOS back/forward), and a wheel or touch whose target is inside a nested scroll container that can still
+  scroll in that direction (`composedPath()` check), are never `preventDefault`ed and never step.
 
 ## ICX-SETTLE — settle rules from C0a
 
@@ -336,10 +446,10 @@ and its files under `scratch/cp-spike/evidence/<column>/` (C0a branch, final run
 | Id | Rule | Test asserts | Evidence |
 |---|---|---|---|
 | **ICX-SETTLE-1** Acknowledge by position | `syncScroll(y)` rounds `y` to an integer and clamps it to the scroll range. If `abs(scrollY − y) ≤ 0.5` it does nothing and arms nothing. Otherwise it stores `pending = {y, until: now + ACK_MS}` and calls `scrollTo({top: y, behavior: "instant"})`. A `scroll` event with `abs(scrollY − pending.y) ≤ ACK_TOL` before `until` is ours. No boolean "next event is ours" flag. | Every landing's own scroll is acknowledged and never enters FREE; a no-op `syncScroll` arms nothing; source has no boolean ack flag. | verdict row R1 (PASS on all three proxies): `R1__*.json` |
-| **ICX-SETTLE-2** FREE | Any other `scroll` event with `storyTop − 1 ≤ scrollY ≤ storyEnd + 1` enters FREE: the stage keeps its frame, and the rail previews `nearest = round((scrollY − storyTop) / BEAT_PX)`. Below `storyEnd + 1` it is RELEASED; above `storyTop − 1` it is the page above. | A foreign `scrollTo` inside the track: phase FREE, the stage frame unchanged, the highlight = `nearest`. Below: RELEASED. FREE is entered synchronously or within one frame of a foreign scroll (OPEN-23). | verdict rows R2, R3 (footnote 3) |
-| **ICX-SETTLE-3** Settle trigger | With `onscrollend`: settle `SCROLLEND_GRACE` after a `scrollend`, only if no `scroll` came in that time. Without `scrollend`: settle after `SETTLE_IDLE` of no scroll events. Always: a `SETTLE_BACKSTOP` timer re-armed on every scroll event. Feature-detect and carry both paths. | A 1 s scroll stream gives exactly one settle (both paths, `?noscrollend` forcing the idle path); the backstop fires if neither does. | verdict rows R6 (`R6__*-nograce.json`: 30 settles without the grace), R7 (≈ 167 ms idle latency) |
+| **ICX-SETTLE-2** FREE | Any other `scroll` event with `storyTop − 1 ≤ scrollY ≤ storyEnd + 1` enters FREE: the stage keeps its frame, and the rail previews `nearest = round((scrollY − storyTop) / BEAT_PX)`. Below `storyEnd + 1` it is RELEASED; above `storyTop − 1` it is the page above. | A foreign `scrollTo` inside the track: phase FREE, the stage frame unchanged, the highlight = `nearest`. Below: RELEASED. FREE is entered synchronously or within one frame of a foreign scroll (C3 build task BT-1). | verdict rows R2, R3 (footnote 3) |
+| **ICX-SETTLE-3** Settle trigger | With `onscrollend`: settle `SCROLLEND_GRACE` after a `scrollend`, only if no `scroll` came in that time. Without `scrollend`: settle after `SETTLE_IDLE` of no scroll events. Always: a `SETTLE_BACKSTOP` timer re-armed on every scroll event. Feature-detect and carry both paths (BT-2). | A 1 s scroll stream gives exactly one settle (both paths, `?noscrollend` forcing the idle path); the backstop fires if neither does. | verdict rows R6 (`R6__*-nograce.json`: 30 settles without the grace), R7 (≈ 167 ms idle latency) |
 | **ICX-SETTLE-4** Settle target | The nearest beat, as a jump (ICX-JUMP: ±1 = a step, ≥ 2 = a dip). Distance 0 (the nearest beat is the one already landed, the page merely scrolled off it): a re-alignment only — the page scrolls back to that beat's position, no dip, no content replay, no history write (unlike ICX-JUMP.0, the scroll position does move). The settle's own scroll is acknowledged (ICX-SETTLE-1). Re-entry from below: a FREE episode that began in RELEASED settles on the last pinned beat unless a scrollbar hold was seen in it; a new FREE episode within `REENTRY_STICKY_MS` of such a settle still counts as re-entry, again unless a scrollbar hold is seen in that new episode (a held drag always settles on `nearest`, ICX-RELEASE.2). | After a settle, no second FREE, and `phase == "rest"` on: the last pinned, if the FREE episode is a re-entry AND no scrollbar hold was seen in it (it began in RELEASED, or began within `REENTRY_STICKY_MS` of such a settle); otherwise `nearest`. A momentum stream from below lands on the last pinned and never walks back. | verdict row R8 (844×390 walked back to beat 7 before the rule) |
-| **ICX-SETTLE-5** Settle cancellation | An intercepted gesture (wheel, key, touch) during FREE cancels the pending settle and counts from **the beat the settle would have picked** (ICX-SETTLE-4's target: the last pinned on a re-entry with no scrollbar hold seen, otherwise the beat nearest the current `scrollY`), not from the stage's frame. A further foreign scroll restarts the timers. If the settle wins the race, the outcome is the same beat. | Scrollbar drag then an immediate wheel or key: exactly one move, to `settleTarget ± 1`, whichever path ran (re-entry with no scrollbar hold seen: `last pinned ± 1`; otherwise, a held drag included: `nearest ± 1`). | verdict row R3 (Chromium 1440×900 intermittent, footnote 3; OPEN-23) |
+| **ICX-SETTLE-5** Settle cancellation | An intercepted gesture (wheel, key, touch) during FREE cancels the pending settle and counts from **the beat the settle would have picked** (ICX-SETTLE-4's target: the last pinned on a re-entry with no scrollbar hold seen, otherwise the beat nearest the current `scrollY`), not from the stage's frame. A further foreign scroll restarts the timers. If the settle wins the race, the outcome is the same beat. | Scrollbar drag then an immediate wheel or key: exactly one move, to `settleTarget ± 1`, whichever path ran (re-entry with no scrollbar hold seen: `last pinned ± 1`; otherwise, a held drag included: `nearest ± 1`). | verdict row R3 (Chromium 1440×900 intermittent, footnote 3; BT-1) |
 | **ICX-SETTLE-6** Scrollbar hold | A capture-phase `mousedown` on `document` with `clientX ≥ documentElement.clientWidth` (or `clientY ≥ clientHeight`) means held: the settle waits. The hold ends on `mouseup`/`pointerup`, a `mousemove` with `buttons === 0`, window `blur`, or `HOLD_MAX`. Overlay scrollbars are invisible to this test; there the settle relies on ICX-SETTLE-3. | Classic scrollbar: no settle during a 1 s still hold; exactly one settle on release. | verdict row R5 (`R5__*-classicbar.json`, footnote 5) |
 | **ICX-SETTLE-7** Resize / rotation | On every `resize`, re-measure at once (no debounce for the re-snap). `BEAT_PX = round(100svh − header)` in integer CSS px; the pin height is the same integer. Inside the story: `syncScroll(y_dest)`. RELEASED: keep the distance below `storyEnd`, from the last scroll position seen at the old viewport size, clamped to the new room below the story. Browser scroll corrections within `RESIZE_GRACE` after a real geometry change are re-snapped, never FREE. Page boot is not a geometry change. `overflow-anchor: none` on `html` and `body`. A height-only change where 100svh did not move is a no-op. Measure with offsets and `scrollY` only, never `getBoundingClientRect`. | Resize/rotate on a beat: the same beat, `scrollY` on its track position, no FREE. Below the story: distance kept (or clamped). Source has no `getBoundingClientRect` in the input/settle layer. | verdict row R4 (footnote 4) |
 | **ICX-SETTLE-8** Release / re-entry | At `REST(last)`, a forward wheel, key or swipe is not intercepted. Wheel from below: events pass while `scrollY + dy ≥ storyEnd`; the event that would cross is prevented, `syncScroll(storyEnd)` lands `REST(last)`, and the rest of that gesture is swallowed. Keys from below pass natively (then ICX-SETTLE-2/4). Home and End always jump. | ICX-RELEASE.1/.2 plus: the crossing wheel event is prevented and the rest of that gesture steps nothing. | verdict row R2 (footnotes 1, 2) |
@@ -348,82 +458,26 @@ and its files under `scratch/cp-spike/evidence/<column>/` (C0a branch, final run
 
 ## Not machine-testable (judged by a person)
 
-- "The designed speed" and the story feel, including the Ride and Make→Look: Daniel judges on frame strips (DEC-8).
-  ICX-STEP.2/.3 check only the numbers (the Ride's 1.45 s ± 0.1 s is DEFAULT (DEC-8), pending Daniel).
-- "≤ 5 s where feasible": a test can check only the list of accepted exceptions (OPEN-2).
+- "The designed speed" and the story feel, including the Ride and Make→Look: Daniel judges on frame strips and the
+  C5 live A/B switch (DECIDED (DEC-8, 2026-10-15)). ICX-STEP.2/.3 check only that motion is unchanged, the dead-time
+  ceilings, and the Ride's 1.45 s ± 0.1 s. A named exception is accepted by Daniel's eye, not by a number.
+- "≤ 5 s where feasible": a test checks the 5 s ceiling and the named-exception list (ICX-STEP.4).
 - "Visible" toggle: ICX-CLASSIC.4 checks it is in the viewport, not that people notice it.
 - The device feel of every ICX-SETTLE row (C0a's last column, below): only the M1 device session can judge it.
 
+## Build tasks for C3
+
+Not questions: work C3 must do and prove.
+- **BT-1** (ICX-SETTLE-2/5; was OPEN-23) Chromium 1440×900 R3 was intermittent in C0a: FREE was sometimes not yet
+  entered 40 ms after a foreign `scrollTo`. C3 proves FREE is entered synchronously or within one frame, under load.
+- **BT-2** (ICX-SETTLE-3; was OPEN-24) Whether shipping Safari has `onscrollend` is UNVERIFIED-DEVICE. C3
+  feature-detects and carries both settle paths, each covered by a test (`?noscrollend` forces the idle path).
+
 ## OPEN for Daniel
 
-Decisions pending: DEC-4 (names, slugs), DEC-6 (autoplay accessibility), DEC-7 (classic view), DEC-8 (story feel).
-Every "DEFAULT (DEC-n), pending Daniel" above changes with them. Daniel's approval is to be recorded in the Decision
-log.
+None — all decided 2026-10-15 (decisions-2026-10-15.md, by main under Daniel's delegation). One gap in those
+decisions is flagged to main, not to Daniel: what the classic toggle does on a short touch screen (ICX-CLASSIC.9).
 
-Questions the vault table leaves open:
-- **OPEN-1** (ICX-CHECKPOINT.3) The tour's chapter list and slugs: does the tour get its own destination table
-  (DEC-11, child F), and do its chips share the story's names?
-- **OPEN-2** (ICX-STEP.2/.4) Today (R1 §2.6, computed): Make→Look transition 2.55 s with caption at 1.59 s;
-  Yours→Price 1.54 s; Price→Note 1.77 s; phone Yours→End 1.58 s; Email (`chase`) content ≈ 6.03 s. Which are trimmed
-  (C5) and which become named exceptions? The DEC-8 default names only Make→Look (≤ 1.6 s) and the Ride (1.45 s ± 0.1 s).
-- **OPEN-3** (ICX-BACK.5) A back gesture at the first checkpoint: ignored, or passed natively (to the page above, and
-  pull-to-refresh on touch)?
-- **OPEN-4** (ICX-SIGNED.4, ICX-DIP.1) The ±1 arithmetic is settled (`o + 3` → one back gesture → `o + 2`). Open is
-  the "decision time" for the dip rule while a transition runs: (a) at each gesture, so `dest = o + 3` during the seam
-  `o → o + 1` starts a dip to `o + 3` at once and the back gesture lands in its fade-out (ICX-DIP.2, cut on `o + 2`);
-  or (b) at the running transition's landing, so the seam rushes (≤ 0.6 s) to `o + 1`, lands, and then
-  `distance = 1` → a step to `o + 2`. R1 §3.3 did (b) only when the rushed seam took ≤ 0.35 s, (a) otherwise.
-- **OPEN-5** (ICX-SIGNED.1) Gestures that push `dest` past the first or the last pinned: clamp, or does a surplus
-  forward gesture at the end count toward release?
-- **OPEN-6** (ICX-SIGNED.5) What triggers the rush (≤ 0.6 s left): any extra gesture, or only one that changes
-  `dest`? R1 had a 0.35 s seam rush and a 0.6 s content rush; the vault states one 0.6 s cap.
-- **OPEN-7** (ICX-DIP.1) "Rest-entry": is it the target's content start (R1 §3.3 `S_dest`, so its content plays), as
-  assumed here?
-- **OPEN-8** (ICX-JUMP.3) A deep link on load: one dip from the page's first paint, or a dip-less start at the
-  content? And reload: replay the content, or land still on the rest frame (R1 §3.5's policy)?
-- **OPEN-9** (ICX-JUMP.5) A rail/menu jump to a row that is `native` in this mode (tablet "Price", phone "A note"):
-  instant native anchor scroll? Does it push history like other jumps?
-- **OPEN-10** (ICX-HIST.5) The first checkpoint's URL: `/` with no hash (R1 §3.5), or `/#new-invoice`?
-- **OPEN-11** (ICX-HIST) Legacy hashes `#top`, `#how`, `#pricing`, `#download` (site.js `ANCHOR`) and the theme hashes
-  `#dark`/`#light` (A5 reads them on load): resolved and replaced by the slug, or left alone?
-- **OPEN-12** (ICX-HIST) History for FREE settles (R1: `replaceState`), for scroll-spy in native modes (write the hash
-  or not), and the write time (on the `dest` decision, R1 §3.5, or on landing).
-- **OPEN-13** (ICX-DEST anchor) Six sections have no id today (New invoice, Invoices, Dashboard, Email, Your data,
-  A note). Does C3 add ids, and should every anchor id equal its slug so `/#<slug>` works with no JS? Today
-  `#pricing`/`#download`/`#how` differ from the slugs `price`/`get-the-app`/`templates`.
-- **OPEN-14** (ICX-DEST, ICX-RELEASE.3) Phone: `end` (the offer card) is pinned at the end of the track, but `price`
-  and `note` are native and follow it in the document. What does `/#get-the-app` target on a phone, and what does the
-  reader meet after release?
-- **OPEN-15** (ICX-DEST modes) Today a short touch screen (coarse pointer, 100svh < 600 px, `SHORT_TOUCH` in site.js)
-  goes calm. Does that stay a calm trigger? C0a probed 375×548 as pinned.
-- **OPEN-16** (ICX-REST.1) Does RELEASED (below the pin, after a release) satisfy the invariant, as R1 §3.3 I1 had it?
-- **OPEN-17** (ICX-HL.4) The scroll-spy threshold that makes a native section "current".
-- **OPEN-18** (ICX-CLASSIC.7) The toggle's placement and label (NEW COPY for fe:claims), its storage
-  (e.g. `localStorage`), whether it also appears on `/tour` and stops the tour's autoplay, and whether a
-  reduced-motion visitor may switch the story on.
-- **OPEN-19** (ICX-HIDDEN.2) "Resumes at rest": finish the paused run on return, or jump straight to the rest frame?
-- **OPEN-20** (ICX-KEY) Left/Right arrows; R1 §3.4's ignore list (modifiers, `defaultPrevented`, Space on buttons/links); does `aria-live` also announce
-  wheel/touch/rail landings?
-- **OPEN-21** (ICX-BYPASS.4) R1 §3.4 also passes horizontal wheel (`|dx| > |dy|`) and events inside a nested scroll
-  container that can still scroll. Adopt them as bypass rows?
-- **OPEN-22** (ICX-NOPROG.3) DEC-6 asks fe:claims / a11y to confirm the classic toggle meets WCAG 2.2.2 with no Pause
-  control.
-- **OPEN-23** (ICX-SETTLE-2/5, C3) Chromium 1440×900 R3 was intermittent: FREE was sometimes not yet entered 40 ms after
-  a foreign `scrollTo`. C3 must prove FREE is entered synchronously or within one frame under load.
-- **OPEN-24** (ICX-SETTLE-3) Whether shipping Safari has `onscrollend` is UNVERIFIED-DEVICE; C3 carries both paths.
-- **OPEN-25** (ICX-STEP.7) A forward gesture during a checkpoint's content (landed, before rest): the vault's step
-  row starts from rest and its signed row covers only transitions. Options: (a) the content finishes at 1×, then the
-  next transition plays; (b) the content rushes to its rest within ≤ 0.6 s, then the next transition; (c) the content
-  is skipped (cut to its rest frame, or a dip), then the next transition. R1 §3.3 did (b) when ≤ 0.6 s of content was
-  left, otherwise a dip to the rest frame.
-- **OPEN-26** (ICX-JUMP.0) A jump at rest to the checkpoint already landed (a rail click on the current chapter, End at
-  the last pinned). The vault's jump row says "±1 → step, otherwise dip" and is silent on distance 0. Default: nothing
-  moves. Alternative: replay that checkpoint's content from its rest-entry (a dip, then content) — some readers click
-  the current chapter to see it again.
-- **OPEN-27** (ICX-RELEASE.2, ICX-SETTLE-4) Re-entering the pin from below by **dragging the scrollbar** and holding at
-  an earlier beat. The vault says re-entry lands on the last checkpoint; C0a's S4 lets a held scrollbar drag settle where
-  the reader put it (an explicit choice). Default: the drag wins (settle on `nearest`). Alternative: always the last
-  checkpoint, as for wheel/swipe/momentum.
 
 Device-only items for the M1 device session (C0a, every real-device cell UNVERIFIED-DEVICE; Mac Safari, Windows
 Chrome/Edge, iPhone Safari):
