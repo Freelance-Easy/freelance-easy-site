@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FETheme fixture</title>
+  <!-- the fixture for assets/shared/theme.js (A5). ?policy=home|tour|none picks the hash policy (default home);
+       ?bare=1 skips the head script, so FETheme.init meets a page with no data-theme at all (CF-11's doc pages). -->
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      if (q.get("bare") === "1") return;
+      // the head script every page runs today: a hash theme first, then fe-theme, else dark
+      var d = document.documentElement, t = null;
+      var f = location.hash.slice(1).split(/[&,]/);
+      for (var i = 0; i < f.length; i++) if (f[i] === "dark" || f[i] === "light") t = f[i];
+      if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+      d.setAttribute("data-theme", t === "light" ? "light" : "dark");
+    })();
+  </script>
+  <link rel="stylesheet" href="/assets/shared/theme.css">
+  <style>
+    :root { --bg: #080a0f; --ink: #e9ebef; --muted: #9aa1ad; --panel: #141821; --line: #262c38; --accent: #5b9bd5; }
+    [data-theme="light"] { --bg: #f3f3f0; --ink: #15171c; --muted: #5b616c; --panel: #ffffff; --line: #d9dad5; --accent: #2f6ea8; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, sans-serif; }
+    header { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between;
+             padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--bg); }
+    .brand { font-weight: 700; }
+    .theme-toggle { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line);
+                    background: var(--panel); color: var(--ink); cursor: pointer; font-size: 18px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 48px 24px; }
+    h1 { font-size: clamp(32px, 6vw, 64px); line-height: 1.05; margin: 0 0 16px; }
+    p { color: var(--muted); max-width: 60ch; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 32px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; min-height: 160px; }
+    .card b { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="brand">Freelance Easy</span>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme">&#9680;</button>
+  </header>
+  <main>
+    <h1>One circle, both ways.</h1>
+    <p>The theme switch reveals the other theme through a soft-edged circle from the toggle: 420 ms, the app's curve.</p>
+    <div class="grid">
+      <div class="card"><b>Dark</b><p>The default on every page.</p></div>
+      <div class="card"><b>Light</b><p>Remembered in fe-theme.</p></div>
+      <div class="card"><b>Reduced motion</b><p>The switch is instant.</p></div>
+      <div class="card"><b>Hash</b><p>Per-page policy: home, tour or none.</p></div>
+    </div>
+  </main>
+  <script src="/assets/shared/theme.js"></script>
+  <script>
+    FETheme.init({ hashPolicy: new URLSearchParams(location.search).get("policy") || "home", toggle: "[data-theme-toggle]" });
+  </script>
+</body>
+</html>
