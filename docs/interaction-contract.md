@@ -172,9 +172,13 @@ still update `dest` (which is preserved); when the cooldown ends, `distance = 1`
 Rule: target ±1 → the same as a step. Otherwise → one dip to the target, then play its content (deep links play the
 demo). Back/Forward (popstate): the same visual behaviour, but never writes history.
 
+- **ICX-JUMP.0** Zero distance: a jump at rest whose target is the checkpoint already landed (`target == rendered`,
+  e.g. a rail click on the current chapter, or End at `REST(last pinned)`, ICX-KEY.6) moves nothing: no dip, no content
+  replay, no history write. DEFAULT, pending Daniel (OPEN-26). During a transition, `target == rendered` is ordinary
+  signed input (ICX-SIGNED: `dest` becomes the target).
 - **ICX-JUMP.1** A jump to `rendered + 1` behaves exactly as ICX-STEP; to `rendered − 1` exactly as ICX-BACK.
-- **ICX-JUMP.2** Any other pinned target: one dip (ICX-DIP) to the target, then its content plays to rest, in either
-  direction.
+- **ICX-JUMP.2** Any other pinned target (`|target − rendered| ≥ 2`): one dip (ICX-DIP) to the target, then its content
+  plays to rest, in either direction.
 - **ICX-JUMP.3** A deep link (`/#<slug>` on load) to a pinned row plays that row's content and rests there. How it
   starts (dip or not) and what reload does: OPEN-8.
 - **ICX-JUMP.4** popstate: the same visuals as .1/.2, and no `pushState`/`replaceState` call (ICX-HIST.3).
@@ -405,6 +409,10 @@ Questions the vault table leaves open:
   next transition plays; (b) the content rushes to its rest within ≤ 0.6 s, then the next transition; (c) the content
   is skipped (cut to its rest frame, or a dip), then the next transition. R1 §3.3 did (b) when ≤ 0.6 s of content was
   left, otherwise a dip to the rest frame.
+- **OPEN-26** (ICX-JUMP.0) A jump at rest to the checkpoint already landed (a rail click on the current chapter, End at
+  the last pinned). The vault's jump row says "±1 → step, otherwise dip" and is silent on distance 0. Default: nothing
+  moves. Alternative: replay that checkpoint's content from its rest-entry (a dip, then content) — some readers click
+  the current chapter to see it again.
 
 Device-only items for the M1 device session (C0a, every real-device cell UNVERIFIED-DEVICE; Mac Safari, Windows
 Chrome/Edge, iPhone Safari):
