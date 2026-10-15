@@ -2,15 +2,15 @@
 
 ## Framework
 
-**Plain HTML / CSS / JS — no framework, no build step.** Three files load at runtime: `index.html`, `styles.css`, `script.js`. The folder _is_ the deployable artifact.
+**Plain HTML / CSS / JS — no framework, no *deploy* build step.** The eight root pages (`index`, `install`, `privacy`, `terms`, `404`, `mac`, `mac-audio`, `audio` .html) are generated from `src/` by `scripts/build-site.py` (stdlib Python) and committed: edit `src/`, run `python3 scripts/build-site.py`, commit the source and the pages together. Never hand-edit those eight pages. `tour/**` and the two dated legal archives are not generated; edit them in place. At runtime `index.html` loads `/assets/story/`; the other pages load `styles.css` (and most of them `script.js`). The folder _is_ the deployable artifact.
 
 ## Build command
 
-**None.** Static HTML — just serve the folder.
+**None for deploy.** Static HTML — just serve the folder. Locally, after any change under `src/`: `python3 scripts/build-site.py` writes the root pages (`src/pages/<name>.html` + `src/partials/` via `<!-- #include partials/<name>.html -->` lines; `audio.html` is derived from `mac-audio.html`), and `python3 scripts/build-site.py --check` must exit 0 (it lists any root page that differs from `src/`).
 
 ## Build output directory
 
-**The root folder _is_ the output.** Point Cloudflare Pages at the repo root.
+**The root folder _is_ the output.** Point Cloudflare Pages at the repo root. `src/`, `tests/`, `docs/`, `scratch/` and `scripts/` stay out of the upload (`.assetsignore`).
 
 ## Local dev command
 
@@ -20,7 +20,7 @@ npx serve .
 python3 -m http.server 8000
 ```
 
-Then `http://localhost:8000`. No watch step needed; refresh the browser after edits.
+Then `http://localhost:8000`. No watch step: after editing `src/`, run `python3 scripts/build-site.py`, then refresh the browser.
 
 ## Node version (if applicable)
 
@@ -126,7 +126,7 @@ Four more Astra reviews of v2.1 (tells / three first visits / line edit / layout
 - **Every image and the sample PDF come from ONE invoice** (INV1045, session day + kit fee) — the editor caption "The invoice above, open in the editor" is now literally true, and "Open the PDF" opens that invoice. `scripts/capture-screenshots.py` shoots the editor scrolled to its line items at a 1440×872 viewport (the scroller bottoms out with the heading 53 px down at 900), crops the phone details, and pins `HERO_CROP_HEIGHT` (1470 px, keep in step with the `<img height>`).
 - **Copy:** three-step block → two paragraphs; bold-lead-in bullets → prose; pricing = two prices + renewal/cancel + "stays on your computer", payment mechanics in a `<details>`; Q&A = three real questions + one plain limits sentence; maker note = one paragraph + the support address, no signature. The "60 seconds" qualification sits in the lede ("After installing and signing in with Google, a new invoice is a client, a few line items and a PDF").
 - **`script.js` fix:** `data-single-platform="mac"` now keeps the Mac campaign page's **button** on Mac for a Windows visitor (it previously switched the button to Windows next to text saying the page is Mac-only) while still showing that visitor the "Windows download is on the main page" note. Labels are "Download for Mac / Windows" on both the button and the link; copy-fallback text is plainer. `.dl-status:empty` no longer reserves space.
-- **`scripts/derive-audio-page.py`** generates `audio.html` from `mac-audio.html` (each substitution must match exactly once; a leftover Mac-only phrase fails the run). Edit `mac-audio.html`, then run it.
+- **`scripts/build-site.py`** generates `audio.html` from the built `mac-audio.html` (each substitution must match exactly once; a leftover Mac-only phrase fails the build). Edit `src/pages/mac-audio.html`, then run it. (Until the 2026-10-14 generator cutover this was `scripts/derive-audio-page.py`.)
 - **OG image** regenerated to match (Montserrat headline, plain kicker, no pill).
 - **Verified locally:** `check_states.py` (session scratchpad) asserted, per visitor OS × page: one download block, OS detection, campaign path (`?utm_campaign` sanitised to `[a-z0-9-]`), primary/alt/notes, the phone copy fallback (clipboard = page URL), the theme image swap, and zero non-local requests. Windows states were captured with a CDP `platform` override — a UA-only override still reports `MacIntel`, which is why v2.1's "Windows" screenshot was identical to the Mac one.
 
