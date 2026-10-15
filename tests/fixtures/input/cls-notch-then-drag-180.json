@@ -1,0 +1,256 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 100,
+   "metaKey": false,
+   "t": 0,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -120
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 180,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 196,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 212,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 228,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 244,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 260,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 276,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 292,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 308,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 324,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 340,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 356,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 372,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 388,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 404,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 420,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 436,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 452,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 468,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 484,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  }
+ ],
+ "name": "cls-notch-then-drag-180",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}
