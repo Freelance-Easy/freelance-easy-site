@@ -204,6 +204,20 @@ def test_placeholder_cannot_inject_include(tmp_path):
         assert not (out / "404.html").exists()
 
 
+def test_placeholder_cannot_compose_include(tmp_path):
+    # each value passes the per-value check, but partial text + value together spell an include directive
+    src = fixture_src(tmp_path)
+    (src / "partials" / "v.html").write_bytes(b"<p><!{{a}} #include partials/footer.html --></p>\n")
+    page = src / "pages" / "404.html"
+    page.write_bytes(page.read_bytes().replace(
+        b"  </body>", b"    <!-- #include partials/v.html a=-- -->\n  </body>", 1))
+    out = tmp_path / "out"
+    r = run_build("--src", src, "--out", out)
+    assert r.returncode == 1, r.stdout
+    assert "include directive" in r.stderr, r.stderr
+    assert not (out / "404.html").exists()
+
+
 def test_site_url_serves_built_pages(site_url):
     assert site_url.startswith("http://127.0.0.1:")
     for path in ("/index.html", "/audio.html", "/mac.html"):

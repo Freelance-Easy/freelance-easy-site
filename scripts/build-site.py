@@ -170,6 +170,9 @@ def render_partial(src: pathlib.Path, rel: str, args: str, where: str) -> str:
         return values[key]
 
     text = PLACEHOLDER.sub(fill, text)
+    # values are checked one by one above; partial text and values can still combine into a directive
+    if INCLUDE_ANY.search(text):
+        raise BuildError(f"{where}: {rel} forms an include directive once its values are filled")
     unused = sorted(set(values) - used)
     if unused:
         raise BuildError(f"{where}: {rel} has no placeholder for {', '.join(unused)}")

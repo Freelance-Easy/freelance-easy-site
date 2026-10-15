@@ -14,3 +14,6 @@ docs/
 scratch/
 .git/
 .DS_Store
+# local tool state and review evidence (gitignored too)
+.wrangler/
+.qa-evidence/
