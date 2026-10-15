@@ -47,7 +47,9 @@ PRIMARY_SELECTOR = ".btn-primary, [data-primary], [data-role=primary]"
 
 
 def _local_only(route, blocked: list[str]):
-    if urlparse(route.request.url).hostname in LOCAL:
+    u = urlparse(route.request.url)
+    # the browser side gets the same guard as _get: never a non-local host, never a download route
+    if u.hostname in LOCAL and not _DOWNLOAD_RX.match(u.path):
         route.continue_()
     else:
         blocked.append(route.request.url)
@@ -67,8 +69,12 @@ class Fail(Exception):
 
 class _LocalRedirects(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
+        newurl = urljoin(req.full_url, newurl)
         if urlparse(newurl).hostname not in LOCAL:
             raise Fail(f"refusing redirect to non-local host: {newurl}")
+        # every hop gets the same guard as the first request: a local redirect must not reach a download route
+        if _DOWNLOAD_RX.match(urlparse(newurl).path):
+            raise Fail(f"refusing redirect to a download route: {newurl}")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
@@ -414,8 +420,12 @@ def check_LINKS(browser, url):
             continue
         path = urlparse(target).path
         # classify BEFORE any fetch: a routed path (_redirects / worker.js) is never requested
-        if _DOWNLOAD_RX.match(path) or any(r.match(path) for r in rules):
+        if any(r.match(path) for r in rules):
             routed.add(path)
+            continue
+        # a download-looking path that no rule defines is broken, and is still never requested
+        if _DOWNLOAD_RX.match(path):
+            bad.append(f"broken link {h} (download route with no _redirects/worker.js rule; not fetched)")
             continue
         cands = [target, target.rstrip("/") + ".html", target.rstrip("/") + "/index.html"]
         try:
