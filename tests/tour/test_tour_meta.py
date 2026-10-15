@@ -23,6 +23,7 @@ FOOTER = ROOT / "src" / "partials" / "footer.html"
 SIGNED = "once email is set up"   # the qualifier R5 B.1 requires on the Email chapter (wording signed by fe:claims)
 EMAIL_INDEX = 5                    # the Email chapter in the caption list (the full tour's chapter 6 of 7)
 CANONICAL = "https://freelance-easy.com/tour/"
+WATCH_ONLY = re.compile(r"watch[\s-]*only", re.I)
 
 
 def _text(path: pathlib.Path) -> str:
@@ -57,7 +58,7 @@ def test_no_example_account():
 
 @pytest.mark.parametrize("page", [TOUR, QUICK], ids=["tour", "quick"])
 def test_no_watch_only_in_markup(page):
-    assert "watch-only" not in _text(page).lower()
+    assert not WATCH_ONLY.search(_text(page))
 
 
 @pytest.mark.parametrize("page", [TOUR, QUICK], ids=["tour", "quick"])
@@ -80,9 +81,14 @@ def test_tour_canonical_and_og():
     assert _meta(html, "og:url") == CANONICAL
     for prop in ("og:title", "og:description"):
         assert (_meta(html, prop) or "").strip(), prop
-    image = _meta(html, "og:image") or ""
-    assert image.startswith("https://freelance-easy.com/"), image
-    assert (ROOT / image.removeprefix("https://freelance-easy.com/")).is_file(), image
+    # a tour-specific capture (the shared og-image carries platform copy a new page can't reuse: fe:claims A11-1)
+    assert _meta(html, "og:image") == "https://freelance-easy.com/assets/tour/og-tour.png"
+    img = ROOT / "assets" / "tour" / "og-tour.png"
+    head = img.read_bytes()[:24]
+    assert head[:8] == b"\x89PNG\r\n\x1a\n"
+    assert (int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")) == (1200, 630)
+    tw = re.search(r'<meta\s+name="twitter:image"\s+content="([^"]*)"', html)
+    assert tw is None or tw.group(1) == _meta(html, "og:image")
 
 
 def test_quick_canonical_points_to_tour():
@@ -108,13 +114,24 @@ SEEK = {
 }
 
 
+# visible all the way up: no display:none / visibility:hidden / opacity 0 / hidden attribute on it or any ancestor
+SHOWN_JS = """el => { const bad = [];
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    const s = getComputedStyle(n);
+    if (n.hidden || s.display === 'none' || s.visibility !== 'visible' || parseFloat(s.opacity) < 0.5)
+      bad.push(`${n.tagName}#${n.id}.${n.className}: ${s.display}/${s.visibility}/${s.opacity}`);
+  }
+  return bad; }"""
+
+
+@pytest.mark.parametrize("width", [1440, 390])
 @pytest.mark.parametrize("path", list(SEEK), ids=["tour", "quick"])
-def test_email_caption_rendered(site_url, path):
+def test_email_caption_rendered(site_url, path, width):
     ready, seek, at_email = SEEK[path]
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page = browser.new_page(viewport={"width": width, "height": 900 if width > 600 else 844})
             page.goto(site_url + path)
             page.wait_for_function(ready, timeout=15000)
             if seek:
@@ -126,9 +143,31 @@ def test_email_caption_rendered(site_url, path):
             assert caption.is_visible()
             box = caption.bounding_box()
             assert box and box["width"] > 0 and box["height"] > 0
-            style = caption.evaluate(
-                "el => { const s = getComputedStyle(el); return [s.visibility, s.opacity, s.color]; }")
-            assert style[0] == "visible" and float(style[1]) > 0.5, style
+            assert caption.evaluate(SHOWN_JS) == []
+            vw = page.viewport_size["width"]
+            assert box["x"] >= 0 and box["x"] + box["width"] <= vw, box   # not pushed off a phone screen
             assert SIGNED in caption.inner_text(), caption.inner_text()
+        finally:
+            browser.close()
+
+
+# The player note as rendered (proto.js rewrites it; quick.js shows it only in reduced mode): no "watch only".
+@pytest.mark.parametrize("flags", ["", "#reduced"], ids=["play", "reduced"])
+@pytest.mark.parametrize("path", list(SEEK), ids=["tour", "quick"])
+def test_player_note_rendered(site_url, path, flags):
+    ready = SEEK[path][0]
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.goto(site_url + path + flags)
+            page.wait_for_function(ready, timeout=15000)
+            page.wait_for_timeout(300)
+            note = page.locator("#player-note")
+            text = note.evaluate("el => el.textContent")
+            assert text.strip(), "player note is empty"
+            assert not WATCH_ONLY.search(text), text
+            if note.is_visible():
+                assert not WATCH_ONLY.search(note.inner_text()), note.inner_text()
         finally:
             browser.close()
