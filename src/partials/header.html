@@ -12,7 +12,7 @@
       <a href="#pricing">Pricing</a>
       <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
            and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
-      <span class="dl-note" data-dl-note data-for="header" hidden></span>
+      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden></span>
       <a class="nav-cta" href="#download" data-dl data-placement="header" data-platforms="mac,win">Download</a>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
         <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
@@ -20,5 +20,5 @@
       </button>
     </nav>
   </div>
-  <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite" hidden></div>
+  <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
 </header>

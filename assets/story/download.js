@@ -116,27 +116,33 @@
   }
 
   // (A9) a single Download link (the homepage header's): a Mac or Windows visitor gets /dl/<os>/<campaign>, which the
-  // site answers as an attachment (worker.js's Mac proxy; _redirects for Windows), so the file downloads and the page
-  // stays. The note beside it keeps the platform next to the button and, once clicked, the status line under the
-  // header says the download is starting, with the requirement or the Windows warning and the install help (R5: they
-  // stay next to every download). Phones keep "send to computer": the link still jumps to the download block, whose
-  // button shares the page, and on a phone it reads "Get it on Mac". An OS the placement doesn't offer (Linux, or
-  // Windows on a Mac-only page) keeps the plain link. Options: placement, platforms (["mac"] for a Mac-only page);
-  // without them, data-placement and data-platforms="mac,win" (the default).
+  // site answers as an attachment (worker.js's Mac proxy; _redirects for Windows). A plain click loads it in a hidden
+  // iframe, so the file downloads and the page never navigates: an error answer (a worker 502, GitHub's 404 after the
+  // Windows redirect) lands in the hidden frame, not over the homepage (Sol A9-1). A modified click (new tab or window)
+  // is the browser's own. The note beside the link keeps the platform next to it (R5); once clicked, the status line
+  // under the header says the download should start, with the requirement or the Windows warning and the install
+  // help, and the note steps aside while it shows. The status line closes itself (STATUS_MS, Escape, the story moving
+  // a beat or the page a viewport, or its ×). Phones keep "send to computer": the link still jumps to the download
+  // block, whose button shares the page, and on a phone it reads "Get it on Mac". An OS the placement doesn't offer
+  // (Linux, or Windows on a Mac-only page) keeps the plain link. Options: placement, platforms (["mac"] for a Mac-only
+  // page); without them, data-placement and data-platforms="mac,win" (the default). Wiring twice is a no-op.
+  // The note in two parts: one line from 1024 px, stacked in two below (dl-status.css), so the nav never crowds.
   var NOTES = {
-    mac: "Apple Silicon Macs (M1 or later)" /* NEW COPY */,
-    win: "Windows 10 or 11, 64-bit" /* NEW COPY */,
+    mac: ["Apple Silicon Macs" /* NEW COPY */, " ", "(M1 or later)" /* NEW COPY */],
+    win: ["Windows 10 and 11" /* NEW COPY */, ", ", "64-bit" /* NEW COPY */],
   };
   var STATUS = {
     mac: {
-      text: "Your download is starting. Freelance Easy runs on Apple Silicon Macs (M1 or later) with macOS 12 or later. Intel Macs aren't supported." /* NEW COPY */,
+      text: "Your download should start in a moment. For Apple Silicon Macs with macOS 12 or later." /* NEW COPY */,
       href: "/install#mac",
     },
     win: {
-      text: "Your download is starting. For Windows 10 and 11, 64-bit. The installer isn't code-signed yet, so Windows shows a security warning the first time you open it." /* NEW COPY */,
+      text: "Your download should start in a moment. Windows warns you the first time you open it: the installer isn't code-signed yet." /* NEW COPY */,
       href: "/install#windows",
     },
   };
+  var STATUS_MS = 12000; // the status line's own close (Daniel's flip: 0 = stays until closed)
+  var FADE_MS = 200;
   var HELP = "Install help" /* NEW COPY */;
   var CLOSE = "Close" /* NEW COPY (the close button's accessible name) */;
 
@@ -151,11 +157,51 @@
     return list.length ? list : ["mac", "win"];
   }
 
+  function noteFor(placement) {
+    return document.querySelector('[data-dl-note][data-for="' + placement + '"]');
+  }
+
+  // the hidden frame the downloads load in (one per page, reused)
+  var frame = null;
+  function downloadInPlace(url) {
+    if (!frame) {
+      frame = document.createElement("iframe");
+      frame.hidden = true;
+      frame.tabIndex = -1;
+      frame.setAttribute("aria-hidden", "true");
+      frame.setAttribute("data-dl-frame", "");
+      document.body.appendChild(frame);
+    }
+    frame.src = url;
+  }
+
+  // the status line: its box stays in the DOM, empty and not hidden, as a polite live region; filling it announces it
+  var open = null; // {box, note, stop}
+  function closeStatus(fade) {
+    if (!open) return;
+    var o = open;
+    open = null;
+    o.stop();
+    if (o.note) o.note.classList.remove("is-covered");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!fade || reduce) {
+      o.box.textContent = "";
+      return;
+    }
+    o.box.classList.add("is-leaving");
+    setTimeout(function () {
+      if (open && open.box === o.box) return; // shown again meanwhile
+      o.box.classList.remove("is-leaving");
+      o.box.textContent = "";
+    }, FADE_MS);
+  }
+
   function showStatus(os, placement) {
     var box = document.querySelector('[data-dl-status][data-for="' + placement + '"]');
     if (!box) return;
+    closeStatus(false);
+    box.classList.remove("is-leaving");
     var s = STATUS[os];
-    box.textContent = "";
     var p = document.createElement("p");
     p.appendChild(document.createTextNode(s.text + " "));
     var help = document.createElement("a");
@@ -167,15 +213,57 @@
     close.setAttribute("aria-label", CLOSE);
     close.textContent = "×";
     close.addEventListener("click", function () {
-      box.hidden = true;
+      closeStatus(true);
     });
+    box.textContent = "";
+    box.setAttribute("data-os", os);
     box.appendChild(p);
     box.appendChild(close);
-    box.setAttribute("data-os", os);
-    box.hidden = false;
+    // the note says the same thing: it steps aside while the status line shows (keeping its place, so the nav stays put)
+    var note = noteFor(placement);
+    if (note) note.classList.add("is-covered");
+
+    var y0 = window.scrollY;
+    var timer = 0;
+    function arm(ms) {
+      if (!STATUS_MS) return;
+      timer = setTimeout(function () {
+        // not while the visitor is reading it with the pointer or the keyboard
+        if (box.contains(document.activeElement) || box.matches(":hover")) arm(4000);
+        else closeStatus(true);
+      }, ms);
+    }
+    function onKey(e) {
+      if (e.key === "Escape" || e.key === "Esc") closeStatus(true);
+    }
+    function onScroll() {
+      if (Math.abs(window.scrollY - y0) >= window.innerHeight) closeStatus(true);
+    }
+    // the story moving a beat: site.js marks the current chapter with aria-current
+    var beat = window.MutationObserver
+      ? new MutationObserver(function () {
+          closeStatus(true);
+        })
+      : null;
+    if (beat) beat.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["aria-current"] });
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    arm(STATUS_MS);
+    open = {
+      box: box,
+      note: note,
+      stop: function () {
+        clearTimeout(timer);
+        if (beat) beat.disconnect();
+        document.removeEventListener("keydown", onKey);
+        window.removeEventListener("scroll", onScroll);
+      },
+    };
   }
 
   function wireLink(a, os, campaign, opts) {
+    if (a.hasAttribute("data-dl-wired")) return; // FEDownload.wire on a [data-dl] link init already wired
+    a.setAttribute("data-dl-wired", "");
     opts = opts || {};
     var placement = opts.placement || a.getAttribute("data-placement") || "header";
     var platforms = platformList(opts.platforms || a.getAttribute("data-platforms"));
@@ -186,13 +274,25 @@
     if (platforms.indexOf(os) < 0) return;
     a.setAttribute("data-platform", os);
     a.setAttribute("href", "/dl/" + os + "/" + campaign);
-    var note = document.querySelector('[data-dl-note][data-for="' + placement + '"]');
+    var note = noteFor(placement);
     if (note) {
-      note.textContent = NOTES[os];
+      note.textContent = "";
+      var parts = NOTES[os];
+      [0, 1, 2].forEach(function (i) {
+        var span = document.createElement("span");
+        span.className = i === 1 ? "dl-note-sep" : "dl-note-part";
+        span.textContent = parts[i];
+        note.appendChild(span);
+      });
       note.hidden = false;
+      if (note.id) a.setAttribute("aria-describedby", note.id);
     }
-    a.addEventListener("click", function () {
+    a.addEventListener("click", function (e) {
       track("Download Click", { os: os, campaign: campaign, page: pageId(), placement: placement });
+      // a new tab or window (modifier or middle click) is the browser's own
+      if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      downloadInPlace(a.getAttribute("href"));
       showStatus(os, placement);
     });
   }

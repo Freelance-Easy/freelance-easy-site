@@ -2,9 +2,9 @@
    download.js shows them to a Mac or Windows visitor only: the note beside the button (the platform stays next to the
    download, R5) and the status line under the header once the download starts (the requirement or the Windows
    warning, and the install help). Tokens only (site.css). The status line hangs out of the header's flow: site.js
-   measures the header's height, which must not change. */
-.dl-note[hidden],
-.dl-header-status[hidden] {
+   measures the header's height, which must not change. Its box is a live region that stays in the DOM: empty, it
+   draws nothing (no padding, no shadow, no size); download.js fills it, fades it out (.is-leaving) and empties it. */
+.dl-note[hidden] {
   display: none;
 }
 .dl-note {
@@ -19,7 +19,13 @@
   position: absolute;
   top: calc(100% + 8px);
   right: max(var(--pad), calc((100% - var(--shell)) / 2 + var(--pad)));
-  max-width: min(420px, calc(100% - 2 * var(--pad)));
+  max-width: min(400px, calc(100% - 2 * var(--pad)));
+  transition: opacity 0.2s var(--ease);
+}
+.dl-header-status.is-leaving {
+  opacity: 0;
+}
+.dl-header-status:not(:empty) {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -70,9 +76,37 @@
 html.on-band:where(:not(.past-band)) .dl-note {
   color: var(--ride-text-2);
 }
-/* a narrow window: the note would crowd the nav; the status line still carries the platform after the click */
-@media (max-width: 759px) {
-  .dl-note {
+/* while the status line shows, the note steps aside without moving the nav */
+.dl-note.is-covered {
+  visibility: hidden;
+}
+/* 640-1023 px: the note stacks in two short lines and the nav links keep one line each with a little less padding, so
+   How it works, Pricing, the note, Download and the theme toggle keep one row (measured: 640 px leaves ~13 px spare).
+   Below 640 px the nav is the phone header (site.css hides the links) and has no room for the note: the status line
+   carries the requirement after the click there. */
+.dl-note-sep {
+  white-space: pre;
+}
+@media (max-width: 1023px) {
+  .dl-note:not([hidden]) {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 11.5px;
+    line-height: 1.2;
+    margin-left: 6px;
+  }
+  .dl-note-sep {
+    display: none;
+  }
+  .site-header .nav a {
+    white-space: nowrap;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+@media (max-width: 639px) {
+  .dl-note:not([hidden]) {
     display: none;
   }
 }

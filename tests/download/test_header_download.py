@@ -18,31 +18,59 @@ NOTE = '.site-header [data-dl-note][data-for="header"]'
 
 
 @pytest.fixture(scope="module")
-def browser():
+def pw():
     with sync_playwright() as p:
-        b = p.chromium.launch()
-        yield b
-        b.close()
+        yield p
+
+
+@pytest.fixture(scope="module")
+def browser(pw):
+    b = pw.chromium.launch()
+    yield b
+    b.close()
+
+
+@pytest.fixture(scope="module")
+def webkit(pw):
+    try:
+        b = pw.webkit.launch()
+    except Exception as e:  # noqa: BLE001 - not installed here
+        pytest.skip(f"webkit not installed: {e}")
+    yield b
+    b.close()
+
+
+def _opener(browser, contexts):
+    def open_(who: str, url: str, width: int = 1440, clock: bool = False):
+        ua, platform = VISITORS[who]
+        if who == "phone":
+            ctx = browser.new_context(user_agent=ua, viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, accept_downloads=True)
+        else:
+            ctx = browser.new_context(user_agent=ua, viewport={"width": width, "height": 900}, accept_downloads=True)
+        ctx.add_init_script(f"Object.defineProperty(Navigator.prototype, 'platform', {{ get: () => {json.dumps(platform)} }});")
+        ctx.add_init_script("window.__calls = []; window.plausible = function (n, o) { window.__calls.push([n, (o && o.props) || null]); };")
+        contexts.append(ctx)
+        page = ctx.new_page()
+        if clock:
+            page.clock.install()
+        page.goto(url, wait_until="load")
+        return page
+
+    return open_
 
 
 @pytest.fixture
 def visit(browser):
     contexts = []
+    yield _opener(browser, contexts)
+    for ctx in contexts:
+        ctx.close()
 
-    def open_(who: str, url: str):
-        ua, platform = VISITORS[who]
-        if who == "phone":
-            ctx = browser.new_context(user_agent=ua, viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, accept_downloads=True)
-        else:
-            ctx = browser.new_context(user_agent=ua, viewport={"width": 1440, "height": 900}, accept_downloads=True)
-        ctx.add_init_script(f"Object.defineProperty(Navigator.prototype, 'platform', {{ get: () => {json.dumps(platform)} }});")
-        ctx.add_init_script("window.__calls = []; window.plausible = function (n, o) { window.__calls.push([n, (o && o.props) || null]); };")
-        contexts.append(ctx)
-        page = ctx.new_page()
-        page.goto(url, wait_until="load")
-        return page
 
-    yield open_
+@pytest.fixture
+def visit_webkit(webkit):
+    contexts = []
+    yield _opener(webkit, contexts)
     for ctx in contexts:
         ctx.close()
 
@@ -66,7 +94,50 @@ def test_mac_click_downloads_in_place(dl_site, visit):
 
 
 def test_win_click_downloads_in_place(dl_site, visit):
+    # /dl/win/site is a 302 to the asset on another origin, as _redirects sends it to GitHub
     _downloads_in_place(dl_site, visit, "win", "win", "Freelance-Easy-Setup.exe")
+
+
+def _stays_after_failure(dl_site, visit, who: str, os_: str):
+    start = dl_site.url + "/"
+    page = visit(who, start)
+    before = len(dl_site.hits)
+    page.locator(CTA).click()
+    page.wait_for_timeout(800)
+    assert dl_site.hits[before:] == [f"/dl/{os_}/site"], "the download was asked for"
+    assert page.url == start, "an error answer never replaces the homepage"
+    assert page.locator(CTA).is_visible(), "the header is still there"
+    assert page.locator("[data-beat]").count() > 3, "the story is still there"
+    assert page.locator(STATUS).is_visible(), "the status line and its install help are still there"
+
+
+def test_failed_mac_download_stays_in_place(dl_site, visit):
+    dl_site.mode["mac"] = "502"
+    _stays_after_failure(dl_site, visit, "mac", "mac")
+
+
+def test_failed_win_download_stays_in_place(dl_site, visit):
+    dl_site.mode["win"] = "404"  # GitHub's 404 after the redirect
+    _stays_after_failure(dl_site, visit, "win", "win")
+
+
+def test_webkit_downloads_in_place_and_survives_a_502(dl_site, visit_webkit):
+    """Playwright's WebKit (Safari's engine, not Safari): the hidden-frame download and the 502 case."""
+    _downloads_in_place(dl_site, visit_webkit, "mac", "mac", "Freelance-Easy.dmg")
+    dl_site.mode["mac"] = "502"
+    _stays_after_failure(dl_site, visit_webkit, "mac", "mac")
+
+
+def test_wire_is_idempotent(dl_site, visit):
+    page = visit("mac", dl_site.url + "/")
+    page.evaluate("FEDownload.wire(document.querySelector('.site-header .nav-cta'))")
+    page.evaluate("FEDownload.wire(document.querySelector('.site-header .nav-cta'), {placement: 'header', platforms: ['mac']})")
+    before = len(dl_site.hits)
+    with page.expect_download(timeout=5000):
+        page.locator(CTA).click()
+    page.wait_for_timeout(300)
+    assert len(page.evaluate("window.__calls")) == 1, "one click, one event"
+    assert dl_site.hits[before:] == ["/dl/mac/site"], "one click, one request"
 
 
 @pytest.mark.parametrize(
@@ -104,8 +175,8 @@ def test_phone_keeps_send_to_computer(dl_site, visit):
 @pytest.mark.parametrize(
     "who, note, words, link",
     [
-        ("mac", "Apple Silicon Macs (M1 or later)", ["Apple Silicon Macs (M1 or later)", "macOS 12 or later"], "/install#mac"),
-        ("win", "Windows 10 or 11, 64-bit", ["Windows 10 and 11, 64-bit", "security warning"], "/install#windows"),
+        ("mac", "Apple Silicon Macs (M1 or later)", ["should start in a moment", "Apple Silicon Macs", "macOS 12 or later"], "/install#mac"),
+        ("win", "Windows 10 and 11, 64-bit", ["should start in a moment", "Windows warns you", "code-signed"], "/install#windows"),
     ],
 )
 def test_status_line(dl_site, visit, who, note, words, link):
@@ -113,6 +184,7 @@ def test_status_line(dl_site, visit, who, note, words, link):
     # before the click: the platform beside the button; the status line not yet
     assert page.locator(NOTE).is_visible()
     assert page.locator(NOTE).inner_text().strip() == note
+    assert page.locator(CTA).get_attribute("aria-describedby") == page.locator(NOTE).get_attribute("id")
     status = page.locator(STATUS)
     assert not status.is_visible()
     with page.expect_download(timeout=5000):
@@ -122,8 +194,73 @@ def test_status_line(dl_site, visit, who, note, words, link):
     for w in words:
         assert w in text
     assert status.locator(f'a[href="{link}"]').count() == 1
+    assert not page.locator(NOTE).is_visible(), "the note steps aside while the status line says it"
     status.get_by_role("button", name="Close").click()
+    page.wait_for_timeout(350)  # the 200 ms fade
     assert not status.is_visible()
+    assert page.locator(NOTE).is_visible(), "the note is back"
+
+
+def test_status_is_a_live_region_that_stays(dl_site, visit):
+    page = visit("mac", dl_site.url + "/")
+    box = page.locator(STATUS)
+    # in the DOM, empty and not hidden before the click, so filling it is announced
+    assert box.count() == 1
+    assert box.get_attribute("role") == "status" and box.get_attribute("aria-live") == "polite"
+    assert box.get_attribute("hidden") is None
+    assert box.evaluate("b => b.childNodes.length") == 0
+    with page.expect_download(timeout=5000):
+        page.locator(CTA).click()
+    assert box.get_attribute("hidden") is None and "should start" in box.inner_text()
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(350)
+    assert box.count() == 1 and box.get_attribute("hidden") is None
+    assert box.evaluate("b => b.childNodes.length") == 0, "closed = emptied, not removed or hidden"
+
+
+def test_status_closes_itself(dl_site, visit):
+    # after ~12 s
+    page = visit("mac", dl_site.url + "/", clock=True)
+    with page.expect_download(timeout=5000):
+        page.locator(CTA).click()
+    page.mouse.move(10, 600)  # not hovering the card
+    box = page.locator(STATUS)
+    page.clock.run_for(11000)
+    assert box.is_visible()
+    page.clock.run_for(1500)
+    assert not box.is_visible()
+    # once the page scrolls a viewport
+    page2 = visit("win", dl_site.url + "/")
+    with page2.expect_download(timeout=5000):
+        page2.locator(CTA).click()
+    assert page2.locator(STATUS).is_visible()
+    page2.evaluate("window.scrollBy(0, window.innerHeight + 40)")
+    page2.wait_for_timeout(500)
+    assert not page2.locator(STATUS).is_visible()
+
+
+@pytest.mark.parametrize("width", [640, 800, 1024, 1440])
+def test_note_beside_download_without_crowding(dl_site, visit, width):
+    page = visit("mac", dl_site.url + "/", width=width)
+    note, cta = page.locator(NOTE), page.locator(CTA)
+    assert note.is_visible(), f"the requirement is in view beside Download at {width}"
+    n, c = note.bounding_box(), cta.bounding_box()
+    header = page.locator(".site-header").bounding_box()
+    assert n["x"] + n["width"] <= c["x"] + 1, "the note sits left of the button"
+    assert n["y"] >= header["y"] and n["y"] + n["height"] <= header["y"] + header["height"], "inside the header"
+    tops = page.evaluate("[...document.querySelectorAll('.site-header .nav > *')].filter(e => e.offsetParent).map(e => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2))")
+    assert max(tops) - min(tops) <= 2, f"one row: {tops}"
+    lines = page.evaluate("[...document.querySelectorAll('.site-header .nav a')].filter(e => e.offsetParent).map(e => e.getClientRects().length === 1 && e.getBoundingClientRect().height < 44)")
+    assert all(lines), f"no nav link wraps at {width}: {lines}"
+    # the status line covers the note without moving the nav
+    before = page.locator(".site-header .nav a").first.bounding_box()
+    page.route("**/dl/**", lambda r: r.abort())
+    cta.click()
+    assert page.locator(".site-header .nav a").first.bounding_box() == before
+    brand = page.locator(".site-header .brand").bounding_box()
+    nav = page.locator(".site-header .nav").bounding_box()
+    assert brand["x"] + brand["width"] < nav["x"], "nothing overlaps the brand"
+    assert page.evaluate("document.querySelector('.site-header .nav').scrollWidth <= document.querySelector('.site-header .nav').clientWidth + 1")
 
 
 def test_platforms_option_mac_only(dl_site, visit):

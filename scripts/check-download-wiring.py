@@ -158,9 +158,9 @@ def hev(os_: str, campaign: str) -> list:
 
 HEADER_CASES = [
     ("mac", MAC_UA, "MacIntel", False, "utm_campaign=f1", "/dl/mac/f1", "Download", [hev("mac", "f1")],
-     ("/install#mac", ["Apple Silicon", "M1 or later"])),
+     ("/install#mac", ["should start", "Apple Silicon Macs", "macOS 12"])),
     ("win", WIN_UA, "Win32", False, "", "/dl/win/site", "Download", [hev("win", "site")],
-     ("/install#windows", ["Windows 10 and 11", "security warning"])),
+     ("/install#windows", ["should start", "Windows warns you"])),
     ("phone", PHONE_UA, "iPhone", True, "", "#download", "Get it on Mac", [], None),
 ]
 
@@ -183,6 +183,15 @@ def visitor(browser, ua: str, platform: str, phone: bool):
         context = browser.new_context(user_agent=ua, viewport={"width": 1280, "height": 900})
     context.add_init_script(f"Object.defineProperty(Navigator.prototype, 'platform', {{ get: () => {json.dumps(platform)} }});")
     context.add_init_script(RECORDER)
+    # The header downloads in a hidden frame (cancelling the click doesn't stop it): every /dl/ request is recorded
+    # and refused here, so no download starts and nothing reaches the release host, on a preview either.
+    context.dl_asked = []
+
+    def refuse(route):
+        context.dl_asked.append(urlsplit(route.request.url).path + ("?" + urlsplit(route.request.url).query if urlsplit(route.request.url).query else ""))
+        route.abort()
+
+    context.route("**/dl/**", refuse)
     return context
 
 
@@ -197,11 +206,16 @@ def check_header(browser, base: str) -> tuple[int, int]:
         got_href = cta.get_attribute("href")
         got_label = cta.inner_text().strip()
         cta.click()
-        page.wait_for_timeout(100)
+        page.wait_for_timeout(300)
         got_events = page.evaluate("window.__calls")
         problems = []
         if got_href != want_href:
             problems.append(f"href {got_href!r}, want {want_href!r}")
+        want_asked = [want_href] if want_href.startswith("/dl/") else []
+        if context.dl_asked != want_asked:
+            problems.append(f"downloads asked {context.dl_asked}, want {want_asked} (in place, from the page)")
+        if page.url.split("?")[0].split("#")[0].rstrip("/") != base:
+            problems.append(f"the page left: {page.url}")
         if got_label != want_label:
             problems.append(f"label {got_label!r}, want {want_label!r}")
         if got_events != want_events:
