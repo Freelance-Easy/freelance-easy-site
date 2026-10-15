@@ -155,6 +155,22 @@ def test_reveal_check_default_start_budget_is_still_50(site_url):
     assert r.returncode == 1 and "expected <= 80" in r.stdout, r.stdout + r.stderr
 
 
+def test_double_press_flips_twice(site_url, browser):
+    # two presses before the view-transition update applies are two flips (back where it started), as on the tours:
+    # the homepage flips from FETheme.target() (the theme it is heading to), not from the not-yet-updated DOM
+    ctx, page, errors = open_home(browser, site_url + "/#dark")
+    try:
+        start = theme(page)
+        page.evaluate("""() => { const b = document.querySelector('[data-theme-toggle]'); b.click(); b.click(); }""")
+        page.wait_for_function("() => !document.documentElement.classList.contains('vt-theme')", timeout=4000)
+        page.wait_for_timeout(300)
+        assert theme(page) == start
+        assert page.evaluate("() => localStorage.getItem('fe-theme')") == start
+        assert errors == [], errors
+    finally:
+        ctx.close()
+
+
 def test_legacy_hash_read(site_url, browser):
     ctx, page, errors = open_home(browser, site_url + "/#light")
     try:
