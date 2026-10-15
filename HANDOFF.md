@@ -1,3 +1,44 @@
+# Start here
+
+Run from the repo root (or a worktree outside Dropbox, e.g. `~/work/site-<piece>`).
+
+**BUILD** — regenerate the eight root pages from `src/`:
+```
+python3 scripts/build-site.py
+```
+**CHECK** — proves the committed root pages match `src/` (exit 0):
+```
+python3 scripts/build-site.py --check
+```
+**SERVE** — plain static server on 8796 (no `_redirects`, `_headers` or Worker); `curl -sI http://127.0.0.1:8796/` should be 200:
+```
+python3 -m http.server 8796 --bind 127.0.0.1 --directory "$PWD"
+```
+**PYT** — the pytest suite (once: `uv run --with playwright python3 -m playwright install chromium webkit`):
+```
+uv run --with pytest --with playwright python3 -m pytest tests -q
+```
+**WORKER** — the Worker's routing logic; last line `ALL PASS (N checks)`:
+```
+node scripts/test-worker.mjs
+```
+**WIRING** — download-button wiring against a running SERVE; last line `ALL PASS (N cases)`:
+```
+uv run --with playwright python3 scripts/check-download-wiring.py http://127.0.0.1:8796
+```
+**WRANGLER** — worker-faithful local routing on 8787:
+```
+npx wrangler dev --port 8787
+```
+
+**Landing (Daniel's "merge")**: pieces merge into the integration branch (`integration/site-ux`); Daniel says OK; only then does it reach `main`, and a push to `main` **is** the production deploy. Never open a PR unless asked. Steps: detached worktree at fresh `origin/main` → `git merge --no-ff integration/site-ux` → run the tests → `git push origin HEAD:main` → read-only production check.
+
+**Rollback**: `git revert -m 1 <merge-sha>`, then push the same way.
+
+wrangler dev honours _redirects/_headers: unknown — not run in A2 (sandbox denied starting servers); re-prove once (2026-10-15)
+
+---
+
 # Freelance Easy site — handoff to deploy Claude
 
 ## Framework
