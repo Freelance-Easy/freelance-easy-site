@@ -99,7 +99,7 @@
    "ok": true,
    "detail": [
     {
-     "t": 6208.8,
+     "t": 6296.8,
      "ev": "settle",
      "y": 2032,
      "ph": "free",
@@ -107,7 +107,7 @@
      "d": 3,
      "trigger": "scrollend",
      "to": 3,
-     "quiet": 50.6
+     "quiet": 51.1
     }
    ]
   },
@@ -116,13 +116,13 @@
    "ok": true,
    "detail": [
     {
-     "first": 5657.599999427795,
-     "last": 6141.800000190735,
+     "first": 5746.299999237061,
+     "last": 6229.299999237061,
      "y": 2032
     },
     [
      {
-      "t": 6208.8,
+      "t": 6296.8,
       "ev": "settle",
       "y": 2032,
       "ph": "free",
@@ -130,7 +130,7 @@
       "d": 3,
       "trigger": "scrollend",
       "to": 3,
-      "quiet": 50.6
+      "quiet": 51.1
      }
     ]
    ]
@@ -160,8 +160,8 @@
      "aligned": 0
     },
     {
-     "first": 5657.599999427795,
-     "last": 6141.800000190735,
+     "first": 5746.299999237061,
+     "last": 6229.299999237061,
      "y": 2032
     }
    ]
@@ -175,13 +175,13 @@
  "data": {
   "wheel_path": "settle fired first, then the step",
   "stream": {
-   "first": 5657.599999427795,
-   "last": 6141.800000190735,
+   "first": 5746.299999237061,
+   "last": 6229.299999237061,
    "y": 2032
   },
   "settle": [
    {
-    "t": 6208.8,
+    "t": 6296.8,
     "ev": "settle",
     "y": 2032,
     "ph": "free",
@@ -189,7 +189,7 @@
     "d": 3,
     "trigger": "scrollend",
     "to": 3,
-    "quiet": 50.6
+    "quiet": 51.1
    }
   ],
   "counters": {
@@ -201,12 +201,46 @@
    "lands": 1
   },
   "free_enters": 1,
-  "settle_latency_ms": 67.0,
-  "settle_trigger": "scrollend"
+  "settle_latency_ms": 67.5,
+  "settle_trigger": "scrollend",
+  "first_attempt_failed": [
+   {
+    "name": "a foreign scroll enters FREE",
+    "ok": false,
+    "detail": {
+     "phase": "play",
+     "rendered": 2,
+     "dest": 3,
+     "busy": true,
+     "held": false,
+     "free": false,
+     "ack": {
+      "y": 1752,
+      "events": 1
+     },
+     "gest": null,
+     "y": 1752,
+     "aligned": 584
+    }
+   },
+   {
+    "name": "a key during a pending settle cancels it (0 settles, 1 cancel)",
+    "ok": false,
+    "detail": {
+     "scroll": 3,
+     "acked": 2,
+     "foreign": 1,
+     "scrollend": 3,
+     "settles": 1,
+     "steps": 1,
+     "lands": 1
+    }
+   }
+  ]
  },
  "log": [
   {
-   "t": 26.2,
+   "t": 36.1,
    "ev": "boot",
    "y": 0,
    "ph": "rest",
@@ -218,7 +252,7 @@
    "hasScrollend": true
   },
   {
-   "t": 26.7,
+   "t": 36.5,
    "ev": "vv-resize",
    "y": 0,
    "ph": "rest",
@@ -228,7 +262,7 @@
    "h": 640
   },
   {
-   "t": 209.8,
+   "t": 240.4,
    "ev": "step",
    "y": 0,
    "ph": "rest",
@@ -239,7 +273,7 @@
    "from": 0
   },
   {
-   "t": 210,
+   "t": 240.6,
    "ev": "sync",
    "y": 584,
    "ph": "rest",
@@ -250,7 +284,7 @@
    "syncY": 584
   },
   {
-   "t": 267.3,
+   "t": 305.5,
    "ev": "scroll-ack",
    "y": 584,
    "ph": "play",
@@ -259,7 +293,7 @@
    "n": 1
   },
   {
-   "t": 267.3,
+   "t": 305.5,
    "ev": "scrollend",
    "y": 584,
    "ph": "play",
@@ -268,7 +302,7 @@
    "native": true
   },
   {
-   "t": 1410.9,
+   "t": 1442.6,
    "ev": "land",
    "y": 584,
    "ph": "rest",
@@ -277,7 +311,7 @@
    "aligned": 0
   },
   {
-   "t": 1621,
+   "t": 1624.6,
    "ev": "step",
    "y": 584,
    "ph": "rest",
@@ -288,7 +322,7 @@
    "from": 1
   },
   {
-   "t": 1621.1,
+   "t": 1624.7,
    "ev": "sync",
    "y": 1168,
    "ph": "rest",
@@ -299,7 +333,7 @@
    "syncY": 1168
   },
   {
-   "t": 1625.2,
+   "t": 1630.1,
    "ev": "scroll-ack",
    "y": 1168,
    "ph": "play",
@@ -308,7 +342,7 @@
    "n": 1
   },
   {
-   "t": 1625.2,
+   "t": 1630.2,
    "ev": "scrollend",
    "y": 1168,
    "ph": "play",
@@ -317,7 +351,7 @@
    "native": true
   },
   {
-   "t": 2821.8,
+   "t": 2826.1,
    "ev": "land",
    "y": 1168,
    "ph": "rest",
@@ -326,7 +360,7 @@
    "aligned": 0
   },
   {
-   "t": 3041.4,
+   "t": 3063.5,
    "ev": "free-enter",
    "y": 1518,
    "ph": "free",
@@ -335,7 +369,7 @@
    "from": "rest"
   },
   {
-   "t": 3041.9,
+   "t": 3063.9,
    "ev": "scrollend",
    "y": 1518,
    "ph": "free",
@@ -344,7 +378,7 @@
    "native": true
   },
   {
-   "t": 3082.1,
+   "t": 3099.8,
    "ev": "settle-cancel",
    "y": 1518,
    "ph": "free",
@@ -354,7 +388,7 @@
    "b0": 3
   },
   {
-   "t": 3082.2,
+   "t": 3099.8,
    "ev": "step",
    "y": 1518,
    "ph": "rest",
@@ -365,7 +399,7 @@
    "from": 3
   },
   {
-   "t": 3082.2,
+   "t": 3099.9,
    "ev": "sync",
    "y": 2336,
    "ph": "rest",
@@ -376,7 +410,7 @@
    "syncY": 2336
   },
   {
-   "t": 3091.4,
+   "t": 3113.5,
    "ev": "scroll-ack",
    "y": 2336,
    "ph": "dip",
@@ -385,7 +419,7 @@
    "n": 1
   },
   {
-   "t": 3091.4,
+   "t": 3113.5,
    "ev": "scrollend",
    "y": 2336,
    "ph": "dip",
@@ -394,7 +428,7 @@
    "native": true
   },
   {
-   "t": 4007.6,
+   "t": 4027.6,
    "ev": "land",
    "y": 2336,
    "ph": "rest",
@@ -403,7 +437,7 @@
    "aligned": 0
   },
   {
-   "t": 4191.6,
+   "t": 4262.4,
    "ev": "free-enter",
    "y": 2161,
    "ph": "free",
@@ -412,7 +446,7 @@
    "from": "rest"
   },
   {
-   "t": 4191.9,
+   "t": 4262.7,
    "ev": "scrollend",
    "y": 2161,
    "ph": "free",
@@ -421,7 +455,7 @@
    "native": true
   },
   {
-   "t": 4243.2,
+   "t": 4313.9,
    "ev": "settle",
    "y": 2161,
    "ph": "free",
@@ -429,10 +463,10 @@
    "d": 4,
    "trigger": "scrollend",
    "to": 4,
-   "quiet": 51.6
+   "quiet": 51.5
   },
   {
-   "t": 4243.2,
+   "t": 4314,
    "ev": "goto",
    "y": 2161,
    "ph": "rest",
@@ -442,7 +476,7 @@
    "to": 4
   },
   {
-   "t": 4243.4,
+   "t": 4314,
    "ev": "sync",
    "y": 2336,
    "ph": "rest",
@@ -453,7 +487,7 @@
    "syncY": 2336
   },
   {
-   "t": 4243.4,
+   "t": 4314,
    "ev": "land",
    "y": 2336,
    "ph": "rest",
@@ -462,7 +496,7 @@
    "aligned": 0
   },
   {
-   "t": 4258.2,
+   "t": 4329.3,
    "ev": "gesture",
    "y": 2336,
    "ph": "rest",
@@ -474,7 +508,7 @@
    "dy": -1.8666666348775227
   },
   {
-   "t": 4258.4,
+   "t": 4329.5,
    "ev": "scroll-ack",
    "y": 2336,
    "ph": "rest",
@@ -483,7 +517,7 @@
    "n": 1
   },
   {
-   "t": 4258.4,
+   "t": 4329.5,
    "ev": "scrollend",
    "y": 2336,
    "ph": "rest",
@@ -492,7 +526,7 @@
    "native": true
   },
   {
-   "t": 4358.2,
+   "t": 4445.6,
    "ev": "step",
    "y": 2336,
    "ph": "rest",
@@ -503,7 +537,7 @@
    "from": 4
   },
   {
-   "t": 4358.2,
+   "t": 4445.7,
    "ev": "sync",
    "y": 1752,
    "ph": "rest",
@@ -514,7 +548,7 @@
    "syncY": 1752
   },
   {
-   "t": 4359.1,
+   "t": 4446.4,
    "ev": "scroll-ack",
    "y": 1752,
    "ph": "dip",
@@ -523,7 +557,7 @@
    "n": 1
   },
   {
-   "t": 4359.1,
+   "t": 4446.4,
    "ev": "scrollend",
    "y": 1752,
    "ph": "dip",
@@ -532,7 +566,7 @@
    "native": true
   },
   {
-   "t": 4579.8,
+   "t": 4667,
    "ev": "land",
    "y": 1752,
    "ph": "rest",
@@ -541,7 +575,7 @@
    "aligned": 0
   },
   {
-   "t": 5674.5,
+   "t": 5762.3,
    "ev": "free-enter",
    "y": 1766,
    "ph": "free",
@@ -550,7 +584,7 @@
    "from": "rest"
   },
   {
-   "t": 5674.8,
+   "t": 5762.6,
    "ev": "scrollend",
    "y": 1766,
    "ph": "free",
@@ -559,7 +593,7 @@
    "native": true
   },
   {
-   "t": 5691.8,
+   "t": 5779.3,
    "ev": "scrollend",
    "y": 1780,
    "ph": "free",
@@ -568,7 +602,7 @@
    "native": true
   },
   {
-   "t": 5708,
+   "t": 5795.9,
    "ev": "scrollend",
    "y": 1793,
    "ph": "free",
@@ -577,7 +611,7 @@
    "native": true
   },
   {
-   "t": 5724.6,
+   "t": 5813.2,
    "ev": "scrollend",
    "y": 1806,
    "ph": "free",
@@ -586,7 +620,7 @@
    "native": true
   },
   {
-   "t": 5741.1,
+   "t": 5829.3,
    "ev": "scrollend",
    "y": 1818,
    "ph": "free",
@@ -595,7 +629,7 @@
    "native": true
   },
   {
-   "t": 5757.4,
+   "t": 5845.9,
    "ev": "scrollend",
    "y": 1830,
    "ph": "free",
@@ -604,7 +638,7 @@
    "native": true
   },
   {
-   "t": 5774.6,
+   "t": 5862.6,
    "ev": "scrollend",
    "y": 1842,
    "ph": "free",
@@ -613,7 +647,7 @@
    "native": true
   },
   {
-   "t": 5791.7,
+   "t": 5879.2,
    "ev": "scrollend",
    "y": 1853,
    "ph": "free",
@@ -622,7 +656,7 @@
    "native": true
   },
   {
-   "t": 5807.7,
+   "t": 5895.8,
    "ev": "scrollend",
    "y": 1864,
    "ph": "free",
@@ -631,7 +665,7 @@
    "native": true
   },
   {
-   "t": 5824.1,
+   "t": 5912.5,
    "ev": "scrollend",
    "y": 1875,
    "ph": "free",
@@ -640,7 +674,7 @@
    "native": true
   },
   {
-   "t": 5840.8,
+   "t": 5929.3,
    "ev": "scrollend",
    "y": 1885,
    "ph": "free",
@@ -649,7 +683,7 @@
    "native": true
   },
   {
-   "t": 5857.8,
+   "t": 5946,
    "ev": "scrollend",
    "y": 1895,
    "ph": "free",
@@ -658,7 +692,7 @@
    "native": true
   },
   {
-   "t": 5874.2,
+   "t": 5962.6,
    "ev": "scrollend",
    "y": 1905,
    "ph": "free",
@@ -667,7 +701,7 @@
    "native": true
   },
   {
-   "t": 5890.8,
+   "t": 5979.3,
    "ev": "scrollend",
    "y": 1914,
    "ph": "free",
@@ -676,7 +710,7 @@
    "native": true
   },
   {
-   "t": 5908.3,
+   "t": 5995.9,
    "ev": "scrollend",
    "y": 1923,
    "ph": "free",
@@ -685,7 +719,7 @@
    "native": true
   },
   {
-   "t": 5924.8,
+   "t": 6012.5,
    "ev": "scrollend",
    "y": 1932,
    "ph": "free",
@@ -694,7 +728,7 @@
    "native": true
   },
   {
-   "t": 5941.5,
+   "t": 6029.2,
    "ev": "scrollend",
    "y": 1941,
    "ph": "free",
@@ -703,7 +737,7 @@
    "native": true
   },
   {
-   "t": 5958.8,
+   "t": 6045.8,
    "ev": "scrollend",
    "y": 1949,
    "ph": "free",
@@ -712,7 +746,7 @@
    "native": true
   },
   {
-   "t": 5974.2,
+   "t": 6062.5,
    "ev": "scrollend",
    "y": 1957,
    "ph": "free",
@@ -721,7 +755,7 @@
    "native": true
   },
   {
-   "t": 5992.3,
+   "t": 6079.2,
    "ev": "scrollend",
    "y": 1965,
    "ph": "free",
@@ -730,7 +764,7 @@
    "native": true
   },
   {
-   "t": 6009.3,
+   "t": 6095.9,
    "ev": "scrollend",
    "y": 1973,
    "ph": "free",
@@ -739,7 +773,7 @@
    "native": true
   },
   {
-   "t": 6025.6,
+   "t": 6112.6,
    "ev": "scrollend",
    "y": 1980,
    "ph": "free",
@@ -748,7 +782,7 @@
    "native": true
   },
   {
-   "t": 6041.4,
+   "t": 6129.2,
    "ev": "scrollend",
    "y": 1987,
    "ph": "free",
@@ -757,7 +791,7 @@
    "native": true
   },
   {
-   "t": 6058.7,
+   "t": 6145.9,
    "ev": "scrollend",
    "y": 1994,
    "ph": "free",
@@ -766,7 +800,7 @@
    "native": true
   },
   {
-   "t": 6075.3,
+   "t": 6162.5,
    "ev": "scrollend",
    "y": 2001,
    "ph": "free",
@@ -775,7 +809,7 @@
    "native": true
   },
   {
-   "t": 6092.6,
+   "t": 6179.3,
    "ev": "scrollend",
    "y": 2008,
    "ph": "free",
@@ -784,7 +818,7 @@
    "native": true
   },
   {
-   "t": 6108.7,
+   "t": 6195.9,
    "ev": "scrollend",
    "y": 2014,
    "ph": "free",
@@ -793,7 +827,7 @@
    "native": true
   },
   {
-   "t": 6124.8,
+   "t": 6212.6,
    "ev": "scrollend",
    "y": 2020,
    "ph": "free",
@@ -802,7 +836,7 @@
    "native": true
   },
   {
-   "t": 6141.8,
+   "t": 6229.2,
    "ev": "scrollend",
    "y": 2026,
    "ph": "free",
@@ -811,7 +845,7 @@
    "native": true
   },
   {
-   "t": 6158.5,
+   "t": 6245.9,
    "ev": "scrollend",
    "y": 2032,
    "ph": "free",
@@ -820,7 +854,7 @@
    "native": true
   },
   {
-   "t": 6208.8,
+   "t": 6296.8,
    "ev": "settle",
    "y": 2032,
    "ph": "free",
@@ -828,10 +862,10 @@
    "d": 3,
    "trigger": "scrollend",
    "to": 3,
-   "quiet": 50.6
+   "quiet": 51.1
   },
   {
-   "t": 6208.8,
+   "t": 6296.8,
    "ev": "goto",
    "y": 2032,
    "ph": "rest",
@@ -841,7 +875,7 @@
    "to": 3
   },
   {
-   "t": 6208.9,
+   "t": 6296.8,
    "ev": "sync",
    "y": 1752,
    "ph": "rest",
@@ -852,7 +886,7 @@
    "syncY": 1752
   },
   {
-   "t": 6208.9,
+   "t": 6296.8,
    "ev": "land",
    "y": 1752,
    "ph": "rest",
@@ -861,7 +895,7 @@
    "aligned": 0
   },
   {
-   "t": 6225.2,
+   "t": 6312.4,
    "ev": "scroll-ack",
    "y": 1752,
    "ph": "rest",
@@ -870,7 +904,7 @@
    "n": 1
   },
   {
-   "t": 6225.2,
+   "t": 6312.4,
    "ev": "scrollend",
    "y": 1752,
    "ph": "rest",

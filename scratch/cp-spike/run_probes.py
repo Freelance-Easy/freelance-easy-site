@@ -359,8 +359,9 @@ def r4_resize(t):
     t.page.set_viewport_size({"width": seq[0][0], "height": seq[0][1]})
     t.page.wait_for_timeout(350)
     s, g2 = t.st(), t.geom()
-    t.data["released"] = {"past_before": past, "past_after": s["y"] - g2["storyEnd"]}
-    t.check("a released reader keeps their distance below the story", s["phase"] == "released" and abs((s["y"] - g2["storyEnd"]) - past) <= 2, t.data["released"])
+    exp = min(past, g2["max"] - g2["storyEnd"])        # (Sol C0a-1) the document end can clamp the old distance
+    t.data["released"] = {"past_before": past, "past_after": s["y"] - g2["storyEnd"], "expected": exp}
+    t.check("a released reader keeps their distance below the story (or the document end)", s["phase"] == "released" and abs((s["y"] - g2["storyEnd"]) - exp) <= 2, t.data["released"])
     t.page.set_viewport_size({"width": w0, "height": h0})
     moved = [e for e in t.log(0) + sum(t.data.get("logs_before_reload", []), []) if e["ev"] == "geometry"
              and e.get("rawY") is not None and abs(e["rawY"] - e["usedY"]) > 1]
@@ -541,7 +542,7 @@ def r9_zoom(t):
     t.goto()
     c0 = t.cnt()
     if is_mwk(t):
-        t.synth.append("iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran")
+        t.work.append("iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran")
         t.page.keyboard.down("Control"); t.page.keyboard.up("Control")
     else:
         t.page.keyboard.down("Control")
@@ -639,11 +640,21 @@ SKIP = {("webkit-iphone", "S1")}  # wheel grouping: an iPhone has no wheel     #
 
 
 # ---------------------------------------------------------------- driver
+def same_bytes():
+    """(Sol C0a-1 HIGH) the server on PORT must serve THIS checkout's spike, byte for byte."""
+    import urllib.request
+    for f in ("spike.js", "index.html"):
+        with urllib.request.urlopen(f"http://127.0.0.1:{PORT}/scratch/cp-spike/{f}", timeout=3) as r:
+            if r.read() != (HERE / f).read_bytes():
+                raise SystemExit(f"127.0.0.1:{PORT} serves a different {f} (another checkout or stale bytes); stop it first")
+
+
 def ensure_server():
     s = socket.socket()
     try:
         s.connect(("127.0.0.1", PORT))
         s.close()
+        same_bytes()
         return None
     except OSError:
         pass
@@ -652,6 +663,7 @@ def ensure_server():
     for _ in range(50):
         try:
             socket.create_connection(("127.0.0.1", PORT), 0.2).close()
+            same_bytes()
             return p
         except OSError:
             time.sleep(0.1)

@@ -9,11 +9,11 @@
   "iphone"
  ],
  "variant": "",
- "status": "PASS",
- "workaround": [],
- "synthesised": [
-  "iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+ "status": "WORKAROUND",
+ "workaround": [
+  "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
  ],
+ "synthesised": [],
  "checks": [
   {
    "name": "Ctrl+wheel is never intercepted (no step)",
@@ -75,7 +75,7 @@
   "logs_before_reload": [
    [
     {
-     "t": 16,
+     "t": 15,
      "ev": "boot",
      "y": 0,
      "ph": "rest",
@@ -87,7 +87,7 @@
      "hasScrollend": true
     },
     {
-     "t": 17,
+     "t": 16,
      "ev": "vv-resize",
      "y": 0,
      "ph": "rest",
@@ -105,7 +105,7 @@
  },
  "log": [
   {
-   "t": 8,
+   "t": 11,
    "ev": "boot",
    "y": 0,
    "ph": "rest",
@@ -117,7 +117,7 @@
    "hasScrollend": true
   },
   {
-   "t": 8,
+   "t": 12,
    "ev": "geometry",
    "y": 0,
    "ph": "rest",
@@ -134,7 +134,7 @@
    "usedY": 0
   },
   {
-   "t": 8,
+   "t": 12,
    "ev": "vv-resize",
    "y": 0,
    "ph": "rest",
@@ -144,7 +144,7 @@
    "h": 640
   },
   {
-   "t": 191,
+   "t": 201,
    "ev": "step",
    "y": 0,
    "ph": "rest",
@@ -155,7 +155,7 @@
    "from": 0
   },
   {
-   "t": 191,
+   "t": 201,
    "ev": "sync",
    "y": 584,
    "ph": "rest",
@@ -166,7 +166,7 @@
    "syncY": 584
   },
   {
-   "t": 201,
+   "t": 211,
    "ev": "scroll-ack",
    "y": 584,
    "ph": "play",
@@ -175,7 +175,7 @@
    "n": 1
   },
   {
-   "t": 218,
+   "t": 226,
    "ev": "scrollend",
    "y": 584,
    "ph": "play",
@@ -184,7 +184,7 @@
    "native": true
   },
   {
-   "t": 1392,
+   "t": 1404,
    "ev": "land",
    "y": 584,
    "ph": "rest",
@@ -193,7 +193,7 @@
    "aligned": 0
   },
   {
-   "t": 1577,
+   "t": 1613,
    "ev": "step",
    "y": 584,
    "ph": "rest",
@@ -204,7 +204,7 @@
    "from": 1
   },
   {
-   "t": 1578,
+   "t": 1614,
    "ev": "sync",
    "y": 1168,
    "ph": "rest",
@@ -215,7 +215,7 @@
    "syncY": 1168
   },
   {
-   "t": 1584,
+   "t": 1625,
    "ev": "scroll-ack",
    "y": 1168,
    "ph": "play",
@@ -224,7 +224,7 @@
    "n": 1
   },
   {
-   "t": 1600,
+   "t": 1644,
    "ev": "scrollend",
    "y": 1168,
    "ph": "play",
@@ -233,7 +233,7 @@
    "native": true
   },
   {
-   "t": 2779,
+   "t": 2814,
    "ev": "land",
    "y": 1168,
    "ph": "rest",

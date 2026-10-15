@@ -117,6 +117,9 @@
       S.free = { since: t, from: t < S.reentryUntil ? "released" : S.phase, fromBeat: S.rendered, lastY: y, lastT: t,
         timer: 0, backstop: 0, sawHold: S.held };
       if (S.phase === "released") { S.rendered = N - 1; S.dest = N - 1; }
+      // (Sol C0a-1 HIGH) FREE holds the frame: a running transition freezes on its current frame (no timer may land
+      // or realign while the reader moves the page); the settle plans afresh from rendered
+      if (S.busy) { clearTimeout(S.timer); S.busy = false; S.run = null; stage.classList.remove("dark"); S.dest = S.rendered; }
       S.phase = "free";
       log("free-enter", { from: S.free.from });
     }
@@ -234,7 +237,7 @@
   }
   function land() {
     S.busy = false; S.run = null; S.phase = "rest"; C.lands++;
-    if (Math.abs(window.scrollY - yOf(S.rendered)) > CFG.ACK_TOL) syncScroll(yOf(S.rendered), "land-realign");
+    if (!S.free && Math.abs(window.scrollY - yOf(S.rendered)) > CFG.ACK_TOL) syncScroll(yOf(S.rendered), "land-realign");
     log("land", { aligned: +(window.scrollY - yOf(S.rendered)).toFixed(2) });
     paint();
   }
@@ -375,7 +378,8 @@
     log("touch-end", { decided: T.decided, stepped: T.stepped }); S.touch = null;
   };
   story.addEventListener("touchend", touchEnd, { passive: true });
-  story.addEventListener("touchcancel", touchEnd, { passive: true });
+  // (Sol C0a-1) a cancelled touch never steps
+  story.addEventListener("touchcancel", () => { S.lastTouchEnd = now(); log("touch-cancel"); S.touch = null; }, { passive: true });
 
   // ---------- resize / rotation (rule S7) ----------
   function onGeometry(why) {

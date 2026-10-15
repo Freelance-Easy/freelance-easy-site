@@ -9,11 +9,11 @@
   "iphone"
  ],
  "variant": "",
- "status": "PASS",
- "workaround": [],
- "synthesised": [
-  "iPhone: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
+ "status": "WORKAROUND",
+ "workaround": [
+  "iPhone: partial: no Ctrl+wheel; pinch is not drivable in Playwright WebKit (visualViewport.scale stays 1): only the zoom-emulation and CSS-zoom parts ran"
  ],
+ "synthesised": [],
  "checks": [
   {
    "name": "Ctrl+wheel is never intercepted (no step)",
@@ -75,7 +75,7 @@
   "logs_before_reload": [
    [
     {
-     "t": 15,
+     "t": 16,
      "ev": "boot",
      "y": 0,
      "ph": "rest",
@@ -87,7 +87,7 @@
      "hasScrollend": true
     },
     {
-     "t": 16,
+     "t": 17,
      "ev": "vv-resize",
      "y": 0,
      "ph": "rest",
@@ -117,7 +117,7 @@
    "hasScrollend": true
   },
   {
-   "t": 24,
+   "t": 20,
    "ev": "geometry",
    "y": 0,
    "ph": "rest",
@@ -134,7 +134,7 @@
    "usedY": 0
   },
   {
-   "t": 24,
+   "t": 21,
    "ev": "vv-resize",
    "y": 0,
    "ph": "rest",
@@ -144,7 +144,7 @@
    "h": 548
   },
   {
-   "t": 186,
+   "t": 189,
    "ev": "step",
    "y": 0,
    "ph": "rest",
@@ -155,7 +155,7 @@
    "from": 0
   },
   {
-   "t": 186,
+   "t": 190,
    "ev": "sync",
    "y": 492,
    "ph": "rest",
@@ -166,7 +166,7 @@
    "syncY": 492
   },
   {
-   "t": 197,
+   "t": 199,
    "ev": "scroll-ack",
    "y": 492,
    "ph": "play",
@@ -175,7 +175,7 @@
    "n": 1
   },
   {
-   "t": 214,
+   "t": 216,
    "ev": "scrollend",
    "y": 492,
    "ph": "play",
@@ -184,7 +184,7 @@
    "native": true
   },
   {
-   "t": 1387,
+   "t": 1392,
    "ev": "land",
    "y": 492,
    "ph": "rest",
@@ -193,7 +193,7 @@
    "aligned": 0
   },
   {
-   "t": 1590,
+   "t": 1594,
    "ev": "step",
    "y": 492,
    "ph": "rest",
@@ -204,7 +204,7 @@
    "from": 1
   },
   {
-   "t": 1590,
+   "t": 1594,
    "ev": "sync",
    "y": 984,
    "ph": "rest",
@@ -215,7 +215,7 @@
    "syncY": 984
   },
   {
-   "t": 1597,
+   "t": 1598,
    "ev": "scroll-ack",
    "y": 984,
    "ph": "play",
@@ -233,7 +233,7 @@
    "native": true
   },
   {
-   "t": 2791,
+   "t": 2796,
    "ev": "land",
    "y": 984,
    "ph": "rest",
