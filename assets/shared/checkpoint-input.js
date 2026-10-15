@@ -24,7 +24,8 @@
  *
  * Decisions are per gesture and sticky (R1 §3.4): a wheel gesture is classified (notch | smooth) and decided
  * (intercept | pass) on its first event and keeps both until it ends at its own quiet threshold (ICX-CLASS). An
- * intercepted gesture is never released mid-way (its tail must not leak into native scroll). A gesture the consumer
+ * intercepted gesture is never released mid-way (its tail must not leak into native scroll), except single events a
+ * nested scroller, field or dialog under the pointer can still take in their direction. A gesture the consumer
  * passed is asked again on every event (phase "continue"); once isBypassed returns falsy, that event and the rest of
  * the gesture are prevented and swallowed: no steps (ICX-SETTLE-8's crossing from below).
  * Never intercepted (ICX-BYPASS): Ctrl/⌘+wheel and pinch, horizontal wheel (|dx| > |dy|), and wheel / key / touch
@@ -167,7 +168,7 @@
       var dir = sign(dy);
       var ng = {
         id: ++gid, notch: notch, cls: notch ? "notch" : "smooth", decision: "intercept", lastT: t, winT0: t, acc: 0,
-        dir: 0, samples: [], peakV: 0, peakSince: 0, lastStepT: -Infinity
+        dir: 0, dirT: -Infinity, samples: [], peakV: 0, peakSince: 0, lastStepT: -Infinity
       };
       if (targetBypassed(ev, dir)) ng.decision = "pass";
       else if (consumerPasses(ev, { source: "wheel", dir: dir, phase: "start", gesture: ng.id })) ng.decision = "pass-consumer";
@@ -184,25 +185,7 @@
       var keep = t - C.W_NOW - C.W_PREV - C.REVERSE_WIN;
       while (g.samples.length && g.samples[0].t < keep) g.samples.shift();
 
-      if (!g.dir) { // starting
-        if (g.notch) { g.dir = s; g.lastStepT = t; g.trigger = "start"; return s; }
-        if (t - g.winT0 > C.START_WIN) { g.winT0 = t; g.acc = 0; }
-        g.acc += a;
-        if (g.acc >= C.START_PX) { g.dir = s; g.lastStepT = t; g.trigger = "start"; return s; }
-        return 0;
-      }
-      if (s !== g.dir) { // momentum never reverses: only REVERSE_PX against the direction within REVERSE_WIN does
-        var back = 0;
-        for (i = 0; i < g.samples.length; i++) {
-          var p = g.samples[i];
-          if (p.s === s && p.t > t - C.REVERSE_WIN) back += p.a;
-        }
-        if (back >= C.REVERSE_PX) {
-          g.dir = s; g.lastStepT = t; g.peakV = 0; g.peakSince = 0; g.trigger = "reverse";
-          return s;
-        }
-        return 0;
-      }
+      // rates in direction s (px/s, rate-independent) and the stream's continuity, including this sample
       var now = 0, prev = 0, lo = t - C.W_NOW, lo2 = lo - C.W_PREV, maxGap = 0, n = 0, lastIn = null;
       for (i = 0; i < g.samples.length; i++) {
         var q = g.samples[i];
@@ -215,6 +198,31 @@
         else if (q.t > lo2 && q.t <= lo) prev += q.a;
       }
       var vNow = now / C.W_NOW * 1000, vPrev = prev / C.W_PREV * 1000;
+
+      // Every step that sets the direction seeds the peaks with the rate that caused it (Sol C1-sol-1 #3: an
+      // opener left out of peakSince let a decaying trickle count as "sustained" and repeat, against D1).
+      if (!g.dir) { // starting
+        if (!g.notch) {
+          if (t - g.winT0 > C.START_WIN) { g.winT0 = t; g.acc = 0; }
+          g.acc += a;
+          if (g.acc < C.START_PX) return 0;
+        }
+        g.dir = s; g.dirT = t; g.lastStepT = t; g.peakV = vNow; g.peakSince = vNow; g.trigger = "start";
+        return s;
+      }
+      if (s !== g.dir) { // momentum never reverses: only REVERSE_PX against the direction within REVERSE_WIN does,
+        // counting only samples since the direction was last set (Sol C1-sol-1 #1: older ones re-flipped on 1 px)
+        var back = 0;
+        for (i = 0; i < g.samples.length; i++) {
+          var p = g.samples[i];
+          if (p.s === s && p.t > t - C.REVERSE_WIN && p.t > g.dirT) back += p.a;
+        }
+        if (back >= C.REVERSE_PX) {
+          g.dir = s; g.dirT = t; g.lastStepT = t; g.peakV = vNow; g.peakSince = vNow; g.trigger = "reverse";
+          return s;
+        }
+        return 0;
+      }
       g.peakV = Math.max(g.peakV, vNow);
       g.peakSince = Math.max(g.peakSince, vNow);
       var continuous = n > 2 && maxGap <= C.CONT_GAP;
@@ -253,6 +261,11 @@
       }
       if (onSample) onSample({ source: "wheel", event: ev, t: t, dy: dy, gesture: g.id, cls: g.cls, decision: g.decision });
       if (g.decision === "pass" || g.decision === "pass-consumer") return;
+      // An intercepted gesture is re-checked per event: an event a nested scroller (or field / dialog) under the
+      // pointer can still take in its own direction is left to it, unprevented and unseen by the detector
+      // (ICX-BYPASS.3/.4; Sol C1-sol-1 #2: reversing up at a scroller's bottom). A gesture passed at its start
+      // stays passed (scroll latching: a scroller that reaches its end mid-gesture does not hand over the rest).
+      if (g.decision === "intercept" && targetBypassed(ev, sign(dy))) return;
       if (ev.cancelable !== false) ev.preventDefault();
       if (g.decision === "swallow") return;
       var s = detect(t, dy);
