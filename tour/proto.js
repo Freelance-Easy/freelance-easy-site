@@ -8,7 +8,9 @@
   const root = document.documentElement, frame = $('#app-frame');
   const { clamp, tween, smooth, glide } = window.FM;
   const media = matchMedia('(prefers-reduced-motion: reduce)');
-  let reduced = media.matches || location.hash === '#reduced';
+  // hash flags (any order, joined by & or ,), read like quick.js: #reduced alone or #light&reduced&email
+  const hashReduced = () => location.hash.slice(1).split(/[&,]/).includes('reduced');
+  let reduced = media.matches || hashReduced();
   // (a template's content has no #caption-copy inside it: select its paragraphs directly)
   const captions = $$('p', $('#caption-copy').content).map(p => p.textContent);
   const STEPS = [
@@ -327,7 +329,7 @@
   window.addEventListener('resize', fitFrame);
   document.addEventListener('visibilitychange', () => { if (document.hidden && TOUR.playing) pause(); });
   media.addEventListener('change', e => {
-    reduced = e.matches || location.hash === '#reduced';
+    reduced = e.matches || hashReduced();
     if (!TOUR.ready) return;
     doc.documentElement.dataset.motion = reduced ? 'reduced' : 'full';
     pause(); jump(TOUR.chapter);

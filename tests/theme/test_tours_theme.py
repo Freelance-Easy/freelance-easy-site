@@ -131,10 +131,11 @@ def test_compound_hash_kept(browser, site_url, path):
         ctx.close()
 
 
-@pytest.mark.parametrize("how", ["os", "hash"])
+@pytest.mark.parametrize("how", ["os", "hash", "compound"])
 @pytest.mark.parametrize("path", PAGES)
 def test_reduced_instant(browser, site_url, path, how):
-    url = site_url + path + ("#reduced" if how == "hash" else "")
+    # "compound": the reduced flag among others (#light&reduced&email) must count as reduced too
+    url = site_url + path + {"os": "", "hash": "#reduced", "compound": "#light&reduced&email"}[how]
     ctx, page, errors = open_tour(browser, url, reduced=how == "os")
     try:
         before = themes(page)[0]
