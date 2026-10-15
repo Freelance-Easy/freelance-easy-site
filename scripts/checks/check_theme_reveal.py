@@ -5,9 +5,12 @@ Checks a page's FETheme circle reveal (A5; reused by A6, A7, A8 and C8). For eac
 loads <url> in a fresh profile and clicks the toggle twice, so both directions are covered, then once more under
 prefers-reduced-motion. Each reveal must:
   - run one animation of --vt-r on ::view-transition-new(root) for 420 ms with cubic-bezier(.55,0,.25,1);
-  - reach full radius 420 +/- 40 ms after it starts (measured on the document timeline);
-  - be centred on the toggle's centre (+/- 1.5 px);
-  - end at a radius that clears the farthest viewport corner plus the feather (22% of the radius, 48-220 px);
+  - start within 50 ms of the click (nothing may hog the thread before the circle) and reach full radius
+    420 +/- 40 ms after it starts;
+  - actually be drawn as a circle: ::view-transition-new(root) carries theme.css's radial-gradient mask, centred on
+    the toggle's centre (+/- 1.5 px), and old/new run no UA cross-fade (animation-name none);
+  - end at a radius whose fully opaque inner edge (radius minus the feather: 22% of the radius, 48-220 px) clears
+    the farthest viewport corner, so the last frame is the whole new theme;
   - leave data-theme flipped and explicit, and clean up (no html.vt-theme, no --vt-x / --vt-y).
 Under reduced motion the switch must be instant (flipped synchronously on click, no reveal animation).
 Prints one line per check and "ALL PASS (N checks)"; exits 0 only if every check passes.
@@ -18,11 +21,13 @@ from __future__ import annotations
 
 import argparse
 import math
+import re
 import sys
 import urllib.parse
 
 DURATION_MS = 420
 TOLERANCE_MS = 40
+MAX_START_MS = 50
 EASING = "cubic-bezier(0.55, 0, 0.25, 1)"
 CENTRE_TOLERANCE_PX = 1.5
 HEIGHTS = {1440: 900, 390: 844}
@@ -64,6 +69,11 @@ async (sel) => {
           out.rEnd = parseFloat(kf[kf.length - 1]["--vt-r"]);
           out.vtX = parseFloat(root.style.getPropertyValue("--vt-x"));
           out.vtY = parseFloat(root.style.getPropertyValue("--vt-y"));
+          const cs = (pe) => { try { return getComputedStyle(root, pe); } catch (e) { return null; } };
+          const n = cs("::view-transition-new(root)"), o = cs("::view-transition-old(root)");
+          out.mask = n ? (n.maskImage || n.webkitMaskImage || "") : "";
+          out.animNew = n ? n.animationName : null;
+          out.animOld = o ? o.animationName : null;
           out.count = document.getAnimations().filter((a) => isReveal(a) && a.playState !== "finished").length;
           anim.finished.then(() => { out.finishedAt = performance.now() - t0; }, () => { out.cancelled = true; });
         }
@@ -138,6 +148,10 @@ def reveal_failures(p: dict) -> list[str]:
         bad.append(f"animation duration {p.get('duration')} ms, expected {DURATION_MS}")
     if p.get("easing") != EASING:
         bad.append(f"easing {p.get('easing')!r}, expected {EASING!r}")
+    start = start_ms(p)
+    if start is None or start > MAX_START_MS:
+        bad.append(f"the circle started {start if start is None else round(start)} ms after the click, "
+                   f"expected <= {MAX_START_MS}")
     took = growth_ms(p)
     if p.get("finishedAt") is None or took is None:
         bad.append("the reveal never reached full radius")
@@ -145,12 +159,23 @@ def reveal_failures(p: dict) -> list[str]:
         bad.append(f"full radius after {took:.0f} ms, expected {DURATION_MS}+/-{TOLERANCE_MS}")
     if abs(p["vtX"] - p["cx"]) > CENTRE_TOLERANCE_PX or abs(p["vtY"] - p["cy"]) > CENTRE_TOLERANCE_PX:
         bad.append(f"circle centre ({p['vtX']}, {p['vtY']}) is not the toggle centre ({p['cx']:.1f}, {p['cy']:.1f})")
+    mask = p.get("mask") or ""
+    m = re.search(r"radial-gradient\(\s*circle at ([-\d.]+)px ([-\d.]+)px", mask)
+    if not m:
+        bad.append(f"no circle mask on ::view-transition-new(root) (mask-image {mask[:80]!r}): is theme.css loaded?")
+    elif abs(float(m.group(1)) - p["cx"]) > CENTRE_TOLERANCE_PX or abs(float(m.group(2)) - p["cy"]) > CENTRE_TOLERANCE_PX:
+        bad.append(f"the mask circle is at ({m.group(1)}, {m.group(2)}), not the toggle centre "
+                   f"({p['cx']:.1f}, {p['cy']:.1f})")
+    if p.get("animNew") != "none" or p.get("animOld") != "none":
+        bad.append(f"old/new snapshots animate ({p.get('animOld')!r} / {p.get('animNew')!r}): a cross-fade, not "
+                   "only the circle")
     far = math.hypot(max(p["cx"], p["vw"] - p["cx"]), max(p["cy"], p["vh"] - p["cy"]))
-    need = far + feather(far)
+    inner = p["rEnd"] - feather(p["rEnd"])
     if p["r0"] != 0:
         bad.append(f"the circle starts at {p['r0']} px, not 0")
-    if not p["rEnd"] >= need:
-        bad.append(f"end radius {p['rEnd']:.1f} px does not clear the far corner + feather ({need:.1f} px)")
+    if not inner >= far:
+        bad.append(f"at full radius {p['rEnd']:.1f} px the opaque edge ({inner:.1f} px) stops short of the far "
+                   f"corner ({far:.1f} px): the corner snaps at teardown")
     rs = [s["rpx"] for s in growing(p) if s["rpx"] is not None]
     if any(b < a - 0.5 for a, b in zip(rs, rs[1:])):
         bad.append("the radius shrank during the reveal")

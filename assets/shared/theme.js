@@ -23,7 +23,8 @@
   var policy = "none";
   var started = false;
   var running = null;   // the reveal in flight, if any
-  var pending = null;   // the theme that reveal is heading to (its update callback applies the latest one)
+  var want = null;      // the latest theme asked for (a toggle press mid-reveal flips from this, not the DOM)
+  var seq = 0;          // bumped by every switch; a view-transition update callback applies only if still the latest
 
   function valid(t) { return t === "dark" || t === "light"; }
   function get() { return root.getAttribute("data-theme") === "light" ? "light" : "dark"; }
@@ -48,9 +49,10 @@
     try { w.localStorage.setItem(KEY, t); } catch (e) { /* storage blocked: this visit still flips */ }
   }
 
-  // the only writer of data-theme: always an explicit "dark" or "light"
+  // the only writer of data-theme: always an explicit "dark" or "light". The event fires only on a visible change
+  // (a missing or odd data-theme already shows dark, so making it an explicit "dark" is not one).
   function apply(t) {
-    var changed = root.getAttribute("data-theme") !== t;
+    var changed = get() !== t;
     root.setAttribute("data-theme", t);
     if (changed) d.dispatchEvent(new CustomEvent("fe:themechange", { bubbles: true, detail: { theme: t } }));
   }
@@ -69,13 +71,14 @@
   function reveal(el, t) {
     var r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
     var far = Math.hypot(Math.max(x, w.innerWidth - x), Math.max(y, w.innerHeight - y));
-    var end = far + Math.min(220, Math.max(48, far * 0.22)) + 4;   // the feather clears the farthest corner
+    // theme.css starts the feather at r - clamp(48px, 22% of r, 220px); the end radius puts that inner (fully opaque)
+    // edge past the farthest corner, so the last frame before teardown is already the whole new theme (no snap)
+    var end = Math.min(Math.max(far + 48, far / 0.78), far + 220) + 2;
     root.style.setProperty("--vt-x", x.toFixed(1) + "px");
     root.style.setProperty("--vt-y", y.toFixed(1) + "px");
     root.classList.add("vt-theme");
-    var vt = null;
-    pending = t;
-    try { vt = d.startViewTransition(function () { apply(pending); }); } catch (e) { vt = null; }
+    var vt = null, mine = seq;
+    try { vt = d.startViewTransition(function () { if (mine === seq) apply(t); }); } catch (e) { vt = null; }
     if (!vt) { cleanup(); apply(t); return; }
     running = vt;
     vt.ready.then(function () {
@@ -91,12 +94,13 @@
   function set(t, opts) {
     if (!valid(t)) return;
     var from = opts && opts.from;
+    seq++;                        // any older reveal's update callback is now stale and will not apply
+    want = t;
     remember(t);
     writeHash(t);
     if (running) {                 // a second switch mid-reveal: finish the first, then switch instantly
       var old = running;
       running = null;
-      pending = t;
       try { old.skipTransition(); } catch (e) { /* already finished */ }
       cleanup();
       apply(t);
@@ -117,7 +121,7 @@
     var sel = opts.toggle || "[data-theme-toggle]";
     d.addEventListener("click", function (e) {
       var b = e.target && e.target.closest ? e.target.closest(sel) : null;
-      if (b) set((running ? pending : get()) === "light" ? "dark" : "light", { from: b });
+      if (b) set((running ? want : get()) === "light" ? "dark" : "light", { from: b });
     });
     w.addEventListener("hashchange", function () {
       var h = hashTheme();

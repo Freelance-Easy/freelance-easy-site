@@ -252,3 +252,122 @@ def test_check_theme_reveal_script(site_url, fixture_url):
                        capture_output=True, text=True, timeout=180)
     assert r.returncode == 0, r.stdout + r.stderr
     assert r.stdout.strip().splitlines()[-1].startswith("ALL PASS"), r.stdout
+
+
+# ---- round 1 (Sol + judge) -----------------------------------------------------------------------------------------
+
+def test_stale_update_callback_cannot_win(browser, fixture_url):
+    """Animated light, then dark (cancels it), then an instant light: the cancelled reveal's update callback must not
+    re-apply its theme afterwards. DOM, storage, get() and the last event agree."""
+    ctx, page = open_page(browser, fixture_url)
+    try:
+        got = page.evaluate("""async () => {
+            const ev = [];
+            document.addEventListener('fe:themechange', (e) => ev.push(e.detail.theme));
+            const b = document.querySelector('[data-theme-toggle]');
+            const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+            const state = () => [document.documentElement.getAttribute('data-theme'), localStorage.getItem('fe-theme'),
+                                 FETheme.get(), ev[ev.length - 1]];
+            const out = {};
+            FETheme.set('light', { from: b }); FETheme.set('dark'); FETheme.set('light');
+            await wait(900); out.sync = state();
+            FETheme.set('dark', { from: b });
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            FETheme.set('light'); FETheme.set('dark');
+            await wait(900); out.afterFrames = state();
+            return out; }""")
+        assert got["sync"] == ["light", "light", "light", "light"], got
+        assert got["afterFrames"] == ["dark", "dark", "dark", "dark"], got
+        settle(page)
+        for _ in range(3):                                   # three fast presses: dark -> light -> dark -> light
+            page.click(TOGGLE)
+        page.wait_for_timeout(900)
+        assert page.evaluate("""() => [document.documentElement.getAttribute('data-theme'),
+            localStorage.getItem('fe-theme'), FETheme.get()]""") == ["light", "light", "light"]
+    finally:
+        ctx.close()
+
+
+def _pixel(page, x, y):
+    """The RGB of one viewport pixel, from a 1x1 PNG screenshot (the first pixel's bytes are raw under every PNG
+    filter, so no full decoder is needed)."""
+    import struct
+    import zlib
+    png = page.screenshot(clip={"x": x, "y": y, "width": 1, "height": 1})
+    pos, idat = 8, b""
+    while pos < len(png):
+        n, kind = struct.unpack(">I4s", png[pos:pos + 8])
+        if kind == b"IHDR":
+            assert png[pos + 16] == 8, "8-bit PNG expected"
+        if kind == b"IDAT":
+            idat += png[pos + 8:pos + 8 + n]
+        pos += 12 + n
+    return tuple(zlib.decompress(idat)[1:4])
+
+
+NEW_BG = {"light": (243, 243, 240), "dark": (8, 10, 15)}   # the fixture's --bg per theme
+REVEAL = """() => document.getAnimations().find((a) => a.effect &&
+    a.effect.pseudoElement === '::view-transition-new(root)' && a.playState !== 'finished') || null"""
+PAUSE_AT = "(t) => { const a = (" + REVEAL + ")(); if (!a) return false; a.pause(); a.currentTime = t; return true; }"
+RESUME = "() => { const a = (" + REVEAL + ")(); if (a) a.play(); }"
+
+
+def test_far_corner_covered_before_teardown(browser, fixture_url):
+    """At the last frame before the view transition tears down, the far corner is already fully the new theme, so
+    nothing snaps at teardown (Sol: at 390x844 it stayed ~10% transparent)."""
+    for width in (390, 1440):
+        ctx, page = open_page(browser, fixture_url, width=width)
+        try:
+            h = ctr.HEIGHTS[width]
+            for new in ("light", "dark"):
+                page.click(TOGGLE)
+                page.wait_for_function("() => !!(" + REVEAL + ")()", timeout=3000)
+                assert page.evaluate(PAUSE_AT, ctr.DURATION_MS - 1)
+                page.wait_for_timeout(100)
+                px = _pixel(page, 1, h - 2)                   # the toggle is top right: the far corner is bottom left
+                assert all(abs(a - b) <= 3 for a, b in zip(px, NEW_BG[new])), (width, new, px, NEW_BG[new])
+                page.evaluate(RESUME)
+                settle(page)
+                assert theme(page) == new
+        finally:
+            ctx.close()
+
+
+def _check(url, *extra):
+    return subprocess.run([sys.executable, str(ROOT / "scripts" / "checks" / "check_theme_reveal.py"), *extra, url],
+                          capture_output=True, text=True, timeout=180)
+
+
+def test_check_fails_without_theme_css(fixture_url):
+    """The check must prove a circle is drawn: a page that forgets theme.css shows the UA cross-fade and fails."""
+    r = _check(fixture_url + "?seed=nocss", "--width", "390")
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "no circle mask" in r.stdout and "cross-fade" in r.stdout, r.stdout
+
+
+def test_check_fails_on_slow_start(fixture_url):
+    """The circle must start on the press: a 120 ms fe:themechange handler delays it past 50 ms and fails."""
+    r = _check(fixture_url + "?seed=slow", "--width", "390")
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "ms after the click, expected <= 50" in r.stdout, r.stdout
+
+
+LISTEN_EARLY = """window.__ev = [];
+document.addEventListener('fe:themechange', (e) => window.__ev.push(e.detail.theme));"""
+
+
+def test_init_no_event_without_visible_change(browser, fixture_url):
+    """init() makes a missing or odd data-theme explicit without firing fe:themechange: dark was showing already."""
+    ctx, page = open_page(browser, fixture_url + "?bare=1&policy=none", init_script=LISTEN_EARLY)
+    try:
+        assert theme(page) == "dark"
+        page.evaluate("() => { document.documentElement.setAttribute('data-theme', 'sepia'); FETheme.init({}); }")
+        assert theme(page) == "dark"
+        assert page.evaluate("() => window.__ev") == []
+    finally:
+        ctx.close()
+    ctx, page = open_page(browser, fixture_url + "?bare=1&policy=home#light", init_script=LISTEN_EARLY)
+    try:
+        assert theme(page) == "light" and page.evaluate("() => window.__ev") == ["light"]   # a real change still fires
+    finally:
+        ctx.close()

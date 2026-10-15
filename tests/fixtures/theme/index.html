@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FETheme fixture</title>
   <!-- the fixture for assets/shared/theme.js (A5). ?policy=home|tour|none picks the hash policy (default home);
-       ?bare=1 skips the head script, so FETheme.init meets a page with no data-theme at all (CF-11's doc pages). -->
+       ?bare=1 skips the head script, so FETheme.init meets a page with no data-theme at all (CF-11's doc pages).
+       Seeded faults that check_theme_reveal.py must catch: ?seed=nocss drops theme.css (no circle mask: the UA
+       cross-fade); ?seed=slow adds a fe:themechange handler that hogs the thread for 120 ms (a late circle). -->
   <script>
     (function () {
       var q = new URLSearchParams(location.search);
@@ -19,6 +21,9 @@
     })();
   </script>
   <link rel="stylesheet" href="/assets/shared/theme.css">
+  <script>
+    if (new URLSearchParams(location.search).get("seed") === "nocss") document.querySelector('link[href$="theme.css"]').remove();
+  </script>
   <style>
     :root { --bg: #080a0f; --ink: #e9ebef; --muted: #9aa1ad; --panel: #141821; --line: #262c38; --accent: #5b9bd5; }
     [data-theme="light"] { --bg: #f3f3f0; --ink: #15171c; --muted: #5b616c; --panel: #ffffff; --line: #d9dad5; --accent: #2f6ea8; }
@@ -54,6 +59,9 @@
   </main>
   <script src="/assets/shared/theme.js"></script>
   <script>
+    if (new URLSearchParams(location.search).get("seed") === "slow") {
+      document.addEventListener("fe:themechange", function () { var t = performance.now(); while (performance.now() - t < 120) {} });
+    }
     FETheme.init({ hashPolicy: new URLSearchParams(location.search).get("policy") || "home", toggle: "[data-theme-toggle]" });
   </script>
 </body>
