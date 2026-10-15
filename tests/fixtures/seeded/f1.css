@@ -1,0 +1,2 @@
+/* F1 seed: raw hex, rgb(), a duration and a cubic-bezier outside tokens. */
+.seed { color: #ff00aa; background: rgb(10, 20, 30); transition: opacity 200ms cubic-bezier(.2, .8, .2, 1); }
