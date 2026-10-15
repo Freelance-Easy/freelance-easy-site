@@ -110,7 +110,7 @@
       if (+b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
-    $('#player-note').textContent = reduced ? 'Reduced motion · Choose a chapter to view its final screen.' : 'Watch only · 1 min 20 sec · Space to play or pause';
+    $('#player-note').textContent = reduced ? 'Reduced motion · Choose a chapter to view its final screen.' : '1 min 20 sec · Space to play or pause';
   }
   function positionInk() {
     $$('.tabs, .invoice-tab-bar', screen).forEach(container => {
