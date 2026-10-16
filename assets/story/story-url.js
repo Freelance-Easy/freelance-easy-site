@@ -56,9 +56,10 @@
   var intent = null;      // set only while this file calls goTo: "pop" | "hash" | "push"
   function raise(kind) { if (pending == null || RANK[kind] > RANK[pending]) pending = kind; }
 
-  // A final landing is written once no further dest change follows within QUIET ms: a dip lands (final) at its cut and the
-  // gestures of a quick run (three steps 300 ms apart) arrive just after it, so the chapter they pass through is never
-  // written (ICX-HIST.1, "a checkpoint passed through is never written"). A hidden tab flushes at once.
+  // A replaceState landing is written once no further dest change follows within QUIET ms: a dip lands (final) at its cut and
+  // the gestures of a quick run (three steps 300 ms apart) arrive just after it, so the chapter they pass through is never
+  // written (ICX-HIST.1, "a checkpoint passed through is never written"). A hidden tab flushes at once. A jump's pushState
+  // is written at the landing itself, so Back right after it finds its entry (a later gesture replaces that entry's URL).
   var QUIET = 250;
   var queued = null, quietTimer = 0;
   function flush() {
@@ -88,7 +89,8 @@
     if (p.source === "init") return;               // load, reload, deep link: never a write (ICX-HIST.3)
     if (kind == null) kind = p.source === "jump" ? "push" : p.source === "popstate" ? "pop" : "replace";
     if (kind === "pop") return;
-    queued = { kind: kind === "push" ? "push" : "replace", slug: p.slug };
+    if (kind === "push") { write("push", p.slug); return; }   // at the landing itself: Back must find the entry
+    queued = { kind: "replace", slug: p.slug };
     quietTimer = setTimeout(flush, QUIET);
   });
   function flushOrDrop() { queued = null; clearTimeout(quietTimer); }   // Back arrived: the entry being left is not rewritten
@@ -117,14 +119,18 @@
     var row = rowOf(slug);
     if (!row) return false;
     if (row.kind === "pinned") {
+      var idx = -1, all = rows();
+      for (var i = 0; i < all.length; i++) if (all[i].slug === slug) idx = i;
       var before = F.state ? F.state() : null;
-      pending = pending === "pop" ? null : pending;
+      var there = !!before && before.rendered === idx && before.dest === idx;     // ICX-JUMP.0: nothing will move
       intent = kind;
       var ok;
       try { ok = F.goTo(slug, { source: "jump" }); } finally { intent = null; }
-      // nothing moved (already resting there): a legacy or odd hash still gets its canonical URL (no entry added)
-      if (ok && kind === "hash" && pending == null && before && before.phase === "rest" && before.rendered === before.dest &&
-          rowOf(slug) && F.rendered === rows().indexOf(row)) write("replace", slug);
+      if (kind === "hash" && ok) {
+        // the link supersedes a jump still under way: the browser's own entry is the one for this run (no second push)
+        if (there) { unqueue(); pending = null; write("replace", slug); }   // a legacy or odd hash still gets its slug
+        else pending = "hash";
+      }
       return ok;
     }
     var ok2 = F.goTo(slug, { source: "jump" });
@@ -159,10 +165,10 @@
     popTimer = setTimeout(function () { popHref = null; }, 100);
     var key = hashKey();
     var slug = key === "" || key === "dark" || key === "light" ? FIRST : slugOf(key);
-    if (!slug) return;
     flushOrDrop();
-    pending = "pop";
+    pending = "pop";                                // whatever was under way is now Back's: no write for it (ICX-HIST.3)
     arrivalToken++;                                 // a native arrival write in flight is void
+    if (!slug) return;
     intent = "pop";
     try { F.goTo(slug, { source: "popstate" }); } finally { intent = null; }
   });

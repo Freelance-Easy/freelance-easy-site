@@ -370,3 +370,47 @@ def test_logo_jumps_home(story: Story):
     assert [c[0] for c in calls] == ["pushState"] and calls[0][1] == "/", f"ICX-HIST.2: the logo pushes the plain path once, saw {calls}"
     assert page.evaluate("() => history.length") == length1 + 1 and hash_now(page) == ""
     assert page.evaluate("() => window.__navs") == 0, "ICX-JUMP: the logo reloaded the page"
+
+
+def test_legacy_link_to_the_current_chapter_is_normalised(browser, site_url):
+    """ICX-HIST.6 (Sol C4-1 M): a #how link while the story already rests on Templates moves nothing, yet the entry the
+    browser added gets the slug by replaceState (never a pushState); history.length +1 (the link's own entry)."""
+    st = story_at(browser, site_url, "/#templates", DESK)
+    try:
+        step_ok(st.wait_rest(allowance(1)), 1, "precondition: deep link to Templates")
+        length0 = st.page.evaluate("() => history.length")
+        mark = st.hist_mark()
+        st.page.evaluate("() => { const a = document.createElement('a'); a.href = '#how'; document.body.appendChild(a); a.click(); }")
+        st.page.wait_for_function("() => location.hash === '#templates'", timeout=2000)
+        calls = st.hist()[0][mark[0]:]
+        assert [c[0] for c in calls] == ["replaceState"], f"ICX-HIST.6: got {calls}"
+        assert st.page.evaluate("() => history.length") == length0 + 1
+    finally:
+        st.close()
+
+
+def test_link_during_an_unfinished_jump_adds_one_entry(story: Story):
+    """ICX-HIST.2/.6 (Sol C4-1 H): a hash link clicked while an explicit jump is still under way supersedes it: the
+    browser's entry for the link is the only one added; the landing replaces its URL, no second pushState."""
+    page = story.page
+    length0 = page.evaluate("() => history.length")
+    mark = story.hist_mark()
+    page.evaluate("""() => { FEStory.goTo(5, {source: 'jump'});
+      const a = document.createElement('a'); a.href = '#download'; document.body.appendChild(a); a.click(); }""")
+    step_ok(story.wait_rest(allowance(3)), 8, "ICX-JUMP (link over a jump)")
+    page.wait_for_function("() => location.hash === '#get-the-app'", timeout=2000)
+    calls = story.hist()[0][mark[0]:]
+    assert all(c[0] == "replaceState" for c in calls), f"ICX-HIST.6: a second entry was pushed: {calls}"
+    assert page.evaluate("() => history.length") == length0 + 1
+
+
+def test_back_right_after_a_jump_finds_its_entry(story: Story):
+    """ICX-HIST.2 (Sol C4-1 M): the jump's pushState is written at its landing, so Back immediately after it returns to the
+    first chapter instead of leaving the page."""
+    page = story.page
+    length0 = page.evaluate("() => history.length")
+    story.key("End")
+    page.wait_for_function(f"() => history.length === {length0 + 1}", timeout=3000)
+    page.go_back()
+    step_ok(story.wait_rest(allowance(1)), 0, "ICX-JUMP.4 (Back at once)")
+    assert hash_now(page) == "" and page.evaluate("() => location.pathname") == "/"
