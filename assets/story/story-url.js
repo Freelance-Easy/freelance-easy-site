@@ -147,6 +147,7 @@
       intent = kind;
       var ok;
       try { ok = F.goTo(slug, { source: "jump" }); } finally { intent = null; }
+      if (ok) { if (cancelArrival) { cancelArrival(); cancelArrival = null; } jumping = false; }   // a same-chapter jump has no dest event
       // a run already heading for this chapter (a step in flight) has no new dest event: the explicit jump still owns it
       if (kind === "push" && ok && before && before.dest === idx && before.rendered !== idx) raise("push");
       if (kind === "hash" && ok) {
