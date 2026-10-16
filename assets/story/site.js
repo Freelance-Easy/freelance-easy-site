@@ -1573,6 +1573,9 @@
   function resetEngine() {
     cancelAnimationFrame(raf); raf = 0;
     endFree();
+    // (INT-4, Sol HIGH / Astra MEDIUM) a rebuild mid-dip (a theme switch in its fade-in) drops the dip: its layers'
+    // opacity goes back to rest with it, or the stage came to rest nearly invisible
+    clearDip();
     run = null; dip = null; wait = 0; passK = -1; ack = null; swallow = -1;
     kR = kD = 0; phase = "rest";
   }
