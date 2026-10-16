@@ -57,7 +57,8 @@ def _section_in_view(page, sel: str) -> bool:
     vh = page.viewport_size["height"]
     if box is None or box["height"] <= 0:
         return False
-    if box["y"] < vh * 0.5 and box["y"] + box["height"] > vh * 0.5:
+    line = 80                                            # just under the 64 px header: the section the reader is on
+    if any(box["y"] <= y and box["y"] + box["height"] > y for y in (line, vh * 0.5)):
         return True
     # a section near the page's end cannot scroll up to the header: at the bottom of the page, fully on screen counts
     at_end = page.evaluate("() => Math.ceil(scrollY + innerHeight) >= document.documentElement.scrollHeight - 1")
