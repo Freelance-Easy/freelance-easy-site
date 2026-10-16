@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- NEW COPY --><title>Pricing — Freelance Easy</title>
+    <!-- NEW COPY --><meta name="description" content="$5 a month or $50 a year. Try every feature free for seven days, no card. How to buy, how to pay and how to cancel." />
+    <link rel="canonical" href="https://freelance-easy.com/pricing" />
+    <link rel="icon" href="/favicon.ico" />
+    <!-- (B7) the body face is preloaded: its swap on the long pages shifted the text -->
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
+    <script>
+      (function () {
+        // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
+        // then this visit's theme from /mac (fe-theme-visit, the audio pages' contract), else dark
+        var d = document.documentElement, t = null, h = location.hash.slice(1);
+        if (h === "dark" || h === "light") t = h;
+        if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+        d.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        var calm = false;
+        try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { calm = false; }
+        // a short touch screen (a phone with its browser bars, or any phone held sideways: under 600 px of small
+        // viewport) gets the stacked beats too: a pinned stage plus its caption would leave a thumbnail. Touch only
+        // (pointer: coarse), so a desktop window is never affected. site.js re-checks on rotation (the same test).
+        var short = false;
+        if (!calm) {
+          try {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              var pr = document.createElement("div");
+              pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+              d.appendChild(pr);
+              var sv = pr.getBoundingClientRect().height || window.innerHeight;
+              d.removeChild(pr);
+              short = sv < 600;
+            }
+          } catch (e) { short = false; }
+        }
+        d.classList.remove("no-js");
+        d.classList.add("js", calm || short ? "calm" : "motion");
+        if (short) d.classList.add("short-touch");
+        // a safety net: if the engine never comes up, the beats fall back to their stacked, static layout
+        setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
+      })();
+    </script>
+    <link rel="stylesheet" href="/assets/shared/theme.css" />
+    <script src="/assets/shared/theme.js"></script>
+    <link rel="stylesheet" href="/assets/site/shell.css" />
+    <script src="/assets/site/shell.js" defer></script>
+    <!-- /fe-shell:head -->
+    <link rel="stylesheet" href="./styles.css" />
+    <!-- (PR-1) this page's few layout rules; tokens only (scripts/checks/token_lint.py, tests/pages/test_pricing.py) -->
+    <style>
+      .pricing-page .pricing-lead { font-size: var(--fs-lg); color: var(--text-0); line-height: 1.45; margin-bottom: 8px; }
+      .pricing-page .plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0 16px; }
+      .pricing-page .plan-card { padding: 20px 22px; border-radius: var(--r-lg); background: var(--bg-1); box-shadow: 0 0 0 1px var(--line-2); }
+      .pricing-page .plan-card h2 { margin: 0 0 8px; font-size: var(--fs-md); font-weight: 500; letter-spacing: 0; color: var(--text-1); }
+      .pricing-page .plan-amount { font-size: 40px; font-weight: 680; letter-spacing: -0.03em; color: var(--text-0); margin-right: 4px; }
+      .pricing-page .plan-card p { margin: 0; font-size: var(--fs-sm); line-height: 1.6; }
+      .pricing-page .fine { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
+      .pricing-page .steps > li { margin-bottom: 18px; }
+      .pricing-page .dl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 12px 0 8px; }
+      .pricing-page .dl-row .btn { min-height: 44px; }
+      /* phones (download.js sets data-os="mobile"): the primary button sends the page to a computer, so no installer
+         link stays beside it (the homepage's rule, assets/story/site.css, which this page doesn't load) */
+      [data-os="mobile"] .pricing-page [data-role="alt"] { display: none; }
+      @media (max-width: 560px) {
+        .pricing-page .plan-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+    <!-- (PR-1) Product + Offers: the prices equal the plan cards below (tests/pages/test_pricing.py) and claim nothing
+         the page doesn't; no seller is named (R5 C.1: checkout shows the seller) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Freelance Easy",
+        "url": "https://freelance-easy.com/pricing",
+        "brand": { "@type": "Brand", "name": "Freelance Easy" },
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Monthly",
+            "price": "5.00",
+            "priceCurrency": "USD",
+            "url": "https://freelance-easy.com/pricing",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "5.00",
+              "priceCurrency": "USD",
+              "referenceQuantity": { "@type": "QuantitativeValue", "value": 1, "unitCode": "MON" }
+            }
+          },
+          {
+            "@type": "Offer",
+            "name": "Yearly",
+            "price": "50.00",
+            "priceCurrency": "USD",
+            "url": "https://freelance-easy.com/pricing",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "50.00",
+              "priceCurrency": "USD",
+              "referenceQuantity": { "@type": "QuantitativeValue", "value": 1, "unitCode": "ANN" }
+            }
+          }
+        ]
+      }
+    </script>
+    <script async src="/js/script.js"></script>
+    <script>
+      window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+      plausible.init = plausible.init || function (i) { plausible.o = i || {}; };
+      plausible.init({ endpoint: "/api/event" });
+    </script>
+  </head>
+  <body data-page="pricing">
+<header class="site-header">
+  <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
+  <link rel="stylesheet" href="/assets/story/dl-status.css">
+  <script>
+      /* (BX) a Mac or Windows desktop, decided like download.js's detectPlatform, before the first paint, ahead of the nav it sizes */
+      (function () {
+        var u = (navigator.userAgent || "").toLowerCase(), p = (navigator.platform || "").toLowerCase();
+        if (/iphone|ipod|ipad|android|windows phone/.test(u)) return;
+        var mac = /mac/.test(p) || /mac os x|macintosh/.test(u);
+        if (mac && navigator.maxTouchPoints > 1) return;
+        var win = !mac && (/win/.test(p) || /windows/.test(u));
+        if (mac || win) document.documentElement.setAttribute("data-dl-os", mac ? "mac" : "win");
+      })();
+  </script>
+  <!-- (B4) the slim bar (DEC-1): site-level actions only. No link here jumps inside the story: the chapter rail is the
+       page's own menu (B5). Sticky, never hides, 56 px (assets/site/shell.css). -->
+  <div class="shell">
+    <a class="brand" href="/" aria-label="Freelance Easy home"><!-- NEW COPY (aria-label) -->
+      <img src="/assets/story/fe-mark.png" alt="" width="28" height="28">
+      <span>Freelance Easy</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <!-- "How it works" is the full tour, available at will (DEC-3) -->
+      <a href="/tour/">How it works</a><!-- NEW COPY (nav label) -->
+      <a href="/pricing">Pricing</a>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6) -->
+      <a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a><!-- NEW COPY (nav label) -->
+      <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
+           and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
+      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden><!-- (BX) the words download.js will put here, held invisibly so the fill moves nothing (dl-status.css); keep them equal to NOTES in download.js (tests/shell/test_bar_polish.py checks) --><span data-ph="mac"><span class="dl-note-part">Apple Silicon Macs</span><span class="dl-note-sep"> </span><span class="dl-note-part">(M1 or later)</span></span><span data-ph="win"><span class="dl-note-part">Windows 10 and 11</span><span class="dl-note-sep">, </span><span class="dl-note-part">64-bit</span></span></span><!-- NEW COPY -->
+      <a class="nav-cta" href="/install" data-dl data-placement="header" data-platforms="mac,win">Download</a>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
+        <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
+      </button>
+      <!-- (B4) slots, empty until their pieces fill them (shell.css hides an empty slot): K1's classic switch beside the
+           theme toggle, B6's phone/tablet menu button -->
+      <span class="fe-shell-slot" data-classic-slot></span>
+      <span class="fe-shell-slot" data-menu-slot></span>
+    </nav>
+  </div>
+  <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
+</header>
+    <!-- (PR-1) every sentence below carries NEW COPY and is logged, with its source and ruling, in docs/claims/pricing.md -->
+    <main class="doc pricing-page">
+      <a class="back" href="/">← Back to Freelance Easy</a>
+      <!-- NEW COPY --><h1>Pricing</h1>
+      <!-- NEW COPY --><p class="pricing-lead">One subscription, no add-ons.</p>
+      <!-- NEW COPY --><p>Pro: every feature, unlimited invoices and clients.</p>
+
+      <!-- the renewal lines are the app's plan cards VERBATIM (Renewal Disclosure 2026-10b); never edit them here -->
+      <div class="plan-grid">
+        <section class="plan-card" aria-labelledby="plan-monthly">
+          <!-- NEW COPY --><h2 id="plan-monthly"><span class="plan-amount" data-price="5" data-period="month">$5</span> a month</h2>
+          <!-- NEW COPY --><p>Billed monthly. Renews every month until you cancel.</p>
+        </section>
+        <section class="plan-card" aria-labelledby="plan-yearly">
+          <!-- NEW COPY --><h2 id="plan-yearly"><span class="plan-amount" data-price="50" data-period="year">$50</span> a year</h2>
+          <!-- NEW COPY --><p>Two months free. $4.17 a month, billed once a year. Renews every year until you cancel.</p>
+        </section>
+      </div>
+      <!-- NEW COPY --><p>Cancel any time in Settings, under Manage or cancel subscription. You keep Pro until the end of the period you've paid for. Plus any tax shown at checkout.</p>
+      <!-- NEW COPY --><p>Try every feature free for seven days, no card. When the trial ends, nothing is charged: you keep everything you made, and you can make one more invoice free.</p>
+      <!-- NEW COPY --><p>Not happy with a charge? Email <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a> within 14 days and we'll refund it in full.</p>
+
+      <!-- NEW COPY --><h2 id="how-to-buy">How to buy</h2>
+      <ol class="steps">
+        <li>
+          <!-- NEW COPY --><p>Download the app.</p>
+          <div class="dl-row" data-dl data-placement="pricing-page">
+            <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac"><span data-label>Download for Mac</span></a>
+            <a data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>
+          </div>
+          <span class="fine" data-share-status data-for="pricing-page" aria-live="polite"></span>
+          <!-- NEW COPY --><p class="fine">For Apple Silicon Macs (M1 or later) and Windows 10 or 11, 64-bit. Intel Macs aren't supported. The Windows installer isn't code-signed yet, so Windows shows a security warning when you run it, and some Windows 11 PCs with Smart App Control block it outright: <a href="/install#windows">what to do</a>.</p>
+        </li>
+        <li>
+          <!-- NEW COPY --><p>Open it and sign in with Google. Your seven-day trial starts the first time you sign in, one trial per account.</p>
+        </li>
+        <li>
+          <!-- NEW COPY --><p>To subscribe, click See plans in the app, then Continue monthly or Continue yearly. Checkout opens in your browser.</p>
+        </li>
+      </ol>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6). A placeholder only: no purchase flow, no consent
+           wording (R5 C.3's duties start when the web path ships). -->
+      <!-- NEW COPY --><p data-flag="web-signup" data-web-path hidden><a data-flag-href="/start">Start on the web</a></p>
+
+      <!-- NEW COPY --><h2 id="paying">Paying</h2>
+      <ul>
+        <!-- NEW COPY --><li>Payment is handled by Stripe; checkout shows the seller.</li>
+        <!-- NEW COPY --><li>Prices are set in US dollars. Checkout shows the currency and the full total, including any tax, before you pay.</li>
+        <!-- NEW COPY --><li>Have a promotion code? There is a field for it at checkout.</li>
+      </ul>
+
+      <!-- NEW COPY --><h2 id="before-you-buy">Before you buy</h2>
+      <ul>
+        <!-- NEW COPY --><li>After the trial, these need a subscription: Reports, recurring invoices, sending email from the app, your logo and colors, all four templates, documents, automatic backups, your own invoice numbers and default notes.</li>
+        <!-- NEW COPY --><li>Opening and downloading your invoices isn't a Pro feature: the free plan and a lapsed subscription can do both.</li>
+        <!-- NEW COPY --><li>One person per account. If more people in your business need the app, each needs their own account.</li>
+        <!-- NEW COPY --><li>You can install it on the computers you own or control.</li>
+        <!-- NEW COPY --><li>The app checks your subscription when it starts. A subscribed app keeps working offline for at least seven days after its last successful check, then asks you to sign in again; your files stay on your computer.</li>
+        <!-- NEW COPY --><li>There's no minimum term.</li>
+      </ul>
+
+      <!-- NEW COPY --><h2 id="cancelling">Cancelling, refunds and price changes</h2>
+      <ul>
+        <!-- NEW COPY --><li>You can also cancel by emailing <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a>, or from your Link account at link.com if checkout named Link as the seller.</li>
+        <!-- NEW COPY --><li>Cancelling stops the next renewal. When the period you've paid for ends, the app turns read-only.</li>
+        <!-- NEW COPY --><li>Cancelling doesn't refund the rest of a period you've paid for, except as the <a href="/terms">Terms</a> describe.</li>
+        <!-- NEW COPY --><li>If we change the price of your plan, we'll email you between 14 and 30 days before your first renewal at the new price.</li>
+      </ul>
+      <!-- NEW COPY --><p class="fine">The full rules are in the <a href="/terms">Terms</a>: §2 for the trial and plans, §7 for payment, cancelling and refunds.</p>
+    </main>
+<footer class="site-footer fe-shell-footer">
+  <div class="shell">
+    <!-- the footnotes block (B2): the site's fine print, collected here; page-specific notes join this list -->
+    <section class="fe-shell-footnotes" aria-label="Footnotes">
+      <!-- NEW COPY --><p class="fe-shell-footnote" data-footnote="fictional">Clients, invoices and amounts in the demos, screenshots and tour are fictional.</p>
+    </section>
+    <a class="brand" href="#top"><img src="/assets/story/fe-mark.png" alt="" width="22" height="22"><span>Freelance Easy</span></a>
+    <ul class="foot-links">
+      <li><a href="/install">Download</a></li>
+      <li><a href="/tour/">Watch the tour</a></li>
+      <li><a href="/install">Installation help</a></li>
+      <li><a href="/releases"><span class="version">v0.3.2-beta</span> on GitHub</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/terms">Terms</a></li>
+      <li><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></li>
+      <!-- web billing is paused: shell.js shows this, and gives it its href, only when its web-billing flag is on
+           (web-account contract § 6); /account does not exist yet, so the off state ships no link to it -->
+      <li data-flag="web-billing" hidden><a data-flag-href="/account">Manage subscription</a></li>
+    </ul>
+    <p class="foot-meta">© 2026 Freelance Easy LLC</p>
+  </div>
+</footer>
+    <script>FETheme.init({ hashPolicy: "none" });</script>
+    <script src="/assets/story/download.js"></script>
+  </body>
+</html>
