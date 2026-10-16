@@ -31,3 +31,19 @@
 .fe-shell-footnote + .fe-shell-footnote {
   margin-top: 8px;
 }
+
+/* ---------- The slim bar (B4, DEC-1) ----------
+   56 px at every width (site.css used 64 px from 640 px up). --header-h is the one number the bar, the story's pin
+   and the anchors' scroll padding share; html:root outranks site.css's :root, which loads after this sheet. */
+html:root {
+  --header-h: 56px;
+}
+/* the bar's slots ([data-classic-slot] for K1, [data-menu-slot] for B6) take no room, not even a flex gap, until
+   their piece puts a control in them */
+.fe-shell-slot:empty {
+  display: none;
+}
+.fe-shell-slot {
+  display: flex;
+  align-items: center;
+}
