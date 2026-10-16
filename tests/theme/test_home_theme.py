@@ -6,8 +6,10 @@ the new palette on every switch, with and without View Transitions.
 from __future__ import annotations
 
 import pathlib
+import struct
 import subprocess
 import sys
+import zlib
 
 import pytest
 from playwright.sync_api import sync_playwright
@@ -64,6 +66,54 @@ def checkpoint(page):
     return png, style
 
 
+def _png_pixels(png: bytes):
+    """Decode an 8-bit RGB/RGBA PNG (Playwright's screenshots) to (width, height, flat list of (r, g, b))."""
+    pos, idat, width, height, ctype = 8, b"", 0, 0, 0
+    while pos < len(png):
+        n, kind = struct.unpack(">I4s", png[pos:pos + 8])
+        body = png[pos + 8:pos + 8 + n]
+        if kind == b"IHDR":
+            width, height, depth, ctype = struct.unpack(">IIBB", body[:10])
+            assert depth == 8 and ctype in (2, 6), (depth, ctype)
+        elif kind == b"IDAT":
+            idat += body
+        pos += 12 + n
+    bpp = 4 if ctype == 6 else 3
+    raw, stride, out, prev = zlib.decompress(idat), width * bpp, [], bytearray(width * bpp)
+    for y in range(height):
+        f, line = raw[y * (stride + 1)], bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for i in range(stride):
+            a = line[i - bpp] if i >= bpp else 0
+            b, c = prev[i], prev[i - bpp] if i >= bpp else 0
+            if f == 1:
+                line[i] = (line[i] + a) & 255
+            elif f == 2:
+                line[i] = (line[i] + b) & 255
+            elif f == 3:
+                line[i] = (line[i] + (a + b) // 2) & 255
+            elif f == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        out.extend(tuple(line[x * bpp:x * bpp + 3]) for x in range(width))
+        prev = line
+    return width, height, out
+
+
+def assert_same_stage(got, want, what):
+    """The computed colours must match exactly; the pixels may differ only by raster noise. Re-rasterising the stage's
+    gradients after a theme rebuild dithers them differently (measured after B5's rail layer: max 14/255, 16 of 384k
+    pixels over 4, mean < 0.1), while a wrong palette moves most pixels by 100+ levels."""
+    assert got[1] == want[1], f"{what}: the scene elements' computed colours differ"
+    (w1, h1, a), (w2, h2, b) = _png_pixels(got[0]), _png_pixels(want[0])
+    assert (w1, h1) == (w2, h2), f"{what}: stage size {w1}x{h1} vs {w2}x{h2}"
+    deltas = [max(abs(p - q) for p, q in zip(pa, pb)) for pa, pb in zip(a, b)]
+    over = sum(d > 4 for d in deltas)
+    mean = sum(deltas) / len(deltas)
+    assert over <= len(deltas) // 1000 and mean <= 1.0, (
+        f"{what}: {over} of {len(deltas)} pixels differ by > 4 (allowed {len(deltas) // 1000}), mean {mean:.2f} (max 1.0)")
+
+
 def test_toggle_never_changes_hash(site_url, browser):
     ctx, page, errors = open_home(browser, site_url + "/")
     try:
@@ -116,16 +166,18 @@ def test_scene_palette_follows_theme(site_url, browser, vt):
         assert theme(page) == "light"
         light = checkpoint(page)
         assert light[0] != dark[0] and light[1] != dark[1], "the scenes kept the old theme's palette"
+        with pytest.raises(AssertionError):   # negative control: the tolerant compare still tells the themes apart
+            assert_same_stage((light[0], dark[1]), dark, "light pixels vs dark")
         press(page)
         assert theme(page) == "dark"
-        assert checkpoint(page) == dark
+        assert_same_stage(checkpoint(page), dark, "dark -> light -> dark")
         assert errors == [], errors
     finally:
         ctx.close()
     # and the rebuilt scenes equal a cold load in the new theme
     ctx, page, errors = open_home(browser, site_url + "/#light", init_script=init)
     try:
-        assert checkpoint(page) == light
+        assert_same_stage(checkpoint(page), light, "rebuilt light vs a cold load in light")
     finally:
         ctx.close()
 
