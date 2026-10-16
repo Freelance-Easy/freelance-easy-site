@@ -7,6 +7,22 @@
 .dl-note[hidden] {
   display: none;
 }
+/* (BX) reserve the note's room before it fills. The header's inline script marks <html data-dl-os="mac|win"> while the
+   page parses (a Mac or Windows desktop, the visitors the note is for); until download.js fills the note, it holds that
+   platform's own words invisibly (visibility: hidden, so nothing shows or is read, and never the other platform's), so
+   filling it moves nothing. download.js adds data-dl-skip when it ends up not filling it (an OS the placement doesn't
+   offer), and the room goes. */
+html[data-dl-os] .dl-note[hidden]:not([data-dl-skip]) {
+  display: block;
+  visibility: hidden;
+}
+.dl-note [data-ph] {
+  display: none;
+}
+html[data-dl-os="mac"] .dl-note [data-ph="mac"],
+html[data-dl-os="win"] .dl-note [data-ph="win"] {
+  display: contents;
+}
 .dl-note {
   font-size: 12.5px;
   font-weight: 500;
@@ -88,7 +104,8 @@ html.on-band:where(:not(.past-band)) .dl-note {
   white-space: pre;
 }
 @media (max-width: 1023px) {
-  .dl-note:not([hidden]) {
+  .dl-note:not([hidden]),
+  html[data-dl-os] .dl-note[hidden]:not([data-dl-skip]) {
     display: inline-flex;
     flex-direction: column;
     align-items: flex-end;
@@ -109,7 +126,8 @@ html.on-band:where(:not(.past-band)) .dl-note {
   }
 }
 @media (max-width: 639px) {
-  .dl-note:not([hidden]) {
+  .dl-note:not([hidden]),
+  html[data-dl-os] .dl-note[hidden]:not([data-dl-skip]) {
     display: none;
   }
 }
