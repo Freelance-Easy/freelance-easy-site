@@ -1013,7 +1013,7 @@ details.disclosure p a {
   letter-spacing: -0.014em;
   color: var(--text-2);
 }
-.end-copy > [data-tour-quick] {
+.end-copy > [data-tour-link] {
   display: flex;
   justify-content: center;
   width: 100%;
@@ -2451,7 +2451,7 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
     font-size: 14px;
     line-height: 19px;
   }
-  .captions > .end-copy > [data-tour-quick] {
+  .captions > .end-copy > [data-tour-link] {
     min-height: 44px;
     margin-top: 8px;
   }
@@ -2613,7 +2613,7 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
   .captions > .end-copy .disclose {
     margin-top: 8px;
   }
-  .captions > .end-copy > [data-tour-quick] {
+  .captions > .end-copy > [data-tour-link] {
     margin-top: 6px;
   }
 }
@@ -2632,8 +2632,7 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
 }
 
 /* =====================================================================================================================
-   The 25-second tour (2026-10-06): the hero's secondary button and the dialog it opens (assets/tour-modal.js; the
-   tour itself is /tour/quick/, in an iframe). Placed before the generated fx-lightvars block, which the build
+   The tour link (2026-10-06; the dialog it once opened is retired, B12): the hero's secondary button. Placed before the generated fx-lightvars block, which the build
    script rewrites.
    ===================================================================================================================== */
 /* the secondary button: the header's outlined Download pill (.nav-cta) at the hero's button size, both themes */
@@ -2649,108 +2648,6 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
 .btn-ghost svg {
   width: 16px;
   height: 16px;
-}
-/* the scroll lock: overflow only (scrollY is kept, so the story's follower never sees a jump); the gutter stays, so
-   classic scrollbars don't shift the page sideways */
-html.tq-locked {
-  overflow: hidden;
-  scrollbar-gutter: stable;
-}
-/* the dialog fills the viewport (a click on it, outside .tq-box, is a backdrop click); the box is centred.
-   --tq-chrome: the tour's own bar and notes under its 16:10 window (measured: ~108 px desktop, ~146 px at 390) */
-.tq-dialog {
-  --tq-chrome: 112px;
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  padding: 16px;
-  border: 0;
-  background: transparent;
-  color: var(--text-0);
-  overflow: hidden;
-  container-type: size;                                /* .tq-box sizes itself in cqw / cqh: no 100vw scrollbar maths */
-}
-.tq-dialog[open] {
-  display: grid;
-  place-items: center;
-}
-.tq-dialog::backdrop {
-  background: rgba(4, 6, 10, 0.74);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-[data-theme="light"] .tq-dialog::backdrop {
-  background: rgba(226, 227, 222, 0.8);
-}
-/* 16:10 window, up to 1100 px wide, never taller than the viewport (the close row is 44 px + an 8 px gap) */
-.tq-box {
-  --tq-w: min(1100px, 100cqw, calc((100cqh - 52px - var(--tq-chrome)) * 1.6));
-  width: var(--tq-w);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-.tq-close {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  color: var(--text-1);
-  background: color-mix(in srgb, var(--bg-2) 82%, transparent);
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  transition: color 0.15s, box-shadow 0.15s;
-}
-.tq-close:hover {
-  color: var(--text-0);
-  box-shadow: inset 0 0 0 1px var(--line-3);
-}
-.tq-close svg {
-  width: 16px;
-  height: 16px;
-}
-.tq-frame {
-  width: 100%;
-  height: calc(var(--tq-w) / 1.6 + var(--tq-chrome));
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--bg-0);
-  box-shadow: 0 0 0 1px var(--line-2), 0 40px 100px -40px rgba(0, 0, 0, 0.7);
-}
-.tq-frame iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-/* one calm arrival (the global reduced-motion rule above switches it off) */
-.tq-dialog[open] .tq-box {
-  animation: tq-in 0.28s var(--ease) both;
-}
-.tq-dialog[open]::backdrop {
-  animation: tq-fade 0.28s ease both;
-}
-@keyframes tq-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.985); }
-}
-@keyframes tq-fade {
-  from { opacity: 0; }
-}
-@media (max-width: 639px) {
-  .tq-dialog {
-    --tq-chrome: 150px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tq-dialog[open] .tq-box,
-  .tq-dialog[open]::backdrop {
-    animation: none !important;
-  }
 }
 /* (F1c, Sol F1c #2) on a phone (< 640 px, or a short touch screen) site.js moves the hero's sub line and tour into the
    offer card and takes its CTA row, trial line and fine print off the page (ctaEnd), once the engine starts (fonts, up
