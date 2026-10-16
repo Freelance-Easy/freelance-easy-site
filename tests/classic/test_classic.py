@@ -266,12 +266,27 @@ def test_hidden_where_calm_is_automatic(site_url, browser):
             assert page.evaluate("(s) => { const b = document.querySelector(s); return !!b && b.getClientRects().length === 0; }", sel), sel
         assert page.evaluate("() => getComputedStyle(document.querySelector('.site-header [data-classic-slot]')).display") == "none"
         assert _stored(page) == "1"
+        page.click("[data-menu-open]")                              # the sheet holds no switch either
+        assert page.is_visible("#fe-menu .fe-menu-panel") and not page.is_visible(SHEET_BTN)
+        page.click("[data-menu-open]")
         # turned upright (not short): the switch is back, in the sheet (< 640 px)
         page.set_viewport_size({"width": 390, "height": 844})
         page.wait_for_timeout(400)
         page.click("[data-menu-open]")
         assert page.is_visible(SHEET_BTN)
         assert page.get_attribute(SHEET_BTN, "aria-pressed") == "true"
+    finally:
+        ctx.close()
+    # a touch tablet whose window turns short: the bar's switch steps aside (and comes back)
+    ctx, page = _open(browser, site_url, w=1024, h=760, ua="iphone", phone=True)
+    try:
+        assert page.is_visible(BAR_BTN)
+        page.set_viewport_size({"width": 1024, "height": 500})
+        page.wait_for_timeout(400)
+        assert not page.is_visible(BAR_BTN), "the switch stayed where calm is automatic"
+        page.set_viewport_size({"width": 1024, "height": 760})
+        page.wait_for_timeout(400)
+        assert page.is_visible(BAR_BTN)
     finally:
         ctx.close()
     # a desktop browser, any height: always shown
