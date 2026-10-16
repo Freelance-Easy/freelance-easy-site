@@ -39,15 +39,16 @@ SETTLE_JS = """async (bound) => {
   if (document.fonts) await document.fonts.ready;
   const imgs = Array.from(document.images);
   imgs.forEach(i => { if (i.loading === 'lazy') i.loading = 'eager'; });
-  const pending = new Set(imgs.filter(i => i.src && !(i.complete && i.naturalWidth)));
+  const pending = new Set(imgs.filter(i => (i.currentSrc || i.src || i.srcset) && !(i.complete && i.naturalWidth)));
   await Promise.race([
     Promise.all(imgs.map(i => (i.complete ? Promise.resolve() : new Promise(r => {
       i.addEventListener('load', r, {once: true}); i.addEventListener('error', r, {once: true}); }))
       .then(() => { if (i.complete && i.naturalWidth) pending.delete(i); }))),
     new Promise(r => setTimeout(r, bound))]);
-  const stuck = Array.from(pending).filter(i => !(i.complete && i.naturalWidth)).map(i => i.currentSrc || i.src);
+  const stuck = Array.from(pending).filter(i => !(i.complete && i.naturalWidth)).map(i => i.currentSrc || i.src || i.srcset);
   if (stuck.length) return stuck;
-  await Promise.all(imgs.map(i => i.decode ? i.decode().catch(() => null) : null));
+  await Promise.race([Promise.all(imgs.map(i => i.decode ? i.decode().catch(() => null) : null)),
+    new Promise(r => setTimeout(r, bound))]);
   document.querySelectorAll('video').forEach(v => { v.pause(); try { v.currentTime = 0; } catch (e) {} });
   document.getAnimations().forEach(a => { try { a.cancel(); } catch (e) {} });
   window.scrollTo(0, 0);
@@ -112,7 +113,7 @@ def capture(url: str, widths: list[int], themes: list[str], out: Path,
                             written.append(f)
                         for t in seeks or []:
                             page.evaluate(SEEK_JS, t)
-                            f = Path(f"{base}-t{t:g}.png")
+                            f = Path(f"{base}-t{str(t).removesuffix('.0')}.png")
                             page.screenshot(path=str(f), animations="disabled", caret="hide")
                             written.append(f)
                     finally:
