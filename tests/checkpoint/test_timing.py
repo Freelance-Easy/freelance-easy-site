@@ -50,7 +50,7 @@ MOVING = {
 }
 FRAME_TOL = 2
 # each named exception at its own number (+ 0.02 s): a drift past it is a new decision, not a pass
-EXCEPTION_AT = {("transition", "look"): {"dark": 2.58, "light": 1.67}, ("caption", "chase"): 1.39, ("content", "chase"): 5.25}
+EXCEPTION_AT = {("transition", "look"): {"dark": 2.58, "light": 1.67}, ("caption", "chase"): 1.57, ("content", "chase"): 5.25}
 
 
 @pytest.fixture(scope="module")

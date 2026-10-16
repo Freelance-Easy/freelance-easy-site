@@ -98,7 +98,10 @@
     return (G.band || 0) > 0;
   }
   function dipBand(a) {
-    const to = bandOnAt(dip.cut ? shown : RE[kD] ? RE[kD][1] : shown);
+    // (Sol C5-1 #3) the cut's own target, as cut() will take it: a skip stays on its origin's rest unless dest is >= 2 away
+    const entry = dip.mode === "entry" || (dip.mode === "skip" && Math.abs(kD - kR) >= 2);
+    const k = entry ? kD : dip.k;
+    const to = bandOnAt(dip.cut ? shown : RE[k] ? RE[k][entry ? 0 : 1] : shown);
     if (dip.band0 !== to && a < 0.999) band.style.opacity = a.toFixed(3); else band.style.removeProperty("opacity");
   }
   const nav = $(".story-nav");
@@ -475,7 +478,9 @@
     const ride = seg("ride");
     // C5 (ICX-STEP.3, main 2026-10-16) wider stages: Look's caption arrives as Create's press lands (0.60 s after the
     // gesture at Make's hold), not 0.3 s into the hand-off (1.62 s dark): only the caption moves, no motion
-    const lookAt = p !== "tall" && FX.trim(false) ? seg("make").T0 + M.make.inst.B.pressCreate + 0.14 : seg("makeLook").T0 + 0.3;
+    // (Sol C5-1 #1: a caption is ACTIVE 0.18 s after its switch, the 0.12 s hysteresis + the 0.06 s outgoing fade, so the
+    // switch sits 0.04 s before the press: the caption is active 0.60 s after the gesture)
+    const lookAt = p !== "tall" && FX.trim(false) ? seg("make").T0 + M.make.inst.B.pressCreate - 0.04 : seg("makeLook").T0 + 0.3;
     TL.switches = [["look", lookAt], ["know", seg("lookKnow").T0 + 0.22],
       ["grow", seg("knowGrow").T0 + 0.22], [null, ride.T0 + ride.seam.DIVE + 0.04], ["chase", ride.T1 - 0.08]];
     if (isDesk) {
@@ -1766,7 +1771,7 @@
       return {
         T0: 0, T1: TL.T1, H: TL.HOLD, desktop: TL.isDesk, preset: TL.p, scrollLen: TRACK ? TRACK.L : 0, storyTop: Math.round(storyTop), beatPx,
         segs: TL.segs.map((s) => ({ id: s.id, kind: s.kind, T0: +s.T0.toFixed(3), T1: +s.T1.toFixed(3) })),
-        beats: TL.beats, switches: TL.switches.map(([b, t]) => [b, +t.toFixed(3)]), dests: destinations(),
+        beats: TL.beats, switches: TL.switches.map(([b, t, w]) => (w == null ? [b, +t.toFixed(3)] : [b, +t.toFixed(3), w])), dests: destinations(),
       };
     },
     state() { return { shown: liveT(), target: run ? run.to : shown, vel: run ? run.dir * run.rate : 0, beat: TL ? TL.beats[capIdx] : null, intro: !!(run && run.intro), dip: !!dip, gate: { ...FX.gate }, phase }; },

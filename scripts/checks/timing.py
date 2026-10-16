@@ -33,7 +33,7 @@ EXCEPTIONS = {
                 "0.91 s light) plus the PDF->Look circle (1.26 s dark, untouched by DEC-8): no still frame left in it",
     },
     "caption": {
-        "chase": "the Ride (1.39 s): 'Follow up in two clicks.' arrives once the band is the whole page (one clean colour "
+        "chase": "the Ride (1.57 s active): 'Follow up in two clicks.' arrives once the band is the whole page (one clean colour "
                  "move, no text caught in it); earlier it would sit over the dive and the flood",
     },
     "content": {
@@ -86,7 +86,9 @@ def steps(m: dict) -> list[dict]:
     pinned = [d for d in m["dests"] if d.get("kind") == "pinned"]
     rows = []
     for a, b in zip(pinned, pinned[1:]):
-        sw = next((t for beat, t in m["switches"] if beat == b["beat"] and t >= a["rest"] - 1e-6), None)
+        # the caption is ACTIVE once its switch's hysteresis (0.12 s, or the switch's own width) and the outgoing
+        # caption's 60 ms fade have passed (site.js updateCaptions; Sol C5-1 #1)
+        sw = next((t + (w[0] if w else 0.12) + 0.06 for beat, t, *w in m["switches"] if beat == b["beat"] and t >= a["rest"] - 1e-6), None)
         rows.append({
             "step": f"{a['beat']}->{b['beat']}", "to": b["beat"],
             "transition": round(b["entry"] - a["rest"], 3),
