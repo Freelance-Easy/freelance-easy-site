@@ -1,0 +1,33 @@
+/* The shared shell (B2): the footer's footnotes block and the data-flag guard, for every page that includes
+   src/partials/head.html. Class prefix fe-shell-. Design tokens only (scripts/checks/token_lint.py): the colours
+   come from the page's own token sheet (assets/story/site.css on the homepage, styles.css on the doc pages); both
+   name --text-2 and --line-1 the same way.
+   Loaded before the page's own sheets, so on an equal selector the page wins; the footer's existing classes
+   (site-footer, shell, brand, foot-links, foot-meta) stay styled by the page. */
+
+/* Flagged UI (data-flag="web-signup" | "web-billing") ships with the hidden attribute and stays hidden unless
+   shell.js's site switch turns its flag on. This rule keeps hidden meaning hidden even where the page gives the
+   element its own display (a button styled inline-flex, a list item styled flex). */
+[data-flag][hidden] {
+  display: none !important;
+}
+
+/* Footnotes: the site's fine print, collected at the top of the footer (Apple's footnote block), above the
+   brand and link row, with a hairline under it. A full-width row inside the footer's flex .shell, in the row
+   (desktop) and column (phone) layouts alike. */
+.fe-shell-footnotes {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--line-1);
+}
+.fe-shell-footnote {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.fe-shell-footnote + .fe-shell-footnote {
+  margin-top: 8px;
+}
