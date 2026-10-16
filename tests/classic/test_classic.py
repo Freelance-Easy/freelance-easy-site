@@ -461,3 +461,123 @@ def test_axe_both_states(site_url, browser, path, stored, theme):
         finally:
             ctx.close()
     assert found == [], found
+
+
+# ---- the reading place at a section's edge (K1-fix; K1 judge finding 1) -------------------------------------------------
+# readingPlace used to pick the section under the bar, so a section whose top sat a few px below the bar was one chapter
+# BEHIND what the reader (and the rail) already showed. It now uses the rail's rule (ICX-HL.4): the last section whose
+# top is at or above 40 % of the viewport.
+
+CURRENT = """() => { const line = innerHeight * 0.4; let cur = null;
+  for (const el of document.querySelectorAll('.beat:not(.is-moved), .site-footer')) {
+    const r = el.getBoundingClientRect(); if (r.height > 0 && r.top <= line) cur = el; }
+  return cur && cur.classList.contains('beat') ? cur.dataset.beat : null; }"""
+RAIL_CURRENT = """() => { const a = document.querySelector('nav [aria-current="location"]'); if (!a) return null;
+  const el = document.getElementById(a.getAttribute('href').slice(1)); if (!el) return null;
+  const b = el.dataset.beat ? el : el.closest('[data-beat]'); return b ? b.dataset.beat : null; }"""
+SCROLL_TO_TOP_AT = """([beat, at]) => { const el = document.querySelector(`.beat[data-beat="${beat}"]`);
+  const y = scrollY + el.getBoundingClientRect().top - at; window.scrollTo({top: Math.max(0, y), behavior: 'instant'});
+  return Math.round(el.getBoundingClientRect().top); }"""
+
+
+def _landed(page, idx, where):
+    """The story settled on destination idx (a rest frame), or fail naming where it landed instead."""
+    try:
+        _rest(page, idx, timeout=20000)
+    except Exception:
+        st = page.evaluate("() => { const s = FEStory.state(); return {phase: s.phase, rendered: s.rendered, dest: s.dest}; }")
+        raise AssertionError(f"expected destination {idx}, the story is at {st}: {where}") from None
+
+
+def _edge_positions(page):
+    """px from the viewport top at which a section's top is put: 1-40 px below the bar, then 41-60 % down the viewport."""
+    hb = page.evaluate("() => document.querySelector('.site-header').getBoundingClientRect().bottom")
+    vh = page.evaluate("() => innerHeight")
+    return [round(hb) + d for d in (1, 12, 40)] + [round(vh * p) for p in (0.41, 0.5, 0.6)]
+
+
+@pytest.mark.parametrize("w,h", [(1440, 900), (820, 1100)], ids=["1440", "820"])
+def test_place_kept_at_section_edges(site_url, browser, w, h):
+    ctx, page = _open(browser, site_url, w=w, h=h)
+    try:
+        page.click(BAR_BTN)
+        page.wait_for_function("() => FEStory.mode === 'classic'")
+        page.wait_for_timeout(150)
+        dests = page.evaluate("FEStory.destinations")
+        by_beat = {d["beat"]: k for k, d in enumerate(dests)}
+        beats = page.evaluate("() => [...document.querySelectorAll('.beat:not(.is-moved)')].map(e => e.dataset.beat)")
+        assert len(beats) >= 8, beats
+        checked = 0
+        for beat in beats:
+            for at in _edge_positions(page):
+                page.click(BAR_BTN) if page.evaluate("FEStory.mode") != "classic" else None
+                page.wait_for_function("() => FEStory.mode === 'classic'")
+                page.evaluate(SCROLL_TO_TOP_AT, [beat, at])
+                page.wait_for_timeout(120)
+                cur = page.evaluate(CURRENT)
+                if cur is None or cur not in by_beat:
+                    continue                                    # the page top or the footer: no chapter to land on
+                if w >= 1024:
+                    assert page.evaluate(RAIL_CURRENT) == cur, ("the rail disagrees with the 40 % line", beat, at)
+                # Classic -> story: lands on the chapter the reader was on (its rest frame)
+                page.click(BAR_BTN)
+                page.wait_for_function("() => FEStory.mode !== 'classic'")
+                page.wait_for_function("() => ['rest', 'released'].includes(FEStory.state().phase) && !FEStory.state().step",
+                                       timeout=20000)
+                page.wait_for_timeout(150)
+                if page.evaluate("FEStory.state().phase") == "rest":
+                    _landed(page, by_beat[cur], (beat, at, cur))
+                else:                                          # a native section (the tablet's tail): the same one is current
+                    assert page.evaluate(CURRENT) == cur, ("native section", beat, at, cur)
+                checked += 1
+        assert checked >= 30, checked
+        assert not page._k1_errs, page._k1_errs
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("w,h", [(1440, 900), (820, 1100), (1440, 1200)],
+                         ids=["1440", "820", "1440-tall"])
+def test_story_to_classic_lands_on_chapter(site_url, browser, w, h):
+    """The reverse: the chapter the story showed is the section the Classic page shows as current (not one behind)."""
+    ctx, page = _open(browser, site_url, w=w, h=h)
+    try:
+        for k, d in enumerate(page.evaluate("FEStory.destinations")):
+            idx = k
+            page.evaluate("(b) => FEStory.goTo(b, {source: 'jump'})", d["beat"])
+            page.wait_for_function("() => ['rest', 'released'].includes(FEStory.state().phase) && !FEStory.state().step",
+                                   timeout=20000)
+            page.wait_for_timeout(900)                          # a native section (tablet) is reached by a scroll
+            pinned = page.evaluate("FEStory.state().phase") == "rest"
+            before = None if pinned else page.evaluate(CURRENT)
+            if pinned:
+                _landed(page, idx, ("story", d["slug"]))
+            page.click(BAR_BTN)
+            page.wait_for_function("() => FEStory.mode === 'classic'")
+            page.wait_for_timeout(150)
+            cur = page.evaluate(CURRENT)
+            # (the last chapter on a tall window cannot be scrolled up to the line: the page has ended)
+            at_end = page.evaluate("() => scrollY >= document.documentElement.scrollHeight - innerHeight - 1")
+            assert at_end or cur == (d["beat"] if pinned else before), (d["slug"], d["beat"], cur, before)
+            if w >= 1024:
+                assert page.evaluate(RAIL_CURRENT) == cur
+            page.click(BAR_BTN)
+            page.wait_for_function("() => FEStory.mode !== 'classic'")
+            if pinned and not at_end:
+                _landed(page, idx, ('back to the story', d['slug']))
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_classic_label_centred_on_icon(site_url, browser, theme):
+    """(K1 judge LOW) at >= 1024 px the word "Classic" sits on the icon's centre line (it sat 0.75 px above)."""
+    ctx, page = _open(browser, site_url, w=1440, h=900, theme=theme)
+    try:
+        m = page.evaluate("""() => { const b = document.querySelector('.site-header .classic-toggle'), br = b.getBoundingClientRect();
+          const r = document.createRange(); r.selectNodeContents(b.querySelector('.classic-label')); const t = r.getBoundingClientRect();
+          const i = b.querySelector('svg').getBoundingClientRect();
+          return {btn: br.top + br.height / 2, text: t.top + t.height / 2, icon: i.top + i.height / 2}; }""")
+        assert abs(m["text"] - m["icon"]) <= 0.3 and abs(m["btn"] - m["icon"]) <= 0.3, m
+    finally:
+        ctx.close()

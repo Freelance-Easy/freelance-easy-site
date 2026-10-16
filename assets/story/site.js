@@ -1766,18 +1766,23 @@
     doc.classList.toggle("calm", calm); doc.classList.toggle("motion", !calm);
     return true;
   }
-  // (Sol round D P2) a mode change keeps the reader's place: the checkpoint they are on, or the section under the
-  // header. Taken BEFORE the classes flip (the stacked sections appear at once), applied after the rebuild.
+  // (Sol round D P2; K1-fix) a mode change keeps the reader's place: the checkpoint they are on, or the section they are
+  // reading. Taken BEFORE the classes flip (the stacked sections appear at once), applied after the rebuild. "The section
+  // they are reading" is the one the rail shows as current: the last whose top is at or above 40 % of the viewport
+  // (rail.js SPY_LINE, ICX-HL.4; phones have no rail, so the rule is repeated here, not imported). The section under the
+  // bar was one chapter behind whenever the next section's top sat between the bar and that line.
+  const READ_LINE = 0.4;
   function readingPlace() {
     if (TL && motion() && CP.length && phase !== "released" && window.scrollY <= storyEnd() + 1) {
       return { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR], inStory: true };
     }
-    const hb = header ? header.getBoundingClientRect().bottom : 0;
+    const line = window.innerHeight * READ_LINE;
+    let cur = null, top = 0;
     for (const el of document.querySelectorAll(".beat:not(.is-moved), .site-footer")) {
       const r = el.getBoundingClientRect();
-      if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) return { el, off: r.top, beat: el.classList.contains("beat") ? el.dataset.beat : null };
+      if (r.height > 0 && r.top <= line) { cur = el; top = r.top; }
     }
-    return null;
+    return cur ? { el: cur, off: top, beat: cur.classList.contains("beat") ? cur.dataset.beat : null } : null;
   }
   function restorePlace(pl) {
     if (!pl) return;
@@ -1788,7 +1793,10 @@
     if (pl.el && pl.el.isConnected && pl.el.getBoundingClientRect().height > 0) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
     else if (pl.beat) {
       const sec = $(`.beat[data-beat="${pl.beat}"]`);
-      if (sec && sec.getBoundingClientRect().height > 0) y = window.scrollY + sec.getBoundingClientRect().top - hb;
+      const sr = sec ? sec.getBoundingClientRect() : null;
+      // its top under the bar, or lower when the section is so short that the next one would cross the reading line
+      // (then the rail, and the next visit's readingPlace, would name the next section)
+      if (sr && sr.height > 0) y = window.scrollY + sr.top - Math.max(hb, window.innerHeight * READ_LINE - sr.height + 1);
     }
     if (y == null) return;
     window.scrollTo(0, Math.max(0, Math.round(y)));
