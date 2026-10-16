@@ -27,6 +27,22 @@
   <link rel="stylesheet" href="proto.css">
   <link rel="stylesheet" href="/assets/shared/theme.css">
   <script src="/assets/shared/theme.js" defer></script>
+  <!-- (K1) the Classic switch: beside the theme toggle; classic.js fills the slot, proto.js stops the tour on it -->
+  <style>
+    .tour-header .theme-toggle { margin-left: auto; }
+    .tour-header [data-classic-slot] { display: flex; margin-left: -12px; }
+    .tour-header [data-classic-slot]:empty { display: none; }
+    @media (max-width: 600px) { .tour-header [data-classic-slot] { margin-left: -4px; } }   /* proto.css: the gap is 8 px there */
+    .classic-toggle { width: 40px; height: 40px; display: grid; place-items: center; flex: none; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+    .classic-toggle:hover, .classic-toggle[aria-pressed="true"] { color: var(--ink); background: var(--line); }
+    .classic-toggle svg { width: 16px; height: 16px; }
+    .classic-toggle .classic-label { display: none; }
+    @media (min-width: 1024px) {
+      .classic-toggle { width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px 0 12px; font: inherit; font-size: 13px; font-weight: 500; }
+      .classic-toggle .classic-label { display: inline; }
+    }
+  </style>
+  <script src="/assets/shared/classic.js" defer></script>
   <script src="release-screens.js" defer></script>
   <script src="fe-motion.js" defer></script>
   <script src="proto.js" defer></script>
@@ -39,6 +55,7 @@
         <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
         <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
       </button>
+      <span class="tour-classic-slot" data-classic-slot></span>
     </header>
     <section class="intro" aria-labelledby="tour-title">
       <p class="eyebrow">Freelance Easy · Desktop app</p>

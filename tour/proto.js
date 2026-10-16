@@ -10,7 +10,10 @@
   const media = matchMedia('(prefers-reduced-motion: reduce)');
   // hash flags (any order, joined by & or ,), read like quick.js: #reduced alone or #light&reduced&email
   const hashReduced = () => location.hash.slice(1).split(/[&,]/).includes('reduced');
-  let reduced = media.matches || hashReduced();
+  // K1: the Classic switch (assets/shared/classic.js) is the tour's stop: Classic pauses and shows each chapter's end
+  // state, as reduced motion does; it follows the motion preference unless the visitor chose (#reduced still forces it)
+  const classicOn = () => (window.FEClassic ? window.FEClassic.isOn() : media.matches);
+  let reduced = classicOn() || hashReduced();
   // (a template's content has no #caption-copy inside it: select its paragraphs directly)
   const captions = $$('p', $('#caption-copy').content).map(p => p.textContent);
   const STEPS = [
@@ -110,7 +113,8 @@
       if (+b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
-    $('#player-note').textContent = reduced ? 'Reduced motion · Choose a chapter to view its final screen.' : '1 min 20 sec · Space to play or pause';
+    const why = window.FEClassic && window.FEClassic.chosen() && !hashReduced() ? 'Classic view' : 'Reduced motion';   // NEW COPY (K1: "Classic view")
+    $('#player-note').textContent = reduced ? `${why} · Choose a chapter to view its final screen.` : '1 min 20 sec · Space to play or pause';
   }
   function positionInk() {
     $$('.tabs, .invoice-tab-bar', screen).forEach(container => {
@@ -321,19 +325,21 @@
     window.FETheme.set(window.FETheme.get() === 'light' ? 'dark' : 'light');
   }));
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable], [data-classic-toggle]')) return;   // K1: Space presses the Classic switch itself
     e.preventDefault();
     if (reduced) return;
     if (TOUR.t >= TOUR.total) replay(); else TOUR.playing ? pause() : play();
   });
   window.addEventListener('resize', fitFrame);
   document.addEventListener('visibilitychange', () => { if (document.hidden && TOUR.playing) pause(); });
-  media.addEventListener('change', e => {
-    reduced = e.matches || hashReduced();
+  function applyReduced() {
+    reduced = classicOn() || hashReduced();
     if (!TOUR.ready) return;
     doc.documentElement.dataset.motion = reduced ? 'reduced' : 'full';
     pause(); jump(TOUR.chapter);
-  });
+  }
+  media.addEventListener('change', applyReduced);
+  document.addEventListener('fe:classicchange', applyReduced);   // K1: the switch stops (or frees) the tour at once
   window.FETheme.init({ hashPolicy: 'tour' });   // keeps the head script's pick (#light, fe-theme, ...), always explicit
   frame.addEventListener('load', async () => {
     doc = frame.contentDocument;
