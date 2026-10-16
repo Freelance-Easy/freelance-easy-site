@@ -76,6 +76,8 @@
   F.onDest(function (p) {
     if (!p || p.preview || p.source === "free") return;
     unqueue();
+    if (cancelArrival) { cancelArrival(); cancelArrival = null; }   // a pinned move supersedes a native jump still scrolling
+    jumping = false;
     if (p.source === "popstate") raise("pop");
     else if (p.source === "jump") raise(intent === "hash" ? "hash" : "push");
     else raise("replace");                         // step, settle
@@ -145,6 +147,8 @@
       intent = kind;
       var ok;
       try { ok = F.goTo(slug, { source: "jump" }); } finally { intent = null; }
+      // a run already heading for this chapter (a step in flight) has no new dest event: the explicit jump still owns it
+      if (kind === "push" && ok && before && before.dest === idx && before.rendered !== idx) raise("push");
       if (kind === "hash" && ok) {
         // the link supersedes a jump still under way: the browser's own entry is the one for this run (no second push)
         if (there) { unqueue(); pending = null; write("replace", slug); }   // a legacy or odd hash still gets its slug

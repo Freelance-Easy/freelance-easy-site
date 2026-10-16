@@ -542,3 +542,36 @@ def test_download_links_reach_card(browser, site_url, cell: Cell):
                 assert hash_now(page) == "#get-the-app", f"{cell.name}/{theme}/{where}: URL {hash_now(page)!r}"
             finally:
                 ctx.close()
+
+
+def test_pinned_jump_cancels_a_native_jumps_arrival(browser, site_url):
+    """ICX-HIST.2 (Sol C4-3 H): a pinned jump issued while a native jump is still scrolling supersedes it: the native row's
+    URL is never pushed by the cancelled jump's arrival."""
+    ctx, page = tablet_page(browser, site_url + "/")
+    try:
+        length0 = page.evaluate("() => history.length")
+        page.evaluate("() => FEStoryURL.jump('price')")
+        page.wait_for_timeout(400)          # the smooth scroll is under way
+        page.evaluate("() => FEStoryURL.jump('invoices')")
+        page.wait_for_timeout(4000)
+        page.wait_for_timeout(2800)       # past the native arrival's backstop
+        urls = [c[1] for c in page.evaluate("() => window.__c2hist.slice()")]
+        assert all("price" not in u for u in urls), f"ICX-HIST.2: the superseded native jump wrote: {urls}"
+        # (where the engine then settles with a smooth scroll just cancelled is C3's; here only that the native row is not pushed)
+        assert page.evaluate("() => history.length") <= length0 + 1 and "price" not in hash_now(page), f"ICX-HIST.2: urls {urls}"
+    finally:
+        ctx.close()
+
+
+def test_jump_to_an_inflight_steps_destination_pushes(story: Story):
+    """ICX-HIST.2 (Sol C4-3 H): an explicit jump to the chapter a step is already heading for still pushes (not replaces)."""
+    page = story.page
+    length0 = page.evaluate("() => history.length")
+    mark = story.hist_mark()
+    story.wheel(100)
+    story.idle(150)
+    page.evaluate("() => FEStoryURL.jump('templates')")
+    step_ok(story.wait_rest(allowance(1)), 1, "ICX-HIST.2")
+    calls = story.hist()[0][mark[0]:]
+    assert [c[0] for c in calls] == ["pushState"] and calls[0][1].endswith("#templates"), f"ICX-HIST.2: got {calls}"
+    assert page.evaluate("() => history.length") == length0 + 1
