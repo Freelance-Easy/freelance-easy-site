@@ -6,10 +6,18 @@
   base 67f6b3a's table exactly;
 - test_no_motion_faster: every segment has as many moving frames (60 fps of story, a frame that differs from the one
   before) as on the base 67f6b3a, so no move plays faster or slower: only still frames were cut;
+- test_motion_matches_base: the stronger form of that check: every frame of every segment is the SAME picture as the
+  base's frame at the same moment of the move (?pace=before sampled at T, `/` at the cut-adjusted T), so an easing swap
+  or a sped-up move that overlaps another move fails too, and what was cut is proven still in the base;
+- test_base_motion_pinned: `/?pace=before`'s own frames are pinned (tests/checkpoint/base_signatures.json, one digest per
+  segment, measured on 67f6b3a's timeline), because a speed or easing change in code BOTH timelines share moves `/` and
+  the flag together and the comparison above cannot see it. Regenerate only for a decided motion or
+  stage-content change: python3 scripts/checks/timing.py --url <u> --write-signatures tests/checkpoint/base_signatures.json;
 - test_dip_fades_band: a dip whose cut turns the Ride's band on fades it with the stage, never one frame's flip.
 """
 from __future__ import annotations
 
+import json
 import pathlib
 import sys
 
@@ -41,12 +49,16 @@ PHONE = {
 # moving frames per segment on the base 67f6b3a (timing.moving_frames, Chromium)
 _WIDE = {"look": 238, "lookKnow": 24, "know": 152, "knowGrow": 37, "grow": 67, "ride": 85, "chase": 296,
          "chaseYours": 43, "yours": 1, "yoursPrice": 28, "price": 1, "priceBrand": 31, "brand": 1}
+_TABLET = {k: v for k, v in _WIDE.items() if k not in ("chaseYours", "yours", "yoursPrice", "price", "priceBrand", "brand")}
+_PHONE = {"makeEnd": 77, "makeLook": 74, "look": 238, "lookKnow": 24, "know": 150, "knowGrow": 37, "grow": 57, "ride": 85,
+          "chase": 304, "chaseYours": 43, "yours": 1, "yoursOffer": 21, "end": 1}
 MOVING = {
     ("desktop", "dark"): {"make": 288, "makeLook": 74, **_WIDE},
     ("desktop", "light"): {"make": 263, "makeLook": 44, **_WIDE},
-    ("phone", "dark"): {"make": 211, "makeEnd": 77, "makeLook": 74, "look": 238, "lookKnow": 24, "know": 150,
-                        "knowGrow": 37, "grow": 57, "ride": 85, "chase": 304, "chaseYours": 43, "yours": 1,
-                        "yoursOffer": 21, "end": 1},
+    ("tablet", "dark"): {"make": 288, "makeLook": 74, **_TABLET},
+    ("tablet", "light"): {"make": 263, "makeLook": 44, **_TABLET},
+    ("phone", "dark"): {**_PHONE, "make": 211},
+    ("phone", "light"): {**_PHONE, "make": 211, "makeEnd": 52, "makeLook": 44},
 }
 FRAME_TOL = 2
 # each named exception at its own number (+ 0.02 s): a drift past it is a new decision, not a pass
@@ -125,6 +137,34 @@ def test_no_motion_faster(browser, site_url, layout, theme):
     assert set(got) == set(base), f"segments differ: {sorted(got)} vs {sorted(base)}"
     off = {k: (got[k], base[k]) for k in base if abs(got[k] - base[k]) > FRAME_TOL}
     assert not off, f"moving frames (got, base 67f6b3a) changed: {off}"
+
+
+@pytest.mark.parametrize("layout,theme", sorted(MOVING), ids=[f"{a}-{b}" for a, b in sorted(MOVING)])
+def test_motion_matches_base(browser, site_url, layout, theme):
+    """DEC-8: cut dead time, never motion speed. Per-frame stage signatures, `/` against `/?pace=before` (the base's
+    timeline, test_pace_before_is_the_base), skipping the cut spans: any difference names the segment and the time."""
+    ctx, page = _open(browser, site_url, layout, theme)
+    ctx2, base_page = _open(browser, site_url, layout, theme, "?pace=before")
+    try:
+        bad = timing.signature_diffs(page, base_page, page.evaluate("() => window.__site.map()"),
+                                     base_page.evaluate("() => window.__site.map()"))
+    finally:
+        ctx.close()
+        ctx2.close()
+    assert not bad, "motion differs from the base 67f6b3a (a faster, slower or re-eased move?):\n  " + "\n  ".join(bad)
+
+
+@pytest.mark.parametrize("layout,theme", sorted(MOVING), ids=[f"{a}-{b}" for a, b in sorted(MOVING)])
+def test_base_motion_pinned(browser, site_url, layout, theme):
+    """Every frame (60 fps of story time) of every segment of the base timeline is the picture it was on 67f6b3a."""
+    ctx, page = _open(browser, site_url, layout, theme, "?pace=before")
+    try:
+        got = timing.segment_digests(page, page.evaluate("() => window.__site.map()"))
+    finally:
+        ctx.close()
+    want = json.loads((pathlib.Path(__file__).with_name("base_signatures.json")).read_text())[f"{layout}-{theme}"]
+    off = sorted(k for k in set(got) | set(want) if got.get(k) != want.get(k))
+    assert not off, f"frames changed against 67f6b3a in segments {off}: a move was sped up, slowed or re-eased (regenerate only for a decided motion or stage-content change: python3 scripts/checks/timing.py --url <u> --write-signatures tests/checkpoint/base_signatures.json)"
 
 
 def test_dip_fades_band(browser, site_url):

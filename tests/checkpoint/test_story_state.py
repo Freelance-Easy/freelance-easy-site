@@ -28,8 +28,9 @@ from lib import (BEATS, CELLS, SEED, SLUGS, Cell, Fuzz, Story, check_engine,
 # 5.25 s, Email a named content exception), so C3's pending C5_SLACK is gone. One step stays over by design: Make->Look
 # is DEC-8's named TRANSITION exception (2.58 s dark: Make's moving tail + the untouched PDF->Look circle, no still frame
 # in it; scripts/checks/timing.py EXCEPTIONS), and Make->Look + Look = 7.51 s at 1x vs lib's 7.5 s. The budget carries
-# that exception's measured excess plus scheduling slack: +0.5 s.
-MAKE_LOOK_EXCEPTION_SLACK = 0.5
+# that exception's measured excess (0.01 s) plus scheduling slack: +0.1 s (was 0.5 s on every wait; scoping it to
+# the waits that cross Make->Look was not worth the plumbing: the real excess is one step by 0.01 s).
+MAKE_LOOK_EXCEPTION_SLACK = 0.1
 _lib_allowance = lib.allowance
 
 
