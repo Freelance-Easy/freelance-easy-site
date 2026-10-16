@@ -256,9 +256,71 @@ def test_idle_contrast(browser, site_url, theme):
             page.mouse.move(900, 700)                              # no hover on the rail
             idle = page.evaluate("[...document.querySelectorAll('.story-nav a:not(.is-hl)')].map(a => a.dataset.go)")
             assert len(idle) == 8, idle
-            for b in idle:
-                r, bg = _name_contrast(page, b)
-                assert r >= 4.5, f"{theme} {where}: idle '{b}' is {r:.2f}:1 on {bg}"
+            _assert_idle(page, idle, f"{theme} pinned {where}")
+    finally:
+        ctx.close()
+
+
+def _assert_idle(page, idle, label):
+    worst = 99.0
+    for b in idle:
+        r, bg = _name_contrast(page, b)
+        worst = min(worst, r)
+        assert r >= 4.5, f"{label}: idle '{b}' is {r:.2f}:1 on {bg}"
+    print(f"CONTRAST {label}: min {worst:.2f}:1 over {len(idle)} idle names")
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_idle_contrast_calm(browser, site_url, theme):
+    """(judge B5-1 #1) calm / classic: the fixed rail scrolls over the Ride band section (#email); every idle name keeps
+    >= 4.5:1 with the rail fully over the band and straddling its top edge (links over it take a.on-band)."""
+    ctx, page = _open(browser, site_url, theme=theme, reduced_motion="reduce", device_scale_factor=2)
+    try:
+        page.wait_for_function("() => FEStory.mode === 'calm'")
+        page.mouse.move(1200, 780)
+        geo = page.evaluate("""() => { const n = document.querySelector('.story-nav').getBoundingClientRect();
+          const e = document.getElementById('email').getBoundingClientRect();
+          return { top: n.top, bottom: n.bottom, row: n.height / 9, eTop: e.top + scrollY, eH: e.height }; }""")
+        assert geo["eH"] > geo["bottom"] - geo["top"] + 80, geo
+        cases = [("band", geo["eTop"] - (geo["top"] - 40)),                       # band section covers the whole rail
+                 ("straddle", geo["eTop"] - (geo["top"] + 5 * geo["row"] - 6))]  # its top edge cuts the sixth row
+        for where, y in cases:
+            page.evaluate("(y) => window.scrollTo(0, y)", round(y))
+            page.wait_for_timeout(500)
+            marks = page.evaluate("[...document.querySelectorAll('.story-nav a')].map(a => a.classList.contains('on-band'))")
+            if where == "band":
+                assert all(marks), marks
+            else:
+                assert any(marks) and not all(marks), marks
+            idle = page.evaluate("[...document.querySelectorAll('.story-nav a:not(.is-hl)')].map(a => a.dataset.go)")
+            assert len(idle) == 8, idle
+            _assert_idle(page, idle, f"{theme} calm {where}")
+    finally:
+        ctx.close()
+
+
+# c3a84e4's bar and footer: the brand's x, the controls' right gap, the footer's content edges (measured 2026-10-16;
+# the story column's wider gutter must never reach them) — judge B5-1 #2
+BASE_BAR = {
+    ("story", 1024): (56.0, 30.7), ("story", 1280): (58.4, 58.4), ("story", 1440): (140.0, 140.0),
+    ("calm", 1024): (30.7, 30.7), ("calm", 1280): (58.4, 58.4), ("calm", 1440): (140.0, 140.0),
+}
+
+
+@pytest.mark.parametrize("mode,w", list(BASE_BAR))
+def test_bar_and_footer_keep_base_gutter(browser, site_url, mode, w):
+    kw = {"reduced_motion": "reduce"} if mode == "calm" else {}
+    ctx, page = _open(browser, site_url, w=w, **kw)
+    try:
+        page.wait_for_timeout(300)
+        m = page.evaluate("""() => { const b = document.querySelector('.site-header .brand').getBoundingClientRect();
+          const kids = [...document.querySelectorAll('.site-header .shell *')].map(e => e.getBoundingClientRect()).filter(r => r.width > 0);
+          const fs = document.querySelector('footer .shell, .site-footer .shell'), fr = fs.getBoundingClientRect(), fc = getComputedStyle(fs);
+          return { brand: b.left, right: innerWidth - Math.max(...kids.map(r => r.right)),
+                   footL: fr.left + parseFloat(fc.paddingLeft), footR: innerWidth - fr.right + parseFloat(fc.paddingRight) }; }""")
+        left, right = BASE_BAR[(mode, w)]
+        for k, want in (("brand", left), ("right", right), ("footL", left), ("footR", right)):
+            assert abs(m[k] - want) <= 0.6, f"{mode} {w}px: {k} {m[k]:.1f} != base {want}"
     finally:
         ctx.close()
 
@@ -445,7 +507,7 @@ def test_calm_hides_when_narrow(browser, site_url):
         page.wait_for_function("() => FEStory.mode === 'calm'")
         page.wait_for_timeout(200)
         assert not page.evaluate("document.querySelector('.story-nav').hidden")
-        page.add_style_tag(content=":root { --nav-room: 40px !important; }")   # a gutter too narrow for the names
+        page.add_style_tag(content=":root { --rail-room: 40px !important; }")  # a gutter too narrow for the names
         page.evaluate("window.dispatchEvent(new Event('resize'))")
         page.wait_for_timeout(200)
         assert page.evaluate("document.querySelector('.story-nav').hidden"), "the rail stayed over the content"

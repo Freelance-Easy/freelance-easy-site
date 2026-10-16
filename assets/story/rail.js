@@ -104,6 +104,7 @@
       doc.classList.remove("has-rail");
       if (nav.parentNode !== pinHome) pinHome.insertBefore(nav, pinNext && pinNext.parentNode === pinHome ? pinNext : pinHome.firstChild);
       nav.hidden = !show;
+      bandWatch(false);
       return;
     }
     // calm / classic / static at >= 1024 px: beside the stacked sections
@@ -116,6 +117,39 @@
       nav.hidden = true;
       doc.classList.remove("has-rail");
     }
+    bandWatch(!nav.hidden);
+  }
+
+  /* ---- calm / classic: which links sit over the Ride's band section (the fixed rail straddles its edges) ---- */
+  var bandSec = document.querySelector(".chapter--chase"), bandOn = false, bandRaf = 0;
+  function bandMark() {
+    bandRaf = 0;
+    var fixed = nav.classList.contains("is-fixed") && !nav.hidden;
+    var r = fixed && bandSec ? bandSec.getBoundingClientRect() : null, ons = [], i;
+    for (i = 0; i < items.length; i++) {
+      var on = false;
+      if (r && r.height) {
+        var lr = items[i].a.getBoundingClientRect(), c = lr.top + lr.height / 2;
+        on = c >= r.top && c <= r.bottom;                         // the link's centre is over the band
+      }
+      ons.push(on);
+    }
+    // the ends of the run over the band feather the light theme's shade (rail.css), so it never reads as a panel
+    for (i = 0; i < items.length; i++) {
+      var a = items[i].a;
+      a.classList.toggle("on-band", ons[i]);
+      a.classList.toggle("band-first", ons[i] && !ons[i - 1]);
+      a.classList.toggle("band-last", ons[i] && !ons[i + 1]);
+    }
+  }
+  function bandSoon() { if (!bandRaf) bandRaf = requestAnimationFrame(bandMark); }
+  function bandWatch(on) {
+    if (on !== bandOn) {
+      bandOn = on;
+      if (on) window.addEventListener("scroll", bandSoon, { passive: true });
+      else window.removeEventListener("scroll", bandSoon);
+    }
+    bandMark();
   }
 
   /* ---- the scroll-spy (ICX-HL.4, ICX-HIST.9): native sections only ---- */

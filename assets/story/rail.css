@@ -2,26 +2,35 @@
    Daniel (Round 2): "same tick style; page names always visible, gray when inactive and white and bigger when active",
    and "shouldnt be displaying the page transition elements as user control": no numbers, counters, fills or progress
    bars (ICX-NOPROG). One row per chapter: the tick (the v2 tick, 2 px, the current one longer) and its name beside it.
-   rail.js owns the state classes (.is-hl = the highlight, aria-current = the landed chapter) and `hidden`; site.js adds
-   .is-in (the draw-in, once the arrival hands over) and .on-band (the Ride's band has covered the rail).
-   Contrast: idle names >= 4.5:1 on the page and on the band, both themes (tests/nav/test_rail.py::test_idle_contrast);
-   ticks >= 3:1 (--nav-a0). Tokens only. */
+   rail.js owns the state classes (.is-hl = the highlight, aria-current = the landed chapter, a.on-band = this link is
+   over the Ride's band section in calm / classic) and `hidden`; site.js adds .is-in (the draw-in, once the arrival
+   hands over) and .story-nav.on-band (the pinned story's band has covered the rail).
+   Contrast: idle names >= 4.5:1 on the page and on the band, both themes, pinned and calm
+   (tests/nav/test_rail.py::test_idle_contrast); ticks >= 3:1 (--nav-a0). Tokens only. */
 :root {
   --rail-x: clamp(20px, calc(max(0px, (100vw - var(--shell)) / 2) * 0.44), 44px);   /* the rail's left edge */
   --rail-w: 112px;                    /* tick + gap + the longest name at its active size ("Get the app") */
   --rail-row: 28px;                   /* WCAG 2.5.8: 24 px targets at least */
-  --nav-room: calc(var(--rail-x) + var(--rail-w) + 28px);   /* the gutter the content keeps clear (site.css --pad-l) */
+  --rail-room: calc(var(--rail-x) + var(--rail-w) + 28px);   /* the gutter the story column keeps clear */
+  /* the rail's motion (the site has no duration tokens yet; these are the rail's, used by every rule below) */
+  --rail-t-ink: 240ms;                /* token-lint: allow (rail motion token) */
+  --rail-t-size: 320ms;               /* token-lint: allow (rail motion token) */
+  --rail-t-fade: 400ms;               /* token-lint: allow (rail motion token) */
+  --rail-t-draw: 560ms;               /* token-lint: allow (rail motion token) */
+  --rail-stagger: 36ms;               /* token-lint: allow (rail motion token) */
+  --rail-lead: 80ms;                  /* token-lint: allow (rail motion token) */
+  /* light theme on the teal band: white 13 px names need the band about 9 % deeper under the rail (measured: white on
+     the band's live teal is ~4.2:1; with this shade >= 4.6:1) */
+  --ride-shade: color-mix(in srgb, var(--ink) 9%, transparent);
 }
 .story-nav {
   display: none;
 }
 @media (min-width: 1024px) {
-  /* calm / classic: the same gutter as the story (the rail stays beside the stacked sections) */
-  .js.calm.has-rail {
-    --pad-l: max(var(--pad), calc(var(--nav-room) - max(0px, (100vw - var(--shell)) / 2)));
-  }
-  .js.calm.has-rail .shell {
-    padding-left: var(--pad-l);
+  /* the story column (never the bar or the footer, which keep site.css's own gutter) clears the rail's names */
+  .js.motion main .shell,
+  .js.calm.has-rail main .shell {
+    padding-left: max(var(--pad), calc(var(--rail-room) - max(0px, (100vw - var(--shell)) / 2)));
   }
   .js .story-nav:not([hidden]) {
     display: block;
@@ -68,7 +77,7 @@
   border-radius: 6px;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.24s var(--ease);
+  transition: color var(--rail-t-ink) var(--ease);
 }
 .story-nav .tk {
   flex: none;
@@ -88,14 +97,14 @@
   opacity: var(--nav-a0);
   transform-origin: 0 50%;
   scale: 0 1;
-  transition: width 0.32s var(--ease), opacity 0.24s var(--ease), scale 0.56s var(--ease);
-  transition-delay: 0s, 0s, calc(var(--i, 0) * 36ms);
+  transition: width var(--rail-t-size) var(--ease), opacity var(--rail-t-ink) var(--ease), scale var(--rail-t-draw) var(--ease);
+  transition-delay: 0s, 0s, calc(var(--i, 0) * var(--rail-stagger));
 }
 .story-nav .nm {
   display: inline-block;
   transform-origin: 0 50%;
   opacity: 0;
-  transition: scale 0.32s var(--ease), opacity 0.4s var(--ease), translate 0.4s var(--ease);
+  transition: scale var(--rail-t-size) var(--ease), opacity var(--rail-t-fade) var(--ease), translate var(--rail-t-fade) var(--ease);
   translate: -4px 0;
 }
 /* the entrance: the ticks draw in from the edge and the names settle beside them, top to bottom */
@@ -105,7 +114,7 @@
 .story-nav:is(.is-in, .is-fixed) .nm {
   opacity: 1;
   translate: 0 0;
-  transition-delay: 0s, calc(80ms + var(--i, 0) * 36ms), calc(80ms + var(--i, 0) * 36ms);
+  transition-delay: 0s, calc(var(--rail-lead) + var(--i, 0) * var(--rail-stagger)), calc(var(--rail-lead) + var(--i, 0) * var(--rail-stagger));
 }
 /* the highlight (dest): the strongest ink, a step bigger, the long tick */
 .story-nav a.is-hl {
@@ -132,44 +141,69 @@
   box-shadow: 0 0 0 2px var(--focus);
 }
 /* on the Ride's band: the band's own text colours (dark theme: near-black on light blue; light theme: white on teal,
-   where only the full colour clears 4.5:1, so there the idle and the current name differ by size, weight and tick) */
-.story-nav.on-band a {
+   where only the full colour clears 4.5:1, so there the idle and the current name differ by size, weight and tick).
+   Pinned story: the whole rail (.story-nav.on-band, site.js). Calm / classic: link by link (a.on-band, rail.js), since
+   the fixed rail straddles the band section's edges as the page scrolls. */
+.story-nav.on-band a,
+.story-nav a.on-band {
   color: color-mix(in srgb, var(--ride-text) 86%, var(--ride));
-}
-:root:not([data-theme="dark"]) .story-nav.on-band a {
-  color: var(--ride-text);
-}
-.story-nav.on-band a.is-hl {
-  color: var(--ride-text);
-}
-.story-nav.on-band {
   --nav-a0: 0.68;
   --focus: var(--ride-text);
 }
-/* light theme: the teal band is too light for white 13 px text (~4.2:1 measured), so the band deepens a little under
-   the rail: a soft shade from the screen's edge to just past the names, feathered at both ends (no edge, no panel) */
-.story-nav::before {
+:root:not([data-theme="dark"]) .story-nav.on-band a,
+:root:not([data-theme="dark"]) .story-nav a.on-band,
+.story-nav.on-band a.is-hl,
+.story-nav a.on-band.is-hl {
+  color: var(--ride-text);
+}
+/* light theme: the band deepens a little under the names (--ride-shade), feathered at both ends (no edge, no panel) */
+.story-nav::before,
+.story-nav a::after {
   content: "";
   position: absolute;
-  top: -48px;
-  bottom: -48px;
-  left: calc(-1 * var(--rail-x));
-  right: -72px;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(3, 26, 28, 0.2) 0, rgba(3, 26, 28, 0.2) calc(100% - 96px), rgba(3, 26, 28, 0));
-  -webkit-mask-image: linear-gradient(180deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
-  mask-image: linear-gradient(180deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
   opacity: 0;
-  transition: opacity 0.3s var(--ease);
+  transition: opacity var(--rail-t-ink) var(--ease);
 }
-:root:not([data-theme="dark"]) .story-nav.on-band::before {
+.story-nav::before {
+  top: -20px;
+  bottom: -20px;
+  left: calc(-1 * var(--rail-x));
+  right: -64px;
+  background: linear-gradient(90deg, var(--ride-shade) 0, var(--ride-shade) calc(100% - 80px), transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, currentColor 20px, currentColor calc(100% - 20px), transparent);
+  mask-image: linear-gradient(180deg, transparent, currentColor 20px, currentColor calc(100% - 20px), transparent);
+}
+.story-nav a::after {
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--rail-x));
+  right: -64px;
+  background: linear-gradient(90deg, var(--ride-shade) 0, var(--ride-shade) calc(100% - 80px), transparent);
+}
+.story-nav a.band-first::after {
+  -webkit-mask-image: linear-gradient(180deg, transparent, currentColor 60%);
+  mask-image: linear-gradient(180deg, transparent, currentColor 60%);
+}
+.story-nav a.band-last::after {
+  -webkit-mask-image: linear-gradient(0deg, transparent, currentColor 60%);
+  mask-image: linear-gradient(0deg, transparent, currentColor 60%);
+}
+.story-nav a.band-first.band-last::after {
+  -webkit-mask-image: linear-gradient(180deg, transparent, currentColor 40%, currentColor 60%, transparent);
+  mask-image: linear-gradient(180deg, transparent, currentColor 40%, currentColor 60%, transparent);
+}
+:root:not([data-theme="dark"]) .story-nav.on-band::before,
+:root:not([data-theme="dark"]) .story-nav a.on-band::after {
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
   .story-nav a,
   .story-nav .tk::before,
-  .story-nav .nm {
+  .story-nav .nm,
+  .story-nav::before,
+  .story-nav a::after {
     transition: none !important;
   }
 }

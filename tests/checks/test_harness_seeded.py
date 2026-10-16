@@ -106,8 +106,6 @@ def test_axe_usage_and_non_local_refused():
 CF11 = ("CF-11: script.js:34 removes data-theme for dark on the doc pages; B7's ADOPT gate "
         "drops ./script.js there and flips this to pass")
 KNOWN_BASE_FAILS = {
-    ("/", "F7"): ("base: CLS 0.0228 (>= 0.02) from div.fx-shape shifts at ~0.8-1.6 s",
-                  "F7 FAIL CLS 0.02"),
     ("/", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
     ("/install", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
     ("/privacy", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
