@@ -106,17 +106,13 @@ def test_axe_usage_and_non_local_refused():
 CF11 = ("CF-11: script.js:34 removes data-theme for dark on the doc pages; B7's ADOPT gate "
         "drops ./script.js there and flips this to pass")
 KNOWN_BASE_FAILS = {
-    ("/install", "F8"): (CF11, "F8 FAIL [os=dark] data-theme=None"),
-    ("/privacy", "F8"): (CF11, "F8 FAIL [os=dark] data-theme=None"),
-    ("/terms", "F8"): (CF11, "F8 FAIL [os=dark] data-theme=None"),
-    ("/404", "F8"): ("base: 404.html's head script sets data-theme only for light, so dark has "
-                     "no attribute (CF-11's shape, not covered by it)",
-                     "F8 FAIL [os=dark] data-theme=None"),
     ("/", "F7"): ("base: CLS 0.0228 (>= 0.02) from div.fx-shape shifts at ~0.8-1.6 s",
                   "F7 FAIL CLS 0.02"),
-    ("/terms", "F7"): ("base: CLS 0.0227 (>= 0.02), one 45 ms shift of ul/p/h2 (font swap)",
-                       "F7 FAIL CLS 0.02"),
     ("/", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
+    ("/install", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
+    ("/privacy", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
+    ("/terms", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
+    ("/404", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
 }
 
 

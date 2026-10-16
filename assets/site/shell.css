@@ -47,3 +47,117 @@ html:root {
   display: flex;
   align-items: center;
 }
+
+/* ---------- The bar on the doc pages (B7, CF-14) ----------
+   privacy, terms, install and 404 load styles.css, whose older .site-header rules (14 px padding, a "#download"
+   pill) are not the homepage bar's. These rules, scoped to a page whose <main> is a .doc, give the bar site.css's
+   shape: 56 px, the outlined Download pill (its href is /install here, so styles.css's [href="#download"] pill
+   cannot match), the round theme button, the hairline (no scroll observer runs here), and the phone bar. */
+body:has(> main.doc) .site-header {
+  height: var(--header-h);
+  border-bottom-color: var(--line-1);
+}
+body:has(> main.doc) .site-header .shell {
+  height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  gap: 16px;
+}
+body:has(> main.doc) .site-header .brand {
+  white-space: nowrap;
+}
+body:has(> main.doc) .site-header .nav a.nav-cta {
+  color: var(--text-0);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  margin-left: 4px;
+}
+body:has(> main.doc) .site-header .nav a.nav-cta:hover {
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+body:has(> main.doc) .site-header .theme-toggle {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+body:has(> main.doc) .site-header .theme-toggle:hover {
+  background: var(--bg-3);
+}
+@media (max-width: 639px) {
+  body:has(> main.doc) .site-header .nav a:not(.nav-cta) {
+    display: none;
+  }
+  body:has(> main.doc) .site-header .theme-toggle {
+    width: 34px;
+    height: 34px;
+    margin-left: 2px;
+  }
+}
+@media (max-width: 380px) {
+  body:has(> main.doc) .site-header .brand span {
+    font-size: 13px;
+  }
+  body:has(> main.doc) .site-header .nav a.nav-cta {
+    padding: 7px 11px;
+  }
+}
+
+/* ---------- The footer on the doc pages (B7, CF-14) ----------
+   The footer's brand, link row and meta line are styled by site.css on the homepage; styles.css has an older
+   .site-footer (a .links row) that does not know .foot-links. The same rules, scoped to a .doc page. */
+body:has(> main.doc) .site-footer {
+  margin-top: 40px;
+  border-top: 1px solid var(--line-1);
+  padding: 34px 0 44px;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+body:has(> main.doc) .site-footer .shell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 32px;
+}
+body:has(> main.doc) .site-footer .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-1);
+}
+body:has(> main.doc) .site-footer .brand img {
+  width: 22px;
+  height: 22px;
+}
+body:has(> main.doc) .foot-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+body:has(> main.doc) .foot-links a {
+  color: var(--text-2);
+  padding: 4px 0;
+  display: inline-block;
+  text-decoration: none;
+}
+body:has(> main.doc) .foot-links a:hover {
+  color: var(--text-0);
+}
+body:has(> main.doc) .foot-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+@media (max-width: 639px) {
+  body:has(> main.doc) .site-footer .shell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
