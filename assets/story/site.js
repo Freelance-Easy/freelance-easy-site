@@ -146,7 +146,7 @@
   // halfway into the hold: it is exactly 1 well before the pin lets go, so a follower still settling by a hair never
   // leaves the section after the pin part-faded
   const END_HOLD = 0.06, END_REST = 0.02, END_K = 0.015;
-  // the phone story's Make caption: the hero's own h1 with an aria-hidden "01" in front (removed whenever the phone
+  // the phone story's Make caption: the hero's own h1 with an aria-hidden chapter name ("New invoice") in front (removed whenever the phone
   // story is not running)
   let stepEl = null;
   function heroSplit(on) {
@@ -157,7 +157,7 @@
         stepEl = document.createElement("span");
         stepEl.className = "step";
         stepEl.setAttribute("aria-hidden", "true");
-        stepEl.textContent = "01";
+        stepEl.textContent = "New invoice";
       }
       if (stepEl.parentNode !== hc) hc.insertBefore(stepEl, hc.firstChild);
     } else if (stepEl && stepEl.parentNode) stepEl.remove();
