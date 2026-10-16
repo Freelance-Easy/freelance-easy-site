@@ -452,6 +452,12 @@ def _pinch(p):
     t("touchEnd", [])
 
 
+# scrollY at the zoom-out: the first visualViewport resize back to scale <= 1.01, and SETTLE_IDLE (150 ms) later (when
+# the zoom-out settle reads it)
+_ZOOM_OUT_Y = """() => { window.__zo = []; const v = visualViewport; const on = () => { if (v.scale > 1.01 || window.__zo.length) return;
+  window.__zo.push(Math.round(scrollY)); setTimeout(() => window.__zo.push(Math.round(scrollY)), 140); }; v.addEventListener('resize', on); }"""
+
+
 def _unzoom(p):
     """Pinch back out to scale 1 (Input.synthesizePinchGesture)."""
     for _ in range(4):
@@ -491,7 +497,22 @@ def test_pinch_keeps_the_landed_chapter(browser, site_url):
         assert L["dest"] == [] and all(r[3] == 1 for r in rec), f"the story left Templates while zoomed: dest {L['dest']}"
         assert st["settles"] == s0["settles"], f"a settle ran while zoomed ({s0['settles']} -> {st['settles']})"
         # zoom back out (the page-scale snaps to 1): one distance-0 re-alignment on Templates
+        # Not vacuous (main's C6-fix re-check): the base bug needs the zoom-out to find the layout nearer another chapter.
+        # The pinch's own layout scroll varies run to run (608 -> 0 here, less under load); if it left Templates
+        # nearest, pan the layout to the top while still zoomed (the same foreign-scroll-while-zoomed path), then
+        # require nearest != Templates when the scale comes back (as the zoom-out settle reads it, ~150 ms later).
+        story_top, bp = s0["trackY"] - s0["bp"], s0["bp"]
+        nearest = lambda y: max(0, min(8, round((y - story_top) / bp)))  # noqa: E731
+        if nearest(p.page.evaluate("() => scrollY")) == 1:
+            p.page.evaluate("() => window.scrollTo({ top: 0, behavior: 'instant' })")
+            p.page.wait_for_timeout(1000)
+        assert p.page.evaluate("() => visualViewport.scale") > 1.01 and p.st()["settles"] == s0["settles"], p.st()
+        p.page.evaluate(_ZOOM_OUT_Y)
         _unzoom(p)
+        p.page.wait_for_timeout(200)
+        zo = p.page.evaluate("() => window.__zo")
+        assert len(zo) == 2 and all(nearest(y) != 1 for y in zo), (
+            f"vacuous: at the zoom-out the layout (y {zo}) was nearest Templates, so a nearest-settle would pass too")
         st = p.rest_on(1, 4000)
         p.page.wait_for_timeout(900)
         st, L = p.st(), p.read()
