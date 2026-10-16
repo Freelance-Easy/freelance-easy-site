@@ -116,11 +116,13 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
     display: flex;
   }
 }
+/* the story page by its body attribute, not body:has(.story-nav): the rail sits after the bar in the source, so a first
+   paint before the parser reaches it would show the bar without the button, then shift it in (test_bar_polish F7) */
 @media (max-width: 1023px) {
-  .js body:has(.story-nav) .fe-menu-btn {
+  .js body[data-page="home"] .fe-menu-btn {
     display: grid;
   }
-  .js body:has(.story-nav) [data-menu-slot]:has(> .fe-menu-btn) {
+  .js body[data-page="home"] [data-menu-slot]:has(> .fe-menu-btn) {
     display: flex;
   }
 }
@@ -131,7 +133,7 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
   html.js .site-header .shell:has(.fe-menu-btn) {
     gap: 8px;
   }
-  .js body:has(.story-nav) .fe-menu-btn {
+  .js body[data-page="home"] .fe-menu-btn {
     width: 32px;
     height: 32px;
     margin-left: -2px;
