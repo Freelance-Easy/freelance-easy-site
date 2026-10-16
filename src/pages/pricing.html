@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- NEW COPY --><title>Pricing — Freelance Easy</title>
+    <!-- NEW COPY --><meta name="description" content="$5 a month or $50 a year. Try every feature free for seven days, no card. How to buy, how to pay and how to cancel." />
+    <link rel="canonical" href="https://freelance-easy.com/pricing" />
+    <link rel="icon" href="/favicon.ico" />
+    <!-- (B7) the body face is preloaded: its swap on the long pages shifted the text -->
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- #include partials/head.html -->
+    <link rel="stylesheet" href="./styles.css" />
+    <!-- (PR-1) this page's few layout rules; tokens only (scripts/checks/token_lint.py, tests/pages/test_pricing.py) -->
+    <style>
+      .pricing .pricing-lead { font-size: var(--fs-lg); color: var(--text-0); line-height: 1.45; margin-bottom: 8px; }
+      .pricing .plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0 16px; }
+      .pricing .plan-card { padding: 20px 22px; border-radius: var(--r-lg); background: var(--bg-1); box-shadow: 0 0 0 1px var(--line-2); }
+      .pricing .plan-card h2 { margin: 0 0 8px; font-size: var(--fs-md); font-weight: 500; letter-spacing: 0; color: var(--text-1); }
+      .pricing .plan-amount { font-size: 40px; font-weight: 680; letter-spacing: -0.03em; color: var(--text-0); margin-right: 4px; }
+      .pricing .plan-card p { margin: 0; font-size: var(--fs-sm); line-height: 1.6; }
+      .pricing .fine { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
+      .pricing .steps > li { margin-bottom: 18px; }
+      .pricing .dl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 12px 0 8px; }
+      .pricing .dl-row .btn { min-height: 44px; }
+      @media (max-width: 560px) {
+        .pricing .plan-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+    <!-- (PR-1) Product + Offers: the prices equal the plan cards below (tests/pages/test_pricing.py) and claim nothing
+         the page doesn't; no seller is named (R5 C.1: checkout shows the seller) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Freelance Easy",
+        "url": "https://freelance-easy.com/pricing",
+        "brand": { "@type": "Brand", "name": "Freelance Easy" },
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Monthly",
+            "price": "5.00",
+            "priceCurrency": "USD",
+            "url": "https://freelance-easy.com/pricing",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "5.00",
+              "priceCurrency": "USD",
+              "referenceQuantity": { "@type": "QuantitativeValue", "value": 1, "unitCode": "MON" }
+            }
+          },
+          {
+            "@type": "Offer",
+            "name": "Yearly",
+            "price": "50.00",
+            "priceCurrency": "USD",
+            "url": "https://freelance-easy.com/pricing",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "50.00",
+              "priceCurrency": "USD",
+              "referenceQuantity": { "@type": "QuantitativeValue", "value": 1, "unitCode": "ANN" }
+            }
+          }
+        ]
+      }
+    </script>
+    <script async src="/js/script.js"></script>
+    <script>
+      window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+      plausible.init = plausible.init || function (i) { plausible.o = i || {}; };
+      plausible.init({ endpoint: "/api/event" });
+    </script>
+  </head>
+  <body data-page="pricing">
+    <!-- #include partials/header.html dl_fallback=/install -->
+    <!-- (PR-1) every sentence below carries NEW COPY and is logged, with its source and ruling, in docs/claims/pricing.md -->
+    <main class="doc pricing">
+      <a class="back" href="/">← Back to Freelance Easy</a>
+      <!-- NEW COPY --><h1>Pricing</h1>
+      <!-- NEW COPY --><p class="pricing-lead">$5 a month, or $50 a year. One subscription, no add-ons.</p>
+      <!-- NEW COPY --><p>Pro: every feature, unlimited invoices and clients.</p>
+
+      <!-- the renewal lines are the app's plan cards VERBATIM (Renewal Disclosure 2026-10b); never edit them here -->
+      <div class="plan-grid">
+        <section class="plan-card" aria-labelledby="plan-monthly">
+          <!-- NEW COPY --><h2 id="plan-monthly"><span class="plan-amount" data-price="5" data-period="month">$5</span> a month</h2>
+          <!-- NEW COPY --><p>Billed monthly. Renews every month until you cancel.</p>
+        </section>
+        <section class="plan-card" aria-labelledby="plan-yearly">
+          <!-- NEW COPY --><h2 id="plan-yearly"><span class="plan-amount" data-price="50" data-period="year">$50</span> a year</h2>
+          <!-- NEW COPY --><p>Two months free. $4.17 a month, billed once a year. Renews every year until you cancel.</p>
+        </section>
+      </div>
+      <!-- NEW COPY --><p>Cancel any time in Settings, under Manage or cancel subscription. You keep Pro until the end of the period you've paid for. Plus any tax shown at checkout.</p>
+      <!-- NEW COPY --><p>Try every feature free for seven days, no card. When the trial ends, nothing is charged: you keep everything you made, and you can make one more invoice free.</p>
+      <!-- NEW COPY --><p>Not happy with a charge? Email <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a> within 14 days and we'll refund it in full.</p>
+
+      <!-- NEW COPY --><h2 id="how-to-buy">How to buy</h2>
+      <ol class="steps">
+        <li>
+          <!-- NEW COPY --><p>Download the app.</p>
+          <div class="dl-row" data-dl data-placement="pricing-page">
+            <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac"><span data-label>Download for Mac</span></a>
+            <a data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>
+          </div>
+          <span class="fine" data-share-status data-for="pricing-page" aria-live="polite"></span>
+          <!-- NEW COPY --><p class="fine">For Apple Silicon Macs (M1 or later) and Windows 10 or 11, 64-bit. Intel Macs aren't supported. The Windows installer isn't code-signed yet, so Windows shows a security warning the first time you open it: <a href="/install#windows">what to click</a>.</p>
+        </li>
+        <li>
+          <!-- NEW COPY --><p>Open it and sign in with Google. Your seven-day trial starts the first time you sign in, one trial per account.</p>
+        </li>
+        <li>
+          <!-- NEW COPY --><p>To subscribe, click See plans in the app, then Continue monthly or Continue yearly. Checkout opens in your browser.</p>
+        </li>
+      </ol>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6). A placeholder only: no purchase flow, no consent
+           wording (R5 C.3's duties start when the web path ships). -->
+      <!-- NEW COPY --><p data-flag="web-signup" data-web-path hidden><a data-flag-href="/start">Start on the web</a></p>
+
+      <!-- NEW COPY --><h2 id="paying">Paying</h2>
+      <ul>
+        <!-- NEW COPY --><li>Payment is handled by Stripe; checkout shows the seller.</li>
+        <!-- NEW COPY --><li>Prices are set in US dollars. Checkout shows the currency and the full total, including any tax, before you pay.</li>
+        <!-- NEW COPY --><li>Have a promotion code? There is a field for it at checkout.</li>
+      </ul>
+
+      <!-- NEW COPY --><h2 id="before-you-buy">Before you buy</h2>
+      <ul>
+        <!-- NEW COPY --><li>After the trial, these need a subscription: Reports, recurring invoices, sending email from the app, your logo and colors, all four templates, documents, automatic backups, your own invoice numbers and default notes.</li>
+        <!-- NEW COPY --><li>Opening and exporting what you made is never locked.</li>
+        <!-- NEW COPY --><li>One person per account. If more people in your business need the app, each needs their own account.</li>
+        <!-- NEW COPY --><li>You can install it on the computers you own or control.</li>
+        <!-- NEW COPY --><li>There's no minimum term.</li>
+      </ul>
+
+      <!-- NEW COPY --><h2 id="cancelling">Cancelling, refunds and price changes</h2>
+      <ul>
+        <!-- NEW COPY --><li>You can also cancel by emailing <a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a>, or from your Link account at link.com if checkout named Link as the seller.</li>
+        <!-- NEW COPY --><li>Cancelling stops the next renewal. When the period you've paid for ends, the app turns read-only: you can still open and download everything you made.</li>
+        <!-- NEW COPY --><li>Cancelling doesn't refund the rest of a period you've paid for, except as <a href="/terms">Terms §7</a> describes.</li>
+        <!-- NEW COPY --><li>If we change the price of your plan, we'll email you between 14 and 30 days before your first renewal at the new price.</li>
+      </ul>
+      <!-- NEW COPY --><p class="fine">The full rules are in the <a href="/terms">Terms</a>: §2 for the trial and plans, §7 for payment, cancelling and refunds.</p>
+    </main>
+    <!-- #include partials/footer.html dl_fallback=/install -->
+    <script>FETheme.init({ hashPolicy: "none" });</script>
+    <script src="/assets/story/download.js"></script>
+  </body>
+</html>
