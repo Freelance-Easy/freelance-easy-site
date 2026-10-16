@@ -20,7 +20,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIXTURE = "/tests/fixtures/shell/doc.html"
 HEAD_SPAN = re.compile(r"[ \t]*<!-- fe-shell:head .*?<!-- /fe-shell:head -->\n", re.S)
 FOOTER_SPAN = re.compile(r'<footer class="site-footer fe-shell-footer">.*?</footer>\n', re.S)
-FICTIONAL = "Names, invoices and amounts shown on this site are fictional."
+FICTIONAL = "Clients, invoices and amounts in the demos, screenshots and tour are fictional."
 HEIGHTS = {1440: 900, 800: 900, 390: 844}
 
 _spec = importlib.util.spec_from_file_location("run_axe", ROOT / "scripts" / "checks" / "run_axe.py")
