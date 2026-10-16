@@ -434,6 +434,164 @@ def test_pinch_never_prevented(browser, site_url):
         p.close()
 
 
+_PINCH_REC = """() => { window.__pz = []; const rec = () => { const s = FEStory.state();
+  window.__pz.push([s.phase, s.step, s.dip, s.rendered, s.dest, +visualViewport.scale.toFixed(2), Math.round(scrollY)]); requestAnimationFrame(rec); };
+  requestAnimationFrame(rec); }"""
+
+
+def _pinch(p):
+    """A two-finger zoom-in pinch through the touch pipeline (Input.dispatchTouchEvent), the fingers diverging about
+    y 380 (the judge's probe): Chromium zooms to scale 5 AND scrolls the layout viewport (608 -> 0 at Templates)."""
+    t = lambda kind, pts: p.cdp.send("Input.dispatchTouchEvent", {"type": kind, "touchPoints": pts})  # noqa: E731
+    t("touchStart", [{"x": 195, "y": 330, "id": 1}])
+    p.page.wait_for_timeout(16)
+    t("touchStart", [{"x": 195, "y": 330, "id": 1}, {"x": 195, "y": 430, "id": 2}])
+    for i in range(1, 9):
+        p.page.wait_for_timeout(16)
+        t("touchMove", [{"x": 195, "y": 330 - 12 * i, "id": 1}, {"x": 195, "y": 430 + 12 * i, "id": 2}])
+    t("touchEnd", [])
+
+
+# scrollY at the zoom-out: the first visualViewport resize back to scale <= 1.01, and SETTLE_IDLE (150 ms) later (when
+# the zoom-out settle reads it)
+_ZOOM_OUT_Y = """() => { window.__zo = []; const v = visualViewport; const on = () => { if (v.scale > 1.01 || window.__zo.length) return;
+  window.__zo.push(Math.round(scrollY)); setTimeout(() => window.__zo.push(Math.round(scrollY)), 140); }; v.addEventListener('resize', on); }"""
+
+
+def _unzoom(p):
+    """Pinch back out to scale 1 (Input.synthesizePinchGesture)."""
+    for _ in range(4):
+        vv = p.page.evaluate("() => ({ s: visualViewport.scale, w: visualViewport.width, h: visualViewport.height })")
+        if vv["s"] <= 1.01:
+            break
+        # (CDP's point is in the zoomed viewport's CSS px: its centre, or "Position out of bounds")
+        p.cdp.send("Input.synthesizePinchGesture", {"x": int(vv["w"] / 2), "y": int(vv["h"] / 2), "relativeSpeed": 800,
+                                                     "gestureSourceType": "touch", "scaleFactor": 1 / vv["s"]})
+        p.page.wait_for_timeout(300)
+    assert p.page.evaluate("() => visualViewport.scale") <= 1.01, "could not zoom back out"
+
+
+def test_pinch_keeps_the_landed_chapter(browser, site_url):
+    """Judge C6 ruling (b): a pinch at Templates that also scrolls the layout viewport must not settle while zoomed
+    (a settle scroll yanks the zoomed view, and the nearest beat is wherever the zoom panned to). On zoom-out the story
+    re-aligns ONCE on the chapter it was landed on (ICX-SETTLE-4 distance 0: no dip, no content replay, no dest
+    change). A pure zoom with no layout scroll leaves the story alone (no settle at all)."""
+    p = Phone(browser, site_url, 390, 664)
+    try:
+        p.rest_on(0)
+        p.flick(1)
+        p.rest_on(1)
+        p.page.wait_for_timeout(400)
+        p.log()
+        p.mark()
+        s0 = p.st()
+        p.page.evaluate(_PINCH_REC)
+        _pinch(p)                                  # zoom in at Templates (Chromium scrolls the layout viewport too)
+        p.page.wait_for_timeout(1500)              # past SETTLE_BACKSTOP (700 ms): a settle would have run by now
+        rec = p.page.evaluate("() => window.__pz")
+        assert max(r[5] for r in rec) > 1.2, f"the pinch did not zoom the page: {rec[-1]}"
+        assert any(abs(r[6] - s0["trackY"]) > 50 for r in rec if r[5] > 1.01), (
+            f"the pinch did not scroll the layout viewport while zoomed (nothing to settle): {rec[-1]}")
+        st, L = p.st(), p.read()
+        assert "dip" not in L["phases"] and not any(r[2] for r in rec), f"a dip played while zoomed: {L['phases']}"
+        assert L["dest"] == [] and all(r[3] == 1 for r in rec), f"the story left Templates while zoomed: dest {L['dest']}"
+        assert st["settles"] == s0["settles"], f"a settle ran while zoomed ({s0['settles']} -> {st['settles']})"
+        # zoom back out (the page-scale snaps to 1): one distance-0 re-alignment on Templates
+        # Not vacuous (main's C6-fix re-check): the base bug needs the zoom-out to find the layout nearer another chapter.
+        # The pinch's own layout scroll varies run to run (608 -> 0 here, less under load); if it left Templates
+        # nearest, pan the layout to the top while still zoomed (the same foreign-scroll-while-zoomed path), then
+        # require nearest != Templates when the scale comes back (as the zoom-out settle reads it, ~150 ms later).
+        story_top, bp = s0["trackY"] - s0["bp"], s0["bp"]
+        nearest = lambda y: max(0, min(8, round((y - story_top) / bp)))  # noqa: E731
+        if nearest(p.page.evaluate("() => scrollY")) == 1:
+            p.page.evaluate("() => window.scrollTo({ top: 0, behavior: 'instant' })")
+            p.page.wait_for_timeout(1000)
+        assert p.page.evaluate("() => visualViewport.scale") > 1.01 and p.st()["settles"] == s0["settles"], p.st()
+        p.page.evaluate(_ZOOM_OUT_Y)
+        _unzoom(p)
+        p.page.wait_for_timeout(200)
+        zo = p.page.evaluate("() => window.__zo")
+        assert len(zo) == 2 and all(nearest(y) != 1 for y in zo), (
+            f"vacuous: at the zoom-out the layout (y {zo}) was nearest Templates, so a nearest-settle would pass too")
+        st = p.rest_on(1, 4000)
+        p.page.wait_for_timeout(900)
+        st, L = p.st(), p.read()
+        rec = p.page.evaluate("() => window.__pz")
+        assert st["phase"] == "rest" and st["rendered"] == 1 and abs(st["y"] - st["trackY"]) <= 1, f"not back on Templates: {st}"
+        assert "dip" not in L["phases"] and not any(r[2] for r in rec), f"the zoom-out played a dip: {L['phases']}"
+        assert L["dest"] == [] and L["land"] == [], f"the zoom-out moved the story: dest {L['dest']} land {L['land']}"
+        assert not any(r[1] for r in rec), f"the zoom-out replayed content / ran a move: {sorted({r[1] for r in rec if r[1]})}"
+        assert st["settles"] == s0["settles"] + 1, f"expected exactly one settle on zoom-out ({s0['settles']} -> {st['settles']})"
+        # a pure zoom (no layout scroll) and back: the story is left alone, no settle at all
+        s1 = p.st()
+        p.mark()
+        p.cdp.send("Input.synthesizePinchGesture", {"x": 195, "y": 332, "scaleFactor": 2, "relativeSpeed": 800,
+                                                     "gestureSourceType": "touch"})
+        p.page.wait_for_timeout(500)
+        _unzoom(p)
+        p.page.wait_for_timeout(1200)
+        st, L = p.st(), p.read()
+        assert st["phase"] == "rest" and st["rendered"] == 1 and L["dest"] == [] and "dip" not in L["phases"], st
+        if st["y"] == s1["y"]:
+            assert st["settles"] == s1["settles"], f"a pure zoom ran a settle ({s1['settles']} -> {st['settles']})"
+    finally:
+        p.close()
+
+
+def test_probe_changes_nothing_at_end(browser, site_url):
+    """Judge C6 #1: the touch adapter's in-slop "probe" asks isBypassed in both directions; a probe must change nothing.
+    At REST(Get the app) a tiny back move (a sloppy tap / a back-swipe start, held inside the slop) used to stamp the
+    release flag, so a scroll to the pin's end within 0.6 s was taken as a release. It must settle back instead."""
+    p = Phone(browser, site_url, 390, 664)
+    try:
+        p.rest_on(0)
+        p.goto_beat("end")
+        p.page.wait_for_timeout(400)
+        p.log()
+        p.mark()
+        p.swipe(-6, 200, y0=330)                   # a 6 px back move: every touchmove inside the slop (probes only)
+        p.page.evaluate("() => { const s = FEStory.state(); window.scrollTo({ top: s.trackY - 1, behavior: 'instant' }); }")
+        p.page.wait_for_timeout(1200)
+        st, L = p.st(), p.read()
+        assert L["moves"], "no in-slop touchmove reached the page (the probe never ran)"
+        assert L["dest"] == [] and not L["steps"], f"the tap stepped the story: {L['dest']} {L['steps']}"
+        assert "released" not in L["phases"], f"a probe armed the release: a 1 px scroll at Get the app released: {L['phases']}"
+        assert st["phase"] == "rest" and st["rendered"] == 8, st
+    finally:
+        p.close()
+
+
+def test_sheet_scrolls_natively(browser, site_url):
+    """Judge C6 #3 with B6's menu sheet merged: mid-story at 390, a touch scroll inside the open sheet is never prevented,
+    the sheet scrolls, and the story does not move."""
+    p = Phone(browser, site_url, 390, 664)
+    try:
+        p.rest_on(0)
+        p.flick(1)
+        p.rest_on(1)
+        p.page.wait_for_timeout(400)
+        p.page.click("[data-menu-open]")
+        p.page.wait_for_function("() => document.querySelector('#fe-menu').open")
+        p.page.wait_for_timeout(300)
+        geo = p.page.evaluate("""() => { const d = document.querySelector('#fe-menu'); const r = d.getBoundingClientRect();
+            return { sh: d.scrollHeight, ch: d.clientHeight, top: d.scrollTop, x: r.left + r.width / 2, y: r.top + r.height * 0.7 }; }""")
+        assert geo["sh"] > geo["ch"] + 20, f"the sheet does not overflow at 390x664, nothing to scroll: {geo}"
+        p.log()
+        p.mark()
+        p.swipe(160, 300, y0=geo["y"])             # a slow forward drag inside the sheet
+        p.page.wait_for_timeout(600)
+        L = p.read()
+        after = p.page.evaluate("() => document.querySelector('#fe-menu').scrollTop")
+        assert L["moves"], "no touchmove reached the page"
+        assert not any(prev for _, prev in L["moves"]), f"a touch scroll inside the open sheet was prevented: {L['moves'][:6]}"
+        want = min(40, geo["sh"] - geo["ch"]) - 1      # the sheet's own range (it overflows by ~38 px at 390x664)
+        assert after >= geo["top"] + want, f"the sheet did not scroll ({geo['top']} -> {after}, range {geo['sh'] - geo['ch']})"
+        st = p.st()
+        assert L["dest"] == [] and not L["steps"] and st["rendered"] == 1, f"the story moved under the sheet: {st} {L['dest']}"
+    finally:
+        p.close()
+
+
 def test_horizontal_swipe_not_intercepted(browser, site_url):
     """A sideways swipe (fast or slow-starting) inside the story never steps and is never prevented."""
     p = Phone(browser, site_url, 390, 664)

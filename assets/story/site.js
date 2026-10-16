@@ -1012,7 +1012,7 @@
   const CFG = Object.freeze({ DIP_OUT: 0.1, DIP_IN: 0.12, COOLDOWN: 0.6, RATE_MAX: 3, RUSH: 2.5, RUSH_MAX: 0.6,
     ABORT_RATE: 1.5, RATE_ACCEL: 12, CONTENT_FINISH_MAX: 0.6,
     ACK_TOL: 1.5, ACK_MS: 400, SCROLLEND_GRACE: 50, SETTLE_IDLE: 150, SETTLE_BACKSTOP: 700, REENTRY_STICKY_MS: 800,
-    RESIZE_GRACE: 250, HOLD_MAX: 10000 });
+    RESIZE_GRACE: 250, HOLD_MAX: 10000, ZOOM_SCALE: 1.01 });
   const EPS = 1e-4;
   const clock = () => performance.now() / 1000;
   // BT-2: feature-detect scrollend; ?noscrollend forces the idle path (Safari without scrollend)
@@ -1282,7 +1282,9 @@
       const b = settleTarget();
       return (info.dir > 0 && b === last()) || (info.dir < 0 && b === 0);
     }
-    if (phase === "rest" && info.dir > 0 && kR === last()) { releasing = clock(); return true; }   // ICX-RELEASE.1
+    // ICX-RELEASE.1; a touch "probe" (an in-slop move asked in both directions: a tap, a back-swipe start) is a pure
+    // question and must not arm the release (judge C6 #1)
+    if (phase === "rest" && info.dir > 0 && kR === last()) { if (info.phase !== "probe") releasing = clock(); return true; }
     if (phase === "rest" && info.dir < 0 && kR === 0) return true;                                // ICX-BACK.5
     return false;
   }
@@ -1317,10 +1319,17 @@
     free = null;
     if (phase === "free") phase = "transition";
   }
-  const settleTarget = () => (free && free.from === "released" && !free.sawHold ? last() : nearestK(window.scrollY));
+  // ICX-SETTLE-9 (C6-fix, judge C6 ruling b): a FREE episode that saw a pinch zoom (visualViewport.scale > ZOOM_SCALE)
+  // never settles while zoomed (a settle scroll yanks the zoomed view, and "nearest" is wherever the zoom panned the
+  // layout); on the zoom-out it settles once on the chapter it was landed on: a distance-0 re-alignment (ICX-SETTLE-4)
+  const zoomed = () => { const v = window.visualViewport; return !!(v && v.scale > CFG.ZOOM_SCALE); };
+  const settleTarget = () => (free && free.zoomed ? kR
+    : free && free.from === "released" && !free.sawHold ? last() : nearestK(window.scrollY));
   function foreign(y) {
     const t = clock(), end = storyEnd();
-    if (y > end + 1 || (t - releasing < 0.6 && kR === last() && y >= end - 1)) { if (phase !== "released") setReleased(); return; }
+    // a zoomed pan inside the pin may run past its end: still FREE (it re-aligns on kR at the zoom-out), never a release
+    const zin = phase !== "released" && (zoomed() || !!(free && free.zoomed));
+    if (!zin && (y > end + 1 || (t - releasing < 0.6 && kR === last() && y >= end - 1))) { if (phase !== "released") setReleased(); return; }
     if (!free) {
       free = { from: phase === "released" || t < reentryUntil ? "released" : "in", sawHold: barHeld, lastT: t, timer: 0, backstop: 0, preview: -1 };
       if (phase === "released") { kR = kD = last(); free.back = true; }   // a re-entry from below begins here
@@ -1328,8 +1337,9 @@
       if (dip) { dip = null; clearDip(); }
       phase = "free";
     }
+    if (zoomed()) free.zoomed = true;
     free.lastT = t;
-    const n = nearestK(y);
+    const n = free.zoomed ? kR : nearestK(y);           // a zoomed episode previews the beat it will re-align on
     if (n !== free.preview) { free.preview = n; emit("dest", payload(n, "free", { preview: true })); }
     armSettle("scroll");
     wake();
@@ -1346,10 +1356,15 @@
     if (!free || barHeld) return;                      // a scrollbar hold settles when it ends (ICX-SETTLE-6)
     const quiet = (clock() - free.lastT) * 1000;
     const need = trigger === "scrollend" ? CFG.SCROLLEND_GRACE : CFG.SETTLE_IDLE;
+    if (zoomed()) { free.zoomed = true; return; }     // never while pinch-zoomed: the zoom-out settles (ICX-SETTLE-9)
     if (quiet < need - 1) { armSettle("scroll"); return; }
-    const y = window.scrollY, from = free.from, sawHold = free.sawHold, back = !!free.back;
+    const y = window.scrollY, from = free.from, sawHold = free.sawHold, back = !!free.back, zoom = !!free.zoomed, pv = free.preview;
     endFree();
     settles++;
+    if (zoom) {                                         // the landed chapter, never the nearest
+      if (pv !== kR) emit("dest", payload(kR, "free", { preview: true }));   // FREE's highlight back on it (ICX-HL.3)
+      syncScroll(trackY(kR)); jump(kR, "settle"); return;
+    }
     if (y > storyEnd() + 1) { setReleased(); return; }
     let b = nearestK(y);
     if (from === "released" && !sawHold) { b = last(); reentryUntil = clock() + CFG.REENTRY_STICKY_MS / 1000; }   // re-entry
@@ -1369,6 +1384,15 @@
   }
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("scrollend", () => { if (HAS_SCROLLEND && free) armSettle("scrollend"); });
+  // the zoom-out of a zoomed FREE episode: settle once, after the pinch's own last scrolls have gone quiet
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", () => {
+    if (!free) return;
+    if (zoomed()) { free.zoomed = true; return; }       // a pinch between FREE's scroll and its settle counts too
+    if (!free.zoomed) return;
+    free.lastT = clock();
+    clearTimeout(free.timer);
+    free.timer = setTimeout(() => settle("idle"), CFG.SETTLE_IDLE);
+  });
   document.addEventListener("mousedown", (e) => {
     if (!(e.clientX >= doc.clientWidth || e.clientY >= doc.clientHeight)) return;
     barHeld = true;

@@ -335,7 +335,9 @@
           // its tentative direction (the first chapter's pull-to-refresh, the release) is left alone: held when
           // neither direction passes, or (at an edge, where one does) when it has clearly started (>= 2 px) the
           // intercepted way; a sideways or 1 px lead-in at an edge is never held (Sol C6-sol-1 #1).
-          // Only a vertical lead-in is held: a sideways one is never touched (a horizontal swipe is not intercepted).
+          // Only a vertical lead-in is held: a sideways lead-in is never touched (a horizontal swipe is not
+          // intercepted). A touch whose held vertical lead-in then turns sideways is decided "flat" below: no step,
+          // and its later moves stay prevented (nothing on the page scrolls sideways: overflow-x is clipped).
           // A second finger never gets here (the touch is dead): a pinch is never prevented.
           var vert = Math.abs(dy) > 0 && Math.abs(dy) >= C.DIR_RATIO * Math.abs(dx);
           var pf = vert && touchPasses(ev, 1, "probe"), pb = vert && touchPasses(ev, -1, "probe");
