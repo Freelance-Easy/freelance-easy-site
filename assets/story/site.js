@@ -38,9 +38,9 @@
     for (const m of $$('meta[name="theme-color"]')) m.setAttribute("content", c);
   }
   // FETheme (assets/shared/theme.js, A5) owns the switch: data-theme, fe-theme, the #dark/#light read (home never writes
-  // a hash) and the circle reveal. "fe:themechange" fires INSIDE the view-transition update, so the scenes rebuild
-  // with the new palette synchronously and land in the new snapshot.
-  document.addEventListener("fe:themechange", () => { syncSwitch(); refresh(); });
+  // a hash) and the circle reveal. "fe:themechange" fires INSIDE the view-transition update; an instant switch (no
+  // circle) rebuilds the scenes there, a circle reveal rebuilds them just after the circle starts (themeRebuild, C5b)
+  document.addEventListener("fe:themechange", () => { syncSwitch(); themeRebuild(); });
   // the circle plays only where the story is in motion (not on short touch phones): to give those the circle too,
   // flip this one line to `{ from: b }` (A8 html.motion gate)
   const revealOpts = (b) => (motion() ? { from: b } : undefined);
@@ -401,7 +401,10 @@
     over.innerHTML = "";
     ovCard = ovInk = ovMark = null;
   }
-  function build() {
+  const mountNames = (isDesk, p) => (isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : p === "tall" ? [...PHONE_BEATS, "yours"] : PHONE_BEATS);
+  // pre: the scenes a theme rebuild already mounted in the new theme (themeRebuild), adopted when they were built for
+  // this same stage (preset and scale); otherwise they go and the scenes mount here, as always
+  function build(pre) {
     clearStage();
     const p = preset(), [W, H] = SIZE[p];
     const isDesk = desktop();
@@ -414,8 +417,11 @@
     else if (label.parentNode !== stage) stage.appendChild(label);
     fitPhone();
     const s0 = stage.clientWidth / W;
-    const names = isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : p === "tall" ? [...PHONE_BEATS, "yours"] : PHONE_BEATS;
-    for (const n of names) mounts[n] = mount(n, p, s0);
+    const names = mountNames(isDesk, p);
+    // (Sol C5b-1 MEDIUM) the very same scenes, no more: a spare one would stay on the stage unregistered
+    const fits = pre && pre.p === p && pre.s0 === s0 && pre.dark === dark && names.length === Object.keys(pre.m).length && names.every((n) => pre.m[n]);
+    if (pre && !fits) for (const m of Object.values(pre.m)) m.rootEl.remove();
+    for (const n of names) mounts[n] = fits ? pre.m[n] : mount(n, p, s0);
     for (const m of Object.values(mounts)) m.show(false);
     const layer = () => {
       const l = div("fx-root stage-world fx-seam" + (p === "tall" ? " tall" : ""));
@@ -1543,7 +1549,8 @@
   // keep: a snapshot of where the story is (refresh), restored onto the rebuilt timeline when the checkpoints are the
   // same (a theme change, late fonts, a phone's caption refit). Across a layout change (a new destination table) the
   // reading place is restorePlace's job.
-  function start(firstLoad, keep) {
+  function start(firstLoad, keep, pre) {
+    dropRebuild(pre);                                   // any other (re)start supersedes a theme rebuild in flight
     try {
       resetEngine();
       layoutKey = key();
@@ -1559,7 +1566,7 @@
         capRO.disconnect();
         if (preset() === "tall") for (const b of TALL_BEATS) { const c = capFor(b); if (c) capRO.observe(c); }
       }
-      build();
+      build(pre);
       railMeasure();
       held = false;
       FX.gate.cursor = 1; FX.gate.press = 1;
@@ -1592,6 +1599,7 @@
       wake();
     } catch (err) {
       doc.classList.remove("motion", "calm");
+      if (pre) for (const m of Object.values(pre.m)) m.rootEl.remove();
       try { teardown(); } catch (e) { /* ignore */ }
       seqEnable();
       console.warn("The story fell back to its static layout:", err);
@@ -1604,6 +1612,78 @@
       past: phase === "released" ? readerY - storyEnd() : null };
   }
   function refresh() { start(false, snapshot()); }
+  // C5b (the circle starts on the press, Daniel's "feel instant"): mounting the scenes is most of a rebuild (16-28 ms in
+  // Chromium, 55-88 ms in WebKit, measured 2026-10-16), and inside the view-transition update it held the circle back by
+  // that much. So a theme switch inside a circle reveal mounts the new theme's scenes AFTER the circle's first frame, a
+  // few per task between frames, hidden beside the old ones, then swaps them in with the same refresh as before (the
+  // story's place carried over). Until the swap the old scenes are still on the stage, outside the circle: before any
+  // frame that could show the circle reaching the stage (or the overlay card), the rest is done at once, so no frame
+  // shows a scene in the old palette inside the circle. An instant switch (no circle) rebuilds synchronously, as before.
+  const RB_BUDGET = 8;                                // ms of mounting per task
+  const RB_SLACK = 34;                                // ms: the next paint may come up to two frames after a task ends
+  const revealEase = FX.bezier(0.55, 0, 0.25, 1);     // theme.js's reveal: 420 ms, cubic-bezier(.55,0,.25,1)
+  let rb = null;                                      // the theme rebuild in flight
+  function dropRebuild(keep) {
+    if (!rb) return;
+    const r = rb;
+    rb = null;
+    r.dead = true;
+    cancelAnimationFrame(r.raf); clearTimeout(r.timer);
+    if (r !== keep) for (const m of Object.values(r.m)) m.rootEl.remove();
+  }
+  const sameLayout = () => layoutKey.slice(layoutKey.indexOf("|")) === key().slice(key().indexOf("|"));
+  function themeRebuild() {
+    dropRebuild();
+    if (!TL || !CP.length || !motion() || !doc.classList.contains("vt-theme") || !sameLayout()) { refresh(); return; }
+    const r = (rb = { m: {}, t0: performance.now(), todo: null, touch: 0, raf: 0, timer: 0, frames: 0, dead: false });
+    r.raf = requestAnimationFrame((ts) => rebuildFrame(r, ts));
+  }
+  // (Sol C5b-1 HIGH) a frame callback stays pending while the rebuild runs, so EVERY frame checks before it paints: if
+  // the circle could reach the stage by this frame, the rest is done here, before the paint. The mounting itself runs in
+  // tasks between frames, from the second frame on (the first is the new snapshot's capture, the second the circle's
+  // first frame, where its start time is set: no work sits in front of either).
+  function rebuildFrame(r, ts) {
+    if (r.dead || r !== rb) return;
+    if (++r.frames >= 2 && !r.todo && !rebuildPrep(r)) return;
+    if (r.todo && (!doc.classList.contains("vt-theme") || Math.max(ts, performance.now()) + 4 - r.t0 >= r.touch)) { rebuildStep(r, true); return; }
+    r.raf = requestAnimationFrame((t) => rebuildFrame(r, t));
+    if (r.todo && !r.timer) r.timer = setTimeout(() => { r.timer = 0; rebuildStep(r, false); });
+  }
+  function rebuildPrep(r) {
+    if (!TL || !motion() || !sameLayout()) { refresh(); return false; }
+    const p = preset();
+    Object.assign(r, { p, s0: stage.clientWidth / SIZE[p][0], dark: theme() === "dark", touch: circleReach() });
+    r.todo = mountNames(desktop(), p).map((n) => () => { const m = mount(n, r.p, r.s0); m.show(false); r.m[n] = m; });
+    return true;
+  }
+  // ms after the switch at which the circle's outer edge could first reach the stage or a card over it (an early bound:
+  // t0 is before the circle's start, the end radius is theme.js's largest)
+  function circleReach() {
+    const x = parseFloat(doc.style.getPropertyValue("--vt-x")), y = parseFloat(doc.style.getPropertyValue("--vt-y"));
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return 0;
+    const far = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)), end = far + 222;
+    let d = Infinity;
+    for (const el of [stage, ...over.children]) {
+      const b = el.getBoundingClientRect();
+      if (b.width && b.height) d = Math.min(d, Math.hypot(Math.max(b.left - x, 0, x - b.right), Math.max(b.top - y, 0, y - b.bottom)));
+    }
+    let ms = 0;
+    while (ms < 420 && revealEase(ms / 420) * end < d) ms += 4;
+    return ms;
+  }
+  // all: finish now (a frame that could show the circle on the stage, or the circle is gone). Otherwise mount for about
+  // RB_BUDGET ms, and keep going when the circle could reach the stage within RB_SLACK (fewer last-moment stalls)
+  function rebuildStep(r, all) {
+    if (r.dead || r !== rb || !r.todo) return;
+    const t = performance.now(), now = () => performance.now();
+    while (r.todo.length) {
+      r.todo.shift()();
+      if (r.dead) return;
+      const late = all || !doc.classList.contains("vt-theme") || now() + RB_SLACK - r.t0 >= r.touch;
+      if (!late && r.todo.length && now() - t >= RB_BUDGET) return;      // the pending frame callback carries on
+    }
+    start(false, snapshot(), r);
+  }
   // ICX-SETTLE-7: every resize re-measures at once (no debounce for the re-snap); the layout itself follows, debounced
   function onGeometry() {
     if (!TL || !CP.length || !motion()) return;

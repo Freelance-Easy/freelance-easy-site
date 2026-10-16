@@ -192,10 +192,10 @@ def run_check(url, *extra):
 
 
 def test_reveal_check_passes_on_home(site_url):
-    # homepage start latency is pre-existing (refresh() in the VT update, base 53-59 ms); owner C5 (less dead time)
-    # brings it under 50, so the homepage runs the check with a looser start budget. Everything else is unchanged:
-    # duration, easing, centre, no corner snap at 390 and 1440, instant under reduced motion.
-    r = run_check(site_url + "/", "--max-start-ms", "80")
+    # C5b: the circle starts within 50 ms of the press in both directions (the check clicks twice: first and back),
+    # now that the scenes rebuild after the circle starts instead of inside the view-transition update. Everything
+    # else is unchanged: duration, easing, centre, no corner snap at 390 and 1440, instant under reduced motion.
+    r = run_check(site_url + "/", "--max-start-ms", "50")
     assert r.returncode == 0, r.stdout + r.stderr
     assert r.stdout.strip().splitlines()[-1].startswith("ALL PASS"), r.stdout
 
@@ -205,6 +205,71 @@ def test_reveal_check_default_start_budget_is_still_50(site_url):
     assert r.returncode == 1 and "expected <= 50" in r.stdout, r.stdout + r.stderr
     r = run_check(site_url + SLOW, "--width", "390", "--max-start-ms", "80")
     assert r.returncode == 1 and "expected <= 80" in r.stdout, r.stdout + r.stderr
+
+
+SWAP_PROBE = r"""
+async () => {
+  // C5b: the scenes rebuild after the circle starts; until the swap the OLD scenes are on the stage. Every frame before
+  // the swap must keep the circle short of the stage and the cards over it (else a frame shows the old palette inside
+  // the new theme). Samples the circle's radius each frame; the swap is when the old scene roots leave the stage.
+  const stg = document.querySelector('[data-stage=story]'), ovr = document.querySelector('.pin-over');
+  const btn = document.querySelector('[data-theme-toggle]');
+  const olds = [...stg.children].filter((e) => e.classList.contains('fx-root') && !e.classList.contains('fx-seam'));
+  const br = btn.getBoundingClientRect(), bx = br.left + br.width / 2, by = br.top + br.height / 2;
+  let dist = Infinity;
+  for (const el of [stg, ...ovr.children]) {
+    const b = el.getBoundingClientRect();
+    if (b.width && b.height) dist = Math.min(dist, Math.hypot(Math.max(b.left - bx, 0, bx - b.right), Math.max(b.top - by, 0, by - b.bottom)));
+  }
+  let swapped = false;
+  const mo = new MutationObserver(() => { if (olds.some((e) => !e.isConnected)) swapped = true; });
+  mo.observe(stg, { childList: true });
+  const radii = [], t0 = performance.now();
+  btn.click();
+  await new Promise((done) => {
+    const tick = () => {
+      if (!swapped) {
+        try {
+          const r = parseFloat(getComputedStyle(document.documentElement, '::view-transition-new(root)').getPropertyValue('--vt-r'));
+          if (Number.isFinite(r)) radii.push(Math.round(r));
+        } catch (e) { /* no pseudo yet */ }
+      }
+      if (performance.now() - t0 > 1500 || (swapped && !document.documentElement.classList.contains('vt-theme'))) done();
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  mo.disconnect();
+  return { dist: Math.round(dist), swapped, radii, roots: stg.querySelectorAll(':scope > .fx-root:not(.fx-seam)').length };
+}
+"""
+
+
+@pytest.mark.parametrize("width,height", [(390, 664), (1440, 900)])
+def test_theme_rebuild_lands_before_the_circle_reaches_the_stage(site_url, browser, width, height):
+    # a slow CPU (4x) makes the rebuild long enough to matter: the rest is done in one go before a frame could show
+    # the circle over the old scenes
+    ctx = browser.new_context(viewport={"width": width, "height": height}, reduced_motion="no-preference")
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    try:
+        page.goto(site_url + "/#dark", wait_until="load")
+        page.wait_for_function("() => window.__site && window.__site.TL", timeout=8000)
+        page.wait_for_timeout(300)
+        n = page.evaluate("() => document.querySelectorAll('[data-stage=story] > .fx-root:not(.fx-seam)').length")
+        cdp = ctx.new_cdp_session(page)
+        cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
+        for leg in ("first", "back"):
+            r = page.evaluate(SWAP_PROBE)
+            assert r["swapped"], f"{leg}: the scenes were never rebuilt"
+            over = [x for x in r["radii"] if x >= r["dist"]]
+            assert not over, f"{leg}: frames drew the circle at {over} px over the old scenes ({r['dist']} px away)"
+            assert r["roots"] == n, f"{leg}: {r['roots']} scene roots on the stage after the switch, expected {n}"
+            page.wait_for_timeout(200)
+        assert errors == [], errors
+    finally:
+        ctx.close()
 
 
 def test_double_press_flips_twice(site_url, browser):
