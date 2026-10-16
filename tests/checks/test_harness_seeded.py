@@ -369,3 +369,32 @@ def test_capture_is_deterministic(site_url, tmp_path):
     assert len(names) == 4
     for n in names:
         assert filecmp.cmp(outs[0] / n, outs[1] / n, shallow=False), f"{n} differs between runs"
+
+
+def test_capture_homepage_finishes_and_writes(site_url, tmp_path):
+    # the pinned story has offscreen loading="lazy" images that never load: capture must not hang
+    try:
+        r = subprocess.run([sys.executable, str(CHECKS / "capture.py"), site_url + "/",
+                            "--widths", "1280", "--themes", "dark", "--out", str(tmp_path)],
+                           capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        pytest.fail("capture.py on / did not finish within 60 s")
+    assert r.returncode == 0, r.stderr
+    assert (tmp_path / "home-dark-1280.png").stat().st_size > 1000
+
+
+def _seek_capture(site_url, out, seek):
+    r = subprocess.run([sys.executable, str(CHECKS / "capture.py"), site_url + "/",
+                        "--widths", "1280", "--themes", "dark", "--seek", seek,
+                        "--out", str(out)], capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stderr
+    return sorted(out.glob("*.png"))
+
+
+def test_capture_seek_is_deterministic_and_distinguishes_times(site_url, tmp_path):
+    a = _seek_capture(site_url, tmp_path / "a", "0,6")
+    b = _seek_capture(site_url, tmp_path / "b", "0,6")
+    assert len(a) == 2 and [p.name for p in a] == [p.name for p in b]
+    assert not filecmp.cmp(a[0], a[1], shallow=False), "two story times gave the same image"
+    for x, y in zip(a, b):
+        assert filecmp.cmp(x, y, shallow=False), f"{x.name} differs between runs"
