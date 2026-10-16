@@ -23,19 +23,18 @@ import lib
 from lib import (BEATS, CELLS, SEED, SLUGS, Cell, Fuzz, Story, check_engine,
                  assert_rate, dip_spans, rests_seen)
 
-# Bound change (C3, evidenced): ICX-REST.1's allowance is the target's own transition + content + 1 s. lib.allowance
-# stands in DEC-8's ceilings (1.5 s per transition + 5 s of content), which C5 reaches by trimming dead time. Today two
-# single steps exceed them (C0b's finding, PLAN decision log 2026-10-15), measured on __site.map() (segments identical to
-# the base: tests/story/test_segment_order.py): Make->Look 2.58 s + Look 4.93 s = 7.51 s, and the Ride 1.47 s + Email
-# 6.03 s = 7.50 s at 1x (desktop dark). With lib's 7.5 s budget those steps timed out 0-10 ms short of their rest frame
-# (story T 11.102-11.109 of 11.11; 24.028 of 24.03). C3 may not speed motion up, so the budget gets the measured excess
-# plus scheduling slack: +0.5 s. C5 removes this once its trims land.
-C5_SLACK = 0.5
+# Bound (C5, evidenced): ICX-REST.1's allowance is the target's own transition + content + 1 s. lib.allowance stands in
+# DEC-8's ceilings (1.5 s per transition + 5 s of content). C5's dead-time trims brought the Ride + Email under it (1.47 +
+# 5.25 s, Email a named content exception), so C3's pending C5_SLACK is gone. One step stays over by design: Make->Look
+# is DEC-8's named TRANSITION exception (2.58 s dark: Make's moving tail + the untouched PDF->Look circle, no still frame
+# in it; scripts/checks/timing.py EXCEPTIONS), and Make->Look + Look = 7.51 s at 1x vs lib's 7.5 s. The budget carries
+# that exception's measured excess plus scheduling slack: +0.5 s.
+MAKE_LOOK_EXCEPTION_SLACK = 0.5
 _lib_allowance = lib.allowance
 
 
 def allowance(distance: int) -> float:
-    return _lib_allowance(distance) + C5_SLACK
+    return _lib_allowance(distance) + MAKE_LOOK_EXCEPTION_SLACK
 
 
 def to_checkpoint(story: Story, idx: int):

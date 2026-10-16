@@ -87,7 +87,23 @@
     c.style.removeProperty("filter");
     if (c.getAttribute("style") === "") c.removeAttribute("style");
   }
-  function clearDip() { for (const el of [stageWrap, over]) if (el) el.style.removeProperty("opacity"); unDipCopy(); }
+  function clearDip() { for (const el of [stageWrap, over, band]) if (el) el.style.removeProperty("opacity"); unDipCopy(); }
+  // C5 (test_dip_fades_band) a dip whose cut turns the Ride's band on or off (a jump into or out of Email) fades the band
+  // with the stage: left alone it flipped the whole pin's colour in one frame at the dark frame. A dip that stays inside
+  // the band (or outside it) leaves the band put, as v2.1 asked. The band's state is the timeline's, at a story time.
+  function bandOnAt(T) {
+    if (!TL) return false;
+    const sg = TL.segs[segAt(clamp(T, 0, TL.T1))];
+    const G = sg.kind === "seam" && sg.seam.globals ? sg.seam.globals(T - sg.T0) : sg.G;
+    return (G.band || 0) > 0;
+  }
+  function dipBand(a) {
+    // (Sol C5-1 #3) the cut's own target, as cut() will take it: a skip stays on its origin's rest unless dest is >= 2 away
+    const entry = dip.mode === "entry" || (dip.mode === "skip" && Math.abs(kD - kR) >= 2);
+    const k = entry ? kD : dip.k;
+    const to = bandOnAt(dip.cut ? shown : RE[k] ? RE[k][entry ? 0 : 1] : shown);
+    if (dip.band0 !== to && a < 0.999) band.style.opacity = a.toFixed(3); else band.style.removeProperty("opacity");
+  }
   const nav = $(".story-nav");
   const BEATS = ["make", "look", "know", "grow", "chase", "yours", "price", "note", "end"];
   const PHONE_BEATS = ["make", "look", "know", "grow", "chase"];
@@ -437,9 +453,11 @@
     scene("chase", M.chase, 0, M.chase.inst.END, { ...GBASE, field: 1, band: 1 });
     if (isDesk) {
       seam("chaseYours", S.chaseYours, M.chase, M.yours);
-      scene("yours", M.yours, M.yours.inst.START, M.yours.inst.END, GBASE);
+      // C5 (DEC-8: cut dead time, never motion speed) Yours is still after its rest (START + 0.28) and Price after its
+      // rest (T0 + 0.3): each now ends 0.02 s after its rest, so the next move starts on the gesture
+      scene("yours", M.yours, M.yours.inst.START, FX.trim(false) ? M.yours.inst.START + 0.3 : M.yours.inst.END, GBASE);
       seam("yoursPrice", S.yoursPrice, M.yours, null);
-      hold("price", 0.6, { ...GBASE, stage: 0, card: { from: "price", k: 1 } });
+      hold("price", FX.trim(false) ? 0.32 : 0.6, { ...GBASE, stage: 0, card: { from: "price", k: 1 } });
       seam("priceBrand", S.priceBrand, null, null);
       hold("brand", 1.0, { ...GBASE, stage: 0, mark: 1 });
     } else if (p === "tall") {
@@ -458,7 +476,12 @@
     // (the Ride: "Watch it add up." stays through the dive, leaves as the colour floods out, and "Follow up in two
     // clicks." arrives once the band is the whole page: one clean colour move, no text caught in it)
     const ride = seg("ride");
-    TL.switches = [["look", seg("makeLook").T0 + 0.3], ["know", seg("lookKnow").T0 + 0.22],
+    // C5 (ICX-STEP.3, main 2026-10-16) wider stages: Look's caption arrives as Create's press lands (0.60 s after the
+    // gesture at Make's hold), not 0.3 s into the hand-off (1.62 s dark): only the caption moves, no motion
+    // (Sol C5-1 #1: a caption is ACTIVE 0.18 s after its switch, the 0.12 s hysteresis + the 0.06 s outgoing fade, so the
+    // switch sits 0.04 s before the press: the caption is active 0.60 s after the gesture)
+    const lookAt = p !== "tall" && FX.trim(false) ? seg("make").T0 + M.make.inst.B.pressCreate - 0.04 : seg("makeLook").T0 + 0.3;
+    TL.switches = [["look", lookAt], ["know", seg("lookKnow").T0 + 0.22],
       ["grow", seg("knowGrow").T0 + 0.22], [null, ride.T0 + ride.seam.DIVE + 0.04], ["chase", ride.T1 - 0.08]];
     if (isDesk) {
       // (Chase -> Yours: the Chase caption leaves before the band draws back over it; Yours arrives once it's gone)
@@ -1080,7 +1103,7 @@
       return;
     }
     run = null; wait = 0;
-    dip = { t0: t, mode, k, cut: false };
+    dip = { t0: t, mode, k, cut: false, band0: bandOnAt(shown) };
     lastDipAt = t;
     phase = "dip";
     wake(t);
@@ -1158,10 +1181,10 @@
   // a dip: 100 ms out, the cut at the dark frame (dest as it stands then, ICX-DIP.2), 120 ms in
   function dipStep(now) {
     const u = now - dip.t0;
-    if (u < CFG.DIP_OUT) { setDip(1 - u / CFG.DIP_OUT); return; }
+    if (u < CFG.DIP_OUT) { setDip(1 - u / CFG.DIP_OUT); dipBand(1 - u / CFG.DIP_OUT); return; }
     if (!dip.cut) cut();
     const a = Math.min(1, (u - CFG.DIP_OUT) / CFG.DIP_IN);
-    setDip(a);
+    setDip(a); dipBand(a);
     if (a >= 1) { const d = dip; dip = null; clearDip(); afterDip(d); }
   }
   function cut() {
@@ -1748,7 +1771,7 @@
       return {
         T0: 0, T1: TL.T1, H: TL.HOLD, desktop: TL.isDesk, preset: TL.p, scrollLen: TRACK ? TRACK.L : 0, storyTop: Math.round(storyTop), beatPx,
         segs: TL.segs.map((s) => ({ id: s.id, kind: s.kind, T0: +s.T0.toFixed(3), T1: +s.T1.toFixed(3) })),
-        beats: TL.beats, switches: TL.switches.map(([b, t]) => [b, +t.toFixed(3)]), dests: destinations(),
+        beats: TL.beats, switches: TL.switches.map(([b, t, w]) => (w == null ? [b, +t.toFixed(3)] : [b, +t.toFixed(3), w])), dests: destinations(),
       };
     },
     state() { return { shown: liveT(), target: run ? run.to : shown, vel: run ? run.dir * run.rate : 0, beat: TL ? TL.beats[capIdx] : null, intro: !!(run && run.intro), dip: !!dip, gate: { ...FX.gate }, phase }; },

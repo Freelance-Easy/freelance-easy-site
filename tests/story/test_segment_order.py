@@ -36,7 +36,7 @@ def test_segments_equal_base(browser, site_url, layout, theme):
     ctx.add_init_script(f"try{{localStorage.setItem('fe-theme','{theme}')}}catch(e){{}}")
     try:
         page = ctx.new_page()
-        page.goto(site_url + "/", wait_until="load")
+        page.goto(site_url + "/?pace=before", wait_until="load")   # C5: the base timeline is the A/B flag's; C5's own table is tests/checkpoint/test_timing.py
         page.wait_for_function("() => window.__site && window.__site.TL", timeout=10000)
         got = page.evaluate("() => window.__site.map().segs.map(s => `${s.id}:${s.T0}-${s.T1}`).join(' ')")
         assert got == BASE[(layout, theme)], f"segment ids/order/bounds changed from the base 7ae00f7:\n got  {got}\n base {BASE[(layout, theme)]}"
