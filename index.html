@@ -30,6 +30,7 @@
          a seam; scrolling back plays it backwards. Every sentence not on the previous homepage is marked NEW COPY for
          legal. Fictional persona and clients. Without JS, or with reduced motion, the beats stack with still images.
          Files: /assets/story/ (see HANDOFF.md). All fonts are self-hosted; the page makes no third-party request. -->
+    <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
     <script>
       (function () {
         // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
@@ -66,6 +67,9 @@
     </script>
     <link rel="stylesheet" href="/assets/shared/theme.css" />
     <script src="/assets/shared/theme.js"></script>
+    <link rel="stylesheet" href="/assets/site/shell.css" />
+    <script src="/assets/site/shell.js" defer></script>
+    <!-- /fe-shell:head -->
     <link rel="stylesheet" href="/assets/story/app.css" />
     <link rel="stylesheet" href="/assets/story/site.css" />
 
@@ -392,8 +396,12 @@
   </section>
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer fe-shell-footer">
   <div class="shell">
+    <!-- the footnotes block (B2): the site's fine print, collected here; page-specific notes join this list -->
+    <section class="fe-shell-footnotes" aria-label="Footnotes">
+      <!-- NEW COPY --><p class="fe-shell-footnote" data-footnote="fictional">Names, invoices and amounts shown on this site are fictional.</p>
+    </section>
     <a class="brand" href="#top"><img src="/assets/story/fe-mark.png" alt="" width="22" height="22"><span>Freelance Easy</span></a>
     <ul class="foot-links">
       <li><a href="#download">Download</a></li>
@@ -403,6 +411,9 @@
       <li><a href="/privacy">Privacy</a></li>
       <li><a href="/terms">Terms</a></li>
       <li><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></li>
+      <!-- web billing is paused: shell.js shows this, and gives it its href, only when its web-billing flag is on
+           (web-account contract § 6); /account does not exist yet, so the off state ships no link to it -->
+      <li data-flag="web-billing" hidden><a data-flag-href="/account">Manage subscription</a></li>
     </ul>
     <p class="foot-meta">© 2026 Freelance Easy LLC</p>
   </div>
