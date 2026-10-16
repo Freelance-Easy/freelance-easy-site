@@ -2169,7 +2169,10 @@ html.on-band .pin.full-field .stage {
 }
 /* while the Ride's band is the page, the header takes its colour */
 html.on-band:where(:not(.past-band)) .site-header {
-  background: color-mix(in srgb, var(--ride) 88%, transparent);
+  /* (BX) the bar's resting text on the band: --ride-text over the band's own colour measured 4.13:1 light (white on
+     rgb(62,136,136) once the page behind lifted it). The bar's fill is the band moved a little toward --text-1, the
+     end opposite --ride-text in both themes (A10's move), opaque so what passes behind never changes the ratio */
+  background: color-mix(in srgb, var(--ride) 91%, var(--text-1));
   border-bottom-color: transparent;
 }
 html.on-band:where(:not(.past-band)) .site-header .brand,

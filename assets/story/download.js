@@ -268,10 +268,16 @@
     var placement = opts.placement || a.getAttribute("data-placement") || "header";
     var platforms = platformList(opts.platforms || a.getAttribute("data-platforms"));
     if (os === "mobile") {
+      var held = noteFor(placement);
+      if (held) held.setAttribute("data-dl-skip", "");
       headerLabel(a);
       return;
     }
-    if (platforms.indexOf(os) < 0) return;
+    if (platforms.indexOf(os) < 0) {
+      var spare = noteFor(placement);
+      if (spare) spare.setAttribute("data-dl-skip", ""); // not filled: give back the room dl-status.css held for it
+      return;
+    }
     a.setAttribute("data-platform", os);
     a.setAttribute("href", "/dl/" + os + "/" + campaign);
     var note = noteFor(placement);

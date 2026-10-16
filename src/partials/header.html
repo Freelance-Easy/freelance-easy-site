@@ -1,6 +1,17 @@
 <header class="site-header">
   <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
   <link rel="stylesheet" href="/assets/story/dl-status.css">
+  <script>
+      /* (BX) a Mac or Windows desktop, decided like download.js's detectPlatform, before the first paint, ahead of the nav it sizes */
+      (function () {
+        var u = (navigator.userAgent || "").toLowerCase(), p = (navigator.platform || "").toLowerCase();
+        if (/iphone|ipod|ipad|android|windows phone/.test(u)) return;
+        var mac = /mac/.test(p) || /mac os x|macintosh/.test(u);
+        if (mac && navigator.maxTouchPoints > 1) return;
+        var win = !mac && (/win/.test(p) || /windows/.test(u));
+        if (mac || win) document.documentElement.setAttribute("data-dl-os", mac ? "mac" : "win");
+      })();
+  </script>
   <!-- (B4) the slim bar (DEC-1): site-level actions only. No link here jumps inside the story: the chapter rail is the
        page's own menu (B5). Sticky, never hides, 56 px (assets/site/shell.css). -->
   <div class="shell">
@@ -17,7 +28,7 @@
       <a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a><!-- NEW COPY (nav label) -->
       <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
            and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
-      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden></span>
+      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden><!-- (BX) the words download.js will put here, held invisibly so the fill moves nothing (dl-status.css); keep them equal to NOTES in download.js (tests/shell/test_bar_polish.py checks) --><span data-ph="mac"><span class="dl-note-part">Apple Silicon Macs</span><span class="dl-note-sep"> </span><span class="dl-note-part">(M1 or later)</span></span><span data-ph="win"><span class="dl-note-part">Windows 10 and 11</span><span class="dl-note-sep">, </span><span class="dl-note-part">64-bit</span></span></span><!-- NEW COPY -->
       <a class="nav-cta" href="#download" data-dl data-placement="header" data-platforms="mac,win">Download</a>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
         <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
