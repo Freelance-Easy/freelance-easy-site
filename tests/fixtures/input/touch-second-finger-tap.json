@@ -1,0 +1,178 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "t": 0,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 600
+    }
+   ],
+   "type": "touchstart"
+  },
+  {
+   "t": 20,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 600
+    },
+    {
+     "x": 240,
+     "y": 600
+    }
+   ],
+   "type": "touchstart"
+  },
+  {
+   "t": 60,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 600
+    }
+   ],
+   "type": "touchend"
+  },
+  {
+   "t": 76,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 588
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 92,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 576
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 108,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 564
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 124,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 552
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 140,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 540
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 156,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 528
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 172,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 516
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 188,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 504
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 204,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 492
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 220,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 480
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 228,
+   "target": "body",
+   "touches": [],
+   "type": "touchend"
+  }
+ ],
+ "name": "touch-second-finger-tap",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

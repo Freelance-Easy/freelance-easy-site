@@ -1,0 +1,90 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": " ",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 0,
+   "target": "a",
+   "type": "keydown"
+  },
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": " ",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 500,
+   "target": "btn",
+   "type": "keydown"
+  },
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": " ",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 1000,
+   "target": "sum",
+   "type": "keydown"
+  },
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": " ",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 1500,
+   "target": "rb",
+   "type": "keydown"
+  }
+ ],
+ "name": "key-space-on-controls",
+ "nodes": {
+  "a": {
+   "parent": "body",
+   "tag": "A"
+  },
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "btn": {
+   "parent": "body",
+   "tag": "BUTTON"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  },
+  "rb": {
+   "parent": "body",
+   "role": "button",
+   "tag": "DIV"
+  },
+  "sum": {
+   "parent": "body",
+   "tag": "SUMMARY"
+  }
+ },
+ "synthetic": true
+}

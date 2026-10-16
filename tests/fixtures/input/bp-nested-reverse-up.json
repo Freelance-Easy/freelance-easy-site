@@ -1,0 +1,62 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 100,
+   "metaKey": false,
+   "t": 0,
+   "tag": "down",
+   "target": "p",
+   "type": "wheel",
+   "wheelDeltaY": -120
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": -100,
+   "metaKey": false,
+   "t": 150,
+   "target": "p",
+   "type": "wheel",
+   "wheelDeltaY": 120
+  }
+ ],
+ "name": "bp-nested-reverse-up",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "box": {
+   "parent": "body",
+   "scroll": {
+    "client": 300,
+    "height": 1000,
+    "overflowY": "auto",
+    "top": 700
+   },
+   "tag": "DIV"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  },
+  "p": {
+   "parent": "box",
+   "tag": "P"
+  }
+ },
+ "synthetic": true
+}

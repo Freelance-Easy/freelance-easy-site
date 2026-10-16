@@ -1,0 +1,37 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": true,
+   "key": "ArrowDown",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 0,
+   "target": "body",
+   "type": "keydown"
+  }
+ ],
+ "name": "key-default-prevented",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}
