@@ -137,3 +137,41 @@ def test_recording_is_fixture_format(browser, site_url, tmp_path):
     assert any(s["src"] == "wheel" and s["dir"] == 1 for s in out["steps"]), out
     assert any(s["src"] == "key" for s in out["steps"])
     assert out["jumps"] == [{"src": "key", "t": out["jumps"][0]["t"], "target": "first"}]
+
+
+def _run_runner(tmp_path, fixture: dict) -> dict:
+    (tmp_path / "tests" / "checkpoint").mkdir(parents=True)
+    (tmp_path / "tests" / "fixtures" / "input").mkdir(parents=True)
+    (tmp_path / "assets" / "shared").mkdir(parents=True)
+    shutil.copy(ROOT / "tests" / "checkpoint" / "run_detector.mjs", tmp_path / "tests" / "checkpoint")
+    shutil.copy(ROOT / "assets" / "shared" / "checkpoint-input.js", tmp_path / "assets" / "shared")
+    (tmp_path / "tests" / "fixtures" / "input" / "rec.json").write_text(json.dumps(fixture))
+    r = subprocess.run(["node", str(tmp_path / "tests" / "checkpoint" / "run_detector.mjs")],
+                       capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)["fixtures"]["rec"]
+
+
+def _two_drags(config=None) -> dict:
+    ev = []
+    for start in (0, 388):  # 208 ms of slow drag, 180 ms quiet, 208 ms again
+        for k in range(14):
+            ev.append({"type": "wheel", "t": start + 16 * k, "target": "body", "deltaX": 0, "deltaY": 4,
+                       "deltaMode": 0, "wheelDeltaY": -4, "ctrlKey": False, "metaKey": False})
+    fx = {"name": "rec", "synthetic": True, "events": ev,
+          "env": {"consumer": {"mode": "intercept"}, "enabled": True, "innerHeight": 800, "pinHeight": 800, "visualScale": 1},
+          "nodes": {"html": {"parent": None, "tag": "HTML"}, "body": {"parent": "html", "tag": "BODY"}}}
+    if config is not None:
+        fx["config"] = config
+    return fx
+
+
+def test_runner_replays_tuned_config(tmp_path):
+    default = _run_runner(tmp_path / "a", _two_drags())
+    tuned = _run_runner(tmp_path / "b", _two_drags({"QUIET_SMOOTH": 300}))
+    assert len(default["steps"]) == 2  # 180 ms quiet > QUIET_SMOOTH 140: two gestures
+    assert len(tuned["steps"]) == 1  # 180 ms < 300: one gesture
+    bad = _two_drags({"NOPE": 1})
+    (tmp_path / "c").mkdir()
+    with pytest.raises(AssertionError):  # same validation as the module: unknown keys throw
+        _run_runner(tmp_path / "c", bad)
