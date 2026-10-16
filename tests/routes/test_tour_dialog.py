@@ -46,7 +46,9 @@ def test_hero_links_full_tour(site_url, browser):
         assert link.count() == 1
         assert link.get_attribute("href") == "/tour/"
         assert " ".join(link.inner_text().split()) == "Watch the tour"
-        assert page.locator("dialog").count() == 0
+        # the tour dialog is gone; B6's menu sheet (#fe-menu) is the page's only dialog
+        assert page.locator("#tour-quick, .tq-dialog").count() == 0
+        assert page.locator("dialog:not(#fe-menu)").count() == 0
     finally:
         ctx.close()
 
