@@ -102,6 +102,38 @@
   </div>
   <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
 </header>
+<!-- (B6) the phone/tablet menu sheet. Its button goes in the bar's [data-menu-slot] (the script below moves it there
+     before the first paint); shell.js opens and closes the sheet, fills the chapter list from FEStory.destinations (the
+     rail's source, rail.js) and hands a chapter tap to FEStoryURL.jump / FEStory.goTo. shell.css shows the button where
+     the bar has dropped How it works and Pricing (< 640 px) and, on the story page, wherever the chapter rail is hidden
+     (< 1024 px). Without JS the button stays hidden (.js gate in shell.css): no dead control; the footer keeps the links. -->
+<button type="button" class="fe-menu-btn" data-menu-open aria-controls="fe-menu" aria-expanded="false" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <svg class="fe-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path class="fe-menu-bars" d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" /><path class="fe-menu-x" d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
+</button>
+<script>
+  (function () {
+    var b = document.querySelector("[data-menu-open]"), s = document.querySelector(".site-header [data-menu-slot]");
+    if (b && s && b.parentNode !== s) s.appendChild(b);
+  })();
+</script>
+<dialog class="fe-menu" id="fe-menu" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <div class="fe-menu-panel">
+    <nav class="fe-menu-site" aria-label="Site"><!-- NEW COPY (aria-label) -->
+      <ul>
+        <li><a href="/tour/">How it works</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <!-- web sign-up is paused: exactly as the bar's Sign in (header.html), shown with its href only when shell.js's
+             web-signup flag is on -->
+        <li><a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a></li>
+      </ul>
+    </nav>
+    <nav class="fe-menu-chapters" aria-labelledby="fe-menu-chapters-h" hidden>
+      <p class="fe-menu-label" id="fe-menu-chapters-h">Chapters</p><!-- NEW COPY -->
+      <ol></ol>
+    </nav>
+    <button type="button" class="fe-menu-close" data-menu-close>Close</button><!-- NEW COPY -->
+  </div>
+</dialog>
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Privacy policy</h1>
