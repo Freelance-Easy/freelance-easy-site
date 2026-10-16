@@ -17,6 +17,11 @@ LAYERS = """() => [document.querySelector('.stage-wrap'), document.querySelector
 # (before the cut), "in" = the fade-in (after the cut: the stage's opacity is rising again)
 TOGGLE_IN_DIP = """(part) => new Promise((res, rej) => {
   const w = document.querySelector('.stage-wrap'), t0 = performance.now(); let cutAt = null, r0 = FEStory.state().rendered;
+  // the rebuild itself (fe:themechange runs inside the view transition's update, later than the click): window's
+  // capture phase sees it before site.js's listener on document rebuilds the story (Sol DIP-fix-1 MEDIUM)
+  window.__rebuild = null;
+  window.addEventListener('fe:themechange', () => { if (!window.__rebuild) window.__rebuild = {
+    phase: FEStory.state().phase, op: parseFloat(w.style.opacity || '1') }; }, true);
   const tick = () => {
     const s = FEStory.state(), op = parseFloat(w.style.opacity || '1');
     if (performance.now() - t0 > 3000) return rej(new Error('no dip seen: ' + JSON.stringify(s)));
@@ -64,6 +69,9 @@ def test_theme_switch_mid_dip_rests_with_full_stage(browser, site_url, theme, mo
         page.wait_for_function(f"() => FEStory.phase === 'rest' && FEStory.rendered === {want}", timeout=15000)
         page.wait_for_timeout(300)
         assert page.evaluate("() => document.documentElement.getAttribute('data-theme')") != theme, "the toggle never switched"
+        rb = page.evaluate("() => window.__rebuild")
+        assert rb and rb["phase"] == "dip" and rb["op"] < 1, (
+            f"the rebuild did not land inside the dip ({move}, fade-{part}): {rb}; the test proves nothing then")
         layers = page.evaluate(LAYERS)
         assert all(l["inline"] == "" and l["computed"] == "1" for l in layers), (
             f"theme switch in the dip's fade-{part} ({move}, {theme}, toggled at opacity {got['op']:.2f}): "
