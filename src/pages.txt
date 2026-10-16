@@ -1,0 +1,3 @@
+# Pages added after the cutover (scripts/build-site.py builds these plus its own PAGES list).
+# One file name from src/pages/ per line.
+pricing.html
