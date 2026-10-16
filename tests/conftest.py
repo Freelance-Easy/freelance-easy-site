@@ -3,6 +3,9 @@
 site_url: builds the root pages from src/ (scripts/build-site.py) and serves this
 checkout on a free port, 127.0.0.1 only, for the whole session. It yields the
 base URL with no trailing slash, e.g. "http://127.0.0.1:53817".
+
+Tests marked @pytest.mark.slow (C2's ~20 min seeded fuzz) are skipped unless --runslow is given; the orchestrator
+passes it at integration gates.
 """
 from __future__ import annotations
 
@@ -16,6 +19,24 @@ import threading
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+
+def pytest_addoption(parser):
+    parser.addoption("--runslow", action="store_true", default=False,
+                     help="also run tests marked slow (integration gates)")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: long-running; skipped unless --runslow")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--runslow"):
+        return
+    skip = pytest.mark.skip(reason="slow: pass --runslow to run")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip)
 
 
 class _QuietHandler(http.server.SimpleHTTPRequestHandler):
