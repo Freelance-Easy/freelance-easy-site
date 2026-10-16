@@ -48,6 +48,211 @@ html:root {
   align-items: center;
 }
 
+/* ---------- The menu sheet (B6, src/partials/menu.html; shell.js opens it) ----------
+   The button: the theme toggle's round icon button, beside it at the bar's end. Shown, with JS only, where the bar
+   has dropped How it works and Pricing (< 640 px, the phone bar) and, on the story page, wherever the chapter rail is
+   hidden (< 1024 px, rail.css). The sheet: a calm solid panel under the bar (no glass), the page dimmed behind it. */
+.fe-menu-btn {
+  display: none;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  position: relative;
+}
+.fe-menu-btn:hover,
+.fe-menu-btn[aria-expanded="true"] {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+/* a 44 px hit area, as the bar's other controls on a phone */
+.fe-menu-btn::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+.fe-menu-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.fe-menu-btn .fe-menu-x,
+.fe-menu-btn[aria-expanded="true"] .fe-menu-bars {
+  display: none;
+}
+.fe-menu-btn[aria-expanded="true"] .fe-menu-x {
+  display: inline;
+}
+html.on-band:where(:not(.past-band)) .fe-menu-btn {
+  color: var(--ride-text-2);
+}
+html.on-band:where(:not(.past-band)) .fe-menu-btn:hover,
+html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride-text) 14%, transparent);
+}
+@media (max-width: 639px) {
+  .js .fe-menu-btn {
+    display: grid;
+    width: 34px;
+    height: 34px;
+  }
+}
+@media (max-width: 1023px) {
+  .js body:has(.story-nav) .fe-menu-btn {
+    display: grid;
+  }
+}
+/* the narrowest phones (measured at 360 with "Get it on Mac"): the button's 34 px + gap left the brand 9 px short, so
+   the bar's brand-to-nav gap closes to 8 px and the button sits a little tighter to the theme toggle (44 px hit areas
+   kept by ::after) */
+@media (max-width: 380px) {
+  html.js .site-header .shell:has(.fe-menu-btn) {
+    gap: 8px;
+  }
+  .js body:has(.story-nav) .fe-menu-btn {
+    width: 32px;
+    height: 32px;
+    margin-left: -2px;
+  }
+}
+/* the doc pages' nav has no flex gap (styles.css): the button keeps the toggle's 2 px spacing there */
+body:has(> main.doc) .fe-menu-btn {
+  margin-left: 2px;
+}
+/* the page holds still under the open sheet */
+html.fe-menu-open {
+  overflow: hidden;
+}
+.fe-menu {
+  position: fixed;
+  inset: var(--header-h) 0 0 0;
+  z-index: 40;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--text-0);
+  background: color-mix(in srgb, var(--bg-0) 72%, transparent);
+  overscroll-behavior: contain;
+  overflow: auto;
+}
+.fe-menu:not([open]) {
+  display: none;
+}
+.fe-menu-panel {
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line-2);
+  border-radius: 0 0 20px 20px;
+  box-shadow: var(--shadow-card, none);
+  padding: 8px var(--pad, 16px) 16px;
+}
+.fe-menu-panel ul,
+.fe-menu-panel ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fe-menu-panel a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 4px;
+  color: var(--text-1);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border-radius: 10px;
+}
+.fe-menu-panel a:hover {
+  color: var(--text-0);
+}
+.fe-menu-panel li + li a {
+  border-top: 1px solid var(--line-1);
+  border-radius: 0;
+}
+.fe-menu-site a {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-0);
+}
+/* where the bar shows How it works and Pricing itself (>= 640 px), the sheet holds only the chapters */
+@media (min-width: 640px) {
+  .fe-menu-site {
+    display: none;
+  }
+}
+.fe-menu-label {
+  margin: 14px 4px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-2);
+}
+@media (min-width: 640px) {
+  .fe-menu-label {
+    margin-top: 6px;
+  }
+}
+.fe-menu-chapters a.is-current {
+  color: var(--text-0);
+  font-weight: 640;
+}
+.fe-menu-chapters a.is-current::before {
+  content: "";
+  width: 3px;
+  height: 18px;
+  margin-right: 10px;
+  margin-left: -4px;
+  border-radius: var(--r-pill);
+  background: var(--text-0);
+}
+.fe-menu-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.fe-menu-close {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--text-0) 6%, var(--bg-1));
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.fe-menu-close:hover {
+  color: var(--text-0);
+  background: color-mix(in srgb, var(--text-0) 11%, var(--bg-1));
+}
+.fe-menu a:focus-visible,
+.fe-menu-close:focus-visible {
+  outline: 2px solid var(--text-0);
+  outline-offset: -2px;
+}
+
 /* ---------- The bar on the doc pages (B7, CF-14) ----------
    privacy, terms, install and 404 load styles.css, whose older .site-header rules (14 px padding, a "#download"
    pill) are not the homepage bar's. These rules, scoped to a page whose <main> is a .doc, give the bar site.css's
