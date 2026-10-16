@@ -291,6 +291,27 @@ def test_single_column_layout(site_url, browser):
             ctx.close()
 
 
+IPHONE_UA = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
+             "Version/17.0 Mobile/15E148 Safari/604.1")
+
+
+def test_phone_gets_no_installer_link(site_url, browser):
+    """On a phone the download row offers only the hand-off to a computer (A9/piece M): no installer link (Sol PR-1)."""
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True,
+                              user_agent=IPHONE_UA)
+    try:
+        page = ctx.new_page()
+        page.goto(site_url + PAGE, wait_until="load")
+        page.wait_for_timeout(300)
+        assert page.evaluate("() => document.documentElement.getAttribute('data-os')") == "mobile"
+        row = page.locator('main [data-dl][data-placement="pricing-page"]')
+        assert row.locator('[data-role="primary"]').is_visible()
+        assert row.locator('[data-role="primary"] [data-label]').inner_text().strip() == "Send to my Mac"
+        assert not row.locator('[data-role="alt"]').is_visible()
+    finally:
+        ctx.close()
+
+
 def test_in_sitemap_and_on_the_shell(site_url):
     assert "<loc>https://freelance-easy.com/pricing</loc>" in (ROOT / "sitemap.xml").read_text(encoding="utf-8")
     page_html = built()

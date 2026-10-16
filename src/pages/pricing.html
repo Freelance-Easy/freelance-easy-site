@@ -23,6 +23,9 @@
       .pricing-page .steps > li { margin-bottom: 18px; }
       .pricing-page .dl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 12px 0 8px; }
       .pricing-page .dl-row .btn { min-height: 44px; }
+      /* phones (download.js sets data-os="mobile"): the primary button sends the page to a computer, so no installer
+         link stays beside it (the homepage's rule, assets/story/site.css, which this page doesn't load) */
+      [data-os="mobile"] .pricing-page [data-role="alt"] { display: none; }
       @media (max-width: 560px) {
         .pricing-page .plan-grid { grid-template-columns: 1fr; }
       }
