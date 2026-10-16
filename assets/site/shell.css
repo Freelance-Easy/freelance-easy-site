@@ -53,6 +53,11 @@ html:root {
    pill) are not the homepage bar's. These rules, scoped to a page whose <main> is a .doc, give the bar site.css's
    shape: 56 px, the outlined Download pill (its href is /install here, so styles.css's [href="#download"] pill
    cannot match), the round theme button, the hairline (no scroll observer runs here), and the phone bar. */
+/* dl-status.css places the Download status line with site.css's --shell and --pad, which a doc page does not load */
+body:has(> main.doc) {
+  --shell: 1240px;
+  --pad: clamp(16px, 3vw, 40px);
+}
 body:has(> main.doc) .site-header {
   height: var(--header-h);
   border-bottom-color: var(--line-1);
