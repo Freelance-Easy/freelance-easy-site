@@ -10,6 +10,13 @@
     even, drawShape, drawInk, alphaAt, placeSt, swapText, Cursor, tipIn, vrect } = FX;
   const KIT = () => window.FE_SITE;
   const S = (FX.scenes = {});
+  // C5 (DEC-8: cut DEAD time, never motion speed) the dead-time trims play on wider stages; phones (tall) keep the
+  // 10-10 timeline. `?pace=before` plays the pre-C5 timeline everywhere (Daniel's live A/B: no UI, no storage).
+  FX.paceBefore = /(^|[?&])pace=before(&|$)/.test(location.search);
+  FX.trim = (tall) => !FX.paceBefore && !tall;
+  // a still span cut out of a scene: cuts are [at, d] (local seconds: the scene is still from `at` to `at + d`, nothing
+  // keyed inside it); a beat at or after `at + d` moves d earlier, so every moving part keeps its own duration
+  FX.cutTime = (cuts) => (t) => t - cuts.reduce((s, [at, d]) => s + (t >= at + d - 1e-9 ? d : 0), 0);
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
   /* ---------------- shared helpers ---------------- */
@@ -971,7 +978,16 @@
         morphDash: 3.68, toPill: 4.67, pressPill: 5.27, away: 5.59 };
       B.swapPill = +(B.pressPill + 0.12).toFixed(3);
       B.count = B.swapPill + 0.04;
-      const DUR = 6.55;
+      let DUR = 6.55, END = 6.05;
+      // C5 (DEC-8, main's ruling (b) 2026-10-16) three still spans out of Email (measured frame by frame on 67f6b3a):
+      // the hand's pause before Send (1.65-1.73, all of it), the "Email sent." toast's hold (2.95-3.68: 0.20 s of it
+      // stays, so the toast reads >= 0.5 s), the Recent card's pause before the hand sets off for the pill (4.38-4.67:
+      // 0.10 s stays). 0.78 s in all; every move keeps its own timing.
+      if (FX.trim(tall)) {
+        const cut = FX.cutTime([[1.655, 0.08], [3.16, 0.52], [4.49, 0.18]]);
+        for (const k of Object.keys(B)) B[k] = +cut(B[k]).toFixed(3);
+        END = +cut(END).toFixed(3); DUR = +cut(DUR).toFixed(3);
+      }
       // (phones, Sol mobile P1 #4: the list card is whole and populated from local time 0, never an empty shell; it is
       // also what the Ride hands over to. Desktop keeps its arrival from 90 %.)
       const GA = tall ? geom([[0, RA], [0.0001, RA, 2.6, 0.86], [B.morphToast, RAt, 3.2, 0.88]]) : geom([[0, { ...RA, w: RA.w * 0.9, h: RA.h * 0.9 }], [0.0001, RA, 2.6, 0.86]]);
@@ -1109,7 +1125,7 @@
         { t: B.count, what: `the totals update: Collected YTD ${money0(k.kpisBefore.collected)} -> ${money0(k.kpisAfter.collected)}, Overdue ${money0(k.kpisBefore.overdue)} -> ${money0(k.kpisAfter.overdue)}` },
       ];
       const X = { shapeB, inkB, RR, surfR, lineR: lineOf(skR), stR, szR, zR: Z.recent, kp };
-      return { DUR, seek, IN, OUT, leave, EVENTS, B, label: "Chase", END: 6.05, X };
+      return { DUR, seek, IN, OUT, leave, EVENTS, B, label: "Chase", END, X };
     },
   };
 
