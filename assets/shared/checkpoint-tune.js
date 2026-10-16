@@ -11,6 +11,8 @@
  * No network, no storage (cookies, localStorage, sessionStorage): a recording leaves the page only through the
  * Export (a file download) or Copy buttons, which you press. Keys other than navigation keys are never recorded,
  * and node snapshots hold only tag, role, parent and scroll geometry (no text, ids or classes of the page).
+ * Limits: a node's scroll geometry is snapshotted when first seen, and run_detector.mjs replays with DEFAULTS (the
+ * tuned values travel in the file's "config" key for a runner that reads it; this tool does not edit the runner).
  * Window API for tests: window.__ciTune = { exportRecording(), startRecording(), stopRecording(), clear(), state() }.
  * Classic script; needs checkpoint-input.js loaded first (the hook guarantees it).
  */
@@ -104,6 +106,8 @@
 
   function exportRecording() {
     nodeId(doc.documentElement); nodeId(doc.body);
+    var open = doc.querySelectorAll("dialog[open]"); // the detector suppresses keys while any dialog is open
+    for (var i = 0; i < open.length; i++) nodeId(open[i]);
     var vv = root.visualViewport;
     return {
       name: "rec-" + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, ""),
