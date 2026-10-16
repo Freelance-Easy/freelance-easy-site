@@ -4,8 +4,10 @@
 
    - A step run or a FREE settle -> one replaceState at its FINAL landing (rendered == dest); passed-through landings write
      nothing (ICX-HIST.1/.8).
-   - An explicit jump (rail, menu, Home/End, logo, caption focus) -> one pushState at its final landing; gestures that extend
+   - An explicit jump (rail, menu, Home/End, logo) -> one pushState at its final landing; gestures that extend
      the run keep that one push (ICX-HIST.2).
+   - A focus landing (focus reaching an idle caption: Tab, a screen reader's cursor; source "focus") -> one replaceState at
+     its final landing, like a step or a settle: keyboard traversal never stuffs Back with entries.
    - popstate -> FEStory.goTo(slug, {source: "popstate"}); never a write (ICX-HIST.3).
    - init / reload / deep link never write. One exception: a legacy hash (#top #how #pricing #download) is swapped for the
      chapter's own URL with one replaceState (ICX-HIST.6).
@@ -37,10 +39,24 @@
     o.story = slug;
     return o;
   }
+  // The entry a jump leaves is marked scrollRestoration "manual" (the mode is per entry): Back to it is the story's own
+  // traversal (popstate -> goTo places the reader), never the browser's pixel restore. A native row's push is written at
+  // its arrival, so "auto" would restore the ARRIVAL position over goTo's scroll (C4-engine: calm rail -> Templates ->
+  // Back stayed on Templates). The new entry keeps the page's own mode (site.js: "auto" in calm / classic / static, so a
+  // reload there keeps the exact pixel; "manual" in the story); popstate puts it back once its scroll has settled.
+  function siteRestoration() { return ["calm", "classic", "static"].indexOf(F.mode) >= 0 ? "auto" : "manual"; }
+  function setRestoration(m) { try { if ("scrollRestoration" in history && history.scrollRestoration !== m) history.scrollRestoration = m; } catch (e) { /* ignore */ } }
   function write(kind, slug) {
     var url = urlFor(slug);
     try {
-      if (kind === "push") { if (url !== here()) history.pushState(stateFor(slug), "", url); }
+      if (kind === "push") {
+        if (url !== here()) {
+          var m = siteRestoration();
+          setRestoration("manual");
+          history.pushState(stateFor(slug), "", url);
+          setRestoration(m);
+        }
+      }
       else history.replaceState(stateFor(slug), "", url);
     } catch (e) { /* a sandboxed file:// page may refuse; the story still works */ }
   }
@@ -80,6 +96,7 @@
     jumping = false;
     if (p.source === "popstate") raise("pop");
     else if (p.source === "jump") raise(intent === "hash" ? "hash" : "push");
+    else if (p.source === "focus") raise("replace");   // focus reaching a caption: like a settle, never a push (C4-engine)
     else raise("replace");                         // step, settle
   });
 
@@ -201,7 +218,7 @@
     jumping = false;
     restoring = true;
     if (cancelRestore) cancelRestore();
-    cancelRestore = settled(function () { restoring = false; cancelRestore = null; });
+    cancelRestore = settled(function () { restoring = false; cancelRestore = null; setRestoration(siteRestoration()); });
     if (!slug) return;
     intent = "pop";
     try { F.goTo(slug, { source: "popstate" }); } finally { intent = null; }
@@ -221,6 +238,7 @@
     var d = e && e.detail;
     if (!d || !d.slug || d.user === false || !rowOf(d.slug)) return;
     if (initializing || restoring || jumping) return;
+    if (urlFor(d.slug) === here()) return;          // already this URL: the spy's echo after a jump / a Back writes nothing
     write("replace", d.slug);
   });
 

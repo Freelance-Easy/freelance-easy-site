@@ -1021,6 +1021,8 @@
   let shown = 0, raf = 0, lastNow = 0, held = false, lastDrawn = null, srcD = "init", initial = null;
   let free = null, ack = null, geomAt = -1e9, reentryUntil = -1e9, releasing = -1e9, swallow = -1, settles = 0;
   let barHeld = false, holdTimer = 0, classicPref = null, lastMode = null;
+  let nativeStopAt = -1e9;
+  let native = null;                                    // a native row's smooth scroll in flight: null | {phase0, k, timer}
   const listeners = { dest: [], land: [], mode: [] };
   function emit(kind, p) { for (const fn of listeners[kind].slice()) { try { fn(p); } catch (e) { console.warn(e); } } }
   const bi = (k) => BEATS.indexOf(CP[k]);
@@ -1248,6 +1250,7 @@
   }
   // an explicit target (Home/End, the rail, a settle, C4's deep links and popstate): ICX-JUMP
   function jump(k, source, t0) {
+    if (native && source !== "settle" && source !== "step") stopNative();   // the latest explicit jump wins (C4-engine)
     if (phase === "released") reenter();
     if (phase === "free") { endFree(); syncScroll(trackY(kR)); }
     if (!dip && k === kR && kD === kR && (phase === "rest" || (run && run.purpose === "content"))) {
@@ -1380,10 +1383,43 @@
     if (ack && t <= ack.until && Math.abs(y - ack.y) <= CFG.ACK_TOL) return;
     if (ack && t > ack.until) ack = null;
     if (t / 1000 - geomAt < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free" && y <= storyEnd() + 1) { syncScroll(trackY(kR)); return; }
+    // the last frames of a native smooth scroll a later jump cancelled (stopNative) are its residue, not the reader's
+    if (t / 1000 - nativeStopAt < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free") { syncScroll(trackY(kR)); return; }
     foreign(y);                                         // BT-1: FREE is entered here, synchronously in the scroll event
   }
   window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("scrollend", () => { if (HAS_SCROLLEND && free) armSettle("scrollend"); });
+  window.addEventListener("scrollend", () => { endNative(); if (HAS_SCROLLEND && free) armSettle("scrollend"); });
+
+  /* -- a native row's smooth anchor scroll in flight (goTo, ICX-JUMP.5), and its cancel by a later explicit jump -- */
+  // Main's ruling (C4 gap 3a): the latest explicit jump wins. A pinned jump issued while a native jump's smooth scroll is
+  // still under way cancels that scroll (an instant scroll ends a smooth one), puts back the place the scroll left (its
+  // FREE episode, or the release it caused, never happened) and then jumps from there: no settle undoes the dip, no stray
+  // release at the native target.
+  function startNative() {
+    if (native) clearTimeout(native.timer);
+    native = { phase0: native ? native.phase0 : phase, k: native ? native.k : kR, timer: setTimeout(endNative, 2500) };
+  }
+  function endNative() { if (native) { clearTimeout(native.timer); native = null; } }
+  function stopNative() {
+    const n = native;
+    endNative();
+    if (n.phase0 !== "released" && (phase === "free" || phase === "released")) {
+      const pv = free ? free.preview : -1;
+      endFree();
+      run = null; wait = 0; passK = -1;
+      if (dip) { dip = null; clearDip(); }
+      if (kR !== n.k || Math.abs(shown - RE[n.k][1]) > EPS) lastDrawn = null;
+      kR = kD = n.k; shown = RE[kR][1]; phase = "rest";
+      if (pv >= 0 && pv !== kR) emit("dest", payload(kR, "free", { preview: true }));   // FREE's highlight back (ICX-HL.3)
+    }
+    const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const y = clamp(Math.round(phase === "released" ? window.scrollY : trackY(kR)), 0, max);
+    ack = { y, until: performance.now() + CFG.ACK_MS };
+    window.scrollTo({ top: y, left: 0, behavior: "instant" });   // forced, even at the same y: it ends the smooth scroll
+    readerY = window.scrollY;
+    nativeStopAt = clock();
+    wake();
+  }
   // the zoom-out of a zoomed FREE episode: settle once, after the pinch's own last scrolls have gone quiet
   if (window.visualViewport) window.visualViewport.addEventListener("resize", () => {
     if (!free) return;
@@ -1471,7 +1507,7 @@
     const c = e.target.closest && e.target.closest(".beat-copy");
     if (!c || c.classList.contains("is-on")) return;
     const k = CP.indexOf(c.getAttribute("data-copy"));
-    if (k >= 0) jump(k, "jump");
+    if (k >= 0) jump(k, "focus");                      // a focus landing replaces, never pushes (ICX-HIST, C4-engine)
   });
 
   /* ---------------- start, refresh (theme / layout / motion preference / late fonts), resize, teardown ---------------- */
@@ -1838,7 +1874,7 @@
   // (a native row is a smooth anchor scroll, instant in calm, ICX-JUMP.5).
   // onDest(fn): fn({index, beat, slug, source, preview?}) whenever dest changes (the highlight, ICX-HL.1; source "free"
   //   with preview: true is FREE's nearest, ICX-HL.3).
-  // onLand(fn): fn({index, beat, slug, source: step | jump | settle | init | popstate, final}) at every landing; final =
+  // onLand(fn): fn({index, beat, slug, source: step | jump | settle | init | popstate | focus, final}) at every landing; final =
   //   rendered == dest after it (only a final landing writes history, ICX-HIST; pass-through landings carry final: false).
   // onModeChange(fn): fn({mode, destinations}). setClassic(on): K1's hook (true = calm layout, false = the story, null =
   //   follow prefers-reduced-motion); it keeps the reading place. initial: how the first landing happened.
@@ -1852,6 +1888,7 @@
       const hh = header ? header.getBoundingClientRect().height : 0;
       const smooth = motion() && !mq.matches;
       window.scrollTo({ top: Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)), behavior: smooth ? "smooth" : "instant" });
+      if (smooth && TL && motion() && CP.length && !held) startNative();
       return true;
     }
     jump(CP.indexOf(b), source);
