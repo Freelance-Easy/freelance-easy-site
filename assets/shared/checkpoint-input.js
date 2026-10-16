@@ -387,4 +387,12 @@
 
   var api = Object.freeze({ CONFIG_VERSION: CONFIG_VERSION, DEFAULTS: DEFAULTS, createSequence: createSequence });
   root.FECheckpoint = api;
+
+  // C7: dev only. ?ci-tune lazy-loads the tuning overlay next to this file; without the flag nothing is requested.
+  var cs = root.document && root.document.currentScript;
+  if (cs && cs.src && root.location && /[?&]ci-tune(?:[=&#]|$)/.test(root.location.search)) {
+    var ts = root.document.createElement("script");
+    ts.src = cs.src.replace(/checkpoint-input\.js(?:\?.*)?$/, "checkpoint-tune.js");
+    root.document.head.appendChild(ts);
+  }
 })(typeof globalThis !== "undefined" ? globalThis : this);

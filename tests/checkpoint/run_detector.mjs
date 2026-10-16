@@ -106,6 +106,7 @@ function runFixture(name) {
   const out = { steps: [], jumps: [], prevented: [], trace: [] };
   const c = fx.env.consumer;
   const seq = FE.createSequence({
+    config: fx.config, // C7: a recording made with tuned thresholds replays with them (absent = DEFAULTS)
     onStep: (dir, src, info) => out.steps.push({ dir, src, t: info.t, trigger: info.trigger, gesture: info.gesture }),
     onJump: (target, src, info) => out.jumps.push({ target, src, t: info.t }),
     isBypassed: (ev) => (c.mode === "pass" ? true : c.mode === "takeover" ? ev.timeStamp < c.at : false),

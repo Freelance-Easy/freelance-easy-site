@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- C7 fixture page: the real FECheckpoint module on a tall page. Open with ?ci-tune to get the dev overlay. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>checkpoint tune fixture</title>
+<style>
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; }
+  #stage { height: 300vh; padding: 16px; }
+  #count { font-size: 24px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <p>Wheel, key or touch here. The real module counts steps (page scroll is taken over, as on the story).</p>
+  <p id="count" data-steps="0">steps: 0</p>
+  <input id="field" aria-label="field">
+</div>
+<script src="../../../assets/shared/checkpoint-input.js"></script>
+<script>
+  (function () {
+    var n = 0, out = document.getElementById("count");
+    FECheckpoint.createSequence({
+      onStep: function (dir) { n += dir; out.textContent = "steps: " + n; out.setAttribute("data-steps", String(n)); }
+    }).attach(window);
+  })();
+</script>
+</body>
+</html>
