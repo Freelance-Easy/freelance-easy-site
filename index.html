@@ -210,12 +210,12 @@
             <span data-label>Download for Mac</span>
           </a>
           <a class="link-quiet" data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>
-          <!-- the quick walkthrough (tour-modal.js opens it in a dialog over the page; without JS this link opens the
-               standalone /tour/quick/ page). The scroll story is untouched. Its own row under the two downloads. -->
-          <a class="btn btn-ghost" href="/tour/quick/" data-tour-quick>
+          <!-- the tour: a plain link to the full tour (B12, DEC-2: /tour/ is the one tour; the homepage dialog is retired).
+               Its own row under the two downloads. -->
+          <a class="btn btn-ghost" href="/tour/" data-tour-link>
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7.1" stroke="currentColor" stroke-width="1.3"/><path d="M6.6 5.3v5.4L10.9 8z" fill="currentColor"/></svg>
             <!-- NEW COPY -->
-            Watch the 25-second tour
+            Watch the tour
           </a>
         </div>
         <p class="disclose strong">Free for seven days, with every feature and no card.</p>
@@ -456,19 +456,5 @@
 <script src="/assets/shared/checkpoint-input.js"></script>
 <script src="/assets/story/site.js"></script>
 <script src="/assets/story/download.js"></script>
-<!-- the 25-second tour's dialog: native <dialog> + showModal() (Esc, inertness, top layer). tour-modal.js creates the
-     tour's iframe (/tour/quick/) on open and removes it on close, so it restarts every time and costs nothing until
-     it's asked for. -->
-<!-- NEW COPY (the dialog's accessible name, the same words as the hero button) -->
-<dialog class="tq-dialog" id="tour-quick" aria-label="Watch the 25-second tour">
-  <div class="tq-box">
-    <!-- NEW COPY (accessible name) -->
-    <button type="button" class="tq-close" aria-label="Close" autofocus>
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-    </button>
-    <div class="tq-frame"></div>
-  </div>
-</dialog>
-<script src="/assets/story/tour-modal.js" defer></script>
 </body>
 </html>
