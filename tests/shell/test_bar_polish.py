@@ -6,14 +6,12 @@
 """
 from __future__ import annotations
 
-import collections
 import re
-import io
+import base64
 import pathlib
 import sys
 
 import pytest
-from PIL import Image
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from test_bar import MAC_UA, browser, open_page, to_band  # noqa: E402,F401
@@ -46,8 +44,16 @@ def rendered_contrast(page, selector):
     tag = page.add_style_tag(content=selector + "{color:transparent !important}")
     shot = page.screenshot(clip=el.bounding_box())  # the viewport's pixels: the bar is sticky, never scrolled away
     tag.evaluate("e => e.remove()")
-    img = Image.open(io.BytesIO(shot)).convert("RGB")
-    bg = collections.Counter(img.getdata()).most_common(1)[0][0]
+    # the most common pixel, counted by the browser itself (no image library needed)
+    bg = page.evaluate("""async (b64) => {
+        const blob = await (await fetch('data:image/png;base64,' + b64)).blob();
+        const bmp = await createImageBitmap(blob);
+        const cv = new OffscreenCanvas(bmp.width, bmp.height), cx = cv.getContext('2d');
+        cx.drawImage(bmp, 0, 0);
+        const d = cx.getImageData(0, 0, bmp.width, bmp.height).data, n = new Map();
+        for (let i = 0; i < d.length; i += 4) { const k = d[i] + ',' + d[i + 1] + ',' + d[i + 2]; n.set(k, (n.get(k) || 0) + 1); }
+        return [...n.entries()].sort((x, y) => y[1] - x[1])[0][0].split(',').map(Number);
+    }""", base64.b64encode(shot).decode())
     return ratio(fg, bg), fg, bg
 
 
