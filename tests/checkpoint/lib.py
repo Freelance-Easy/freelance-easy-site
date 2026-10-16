@@ -292,6 +292,14 @@ def max_rate(frames: list[Snap], window: float = 0.1) -> float:
     return worst
 
 
+def assert_rate(frames: list[Snap], row: str, ceiling: float = RATE_CEILING, where: str = "") -> None:
+    """ICX-SIGNED.7 (row names the caller's rows): sustained rate over >= 100 ms windows <= ceiling x 1.05, and a
+    near-instantaneous check over >= 34 ms (about two frames) <= ceiling x 1.5, so a single-frame spike cannot hide."""
+    sustained, spike = max_rate(frames), max_rate(frames, window=0.034)
+    assert sustained <= ceiling * RATE_TOL, f"{row}: {where}story time ran at {sustained:.2f}x over 100 ms (ceiling {ceiling:g}x)"
+    assert spike <= ceiling * 1.5, f"{row}: {where}story time spiked to {spike:.2f}x over two frames (ceiling {ceiling:g}x)"
+
+
 def rests_seen(frames: list[Snap]) -> set[int]:
     return {f.index for f in frames if f.index is not None}
 

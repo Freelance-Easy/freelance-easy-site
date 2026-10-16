@@ -19,8 +19,8 @@ import random
 import pytest
 from playwright.sync_api import sync_playwright
 
-from lib import (BEATS, CELLS, RATE_CEILING, RATE_TOL, SEED, SLUGS, Cell, Fuzz, Story, allowance, check_engine,
-                 dip_spans, max_rate, rests_seen)
+from lib import (BEATS, CELLS, SEED, SLUGS, Cell, Fuzz, Story, allowance, check_engine,
+                 assert_rate, dip_spans, rests_seen)
 
 SEQUENCES_PER_CELL = 50
 CELL = pytest.mark.parametrize("cell", CELLS, ids=[c.id for c in CELLS])
@@ -71,8 +71,7 @@ def test_wheel_step_lands_next_checkpoint(story: Story, cell: Cell):
     assert len(mid) >= 10, (
         f"ICX-STEP.1: the seam and content must play frame by frame; only {len(mid)} frames were between the two rest "
         "frames (a 100 px notch moved the base's playhead by ~0.03 s; a teleport would show none)")
-    worst = max_rate(frames)
-    assert worst <= 1.0 * RATE_TOL, f"ICX-STEP.6: a step with no further input never plays faster than 1x, measured {worst:.2f}x"
+    assert_rate(frames, "ICX-STEP.6", ceiling=1.0)
     check_engine(res.snap, 1, "ICX-STEP.1")
 
 
@@ -183,8 +182,7 @@ def test_three_forward_gestures_land_three_pages_on(story: Story, cell: Cell):
     expect_rest(res, 3, "ICX-DIP.5", "each 100 px notch only scrubs 0.03 s of story time; three of them do not reach REST(grow)")
     skipped = rests_seen(frames) - {0, 3}
     assert not skipped, f"ICX-SIGNED.6: checkpoints {sorted(skipped)} passed through but rested"
-    worst = max_rate(frames)
-    assert worst <= RATE_CEILING * RATE_TOL, f"ICX-SIGNED.7: story time ran at {worst:.2f}x (ceiling 3x)"
+    assert_rate(frames, "ICX-SIGNED.7")
     check_engine(res.snap, 3, "ICX-DIP.5")
 
 
@@ -232,8 +230,7 @@ def test_back_gesture_during_forward_seam_reverses_it(story: Story, cell: Cell):
         "by about 0.03 s instead of starting the make->look seam")
     expect_rest(res, 0, "ICX-SIGNED.2", "the reversal is a scrub back to the same scroll position, not a seam played backwards")
     assert not dip_spans(frames), f"ICX-BACK.3: a reversal inside the 0.6 s ramp plays backwards, with no dip; saw {dip_spans(frames)}"
-    worst = max_rate(frames)
-    assert worst <= RATE_CEILING * RATE_TOL, f"ICX-SIGNED.7: story time ran at {worst:.2f}x (ceiling 3x)"
+    assert_rate(frames, "ICX-SIGNED.7")
     check_engine(res.snap, 0, "ICX-SIGNED.2")
 
 
@@ -338,13 +335,15 @@ def test_fuzz_never_rests_mid_transition(browser, site_url, cell: Cell):
             assert res.status in ("rest", "released"), (
                 f"ICX-REST.{2 if res.status == 'stalled' else 1}: {where} -> {res.status} after {res.elapsed:.1f}s with no input: "
                 f"{res.snap.describe()}. Base behaviour: {SCRUB}")
+            if res.status == "released":
+                due = allowance(max(1, cell.last - start_idx))
+                assert res.elapsed <= due, f"ICX-REST.1: {where} -> RELEASED took {res.elapsed:.1f}s after the last input (allowance {due:.1f}s)"
             if res.status == "rest":
                 check_engine(res.snap, res.snap.index, f"ICX-REST.1 {where}")
                 due = allowance(abs(res.snap.index - start_idx))
                 assert res.elapsed <= due, (
                     f"ICX-REST.1: {where} -> rest took {res.elapsed:.1f}s after the last input; transition + content + 1 s "
                     f"for distance {abs(res.snap.index - start_idx)} is {due:.1f}s")
-            worst = max_rate(frames)
-            assert worst <= RATE_CEILING * RATE_TOL, f"ICX-SIGNED.7: {where} -> story time ran at {worst:.2f}x (ceiling 3x)"
+            assert_rate(frames, "ICX-SIGNED.7", where=f"{where} -> ")
     finally:
         story.close()
