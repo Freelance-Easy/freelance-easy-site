@@ -172,21 +172,54 @@ def _ratio(a, b):
     return (la + 0.05) / (lb + 0.05)
 
 
-HIDE_TEXT = """() => { const l = document.querySelector('.stage-label'); l.dataset.keep = l.getAttribute('style') || '';
-  l.style.setProperty('transition', 'none', 'important'); l.style.setProperty('color', 'transparent', 'important'); }"""
-SHOW_TEXT = """() => { const l = document.querySelector('.stage-label'); const k = l.dataset.keep;
+# (the words hidden with -webkit-text-fill-color, which no transition touches, so a running colour/background
+# transition keeps running and is measured as it is; never `transition: none`, never animations="disabled")
+HIDE_TEXT = """(sel) => { const l = document.querySelector(sel); l.dataset.keep = l.getAttribute('style') || '';
+  l.style.setProperty('-webkit-text-fill-color', 'transparent', 'important'); }"""
+SHOW_TEXT = """(sel) => { const l = document.querySelector(sel); const k = l.dataset.keep;
   if (k) l.setAttribute('style', k); else l.removeAttribute('style'); delete l.dataset.keep; }"""
-TEXT_BOX = """() => { const l = document.querySelector('.stage-label'), r = l.querySelector('[data-l="data"]').getBoundingClientRect();
-  const m = getComputedStyle(l).color.match(/[\\d.]+/g).map(Number);
+TEXT_BOX = """(sel) => { const l = document.querySelector(sel), s = l.querySelector('span') || l, r = s.getBoundingClientRect();
+  const m = getComputedStyle(s).color.match(/[\\d.]+/g).map(Number);
   return { x: r.left, y: r.top, w: r.width, h: r.height, color: m }; }"""
+# any colour transition running on the label (a band entry/exit between two samples) is frozen at a fraction of its
+# duration and measured there, at several fractions (an ease-out is most of the way at half time, so the crossing of
+# the two palettes is early); a label with no transition has nothing to freeze
+PAUSE_AT = """(k) => { const a = document.querySelector('.stage-label').getAnimations();
+  for (const x of a) { x.pause(); const t = x.effect.getComputedTiming(); x.currentTime = (x.effect.getTiming().delay || 0) + t.duration * k; }
+  return a.length; }"""
+FRACTIONS = (0.02, 0.06, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75)
+FINISH = "() => { for (const x of document.querySelector('.stage-label').getAnimations()) x.finish(); }"
 
 
-def frames_for(mode, w):
+def measure(page, sel):
+    """(worst ratio, bg pixel, fg) of sel's text colour against every rendered pixel behind its words."""
+    box = page.evaluate(TEXT_BOX, sel)
+    fg = tuple(round(v) for v in box["color"][:3])
+    alpha = box["color"][3] if len(box["color"]) > 3 else 1.0
+    page.evaluate(HIDE_TEXT, sel)
+    try:
+        png = page.screenshot(clip={"x": box["x"], "y": box["y"], "width": box["w"], "height": box["h"]},
+                              animations="allow", caret="hide")
+    finally:
+        page.evaluate(SHOW_TEXT, sel)
+    _, _, rows = _png_pixels(png)
+
+    def over(px):                                           # a translucent text colour lands on the pixel behind it
+        return tuple(alpha * f + (1 - alpha) * b for f, b in zip(fg, px))
+    worst = min((_ratio(over(px), px), px) for row in rows for px in row)
+    return round(worst[0], 2), worst[1], fg + ((round(alpha, 2),) if alpha < 0.999 else ())
+
+
+def grid_for(mode, w, step=0.25):
+    """Every label-on frame at `step` s through the whole window (Know, Grow, the Ride, Chase, Chase -> Yours up to
+    the off-point), in story order, so each band entry and exit happens between two samples."""
     on, off = window_for(mode, w)
-    r0, r1 = w["ride"]
-    last = off - 0.02 if mode != "tablet" else w["T1"]
-    return {"lookKnow+0.08": on + 0.08, "know": w["know"] - 0.02, "grow": w["grow"] - 0.02,
-            "ride-mid": r0 + 0.5 * (r1 - r0), "chase": w["chaseT1"] - 0.02, "last-on": last}
+    ts, t = [on + 0.001], on + step
+    while t < off:
+        ts.append(t)
+        t += step
+    ts.append(off - 0.005 if mode != "tablet" else w["T1"])
+    return ts
 
 
 @pytest.mark.parametrize("theme", THEMES)
@@ -195,27 +228,25 @@ def test_label_contrast(browser, site_url, mode, theme):
     ctx, page = open_story(browser, site_url, mode, theme)
     try:
         w = page.evaluate(WINDOW_JS)
-        report, bad = {}, []
-        for name, t in frames_for(mode, w).items():
+        page.evaluate(SEEK_JS, w["lk"] - 0.05)              # settle off-window first, then walk forward
+        page.wait_for_timeout(400)
+        bad, worst, n = [], (99, None, None, None), 0
+        for t in grid_for(mode, w):
             got = page.evaluate(SEEK_JS, t)
-            assert got["mode"] == "data", (name, t, got)
-            page.wait_for_timeout(450)                      # the label's colours ease (0.24 s) onto/off the field
-            box = page.evaluate(TEXT_BOX)
-            fg = tuple(round(v) for v in box["color"][:3])
-            alpha = box["color"][3] if len(box["color"]) > 3 else 1.0
-            assert alpha >= 0.999, ("the label's text colour should be opaque", name, box["color"])
-            page.evaluate(HIDE_TEXT)
-            try:
-                png = page.screenshot(clip={"x": box["x"], "y": box["y"], "width": box["w"], "height": box["h"]},
-                                      animations="disabled", caret="hide")
-            finally:
-                page.evaluate(SHOW_TEXT)
-            _, _, rows = _png_pixels(png)
-            worst = min((_ratio(fg, px), px) for row in rows for px in row)
-            report[name] = (round(worst[0], 2), worst[1], fg)
-            if worst[0] < 4.5:
-                bad.append((name, round(t, 3), round(worst[0], 2), "bg", worst[1], "fg", fg))
-        assert not bad, (mode, theme, bad, report)
+            assert got["mode"] == "data", (t, got)
+            frozen = page.evaluate(PAUSE_AT, FRACTIONS[0])
+            r, bg, fg = measure(page, LABEL)
+            for k in FRACTIONS[1:] if frozen else ():
+                page.evaluate(PAUSE_AT, k)
+                r, bg, fg = min((r, bg, fg), measure(page, LABEL))
+            page.evaluate(FINISH)
+            n += 1
+            worst = min(worst, (r, round(t, 3), bg, fg))
+            if r < 4.5:
+                seg = next(s[0] for s in w["segs"] if s[1] <= t <= s[2] + 1e-9)
+                bad.append((round(t, 3), seg, r, "bg", bg, "fg", fg, "mid-transition" if frozen else "settled"))
+        assert not bad, (mode, theme, f"{len(bad)}/{n} frames under 4.5:1", bad[:10])
+        assert n >= 40, n
     finally:
         ctx.close()
 
@@ -248,6 +279,29 @@ def test_calm_nojs_disclose(browser, site_url, layout):
         for beat in ("make", "look"):                                                       # a single invoice: G12
             assert figs[beat]["cap"] is None, (layout, beat, figs[beat])
         assert "fictional client" in figs["make"]["aria"]                                   # R5: kept, invisible
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("theme", THEMES)
+@pytest.mark.parametrize("layout", ["calm-1440", "calm-390", "nojs-1440", "nojs-390"])
+def test_calm_nojs_caption_contrast(browser, site_url, layout, theme):
+    """The stacked layouts' "Fictional data" captions (the only visible disclosure there) are >= 4.5:1 on the rendered
+    pixels behind them, both themes (fe:claims #3: the Chase caption on the Ride's teal measured 4.03-4.07 light)."""
+    kind, width = layout.split("-")
+    mode = "desktop" if width == "1440" else "phone"
+    ctx, page = open_story(browser, site_url, mode, theme, reduced=(kind == "calm"), js=(kind == "calm"))
+    try:
+        bad, seen = [], {}
+        for beat in ("know", "grow", "chase"):
+            sel = f'figure:has(.stage[data-stage="{beat}"]) figcaption'
+            page.evaluate("(s) => document.querySelector(s).scrollIntoView({ block: 'center' })", sel)
+            page.wait_for_timeout(150)
+            r, bg, fg = measure(page, sel)
+            seen[beat] = (r, bg, fg)
+            if r < 4.5:
+                bad.append((beat, r, "bg", bg, "fg", fg))
+        assert not bad, (layout, theme, bad, seen)
     finally:
         ctx.close()
 
