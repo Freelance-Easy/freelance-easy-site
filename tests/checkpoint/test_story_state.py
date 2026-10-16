@@ -38,7 +38,13 @@ def allowance(distance: int) -> float:
     return _lib_allowance(distance) + C5_SLACK
 
 
-lib.allowance = allowance   # Story.to_checkpoint reads lib.allowance
+def to_checkpoint(story: Story, idx: int):
+    """lib's Story.to_checkpoint with this module's allowance (the slack stays local to this module)."""
+    res = story.wait_rest(allowance(1))
+    for _ in range(idx):
+        story.wheel(100)
+        res = story.wait_rest(allowance(1))
+    return res
 
 SEQUENCES_PER_CELL = 50
 CELL = pytest.mark.parametrize("cell", CELLS, ids=[c.id for c in CELLS])
@@ -117,11 +123,38 @@ def test_every_step_ends_in_rest_within_allowance(story: Story, cell: Cell):
         check_engine(after, i, f"ICX-REST.1 (step {i})")
 
 
+SEAMS_1X = [("ride", 3), ("lookKnow", 1)]   # (seam id, the checkpoint it leaves)
+
+
+@CELL
+@pytest.mark.parametrize("seam,origin", SEAMS_1X, ids=[s for s, _ in SEAMS_1X])
+def test_seam_plays_at_designed_speed(story: Story, cell: Cell, seam: str, origin: int):
+    """ICX-STEP.2/.6 (judge C3-1 #3): a step plays its seam at exactly 1x, never faster or slower than designed; the
+    Ride (Daniel's benchmark) takes 1.45 s +- 0.1 s."""
+    story.page.evaluate("(k) => FEStory.goTo(k, {source: 'jump'})", origin)
+    expect_rest(story.wait_rest(allowance(2)), origin, f"ICX-STEP.2 (precondition: REST({BEATS[origin]}))")
+    seg = story.page.evaluate("(id) => __site.map().segs.find(s => s.id === id)", seam)
+    story.rec_start()
+    story.wheel(100)
+    res = story.wait_rest(allowance(1))
+    frames = story.rec_stop()
+    expect_rest(res, origin + 1, "ICX-STEP.1")
+    inside = [f for f in frames if seg["T0"] + 0.02 <= f.T <= seg["T1"] - 0.02]
+    assert len(inside) >= 10, f"ICX-STEP.2: only {len(inside)} frames inside the {seam} seam"
+    a, b = inside[0], inside[-1]
+    rate = (b.T - a.T) / ((b.t - a.t) / 1000)
+    assert 0.97 <= rate <= 1.03, f"ICX-STEP.2: the {seam} seam played at {rate:.3f}x (designed: 1x)"
+    wall = (seg["T1"] - seg["T0"]) / rate
+    if seam == "ride":
+        assert abs(wall - 1.45) <= 0.1, f"ICX-STEP.2: the Ride took {wall:.3f} s (1.45 s +- 0.1 s)"
+    assert_rate(frames, "ICX-STEP.6", ceiling=1.0)
+
+
 # ---------------------------------------------------------------------------------------------------------- BACK
 
 @CELL
 def test_back_step_is_one_220ms_fade_to_previous_rest(story: Story, cell: Cell):
-    pre = story.to_checkpoint(1)
+    pre = to_checkpoint(story, 1)
     expect_rest(pre, 1, "ICX-BACK.1 (precondition: step to REST(look), ICX-STEP.1)")
     story.rec_start()
     story.wheel(-100)
@@ -199,7 +232,7 @@ def test_three_forward_gestures_land_three_pages_on(story: Story, cell: Cell):
 
 @CELL
 def test_three_back_gestures_land_three_pages_back(story: Story, cell: Cell):
-    pre = story.to_checkpoint(3)
+    pre = to_checkpoint(story, 3)
     expect_rest(pre, 3, "ICX-DIP.5 (precondition: REST(grow) by single steps, ICX-STEP.1)")
     for _ in range(3):
         story.wheel(-100)

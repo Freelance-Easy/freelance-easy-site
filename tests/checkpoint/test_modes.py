@@ -55,34 +55,46 @@ def _rest_on(page, idx: int, timeout=12000):
 def _section_in_view(page, sel: str) -> bool:
     box = page.locator(sel).first.bounding_box()
     vh = page.viewport_size["height"]
-    return box is not None and box["height"] > 0 and box["y"] < vh * 0.5 and box["y"] + box["height"] > vh * 0.5
+    if box is None or box["height"] <= 0:
+        return False
+    if box["y"] < vh * 0.5 and box["y"] + box["height"] > vh * 0.5:
+        return True
+    # a section near the page's end cannot scroll up to the header: at the bottom of the page, fully on screen counts
+    at_end = page.evaluate("() => Math.ceil(scrollY + innerHeight) >= document.documentElement.scrollHeight - 1")
+    return at_end and box["y"] >= 0 and box["y"] + box["height"] <= vh + 1
 
 
 # ------------------------------------------------------------------------------------------------- reachable
-@pytest.mark.parametrize("mode", ["motion", "calm", "nojs", "fallback4s"])
+@pytest.mark.parametrize("mode", ["motion", "motion-820", "calm", "nojs", "fallback4s"])
 def test_every_destination_reachable(browser, site_url, mode):
     kw = {"reduced_motion": "reduce" if mode == "calm" else "no-preference"}
     if mode == "nojs":
         kw["java_script_enabled"] = False
-    ctx = _ctx(browser, **kw)
+    ctx = _ctx(browser, 820, 1180, **kw) if mode == "motion-820" else _ctx(browser, **kw)
     if mode == "fallback4s":
         ctx.route("**/assets/story/site.js", lambda r: r.abort())
     page = ctx.new_page()
     try:
         page.goto(site_url + "/", wait_until="load")
-        if mode == "motion":
+        if mode.startswith("motion"):
             _ready(page)
+            kinds = page.evaluate("() => FEStory.destinations.map(d => d.kind)")
             for i, slug in enumerate(SLUGS):
                 page.goto(f"{site_url}/#{slug}")
                 page.reload(wait_until="load")
                 _ready(page)
+                if kinds[i] == "native":                 # a tablet's native row: its own section (ICX-JUMP.3)
+                    page.wait_for_timeout(400)
+                    assert _section_in_view(page, f"#{slug}"), f"{mode}: /#{slug} (native) did not land on its section"
+                    assert page.evaluate("() => FEStory.phase") == "released"
+                    continue
                 st = _rest_on(page, i)
                 assert st["T"] == pytest.approx(page.evaluate(f"() => FEStory.destinations[{i}].rest"), abs=0.002), st
             # and the engine's own jump (End) from the first checkpoint: one move to the last pinned
             page.keyboard.press("Home")
             _rest_on(page, 0)
             page.keyboard.press("End")
-            _rest_on(page, 8)
+            _rest_on(page, kinds.index("native") - 1 if "native" in kinds else 8)
             return
         if mode == "fallback4s":
             page.wait_for_function("() => !document.documentElement.classList.contains('motion')", timeout=6000)
@@ -276,5 +288,43 @@ def test_phone_story_steps_and_releases(browser, site_url):
         page.goto(site_url + "/", wait_until="load")
         _ready(page)
         assert page.evaluate("() => FEStory.mode") == "calm"
+    finally:
+        ctx.close()
+
+
+# ------------------------------------------------------------------------------------------------- reload keeps place
+@pytest.mark.parametrize("case", ["desktop-footer", "tablet-price", "desktop-midpin"])
+def test_reload_keeps_place(browser, site_url, case):
+    """A reload with no chapter hash keeps the reader's place (judge C3-1 #1): below the pin (the footer on desktop, the
+    tablet's native Price section) it comes back at the same offset; inside the pin it lands on the checkpoint's rest."""
+    w, h = (820, 1180) if case.startswith("tablet") else (1440, 900)
+    ctx = _ctx(browser, w, h)
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + "/", wait_until="load")
+        _ready(page)
+        _rest_on(page, 0)
+        if case == "desktop-midpin":
+            page.evaluate("() => FEStory.goTo('grow', {source: 'jump'})")
+            _rest_on(page, 3)
+            page.reload(wait_until="load")
+            _ready(page)
+            _rest_on(page, 3, 6000)
+            return
+        sel = ".site-footer" if case == "desktop-footer" else "#price"
+        if case == "desktop-footer":
+            page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+        else:
+            page.evaluate("(s) => window.scrollTo(0, document.querySelector(s).getBoundingClientRect().top + scrollY - 64)", sel)
+        st = _wait(page, "s.phase === 'released'", 4000)
+        page.wait_for_timeout(300)
+        top0 = page.locator(sel).first.bounding_box()["y"]
+        page.reload(wait_until="load")
+        _ready(page)
+        page.wait_for_timeout(600)
+        top1 = page.locator(sel).first.bounding_box()["y"]
+        st = page.evaluate(STATE)
+        assert abs(top1 - top0) <= 2, f"{case}: reload moved {sel} from {top0:.0f} to {top1:.0f} ({st})"
+        assert st["phase"] == "released", st
     finally:
         ctx.close()

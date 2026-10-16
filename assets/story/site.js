@@ -1604,6 +1604,22 @@
   }
   // the first landing (ICX-JUMP.3): a deep link plays its chapter's demo from its rest-entry, a reload or a history
   // visit lands on its rest frame, a fresh arrival at the top plays Make's arrival to its hold frame. No history.
+  // (judge C3-1 #1) with scroll restoration manual, the reading place of a reload or a history visit with no chapter
+  // hash is the engine's: saved on pagehide (the checkpoint in the pin, or the distance below it) and re-applied by
+  // init() after layout. Per tab (sessionStorage), this page only; a new visit (navigate) never reads it.
+  const PLACE_KEY = "fe-story-place";
+  window.addEventListener("pagehide", () => {
+    try {
+      if (!TL || !CP.length || !motion()) { sessionStorage.removeItem(PLACE_KEY); return; }
+      const below = phase === "released" || window.scrollY > storyEnd() + 1;
+      const p = below ? { past: Math.round(window.scrollY - storyEnd()) } : { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR] };
+      p.path = location.pathname; p.cp = CP.join();
+      sessionStorage.setItem(PLACE_KEY, JSON.stringify(p));
+    } catch (e) { /* storage off: the page starts on its first chapter */ }
+  });
+  function savedPlace() {
+    try { const p = JSON.parse(sessionStorage.getItem(PLACE_KEY) || "null"); sessionStorage.removeItem(PLACE_KEY); return p; } catch (e) { return null; }
+  }
   function init() {
     // the engine owns the reading place: the browser's own scroll restoration on a reload or a history visit would land
     // after this one, read as a foreign scroll and settle elsewhere (not a history write: no entry, no URL change)
@@ -1629,6 +1645,21 @@
       initial = { index: BEATS.indexOf(b), source: "native" };
       return;
     }
+    const saved = savedPlace();
+    if (saved && nt !== "navigate" && saved.path === location.pathname) {
+      if (saved.past != null && saved.cp === CP.join()) {   // below the pin: the same distance past it
+        phase = "released"; kR = kD = last(); shown = RE[kR][1];
+        keepPast(Math.max(2, saved.past));
+        initial = { index: bi(kR), source: "restored" };
+        return;
+      }
+      if (saved.beat && CP.includes(saved.beat)) {          // in the pin: that checkpoint's rest frame
+        kR = kD = CP.indexOf(saved.beat); shown = RE[kR][1];
+        syncScroll(trackY(kR));
+        initial = { index: bi(kR), source: "restored" };
+        return;
+      }
+    }
     const y = window.scrollY;
     if (y < 4 && nt === "navigate") { shown = 0; contentRun(); run.intro = true; initial = { index: 0, source: "arrival" }; return; }
     if (y > storyEnd() + 1) { phase = "released"; kR = kD = last(); shown = RE[kR][1]; initial = { index: bi(kR), source: "restored" }; return; }
@@ -1643,7 +1674,11 @@
     try {
       resetEngine();
       layoutKey = key();
-      if (!motion()) { teardown(); doc.classList.add("fx-ready"); seqEnable(); modeChanged(); return; }
+      if (!motion()) {
+        // (calm / static: the browser keeps the place itself, as it always did)
+        try { if ("scrollRestoration" in history) history.scrollRestoration = "auto"; } catch (e) { /* ignore */ }
+        teardown(); doc.classList.add("fx-ready"); seqEnable(); modeChanged(); return;
+      }
       if (desktop()) placeCopies(BEATS);
       else if (preset() === "tall") placeCopies(TALL_PIN, true);
       else placeCopies(PHONE_BEATS);
