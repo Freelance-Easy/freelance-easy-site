@@ -152,6 +152,164 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
 body:has(> main.doc) .fe-menu-btn {
   margin-left: 2px;
 }
+/* ---------- The Classic view switch (K1, assets/shared/classic.js fills [data-classic-slot]) ----------
+   Beside the theme toggle: the same round icon button below 1024 px (its name in aria-label and the tooltip), the icon
+   plus "Classic" from 1024 px. Pressed (Classic on) it holds the hover fill, so its state shows without a hover. */
+.classic-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s, background 0.15s;
+}
+.classic-toggle[hidden] {
+  display: none;
+}
+.classic-toggle:hover,
+.classic-toggle[aria-pressed="true"] {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+.classic-toggle svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.classic-toggle .classic-label {
+  display: none;
+}
+/* a 44 px hit area, centred (the theme toggle's own ::after reaches no further than its 40 px box's 2 px past) */
+.classic-toggle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+html.on-band:where(:not(.past-band)) .classic-toggle {
+  color: var(--ride-text-2);
+}
+html.on-band:where(:not(.past-band)) .classic-toggle:hover,
+html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride-text) 14%, transparent);
+}
+@media (min-width: 1024px) {
+  .classic-toggle {
+    width: auto;
+    padding: 0 14px 0 12px;
+  }
+  .classic-toggle .classic-label {
+    display: inline;
+  }
+}
+/* the slot takes no room (no flex gap) where its button is hidden: a short touch screen (calm is automatic there) */
+.site-header [data-classic-slot]:has(> .classic-toggle[hidden]) {
+  display: none;
+}
+/* the phone bar (< 640 px) has no room for a fifth control (measured 2026-10-16: the brand clipped by 4-19 px at
+   360-390), so there the switch is a row in the menu sheet, above Close (classic.js adds it) */
+@media (max-width: 639px) {
+  .site-header [data-classic-slot]:has(> .classic-toggle) {
+    display: none;
+  }
+}
+.fe-menu-classic {
+  display: none;
+}
+@media (max-width: 639px) {
+  .fe-menu-classic:not([hidden]) {
+    display: block;
+  }
+}
+.fe-menu-panel .classic-toggle {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 0 4px;
+  border-top: 1px solid var(--line-1);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 17px;
+}
+.fe-menu-panel .classic-toggle .classic-label {
+  display: inline;
+}
+.fe-menu-panel .classic-toggle:hover,
+.fe-menu-panel .classic-toggle[aria-pressed="true"] {
+  color: var(--text-0);
+  background: transparent;
+}
+/* the sheet's switch states itself: a check after the words when Classic is on */
+.fe-menu-panel .classic-toggle::after {
+  content: none;
+}
+.fe-menu-panel .classic-toggle .classic-state {
+  margin-left: auto;
+  width: 34px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--line-2);
+  position: relative;
+  transition: background 0.15s;
+}
+.fe-menu-panel .classic-toggle .classic-state::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-1);
+  transition: transform 0.15s;
+}
+.fe-menu-panel .classic-toggle[aria-pressed="true"] .classic-state {
+  background: var(--text-0);
+}
+.fe-menu-panel .classic-toggle[aria-pressed="true"] .classic-state::before {
+  transform: translateX(14px);
+}
+.fe-menu-panel .classic-toggle:focus-visible {
+  outline: 2px solid var(--text-0);
+  outline-offset: -2px;
+}
+/* 700-719 px on the story page: the Classic button's 44 px leaves the brand short beside the platform note (it clipped
+   by up to 15 px at 704-712, measured 2026-10-16). The note steps aside there too, as B6's rule does at 640-699; the
+   Download button stays, and the status line names the platform after the click */
+@media (min-width: 700px) and (max-width: 719px) {
+  html.js[data-dl-os] body[data-page="home"]:has(.site-header .classic-toggle:not([hidden])) .dl-note:not([hidden]),
+  html.js[data-dl-os] body[data-page="home"]:has(.site-header .classic-toggle:not([hidden])) .dl-note[hidden]:not([data-dl-skip]) {
+    display: none;
+  }
+}
+.no-js .classic-toggle {
+  display: none;
+}
+
 /* the page holds still under the open sheet */
 html.fe-menu-open {
   overflow: hidden;

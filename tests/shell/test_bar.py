@@ -99,8 +99,9 @@ def test_item_order(site_url, browser, width):
         assert by["logo"]["href"] == "/" and by["How it works"]["href"] == "/tour/" and by["Pricing"]["href"] == "/pricing"
         assert by["download"]["href"].startswith("/dl/mac/"), by["download"]  # A9 on a Mac
         shown = [i["key"] for i in items if i["shown"]]
-        # (B6) below the rail's 1024 px the menu button (its slot) shows at the bar's end; at 1024+ the slot takes no room
-        want = ["logo", "How it works", "Pricing", "download", "theme"] + (["menu-slot"] if width < 1024 else [])
+        # (B6) below the rail's 1024 px the menu button (its slot) shows at the bar's end; at 1024+ the slot takes no room.
+        # (K1) the Classic switch fills its slot beside the theme toggle from 640 px (below, it is a row in B6's sheet)
+        want = ["logo", "How it works", "Pricing", "download", "theme", "classic-slot"] + (["menu-slot"] if width < 1024 else [])
         assert shown == want, shown
         # "How it works" is a plain link to the full tour now (DEC-3), not the dialog's trigger
         assert page.locator(".site-header [data-tour-quick]").count() == 0
@@ -169,7 +170,7 @@ def test_sign_in_shows_when_switch_on(site_url, browser):
     try:
         assert page.locator(SIGNIN).is_visible() and page.locator(SIGNIN).get_attribute("href") == "/account"
         shown = [i["key"] for i in bar_items(page) if i["shown"]]
-        assert shown == ["logo", "How it works", "Pricing", "signin", "download", "theme"], shown
+        assert shown == ["logo", "How it works", "Pricing", "signin", "download", "theme", "classic-slot"], shown
     finally:
         ctx.close()
 
@@ -252,9 +253,14 @@ def test_slots_present(site_url, browser, width):
         for slot in ("[data-classic-slot]", "[data-menu-slot]"):
             el = page.locator(".site-header .nav > " + slot)
             assert el.count() == 1, slot
-        # K1's slot: empty, and no room taken while empty (no flex gap either)
-        assert page.locator(".site-header .nav > [data-classic-slot]").evaluate(
-            "e => e.childNodes.length === 0 && getComputedStyle(e).display === 'none'")
+        # (K1) the slot holds the Classic switch and nothing else; it takes no room below 640 px, where the switch is a
+        # row in B6's sheet (an empty slot still takes none: shell.css .fe-shell-slot:empty, checked on the doc pages by
+        # tests/routes)
+        classic = page.locator(".site-header .nav > [data-classic-slot]").evaluate("""e => ({
+            only: e.children.length === 1 && e.children[0].matches('button.classic-toggle[data-classic-toggle]'),
+            display: getComputedStyle(e).display })""")
+        assert classic["only"], "something other than the Classic switch is in its slot"
+        assert classic["display"] == ("none" if width < 640 else "flex"), classic
         # (B6) the menu slot holds the menu button and nothing else; it takes no room where the button is hidden (1440)
         menu = page.locator(".site-header .nav > [data-menu-slot]").evaluate("""e => ({
             only: e.childNodes.length === 1 && e.children.length === 1 && e.children[0].matches('button.fe-menu-btn[data-menu-open]'),
@@ -264,12 +270,11 @@ def test_slots_present(site_url, browser, width):
         # K1's switch sits right beside the theme toggle
         assert page.evaluate("() => document.querySelector('.site-header [data-classic-slot]').previousElementSibling"
                              ".matches('[data-theme-toggle]')")
-        # filled, the slot shows in line with the toggle (K1 puts its button in it)
-        page.evaluate("""() => document.querySelector('.site-header [data-classic-slot]').insertAdjacentHTML('beforeend',
-            '<button type="button" class="probe-classic">C</button>')""")
-        t = page.locator(".site-header [data-theme-toggle]").bounding_box()
-        c = page.locator(".site-header .probe-classic").bounding_box()
-        assert c["x"] >= t["x"] + t["width"] and abs((c["y"] + c["height"] / 2) - (t["y"] + t["height"] / 2)) <= 2
+        # filled, the slot shows in line with the toggle
+        if width >= 640:
+            t = page.locator(".site-header [data-theme-toggle]").bounding_box()
+            c = page.locator(".site-header .classic-toggle").bounding_box()
+            assert c["x"] >= t["x"] + t["width"] and abs((c["y"] + c["height"] / 2) - (t["y"] + t["height"] / 2)) <= 2
     finally:
         ctx.close()
 
