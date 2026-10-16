@@ -68,6 +68,34 @@
         setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
       })();
     </script>
+    <!-- fe-classic (K1): the visitor's remembered view decides calm or motion before the first paint, over the
+         reduced-motion query: "1" = Classic (calm), "0" = the story. A short touch screen stays calm either way, and is
+         marked calm-auto (the Classic switch is not shown there: calm is automatic). -->
+    <script>
+      (function () {
+        var d = document.documentElement, c = null, short = false;
+        try {
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            var pr = document.createElement("div");
+            pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+            d.appendChild(pr);
+            short = (pr.getBoundingClientRect().height || window.innerHeight) < 600;
+            d.removeChild(pr);
+          }
+        } catch (e) { short = false; }
+        if (short) d.classList.add("calm-auto");
+        try { c = localStorage.getItem("fe-classic"); } catch (e) { c = null; }
+        if (c !== "1" && c !== "0") return;
+        if (!d.classList.contains("motion") && !d.classList.contains("calm")) return;
+        // "1": calm, as site.js's setClassic(true) leaves it (Classic by choice, not a short touch screen)
+        if (c === "1") { d.classList.remove("motion", "short-touch"); d.classList.add("calm"); return; }
+        // "0": only a page made calm by the reduced-motion query turns to the story, never a short touch screen
+        if (!d.classList.contains("calm")) return;
+        if (short) { d.classList.add("short-touch"); return; }
+        d.classList.remove("calm"); d.classList.add("motion");
+      })();
+    </script>
+    <!-- /fe-classic -->
     <link rel="stylesheet" href="/assets/shared/theme.css" />
     <script src="/assets/shared/theme.js"></script>
     <link rel="stylesheet" href="/assets/site/shell.css" />
@@ -145,6 +173,21 @@
       <span class="fe-shell-slot" data-classic-slot></span>
       <span class="fe-shell-slot" data-menu-slot></span>
     </nav>
+    <script>
+      /* (K1) the Classic view switch, on the story page only, put in its slot as the parser passes (before the first
+         paint, so it never shifts the bar in); assets/shared/classic.js wires it. Hidden where calm is automatic
+         (html.calm-auto, head.html). The doc pages keep the slot empty. */
+      (function () {
+        if (!document.body || document.body.getAttribute("data-page") !== "home") return;
+        var s = document.querySelector(".site-header [data-classic-slot]"), d = document.documentElement, on = false;
+        if (!s || s.firstChild) return;
+        try { var c = localStorage.getItem("fe-classic"); on = c === "1" ? true : c === "0" ? false : window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { on = false; }
+        s.innerHTML = '<button type="button" class="classic-toggle" data-classic-toggle aria-pressed="' + on + '" aria-label="Classic view" title="Classic view">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="2" /><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" /></svg>' +
+          '<span class="classic-label">Classic</span></button>';   // NEW COPY (aria-label, tooltip, bar label)
+        if (d.classList.contains("calm-auto")) s.firstChild.hidden = true;
+      })();
+    </script>
   </div>
   <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
 </header>
@@ -488,5 +531,7 @@
 <script src="/assets/shared/checkpoint-input.js"></script>
 <script src="/assets/story/site.js"></script>
 <script src="/assets/story/download.js"></script>
+<!-- (K1) the Classic view switch: after site.js (FEStory), before the engine's first start -->
+<script src="/assets/shared/classic.js"></script>
 </body>
 </html>
