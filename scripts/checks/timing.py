@@ -260,6 +260,28 @@ def run(url: str, widths: list[int], themes: list[str], browser_name: str, show_
     return 1 if fails else 0
 
 
+def write_signatures(url: str, path: str, browser_name: str = "chromium") -> None:
+    """Regenerate tests/checkpoint/base_signatures.json: segment_digests of `<url>?pace=before` at 1440, 820, 390, both
+    themes (the cells test_base_motion_pinned reads). `url` is the site's base URL (any ?query is dropped)."""
+    from playwright.sync_api import sync_playwright
+    base = url.split("?")[0].split("#")[0].rstrip("/") + "/?pace=before"
+    out = {}
+    with sync_playwright() as pw:
+        browser = getattr(pw, browser_name).launch()
+        try:
+            for lay, w in (("desktop", 1440), ("tablet", 820), ("phone", 390)):
+                for th in ("dark", "light"):
+                    ctx, page = open_story(browser, base, w, th)
+                    try:
+                        out[f"{lay}-{th}"] = segment_digests(page, page.evaluate("() => window.__site.map()"))
+                    finally:
+                        ctx.close()
+        finally:
+            browser.close()
+    with open(path, "w") as f:
+        f.write(json.dumps(out, indent=1) + "\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--url", required=True)
@@ -268,7 +290,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--browser", default="chromium", choices=("chromium", "webkit"))
     ap.add_argument("--activity", action="store_true", help="also print each segment's still spans >= 0.1 s")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--write-signatures", metavar="PATH", help="write the pinned base digests JSON (from <url>?pace=before) and exit")
     a = ap.parse_args(argv)
+    if a.write_signatures:
+        write_signatures(a.url, a.write_signatures, a.browser)
+        return 0
     return run(a.url, a.width or [1440, 820], a.theme or ["dark", "light"], a.browser, a.activity, a.json)
 
 

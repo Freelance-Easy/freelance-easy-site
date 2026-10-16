@@ -11,8 +11,8 @@
   or a sped-up move that overlaps another move fails too, and what was cut is proven still in the base;
 - test_base_motion_pinned: `/?pace=before`'s own frames are pinned (tests/checkpoint/base_signatures.json, one digest per
   segment, measured on 67f6b3a's timeline), because a speed or easing change in code BOTH timelines share moves `/` and
-  the flag together and the comparison above cannot see it. Regenerate only for a decided motion change:
-  `timing.segment_digests` on `/?pace=before` at 1440, 820, 390, both themes;
+  the flag together and the comparison above cannot see it. Regenerate only for a decided motion or
+  stage-content change: python3 scripts/checks/timing.py --url <u> --write-signatures tests/checkpoint/base_signatures.json;
 - test_dip_fades_band: a dip whose cut turns the Ride's band on fades it with the stage, never one frame's flip.
 """
 from __future__ import annotations
@@ -164,7 +164,7 @@ def test_base_motion_pinned(browser, site_url, layout, theme):
         ctx.close()
     want = json.loads((pathlib.Path(__file__).with_name("base_signatures.json")).read_text())[f"{layout}-{theme}"]
     off = sorted(k for k in set(got) | set(want) if got.get(k) != want.get(k))
-    assert not off, f"frames changed against 67f6b3a in segments {off}: a move was sped up, slowed or re-eased (or the base was restyled: regenerate base_signatures.json only for a decided change)"
+    assert not off, f"frames changed against 67f6b3a in segments {off}: a move was sped up, slowed or re-eased (regenerate only for a decided motion or stage-content change: python3 scripts/checks/timing.py --url <u> --write-signatures tests/checkpoint/base_signatures.json)"
 
 
 def test_dip_fades_band(browser, site_url):
