@@ -99,7 +99,9 @@ def test_item_order(site_url, browser, width):
         assert by["logo"]["href"] == "/" and by["How it works"]["href"] == "/tour/" and by["Pricing"]["href"] == "/pricing"
         assert by["download"]["href"].startswith("/dl/mac/"), by["download"]  # A9 on a Mac
         shown = [i["key"] for i in items if i["shown"]]
-        assert shown == ["logo", "How it works", "Pricing", "download", "theme"], shown
+        # (B6) below the rail's 1024 px the menu button (its slot) shows at the bar's end; at 1024+ the slot takes no room
+        want = ["logo", "How it works", "Pricing", "download", "theme"] + (["menu-slot"] if width < 1024 else [])
+        assert shown == want, shown
         # "How it works" is a plain link to the full tour now (DEC-3), not the dialog's trigger
         assert page.locator(".site-header [data-tour-quick]").count() == 0
     finally:
@@ -107,12 +109,12 @@ def test_item_order(site_url, browser, width):
 
 
 def test_phone_bar(site_url, browser):
-    """390: the logo, Download and the theme toggle; the links wait for B6's menu (site.css's phone rule)."""
+    """390: the logo, Download, the theme toggle and B6's menu button (the links moved into its sheet)."""
     ctx, page = open_page(browser, site_url + "/", width=390)
     try:
         items = bar_items(page)
         assert [i["key"] for i in items] == ORDER
-        assert [i["key"] for i in items if i["shown"]] == ["logo", "download", "theme"], items
+        assert [i["key"] for i in items if i["shown"]] == ["logo", "download", "theme", "menu-slot"], items
     finally:
         ctx.close()
 
@@ -250,8 +252,15 @@ def test_slots_present(site_url, browser, width):
         for slot in ("[data-classic-slot]", "[data-menu-slot]"):
             el = page.locator(".site-header .nav > " + slot)
             assert el.count() == 1, slot
-            # empty, and no room taken while empty (no flex gap either)
-            assert el.evaluate("e => e.childNodes.length === 0 && getComputedStyle(e).display === 'none'"), slot
+        # K1's slot: empty, and no room taken while empty (no flex gap either)
+        assert page.locator(".site-header .nav > [data-classic-slot]").evaluate(
+            "e => e.childNodes.length === 0 && getComputedStyle(e).display === 'none'")
+        # (B6) the menu slot holds the menu button and nothing else; it takes no room where the button is hidden (1440)
+        menu = page.locator(".site-header .nav > [data-menu-slot]").evaluate("""e => ({
+            only: e.childNodes.length === 1 && e.children.length === 1 && e.children[0].matches('button.fe-menu-btn[data-menu-open]'),
+            display: getComputedStyle(e).display })""")
+        assert menu["only"], "something other than the menu button is in the menu slot"
+        assert menu["display"] == ("none" if width >= 1024 else "flex"), menu
         # K1's switch sits right beside the theme toggle
         assert page.evaluate("() => document.querySelector('.site-header [data-classic-slot]').previousElementSibling"
                              ".matches('[data-theme-toggle]')")
@@ -265,10 +274,10 @@ def test_slots_present(site_url, browser, width):
         ctx.close()
 
 
-def test_menu_stub():
-    """The (empty) phone/tablet menu partial for B6: no markup yet."""
-    stub = (ROOT / "src" / "partials" / "menu.html").read_text(encoding="utf-8")
-    assert re.sub(r"<!--.*?-->", "", stub, flags=re.S).strip() == ""
+def test_menu_partial():
+    """(B6) the phone/tablet menu partial is filled: the menu button and its sheet (tests/nav/test_menu.py covers it)."""
+    part = re.sub(r"<!--.*?-->", "", (ROOT / "src" / "partials" / "menu.html").read_text(encoding="utf-8"), flags=re.S)
+    assert part.count("data-menu-open") == 2 and '<dialog class="fe-menu" id="fe-menu"' in part
 
 
 # ---- the on-band Download hover (site.css .nav a.nav-cta:hover) ----------------------------------------------------
