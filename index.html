@@ -30,6 +30,9 @@
          a seam; scrolling back plays it backwards. Every sentence not on the previous homepage is marked NEW COPY for
          legal. Fictional persona and clients. Without JS, or with reduced motion, the beats stack with still images.
          Files: /assets/story/ (see HANDOFF.md). All fonts are self-hosted; the page makes no third-party request. -->
+    <!-- (chores-2) the body face is preloaded, as on the doc pages (B7): its swap nudged the bar's labels 3-5 px about
+         120 ms after load (BX's finding) -->
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
     <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
     <script>
       (function () {
