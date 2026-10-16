@@ -349,15 +349,21 @@ for explicit jumps. A checkpoint passed through is never written.
   not chapter hashes: the page starts on the first chapter, and nothing is written until the next final landing.
 - **ICX-HIST.8** A FREE settle writes its final landing with `replaceState`; a distance-0 re-alignment writes nothing
   (ICX-SETTLE-4).
-- **ICX-HIST.9** Scroll-spy history (main's ruling, 2026-10-15). In native sections (classic/calm, or the native rows
-  of a pinned mode) the one owner of history is the nav module (`rail.js`). It writes the current section's URL with
-  `replaceState` **only** when the visitor's own scrolling changes the current section (ICX-HL.4). It writes nothing
-  while any of these suppression flags is set:
+- **ICX-HIST.9** Scroll-spy history (main's ruling, 2026-10-15; owner amended 2026-10-16). In native sections
+  (classic/calm, or the native rows of a pinned mode) the scroll-spy runs in the nav module (`rail.js`), in every mode
+  that has native sections and whether or not the rail itself is visible; on every change of the current section it
+  dispatches `fe:spy` (`detail: {slug}`) on `document`. The one owner of every history write, this one included, is
+  `story-url.js` (C4): it writes the current section's URL with `replaceState` **only** when the visitor's own
+  scrolling changed the current section (ICX-HL.4). It writes nothing while any of these suppression flags (all
+  `story-url.js`'s own) is set:
   - `initializing`: from load (fresh load, reload, deep link, legacy hash) until the scroll that load causes has
     settled (its `scrollend`, or `SETTLE_IDLE` with no scroll where `scrollend` is missing), or at once if none is needed;
   - `restoring`: from a `popstate` until the scroll it causes has settled, the same way;
   - `jumping`: from a programmatic jump to a native row (ICX-JUMP.5) until its arrival, where the jump writes its own
     `pushState` (ICX-HIST.2) instead.
+  Explicit jumps (rail, menu, logo, Home/End) go through `window.FEStoryURL.jump(slug)` when it exists: it sets
+  `jumping` for a native row, calls `FEStory.goTo(slug, {source: "jump"})`, and pushes one entry at the final landing
+  (pinned row) or at the native scroll's arrival (native row). Callers fall back to `FEStory.goTo` when it is absent.
   The highlight and `aria-current` still follow the scroll-spy while a flag is set (ICX-HL.4); only history is
   suppressed.
 
