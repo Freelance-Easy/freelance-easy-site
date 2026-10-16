@@ -325,7 +325,7 @@
     window.FETheme.set(window.FETheme.get() === 'light' ? 'dark' : 'light');
   }));
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable], [data-classic-toggle]')) return;   // K1: Space presses the Classic switch itself
     e.preventDefault();
     if (reduced) return;
     if (TOUR.t >= TOUR.total) replay(); else TOUR.playing ? pause() : play();

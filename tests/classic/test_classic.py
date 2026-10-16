@@ -406,7 +406,20 @@ def test_tour_stop(site_url, browser):
         # and back: the tour plays again
         page.click(btn)
         assert page.is_visible("#play") and _stored(page) == "0"
+        # (Sol K1-1) Space on the focused switch presses the switch, not the tour's play/pause shortcut
+        page.focus(btn)
+        page.keyboard.press("Space")
+        page.wait_for_timeout(200)
+        assert page.get_attribute(btn, "aria-pressed") == "true" and not page.evaluate("() => __tour.state().playing")
         assert not page._k1_errs, page._k1_errs
+    finally:
+        ctx.close()
+    # (Sol K1-1) on a phone the switch and the theme toggle do not overlap
+    ctx, page = _open(browser, site_url, path="/tour/", w=375, h=740, ua="iphone", phone=True)
+    try:
+        t = page.locator(".tour-header [data-theme-toggle]").bounding_box()
+        c = page.locator(".tour-header .classic-toggle").bounding_box()
+        assert c["x"] >= t["x"] + t["width"], (t, c)
     finally:
         ctx.close()
 

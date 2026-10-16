@@ -32,6 +32,7 @@
     .tour-header .theme-toggle { margin-left: auto; }
     .tour-header [data-classic-slot] { display: flex; margin-left: -12px; }
     .tour-header [data-classic-slot]:empty { display: none; }
+    @media (max-width: 600px) { .tour-header [data-classic-slot] { margin-left: -4px; } }   /* proto.css: the gap is 8 px there */
     .classic-toggle { width: 40px; height: 40px; display: grid; place-items: center; flex: none; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
     .classic-toggle:hover, .classic-toggle[aria-pressed="true"] { color: var(--ink); background: var(--line); }
     .classic-toggle svg { width: 16px; height: 16px; }
