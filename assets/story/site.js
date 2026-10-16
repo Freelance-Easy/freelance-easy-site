@@ -1335,7 +1335,9 @@
   function onStep(dir, src, info) {
     if (!TL || !CP.length || held) return;
     if (info && info.gesture != null && info.gesture === swallow) return;   // ICX-SETTLE-8: the rest of a crossing gesture
-    const t0 = info && info.t != null ? info.t / 1000 : clock();
+    // (the run's clock starts when the input is handled: an event's timeStamp can be older than its dispatch, and
+    // counting that gap made the first frames of a 1x step run fast)
+    const t0 = clock();
     if (phase === "released") return;
     if (phase === "free") {                            // ICX-SETTLE-5: counted from the beat the settle would have picked
       const b = settleTarget();
@@ -1360,7 +1362,7 @@
   }
   function onJump(target, src, info) {
     if (!TL || !CP.length || held) return;
-    jump(target === "first" ? 0 : last(), "jump", info && info.t != null ? info.t / 1000 : null);
+    jump(target === "first" ? 0 : last(), "jump");
   }
   // let the gesture pass natively (true) or intercept it: the edges (ICX-RELEASE, ICX-BACK.5), FREE's clamp (ICX-SETTLE-5),
   // the crossing from below (ICX-SETTLE-8), and overlays
@@ -1589,6 +1591,9 @@
   // the first landing (ICX-JUMP.3): a deep link plays its chapter's demo from its rest-entry, a reload or a history
   // visit lands on its rest frame, a fresh arrival at the top plays Make's arrival to its hold frame. No history.
   function init() {
+    // the engine owns the reading place: the browser's own scroll restoration on a reload or a history visit would land
+    // after this one, read as a foreign scroll and settle elsewhere (not a history write: no entry, no URL change)
+    try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) { /* ignore */ }
     let h = "";
     try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) { h = ""; }
     const b = LEGACY[h] || BEATS.find((x) => SLUG[x] === h) || null;
