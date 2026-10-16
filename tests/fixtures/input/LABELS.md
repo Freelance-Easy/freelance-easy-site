@@ -109,10 +109,10 @@ trackpad inertia is C7's job. Times are integer ms (`ev.timeStamp`).
 | `touch-swipe-down` | 10 moves of 12 px down | -1 | — | 10 | — |
 | `touch-long-drag` | 25 moves of 16 px up (400 px): one touch = at most one step | +1 | — | 25 | — |
 | `touch-short-flick` | 2 moves of 10 px up (20 px at 32 ms), end at 40 ms: velocity 0.5 px/ms | +1 | — | 2 | — |
-| `touch-short-slow` | 10 moves of 2 px up, 40 ms apart (20 px over 400 ms): too slow | — | — | 7 | — |
+| `touch-short-slow` | 10 moves of 2 px up, 40 ms apart (20 px over 400 ms): too slow (C6: the 3 in-slop moves are held too) | — | — | 10 | — |
 | `touch-horizontal` | 10 moves of 12 px sideways, 1 px up | — | — | 0 | — |
 | `touch-pinch` | two-finger touch (pinch) moving 120 px | — | — | 0 | — |
-| `touch-second-finger` | one finger moves 6 px, a second finger lands, both move 120 px | — | — | 0 | — |
+| `touch-second-finger` | one finger moves 6 px (held in the slop, C6), a second finger lands, both move 120 px | — | — | 1 | — |
 | `touch-zoomed` | swipe up 120 px while `visualViewport.scale` = 1.5 (pans, ICX-SETTLE-9) | — | — | 0 | — |
 
 ### Added after the detector existed (sabotage coverage; label straight from the contract row named)
@@ -124,7 +124,7 @@ were committed red, before their fix.
 
 | fixture | scenario | steps | jumps | prevented | classes |
 |---|---|---|---|---|---|
-| `touch-second-finger-move` | one finger moves 6 px, then moves carry two touches (no second `touchstart` seen) for 120 px | — | — | 0 | — |
+| `touch-second-finger-move` | one finger moves 6 px (held in the slop, C6), then moves carry two touches (no second `touchstart` seen) for 120 px | — | — | 1 | — |
 | `tp-reverse-jitter-after` | Sol C1-sol-1 #1: +20 px at 0, -12 px at 16, +1 px at 32 ms (a 1 px jitter after a reversal) | +1 -1 | — | all | smooth |
 | `bp-nested-reverse-up` | Sol C1-sol-1 #2: box at its bottom; notch down at 0 (tagged `down`), notch up at 150 ms (the box can scroll up: ICX-BYPASS.4) | +1 | — | tag:down | notch |
 | `d1-trickle` | Sol C1-sol-1 #3: 60 px opener, then 1 px … 0.76 px every 100 ms to 1000 ms (a decaying tail, ICX-SETTLE-D1) | +1 | — | all | notch |

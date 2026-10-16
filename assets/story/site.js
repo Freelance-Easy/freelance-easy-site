@@ -1070,7 +1070,21 @@
   function land(k) {
     kR = k; passK = -1;
     syncScroll(trackY(k));
+    if (kD === kR) announce(k);
     emit("land", payload(k, srcD, { final: kD === kR }));
+  }
+  // ICX-KEY.2 (C6): a polite live region says each FINAL landing's name (key, wheel, touch, rail, settle, popstate,
+  // re-entry); pass-through landings and mid-move frames say nothing, and focus never moves (ICX-KEY.3)
+  // (made at load, empty, so assistive tech knows the region before its first change)
+  const liveEl = document.createElement("p");
+  liveEl.className = "visually-hidden";
+  liveEl.setAttribute("aria-live", "polite");
+  liveEl.setAttribute("data-story-live", "");
+  document.body.appendChild(liveEl);
+  function announce(k) {
+    const name = NAME[CP[k]] || "";
+    if (liveEl.textContent === name) liveEl.textContent = "";   // the same name again is a new landing: say it again
+    liveEl.textContent = name;
   }
   // the one way into REST (ICX-CHECKPOINT.2, ICX-REST): rendered == dest == k, the story on k's rest frame, scrollY on
   // k's track position. Everything that ends a move comes through here.
@@ -1283,6 +1297,7 @@
     if (dip) { dip = null; clearDip(); }
     kR = kD = last(); shown = RE[kR][1]; phase = "rest";
     syncScroll(storyEnd());
+    announce(kR);                                       // re-entry is a final landing on the last pinned (ICX-KEY.2)
     reentryUntil = clock() + CFG.REENTRY_STICKY_MS / 1000;
     lastDrawn = null;
     wake();
@@ -1308,7 +1323,7 @@
     if (y > end + 1 || (t - releasing < 0.6 && kR === last() && y >= end - 1)) { if (phase !== "released") setReleased(); return; }
     if (!free) {
       free = { from: phase === "released" || t < reentryUntil ? "released" : "in", sawHold: barHeld, lastT: t, timer: 0, backstop: 0, preview: -1 };
-      if (phase === "released") kR = kD = last();
+      if (phase === "released") { kR = kD = last(); free.back = true; }   // a re-entry from below begins here
       run = null; wait = 0;                             // the stage keeps its frame; the settle plans afresh
       if (dip) { dip = null; clearDip(); }
       phase = "free";
@@ -1332,7 +1347,7 @@
     const quiet = (clock() - free.lastT) * 1000;
     const need = trigger === "scrollend" ? CFG.SCROLLEND_GRACE : CFG.SETTLE_IDLE;
     if (quiet < need - 1) { armSettle("scroll"); return; }
-    const y = window.scrollY, from = free.from, sawHold = free.sawHold;
+    const y = window.scrollY, from = free.from, sawHold = free.sawHold, back = !!free.back;
     endFree();
     settles++;
     if (y > storyEnd() + 1) { setReleased(); return; }
@@ -1340,6 +1355,9 @@
     if (from === "released" && !sawHold) { b = last(); reentryUntil = clock() + CFG.REENTRY_STICKY_MS / 1000; }   // re-entry
     syncScroll(trackY(kR));
     jump(b, "settle");
+    // a touch / momentum re-entry lands on REST(last) with no new landing (kR was already the last pinned): it is
+    // still a final landing for ICX-KEY.2 (Sol C6-sol-1 #3); a sticky continuation of it says nothing again
+    if (back && b === last() && kR === last() && kD === kR) announce(kR);
   }
   function onScroll() {
     if (!TL || !CP.length || held || !motion()) return;

@@ -14,7 +14,8 @@
  *                                 // info {t, trigger: start|rise|repeat|reverse|key|key-repeat|swipe|flick, gesture?, cls?}
  *     onJump(target, src, info),  // target "first"|"last" (Home/End); src "key"; info {t, key, repeat}
  *     isBypassed(ev, info),       // optional; truthy = let this gesture / key / touch pass natively.
- *                                 // info {source, dir, phase: "start"|"continue", gesture?, jump?}
+ *                                 // info {source, dir, phase: "start"|"continue"|"probe", gesture?, jump?}
+ *                                 // ("probe": a touch still inside TOUCH_SLOP, asked in its tentative direction)
  *     onSample(rec),              // optional debug/tuning tap: every wheel event inside a gesture
  *     pinHeight()                 // optional; px of the pinned stage for SWIPE_PX (default innerHeight)
  *   });
@@ -310,7 +311,15 @@
         return;
       }
       var p = ev.touches[0];
-      T = { x0: p.clientX, y0: p.clientY, t0: ev.timeStamp, decided: null, stepped: false, dy: 0, dead: false };
+      T = { x0: p.clientX, y0: p.clientY, t0: ev.timeStamp, decided: null, stepped: false, dy: 0, dead: false, held: false };
+    }
+
+    // would a touch moving in dir pass natively? (dir 0: no direction yet -> only the direction-free reasons)
+    function touchPasses(ev, dir, phase) {
+      var vv = win && win.visualViewport;
+      if (vv && vv.scale > C.ZOOM_SCALE) return true; // pinch-zoomed: pan (ICX-SETTLE-9)
+      if (!dir) return inFieldOrDialog(pathOf(ev));
+      return targetBypassed(ev, dir) || consumerPasses(ev, { source: "touch", dir: dir, phase: phase });
     }
 
     function onTouchMove(ev) {
@@ -319,14 +328,29 @@
       var p = ev.touches[0], dx = p.clientX - T.x0, dy = T.y0 - p.clientY; // dy > 0 = forward (finger up)
       T.dy = dy;
       if (!T.decided) {
-        if (Math.sqrt(dx * dx + dy * dy) < C.TOUCH_SLOP) return;
-        var vv = win && win.visualViewport, dir = sign(dy);
-        if (vv && vv.scale > C.ZOOM_SCALE) T.decided = "pass"; // pinch-zoomed: pan (ICX-SETTLE-9)
-        else if (Math.abs(dy) < C.DIR_RATIO * Math.abs(dx)) T.decided = "pass"; // horizontal
-        else if (targetBypassed(ev, dir)) T.decided = "pass";
-        else if (consumerPasses(ev, { source: "touch", dir: dir, phase: "start" })) T.decided = "pass";
-        else T.decided = "intercept";
+        if (Math.sqrt(dx * dx + dy * dy) < C.TOUCH_SLOP) {
+          // C6 momentum guard: inside the slop the touch is held. The browser starts its own scroll (and, on lift,
+          // its fling) from the first touchmove nobody prevents, and every later touchmove is then uncancelable, so
+          // a slow start leaked into a native scroll + FREE + settle beside the step. A touch that would pass in
+          // its tentative direction (the first chapter's pull-to-refresh, the release) is left alone: held when
+          // neither direction passes, or (at an edge, where one does) when it has clearly started (>= 2 px) the
+          // intercepted way; a sideways or 1 px lead-in at an edge is never held (Sol C6-sol-1 #1).
+          // Only a vertical lead-in is held: a sideways one is never touched (a horizontal swipe is not intercepted).
+          // A second finger never gets here (the touch is dead): a pinch is never prevented.
+          var vert = Math.abs(dy) > 0 && Math.abs(dy) >= C.DIR_RATIO * Math.abs(dx);
+          var pf = vert && touchPasses(ev, 1, "probe"), pb = vert && touchPasses(ev, -1, "probe");
+          var td = Math.abs(dy) >= 2 ? sign(dy) : 0;
+          if (vert && ((!pf && !pb) || (pf !== pb && td && !(td > 0 ? pf : pb)))) {
+            T.held = true;
+            if (ev.cancelable !== false) ev.preventDefault();
+          }
+          return;
+        }
+        var dir = sign(dy);
+        if (Math.abs(dy) < C.DIR_RATIO * Math.abs(dx)) T.decided = T.held ? "flat" : "pass"; // horizontal: no step
+        else T.decided = touchPasses(ev, dir, "start") ? "pass" : "intercept";
       }
+      if (T.decided === "flat") { if (ev.cancelable !== false) ev.preventDefault(); return; }
       if (T.decided !== "intercept") return;
       if (ev.cancelable !== false) ev.preventDefault();
       if (!T.stepped && Math.abs(dy) >= swipePx()) { // one touch = at most one step
