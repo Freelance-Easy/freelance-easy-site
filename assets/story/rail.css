@@ -1,0 +1,175 @@
+/* ---------- the chapter rail v3 (B5): the story's menu, desktop only ----------
+   Daniel (Round 2): "same tick style; page names always visible, gray when inactive and white and bigger when active",
+   and "shouldnt be displaying the page transition elements as user control": no numbers, counters, fills or progress
+   bars (ICX-NOPROG). One row per chapter: the tick (the v2 tick, 2 px, the current one longer) and its name beside it.
+   rail.js owns the state classes (.is-hl = the highlight, aria-current = the landed chapter) and `hidden`; site.js adds
+   .is-in (the draw-in, once the arrival hands over) and .on-band (the Ride's band has covered the rail).
+   Contrast: idle names >= 4.5:1 on the page and on the band, both themes (tests/nav/test_rail.py::test_idle_contrast);
+   ticks >= 3:1 (--nav-a0). Tokens only. */
+:root {
+  --rail-x: clamp(20px, calc(max(0px, (100vw - var(--shell)) / 2) * 0.44), 44px);   /* the rail's left edge */
+  --rail-w: 112px;                    /* tick + gap + the longest name at its active size ("Get the app") */
+  --rail-row: 28px;                   /* WCAG 2.5.8: 24 px targets at least */
+  --nav-room: calc(var(--rail-x) + var(--rail-w) + 28px);   /* the gutter the content keeps clear (site.css --pad-l) */
+}
+.story-nav {
+  display: none;
+}
+@media (min-width: 1024px) {
+  /* calm / classic: the same gutter as the story (the rail stays beside the stacked sections) */
+  .js.calm.has-rail {
+    --pad-l: max(var(--pad), calc(var(--nav-room) - max(0px, (100vw - var(--shell)) / 2)));
+  }
+  .js.calm.has-rail .shell {
+    padding-left: var(--pad-l);
+  }
+  .js .story-nav:not([hidden]) {
+    display: block;
+  }
+}
+.story-nav {
+  position: absolute;
+  left: var(--rail-x);
+  top: 50%;
+  z-index: 8;
+  translate: 0 -50%;
+  width: var(--rail-w);
+  color: var(--text-0);
+  visibility: hidden;
+}
+/* calm / classic: the stacked sections scroll under it, so it is fixed in the gutter, centred under the bar */
+.story-nav.is-fixed {
+  position: fixed;
+  top: calc(var(--header-h) + (100vh - var(--header-h)) / 2);
+  top: calc(var(--header-h) + (100svh - var(--header-h)) / 2);
+}
+.story-nav:is(.is-in, .is-fixed) {
+  visibility: visible;
+}
+.story-nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.story-nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--rail-row);
+  padding-right: 4px;
+  color: var(--text-2);               /* idle: the gray (>= 4.5:1 on the page, both themes) */
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.004em;
+  white-space: nowrap;
+  text-decoration: none;
+  border-radius: 6px;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.24s var(--ease);
+}
+.story-nav .tk {
+  flex: none;
+  width: 18px;                        /* the tick's box: the idle tick is drawn shorter inside it */
+  height: 2px;
+  position: relative;
+}
+.story-nav .tk::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: var(--nav-a0);
+  transform-origin: 0 50%;
+  scale: 0 1;
+  transition: width 0.32s var(--ease), opacity 0.24s var(--ease), scale 0.56s var(--ease);
+  transition-delay: 0s, 0s, calc(var(--i, 0) * 36ms);
+}
+.story-nav .nm {
+  display: inline-block;
+  transform-origin: 0 50%;
+  opacity: 0;
+  transition: scale 0.32s var(--ease), opacity 0.4s var(--ease), translate 0.4s var(--ease);
+  translate: -4px 0;
+}
+/* the entrance: the ticks draw in from the edge and the names settle beside them, top to bottom */
+.story-nav:is(.is-in, .is-fixed) .tk::before {
+  scale: 1 1;
+}
+.story-nav:is(.is-in, .is-fixed) .nm {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 0s, calc(80ms + var(--i, 0) * 36ms), calc(80ms + var(--i, 0) * 36ms);
+}
+/* the highlight (dest): the strongest ink, a step bigger, the long tick */
+.story-nav a.is-hl {
+  color: var(--text-0);
+  font-weight: 600;
+}
+.story-nav a.is-hl .nm {
+  scale: 1.13;
+}
+.story-nav a.is-hl .tk::before {
+  width: 18px;
+  opacity: 1;
+}
+@media (hover: hover) {
+  .story-nav a:not(.is-hl):hover {
+    color: var(--text-1);
+  }
+  .story-nav a:not(.is-hl):hover .tk::before {
+    width: 14px;
+    opacity: 0.85;
+  }
+}
+.story-nav a:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+/* on the Ride's band: the band's own text colours (dark theme: near-black on light blue; light theme: white on teal,
+   where only the full colour clears 4.5:1, so there the idle and the current name differ by size, weight and tick) */
+.story-nav.on-band a {
+  color: color-mix(in srgb, var(--ride-text) 86%, var(--ride));
+}
+:root:not([data-theme="dark"]) .story-nav.on-band a {
+  color: var(--ride-text);
+}
+.story-nav.on-band a.is-hl {
+  color: var(--ride-text);
+}
+.story-nav.on-band {
+  --nav-a0: 0.68;
+  --focus: var(--ride-text);
+}
+/* light theme: the teal band is too light for white 13 px text (~4.2:1 measured), so the band deepens a little under
+   the rail: a soft shade from the screen's edge to just past the names, feathered at both ends (no edge, no panel) */
+.story-nav::before {
+  content: "";
+  position: absolute;
+  top: -48px;
+  bottom: -48px;
+  left: calc(-1 * var(--rail-x));
+  right: -72px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(3, 26, 28, 0.2) 0, rgba(3, 26, 28, 0.2) calc(100% - 96px), rgba(3, 26, 28, 0));
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+:root:not([data-theme="dark"]) .story-nav.on-band::before {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-nav a,
+  .story-nav .tk::before,
+  .story-nav .nm {
+    transition: none !important;
+  }
+}

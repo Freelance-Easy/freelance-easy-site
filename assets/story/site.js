@@ -88,7 +88,7 @@
     if (c.getAttribute("style") === "") c.removeAttribute("style");
   }
   function clearDip() { for (const el of [stageWrap, over]) if (el) el.style.removeProperty("opacity"); unDipCopy(); }
-  const nav = $(".story-nav"), navBtns = nav ? $$("button[data-go]", nav) : [], navTip = nav ? $(".nav-tip", nav) : null;
+  const nav = $(".story-nav");
   const BEATS = ["make", "look", "know", "grow", "chase", "yours", "price", "note", "end"];
   const PHONE_BEATS = ["make", "look", "know", "grow", "chase"];
   const copy = {}, home = {};
@@ -595,7 +595,7 @@
     else OV = null;
     if (!OV || TL.isDesk) clearOfferVars();
     buildTrack();
-    navMeasure();
+    railMeasure();
     lastG = {};
     curSeg = -1;
   }
@@ -845,9 +845,11 @@
     // the header joins the band while the band is the page (syncOnBand)
     bandK = bk;
     syncOnBand();
-    // the chapter rail takes the band's colours once the band's opening clip has passed it
-    if (navOn && R0) {
-      const nb = bk >= 1 || (bk > 0 && R0.l * kb < navCx && R0.t * kb < navCy);
+    // the chapter rail takes the band's colours once the band's opening clip has covered its whole box (names included)
+    if (railOn && R0) {
+      if (!railBox && bk > 0 && bk < 1) railMeasure(true);
+      const rb = railBox;
+      const nb = bk >= 1 || (bk > 0 && !!rb && R0.l * kb <= rb.l && R0.t * kb <= rb.t && R0.r * kb <= rb.r && R0.b * kb <= rb.b);
       if (lastG.navBand !== nb) { lastG.navBand = nb; nav.classList.toggle("on-band", nb); }
     }
     // legal v-story (2026-10-08), narrowed by A10 (R5 A.2): "Fictional data", continuously, on [labelData, labelOff]
@@ -941,183 +943,31 @@
         if (next) { next.classList.add("is-on"); capActive(next, true); }
       }, CAP_OUT_MS);
     }
-    // the chapter rail follows the last beat that had a caption (through the Ride's flood, 04 stays current)
-    let named = b;
-    for (let j = i; !named && j >= 0; j--) named = TL.beats[j];
-    navSetActive(named, instant);
   }
 
-  /* ---------------- the chapter rail (desktop): checkpoints to see, follow and click ---------------- */
-  // v2.2 (Daniel: "checkpoints that they could maybe like click on the left side of the screen … some kind of dynamic
-  // animated scroller or animated bars … [Codex's] when you hover on it it expands into the more angled bars"). One tick
-  // per checkpoint. At rest the current one is longest and fills as its scene plays (full on its readable frame), and
-  // the long tick rolls on to the next as the next caption arrives. Hover (or keyboard focus) opens the rail like a
-  // dock: the ticks swell around the pointer into an angled fan and the nearest one's name shows beside it. A click
-  // lands on that checkpoint's readable frame through the anchor path (far away, the stage dips and lands). Lengths are
-  // px, positions are in ticks; every move is a critically damped spring (closed form: the same at any frame rate).
-  const NAV = { gap: 24, rest: [10, 20], open: [12, 44], fan: 3.4, doneA: 0.4,
-    wP: 2 * Math.PI * 2.4, wH: 2 * Math.PI * 3.2, wY: 2 * Math.PI * 6, wTip: 2 * Math.PI * 7 };
-  let navOn = false, navIn = false, navCP = [], navIdx = {}, navA = 0, navCx = 0, navCy = 0, navRoom = 44;
-  let navP = 0, navPV = 0, navH = 0, navHV = 0, navY = 0, navYV = 0, navTipY = 0, navTipYV = 0;
-  let navPtr = null, navFocus = -1, navTipK = -1, navTipO = "", navTipT = "";
-  function spr(x, v, goal, w, dt) {
-    const e = x - goal, k = Math.exp(-w * dt), c = v + w * e;
-    return [goal + (e + c * dt) * k, (v - w * c * dt) * k];
+  /* ---------------- the chapter rail (desktop): assets/story/rail.js owns it (B5, rail v3) ---------------- */
+  // rail.js renders the rail from FEStory.destinations, shows or hides it, turns a click into FEStory.goTo and is the one
+  // writer of its highlight and aria-current (ICX-HL.5). The engine keeps the two visual cues only it knows: .is-in (the
+  // rail draws in once the arrival has handed over) and .on-band (the Ride's band has covered the rail's whole box).
+  let railOn = false, railIn = false, railBox = null;
+  // the rail's box inside the band's box (the band's clip insets are in that box: applyGlobals); measured lazily, since
+  // rail.js may show the rail after this layout ran
+  function railMeasure(now) {
+    railOn = !!(nav && TL && TL.isDesk);
+    railBox = null;
+    if (!now || !railOn || nav.hidden) return;
+    const r = nav.getBoundingClientRect(), br = band.getBoundingClientRect();
+    if (!r.width || !br.width) return;
+    railBox = { l: r.left - br.left, t: r.top - br.top, r: br.right - r.right, b: br.bottom - r.bottom };
   }
-  // each checkpoint fills from the moment its caption arrives to its readable frame (its rest); Make
-  // fills to its own end (the PDF press), since its only hold is the arrival's, mid-scene
-  function navBuild() {
-    if (!nav || !TL || !TL.isDesk) { navTeardown(); return; }
-    navCP = []; navIdx = {};
-    for (const btn of navBtns) {
-      const b = btn.dataset.go;
-      const sw = TL.switches.find((s) => s[0] === b);
-      if (b !== "make" && !sw) continue;
-      const k = CP.indexOf(b);
-      if (k < 0) continue;
-      const start = b === "make" ? 0 : sw[1];
-      const end = b === "make" ? TL.seg("make").T1 - 0.02 : RE[k][1];
-      const anchor = Math.max(end, start + 0.05);
-      const tk = $(".tk", btn);
-      tk.style.setProperty("--i", String(navCP.length));
-      navIdx[b] = navCP.length;
-      navCP.push({ b, btn, tk, f: $("b", tk), start, anchor, w: "", fw: "", fa: "", cls: "" });
-    }
-    nav.hidden = false;
-    navOn = true;
-    navMeasure();
+  function railReveal() {
+    if (!railOn || railIn) return;
+    railIn = true;
+    nav.classList.add("is-in");                       // CSS draws the ticks and names in, top to bottom
   }
-  // where the rail sits in the band's box (the band reaches it as its clip opens: applyGlobals), and how far the open
-  // fan may reach before the captions (10 px clear: the narrow desktops get a shorter fan, never ticks over the text)
-  function navMeasure() {
-    if (!navOn) return;
-    const r = $("ol", nav).getBoundingClientRect(), pr = pin.getBoundingClientRect();
-    const hh = header ? header.getBoundingClientRect().height : 64;
-    navCx = r.left + 16 - pr.left;
-    navCy = r.top + r.height / 2 - (pr.top - hh);
-    navRoom = clamp(capsEl.getBoundingClientRect().left - r.left - 10, NAV.rest[1] + 6, NAV.open[1]);
-  }
-  function navReveal() {
-    if (!navOn || navIn) return;
-    navIn = true;
-    nav.classList.add("is-in");                       // CSS draws the ticks in, top to bottom
-  }
-  function navRove(k) { navCP.forEach((c, j) => c.btn.setAttribute("tabindex", j === k ? "0" : "-1")); }
-  function navSetActive(b, force) {
-    const k = navIdx[b];
-    if (k == null || (k === navA && !force)) return;
-    navA = k;
-    navCP.forEach((c, j) => { if (j === k) c.btn.setAttribute("aria-current", "step"); else c.btn.removeAttribute("aria-current"); });
-    if (!nav.contains(document.activeElement)) navRove(k);   // Tab lands on the current chapter
-  }
-  function navGo(b) {
-    if (!TL || !motion()) return;
-    const k = CP.indexOf(b);
-    if (k >= 0) jump(k, "jump");
-  }
-  // one frame of the rail at story time T; returns true while any of its springs is still moving
-  function navTick(T, dt, instant) {
-    if (!navOn || !navCP.length) return false;
-    const n = navCP.length;
-    const hGoal = navPtr != null || navFocus >= 0 ? 1 : 0;
-    const yGoal = navFocus >= 0 ? navFocus : navPtr != null ? navPtr : navY;
-    let busy = false;
-    if (instant) {
-      navP = navA; navPV = 0; navH = hGoal; navHV = 0; navY = yGoal; navYV = 0;
-    } else {
-      [navP, navPV] = spr(navP, navPV, navA, NAV.wP, dt);
-      [navH, navHV] = spr(navH, navHV, hGoal, NAV.wH, dt);
-      [navY, navYV] = spr(navY, navYV, yGoal, NAV.wY, dt);
-      if (Math.abs(navP - navA) < 1e-3 && Math.abs(navPV) < 1e-2) { navP = navA; navPV = 0; } else busy = true;
-      if (Math.abs(navH - hGoal) < 1e-3 && Math.abs(navHV) < 1e-2) { navH = hGoal; navHV = 0; } else busy = true;
-      if (Math.abs(navY - yGoal) < 1e-3 && Math.abs(navYV) < 1e-2) { navY = yGoal; navYV = 0; } else busy = true;
-    }
-    const h = clamp(navH);
-    const tipK = h > 0.02 ? Math.round(clamp(navY, 0, n - 1)) : -1;
-    const [r0, r1] = NAV.rest, o0 = NAV.open[0], o1 = navRoom;
-    let tipLen = 0;
-    for (let j = 0; j < n; j++) {
-      const c = navCP[j];
-      const gR = Math.max(0, 1 - Math.abs(j - navP));                  // rest: the current tick (shared as it rolls on)
-      const gO = Math.max(0, 1 - Math.abs(j - navY) / NAV.fan);        // open: the angled fan around the pointer
-      const len = mix(r0 + (r1 - r0) * gR, o0 + (o1 - o0) * gO, h);
-      const f = clamp((T - c.start) / (c.anchor - c.start));
-      const w = `${len.toFixed(2)}px`, fw = `${(f * len).toFixed(2)}px`, fa = mix(NAV.doneA, 1, gR).toFixed(3);
-      const cls = "tk" + (f > 0.002 && f < 0.998 ? " is-filling" : "") + (j === tipK ? " is-tip" : "");
-      if (c.w !== w) { c.w = w; c.tk.style.width = w; }
-      if (c.fw !== fw) { c.fw = fw; c.f.style.width = fw; }
-      if (c.fa !== fa) { c.fa = fa; c.f.style.opacity = fa; }
-      if (c.cls !== cls) { c.cls = cls; c.tk.className = cls; }
-      if (j === tipK) tipLen = len;
-    }
-    // the name: a pill beside the tick under the pointer, gliding from tick to tick (it appears where it is)
-    if (tipK < 0) navTipK = -1;
-    else {
-      if (tipK !== navTipK) {
-        const c = navCP[tipK];
-        $(".n", navTip).textContent = c.btn.dataset.n || "";
-        $(".t", navTip).textContent = c.btn.dataset.name || "";
-        if (navTipK < 0) { navTipY = tipK * NAV.gap; navTipYV = 0; }
-        navTipK = tipK;
-      }
-      const goal = tipK * NAV.gap;
-      if (instant) { navTipY = goal; navTipYV = 0; }
-      else {
-        [navTipY, navTipYV] = spr(navTipY, navTipYV, goal, NAV.wTip, dt);
-        if (Math.abs(navTipY - goal) < 0.05 && Math.abs(navTipYV) < 0.5) { navTipY = goal; navTipYV = 0; } else busy = true;
-      }
-      const t = `translate3d(${(tipLen + 14).toFixed(1)}px, ${(navTipY + NAV.gap / 2 - 13).toFixed(1)}px, 0)`;
-      if (navTipT !== t) { navTipT = t; navTip.style.transform = t; }
-    }
-    const o = (tipK < 0 ? 0 : h).toFixed(3);
-    if (navTipO !== o) { navTipO = o; navTip.style.opacity = o; }
-    return busy;
-  }
-  function navTeardown() {
-    navOn = false; navIn = false; navPtr = null; navFocus = -1; navTipK = -1; navTipO = navTipT = "";
-    if (!nav) return;
-    nav.hidden = true;
-    nav.classList.remove("is-in", "on-band");
-    for (const c of navCP) {
-      c.tk.removeAttribute("style"); c.tk.className = "tk"; c.f.removeAttribute("style");
-      c.btn.removeAttribute("aria-current"); c.btn.setAttribute("tabindex", "-1");
-    }
-    navTip.removeAttribute("style");
-    navCP = []; navIdx = {};
-  }
-  if (nav) {
-    const btnAt = (e) => { const b = e.target.closest && e.target.closest("button[data-go]"); return b && navIdx[b.dataset.go] != null ? b : null; };
-    nav.addEventListener("pointermove", (e) => {
-      if (e.pointerType === "touch") return;          // touch: a tap is a click, never a hover
-      const b = btnAt(e);
-      if (!b) return;
-      navPtr = clamp(navIdx[b.dataset.go] + (e.offsetY - NAV.gap / 2) / NAV.gap, 0, navCP.length - 1);
-      wake();
-    });
-    nav.addEventListener("pointerleave", () => { navPtr = null; wake(); });
-    nav.addEventListener("click", (e) => { const b = btnAt(e); if (b) navGo(b.dataset.go); });
-    nav.addEventListener("focusin", (e) => {
-      const b = btnAt(e);
-      if (!b) return;
-      navFocus = b.matches(":focus-visible") ? navIdx[b.dataset.go] : -1;
-      navRove(navIdx[b.dataset.go]);
-      wake();
-    });
-    nav.addEventListener("focusout", (e) => {
-      if (nav.contains(e.relatedTarget)) return;
-      navFocus = -1;
-      navRove(navA);
-      wake();
-    });
-    nav.addEventListener("keydown", (e) => {
-      const b = btnAt(e);
-      if (!b) return;
-      const k = navIdx[b.dataset.go];
-      const to = { ArrowDown: k + 1, ArrowRight: k + 1, ArrowUp: k - 1, ArrowLeft: k - 1, Home: 0, End: navCP.length - 1 }[e.key];
-      if (to == null) return;
-      e.preventDefault();
-      navCP[clamp(to, 0, navCP.length - 1)].btn.focus({ preventScroll: true });   // the rail is pinned: never scroll
-    });
+  function railTeardown() {
+    railOn = false; railIn = false; railBox = null;
+    if (nav) nav.classList.remove("is-in", "on-band");
   }
 
   /* ---------------- checkpoints (ICX v1, C3): one gesture = one page; seams and content play at their designed speed ---------------- */
@@ -1210,7 +1060,7 @@
     kD = kR = k; shown = RE[k][1]; phase = "rest";
     syncScroll(trackY(k));
     lastDrawn = null; capIdx = -1;
-    render(shown); updateCaptions(shown, true); navTick(shown, 0, true);
+    render(shown); updateCaptions(shown, true);
     wake();
   }
 
@@ -1534,10 +1384,7 @@
     const k = `${shown.toFixed(5)}|${FX.gate.cursor.toFixed(3)}|${FX.gate.press}`;
     if (k !== lastDrawn) { lastDrawn = k; render(shown); }
     updateCaptions(shown, false);
-    if (navOn) {
-      if (!navIn && !(run && run.intro)) navReveal();  // the rail draws in once the arrival has handed over
-      if (navTick(shown, dt, false)) busy = true;
-    }
+    if (railOn && !railIn && !(run && run.intro)) railReveal();   // the rail draws in once the arrival has handed over
     if (busy) raf = requestAnimationFrame(tick);
   }
   // story time between frames, for state(): the run's own clock (the shown frame is at most one frame behind it)
@@ -1599,7 +1446,7 @@
     label.removeAttribute("data-mode");
     label.style.removeProperty("transform");
     FX.gate.cursor = 1; FX.gate.press = 1;
-    navTeardown();
+    railTeardown();
     placeCopies([]);
   }
   // the first landing (ICX-JUMP.3): a deep link plays its chapter's demo from its rest-entry, a reload or a history
@@ -1687,7 +1534,7 @@
         if (preset() === "tall") for (const b of TALL_BEATS) { const c = capFor(b); if (c) capRO.observe(c); }
       }
       build();
-      navBuild();
+      railMeasure();
       held = false;
       FX.gate.cursor = 1; FX.gate.press = 1;
       if (keep && keep.cp === CP.join()) {
@@ -1712,8 +1559,7 @@
       curSeg = -1; lastDrawn = null; capIdx = -1;
       render(shown);
       updateCaptions(shown, true);
-      navTick(shown, 0, true);
-      if (!(run && run.intro)) navReveal();             // an anchor, a reload or a rebuild: the rail is up at once
+      if (!(run && run.intro)) railReveal();            // an anchor, a reload or a rebuild: the rail is up at once
       doc.classList.add("fx-ready");
       seqEnable();
       modeChanged();
@@ -1891,8 +1737,7 @@
       shown = T;
       render(T);
       updateCaptions(T, true);
-      navReveal();
-      navTick(T, 0, true);
+      railReveal();
       return T;
     },
     release() { held = false; wake(); },
@@ -1905,11 +1750,6 @@
     },
     state() { return { shown: liveT(), target: run ? run.to : shown, vel: run ? run.dir * run.rate : 0, beat: TL ? TL.beats[capIdx] : null, intro: !!(run && run.intro), dip: !!dip, gate: { ...FX.gate }, phase }; },
     pinEl() { return pin; },
-    nav() {
-      return { on: navOn, in: navIn, active: navA, beat: navCP[navA] ? navCP[navA].b : null, p: navP, h: navH, y: navY, tip: navTipK,
-        band: !!(nav && nav.classList.contains("on-band")),
-        ticks: navCP.map((c) => ({ b: c.b, w: parseFloat(c.w) || 0, f: parseFloat(c.fw) || 0, start: +c.start.toFixed(3), anchor: +c.anchor.toFixed(3) })) };
-    },
     setGate(c, p) { FX.gate.cursor = c; FX.gate.press = p; lastDrawn = null; },
     refresh() { refresh(); },
   };

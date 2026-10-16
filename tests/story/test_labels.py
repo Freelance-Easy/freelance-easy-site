@@ -26,7 +26,7 @@ def _built_index() -> str:
 
 
 class _Rail(HTMLParser):
-    """Collects each rail button (attrs + its visually-hidden text) and each span.step with its chapter."""
+    """Collects each rail link (attrs + its visible name, B5) and each span.step with its chapter."""
 
     def __init__(self):
         super().__init__()
@@ -43,10 +43,10 @@ class _Rail(HTMLParser):
         cls = (a.get("class") or "").split()
         if tag == "nav" and "story-nav" in cls:
             self.in_nav = True
-        elif self.in_nav and tag == "button":
+        elif self.in_nav and tag == "a":  # B5 (rail v3): links, not buttons
             self.cur = {"attrs": a, "hidden_text": ""}
             self.btns.append(self.cur)
-        elif self.in_nav and tag == "span" and "visually-hidden" in cls:
+        elif self.in_nav and tag == "span" and "nm" in cls:  # B5: the always-visible name
             self.hid = True
         if a.get("data-copy"):
             self.copy = a["data-copy"]
