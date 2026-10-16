@@ -13,18 +13,18 @@
     <link rel="stylesheet" href="./styles.css" />
     <!-- (PR-1) this page's few layout rules; tokens only (scripts/checks/token_lint.py, tests/pages/test_pricing.py) -->
     <style>
-      .pricing .pricing-lead { font-size: var(--fs-lg); color: var(--text-0); line-height: 1.45; margin-bottom: 8px; }
-      .pricing .plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0 16px; }
-      .pricing .plan-card { padding: 20px 22px; border-radius: var(--r-lg); background: var(--bg-1); box-shadow: 0 0 0 1px var(--line-2); }
-      .pricing .plan-card h2 { margin: 0 0 8px; font-size: var(--fs-md); font-weight: 500; letter-spacing: 0; color: var(--text-1); }
-      .pricing .plan-amount { font-size: 40px; font-weight: 680; letter-spacing: -0.03em; color: var(--text-0); margin-right: 4px; }
-      .pricing .plan-card p { margin: 0; font-size: var(--fs-sm); line-height: 1.6; }
-      .pricing .fine { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
-      .pricing .steps > li { margin-bottom: 18px; }
-      .pricing .dl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 12px 0 8px; }
-      .pricing .dl-row .btn { min-height: 44px; }
+      .pricing-page .pricing-lead { font-size: var(--fs-lg); color: var(--text-0); line-height: 1.45; margin-bottom: 8px; }
+      .pricing-page .plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0 16px; }
+      .pricing-page .plan-card { padding: 20px 22px; border-radius: var(--r-lg); background: var(--bg-1); box-shadow: 0 0 0 1px var(--line-2); }
+      .pricing-page .plan-card h2 { margin: 0 0 8px; font-size: var(--fs-md); font-weight: 500; letter-spacing: 0; color: var(--text-1); }
+      .pricing-page .plan-amount { font-size: 40px; font-weight: 680; letter-spacing: -0.03em; color: var(--text-0); margin-right: 4px; }
+      .pricing-page .plan-card p { margin: 0; font-size: var(--fs-sm); line-height: 1.6; }
+      .pricing-page .fine { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
+      .pricing-page .steps > li { margin-bottom: 18px; }
+      .pricing-page .dl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 12px 0 8px; }
+      .pricing-page .dl-row .btn { min-height: 44px; }
       @media (max-width: 560px) {
-        .pricing .plan-grid { grid-template-columns: 1fr; }
+        .pricing-page .plan-grid { grid-template-columns: 1fr; }
       }
     </style>
     <!-- (PR-1) Product + Offers: the prices equal the plan cards below (tests/pages/test_pricing.py) and claim nothing
@@ -76,7 +76,7 @@
   <body data-page="pricing">
     <!-- #include partials/header.html dl_fallback=/install -->
     <!-- (PR-1) every sentence below carries NEW COPY and is logged, with its source and ruling, in docs/claims/pricing.md -->
-    <main class="doc pricing">
+    <main class="doc pricing-page">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <!-- NEW COPY --><h1>Pricing</h1>
       <!-- NEW COPY --><p class="pricing-lead">$5 a month, or $50 a year. One subscription, no add-ons.</p>

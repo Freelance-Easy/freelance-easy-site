@@ -276,6 +276,21 @@ def test_inline_style_tokens(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
 
 
+def test_single_column_layout(site_url, browser):
+    """The doc column reads top to bottom at every width: no legacy rule (styles.css's homepage `.pricing` grid) turns
+    <main> into columns. Every direct block starts at the column's left edge."""
+    for width in (1440, 390):
+        ctx, page = open_page(browser, site_url + PAGE, width=width)
+        try:
+            assert page.evaluate("() => getComputedStyle(document.querySelector('main')).display") == "block"
+            blocks = "main > h1, main > p:not([hidden]), main > h2, main > .plan-grid"
+            lefts = page.evaluate("(s) => [...document.querySelectorAll(s)]"
+                                  ".map(e => Math.round(e.getBoundingClientRect().left))", blocks)
+            assert len(set(lefts)) == 1, (width, lefts)
+        finally:
+            ctx.close()
+
+
 def test_in_sitemap_and_on_the_shell(site_url):
     assert "<loc>https://freelance-easy.com/pricing</loc>" in (ROOT / "sitemap.xml").read_text(encoding="utf-8")
     page_html = built()
