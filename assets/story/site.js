@@ -477,11 +477,16 @@
       TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + yo.seam.LIFT, 0.02], TL.offerSw);
     }
     TL.beats = ["make", ...TL.switches.map((s) => s[0])];
-    TL.labelData = seg("lookKnow").T0 + 0.14;          // "Fictional data" as the list (and its year total) arrives
+    // (A10, R5 A.2: G12 needs it where money adds up, not on Make's or Look's single invoice) "Fictional data" from the
+    // START of Look -> Know (the first Know row is up 0.08 s into it, so the label is already there)...
+    TL.labelData = seg("lookKnow").T0;
     // ...until the last money has left the stage (desktop, and the phone's own Chase -> Yours since F2)
     // (phones, F2d, Astra F2: the label retires WITH the dashboard it describes) the phone's Recent rows are gone at
     // chaseYours u 0.21 (SEAMS.chaseYours), so the label leaves at 0.24 instead of hanging under the card to 0.36
-    TL.labelOff = isDesk ? seg("chaseYours").T0 + 0.36 : p === "tall" ? seg("chaseYours").T0 + 0.24 : Infinity;
+    // (A10: tablets have no Chase -> Yours; their pinned story ENDS on Chase's money, so their window ends on their own
+    // timeline, at Chase's end, inclusive: the pin carries the labelled stage away; never an open-ended Infinity)
+    const cyL = seg("chaseYours");
+    TL.labelOff = cyL ? cyL.T0 + (p === "tall" ? 0.24 : 0.36) : seg("chase").T1;
     // (phones, F2d) from Chase -> Yours on, the stage's own box (its skin, its shade, the field in it) is gone: the band
     // and then the folder card are the one container on screen (site.css .pin.own)
     TL.ownAt = p === "tall" ? seg("chaseYours").T0 : Infinity;
@@ -902,9 +907,9 @@
       const nb = bk >= 1 || (bk > 0 && R0.l * kb < navCx && R0.t * kb < navCy);
       if (lastG.navBand !== nb) { lastG.navBand = nb; nav.classList.toggle("on-band", nb); }
     }
-    // legal v-story (2026-10-08): "Fictional data", continuously, from the first frame until the last money has left
-    // the stage (both directions); the old "The client is fictional." variant (and the switch at TL.labelData) is gone
-    const mode = T >= TL.labelOff ? "" : "data";
+    // legal v-story (2026-10-08), narrowed by A10 (R5 A.2): "Fictional data", continuously, on [labelData, labelOff]
+    // (both ends inclusive; the same frames in both directions, never faded or timed)
+    const mode = T >= TL.labelData && T <= TL.labelOff ? "data" : "";
     if (lastG.label !== mode) { lastG.label = mode; label.setAttribute("data-mode", mode); }
     if (OV && ovCard) drawOverlay(G);
   }
