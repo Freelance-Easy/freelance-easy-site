@@ -65,7 +65,24 @@
       syncThemeColor(t);
       restartDemos(syncDemoTheme(t));
     });
-    FET.init({ hashPolicy: "none" });
+    // theme.css (the circle's mask) is only needed for a switch, so it is added
+    // here: off the first paint's path, and (unlike a <link> in the body) it
+    // doesn't hold back DOMContentLoaded, i.e. the download wiring below.
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "/assets/shared/theme.css";
+    document.head.appendChild(css);
+    // The toggle's click is handled here, not by the module: a press before
+    // theme.css applies switches at once rather than through the browser's
+    // default cross-fade. Its @property gives --vt-r a computed value only once
+    // the sheet is in effect.
+    FET.init({ hashPolicy: "none", toggle: "[data-fe-theme-unbound]" });
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("[data-theme-toggle]") : null;
+      if (!btn) return;
+      var ready = getComputedStyle(root).getPropertyValue("--vt-r").trim() !== "";
+      FET.set(FET.target() === "light" ? "dark" : "light", ready ? { from: btn } : undefined);
+    });
   } else {
     applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
   }

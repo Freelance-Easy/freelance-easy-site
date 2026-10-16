@@ -10,9 +10,14 @@ theme path until B7 (CF-11).
 - test_demo_follows_theme: a switch still points the making-an-invoice loop at the new theme's files.
 - test_doc_pages_theme_unchanged: install, privacy, terms and the dated archives behave as at the base: no FETheme,
   light is data-theme="light", dark has no data-theme.
+- test_no_grey_dip: going to dark, the area the circle has revealed is already the final dark (no colour fade inside).
+- test_early_press_instant: a press before theme.css applies switches at once (no view transition); after, the circle.
 The reveal itself (timing, mask, centre) is scripts/checks/check_theme_reveal.py's job.
 """
 from __future__ import annotations
+
+import struct
+import zlib
 
 import pytest
 from playwright.sync_api import sync_playwright
@@ -147,5 +152,84 @@ def test_doc_pages_theme_unchanged(browser, site_url, name, stored):
         assert page.evaluate("() => typeof window.FETheme") == "undefined"
         assert not [u for u in requests if "/assets/shared/theme." in u]
         assert not errors, errors
+    finally:
+        ctx.close()
+
+
+def pixel(page, x, y):
+    """The RGB of one viewport pixel: a 1x1 PNG clip; with one pixel every PNG filter leaves the bytes raw."""
+    png = page.screenshot(clip={"x": x, "y": y, "width": 1, "height": 1}, animations="allow")
+    pos, data = 8, b""
+    while pos < len(png):
+        n = struct.unpack(">I", png[pos:pos + 4])[0]
+        kind = png[pos + 4:pos + 8]
+        if kind == b"IDAT":
+            data += png[pos + 8:pos + 8 + n]
+        pos += 12 + n
+    raw = zlib.decompress(data)
+    return tuple(raw[1:4])
+
+
+# a background point well inside the circle's opaque core mid-reveal, near the toggle, clear of text
+DIP_POINT = {1440: (1380, 120), 390: (370, 60)}
+
+
+@pytest.mark.parametrize("width", [1440, 390])
+def test_no_grey_dip(browser, site_url, width):
+    """Going to dark, the area the circle has revealed is the final dark background at once (styles.css's 0.3 s
+    colour transitions used to run inside the new snapshot: #272b33 -> #181c24 -> #13171f)."""
+    ctx = browser.new_context(viewport={"width": width, "height": 900 if width > 400 else 844},
+                              reduced_motion="no-preference")
+    page = ctx.new_page()
+    try:
+        page.goto(f"{site_url}/mac.html", wait_until="load")   # first visit: light
+        page.evaluate("() => document.querySelectorAll('video').forEach((v) => v.pause())")
+        page.wait_for_timeout(300)
+        cdp = ctx.new_cdp_session(page)
+        cdp.send("Animation.enable")
+        cdp.send("Animation.setPlaybackRate", {"playbackRate": 0.1})   # the 420 ms reveal (and any fade) x10
+        page.click("[data-theme-toggle]")
+        page.wait_for_timeout(1800)
+        assert page.evaluate("() => document.documentElement.classList.contains('vt-theme')"), "no reveal running"
+        mid = pixel(page, *DIP_POINT[width])
+        page.wait_for_timeout(6000)
+        assert theme_attr(page) == "dark"
+        final = pixel(page, *DIP_POINT[width])
+        assert max(abs(a - b) for a, b in zip(mid, final)) <= 2, f"mid-reveal {mid} vs final dark {final}"
+    finally:
+        ctx.close()
+
+
+VT_COUNT_JS = """() => { const o = document.startViewTransition; window.__vt = 0;
+    if (o) document.startViewTransition = function () { window.__vt++; return o.apply(this, arguments); }; }"""
+
+
+def test_early_press_instant(browser, site_url):
+    """A press before the body-end theme.css applies switches at once (no view transition, so no UA cross-fade);
+    once it has loaded, a press runs the circle."""
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="no-preference")
+    page = ctx.new_page()
+    held = []
+    page.route("**/assets/shared/theme.css", lambda r: held.append(r))
+    try:
+        page.goto(f"{site_url}/mac.html", wait_until="commit")
+        # script.js has run once theme.css's <link> exists (script.js adds it; at 76aa5d5 it followed script.js)
+        page.wait_for_function("() => !!window.FETheme && !!document.querySelector('link[href$=\"/assets/shared/theme.css\"]')")
+        page.wait_for_timeout(200)
+        page.evaluate(VT_COUNT_JS)
+        before = theme_attr(page)
+        page.evaluate("() => document.querySelector('[data-theme-toggle]').click()")
+        page.wait_for_timeout(200)
+        assert page.evaluate("() => window.__vt") == 0, "an early press must not start a view transition"
+        early = theme_attr(page)
+        assert early != before and early in ("dark", "light"), (before, early)
+        assert held, "theme.css was not requested"
+        held[0].continue_()
+        page.wait_for_load_state("load")
+        page.wait_for_function("() => getComputedStyle(document.documentElement).getPropertyValue('--vt-r').trim() !== ''")
+        page.evaluate("() => document.querySelector('[data-theme-toggle]').click()")
+        page.wait_for_timeout(800)
+        assert page.evaluate("() => window.__vt") == 1, "after theme.css loads a press runs the circle"
+        assert theme_attr(page) == before
     finally:
         ctx.close()
