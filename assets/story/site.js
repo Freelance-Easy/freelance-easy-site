@@ -180,8 +180,8 @@
   }
   // (F1c, Daniel 2026-10-10: the CTA "at the very end") on a phone (the phone story, and the stacked page on a phone:
   // < 640 px, or a short touch screen such as a phone in landscape) the hero is the headline alone and everything that
-  // asks for action is in the End copy, the offer card: the hero's sub line goes in under its headline, and the 25-second
-  // tour after its fine print, so the End's own CTA row, its trial line and its mobile note stay one adjacent block. The
+  // asks for action is in the End copy, the offer card: the hero's sub line goes in under its headline, and the tour link
+  // after its fine print, so the End's own CTA row, its trial line and its mobile note stay one adjacent block. The
   // hero's own CTA row, trial line and fine print leave the page (one Share/Copy button on the phone page). Real DOM,
   // moved, never cloned; everything goes back to its exact original place whenever this is off (laptops, tablets, no JS).
   let ctaParts = null;
@@ -190,7 +190,7 @@
     const hc = copy.make, ec = copy.end;
     if (!hc || !ec) return;
     if (on && !ctaParts) {
-      const row = $(":scope > .cta-row", hc), tour = row && $(":scope > [data-tour-quick]", row);
+      const row = $(":scope > .cta-row", hc), tour = row && $(":scope > [data-tour-link]", row);
       const sub = $(":scope > .sub", hc), dis = $(":scope > .disclose.strong", hc), fine = $(":scope > .fine", hc);
       if (!row || !tour || !sub || !dis || !fine || !$(":scope > .cta-row", ec) || !$(":scope > .fine", ec)) return;
       // (in the order they leave; they come back in reverse, each before the node that followed it)
