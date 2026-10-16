@@ -100,8 +100,10 @@ DERIVED = {"audio.html": "mac-audio.html"}
 
 # The generator owns a fixed list of outputs: every declared page needs src/pages/<name>, and a
 # source with no declared output is refused, so a deleted or stray source never slips past --check.
-PAGES = ("index.html", "install.html", "privacy.html", "terms.html", "404.html", "mac.html", "mac-audio.html",
-         "pricing.html")
+# PAGES are the cutover's pages; a page added later is declared in <src>/pages.txt (one name per line,
+# "#" comments), so the frozen cutover fixture, which has no pages.txt, still builds exactly its own.
+PAGES = ("index.html", "install.html", "privacy.html", "terms.html", "404.html", "mac.html", "mac-audio.html")
+ADDED_PAGES = "pages.txt"
 
 
 class BuildError(Exception):
@@ -212,23 +214,42 @@ def derive_audio(html: str) -> str:
     return html
 
 
+def declared_pages(src: pathlib.Path) -> tuple[str, ...]:
+    """PAGES plus the pages <src>/pages.txt adds."""
+    path = src / ADDED_PAGES
+    if not path.exists() and not path.is_symlink():
+        return PAGES
+    added: list[str] = []
+    for n, line in enumerate(read_text(source_file(src, path, ADDED_PAGES)).splitlines(), 1):
+        name = line.strip()
+        if not name or name.startswith("#"):
+            continue
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*\.html", name):
+            raise BuildError(f"{ADDED_PAGES}:{n}: not a page name: {name!r}")
+        if name in PAGES or name in DERIVED or name in added:
+            raise BuildError(f"{ADDED_PAGES}:{n}: {name} is already declared")
+        added.append(name)
+    return PAGES + tuple(added)
+
+
 def build(src: pathlib.Path) -> dict[str, bytes]:
     pages_dir = src / "pages"
     if not src.is_dir() or not pages_dir.is_dir():
         raise BuildError(f"no pages folder: {pages_dir}")
     if pages_dir.is_symlink():
         raise BuildError(f"{pages_dir} is a symlink; sources must be regular files inside {src}")
+    pages = declared_pages(src)
     found = sorted(p.name for p in pages_dir.iterdir() if p.name.endswith(".html"))
     derived = sorted(set(found) & set(DERIVED))
     if derived:
         raise BuildError(f"{', '.join(derived)} is derived, not built from a source; remove it from {pages_dir}")
-    missing = sorted(set(PAGES) - set(found))
+    missing = sorted(set(pages) - set(found))
     if missing:
         raise BuildError(f"declared pages with no source in {pages_dir}: {', '.join(missing)}")
-    stray = sorted(set(found) - set(PAGES))
+    stray = sorted(set(found) - set(pages))
     if stray:
-        raise BuildError(f"page sources with no declared output (add them to PAGES): {', '.join(stray)}")
-    html = {name: render_page(src, pages_dir / name) for name in PAGES}
+        raise BuildError(f"page sources with no declared output (add them to {src / ADDED_PAGES}): {', '.join(stray)}")
+    html = {name: render_page(src, pages_dir / name) for name in pages}
     for name, base in DERIVED.items():
         html[name] = derive_audio(html[base])
     return {name: text.encode("utf-8") for name, text in html.items()}

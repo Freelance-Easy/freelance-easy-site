@@ -190,6 +190,39 @@ def test_check_fails_when_page_source_missing(tmp_path):
     assert not (out / "extra.html").exists()
 
 
+def test_added_pages_declared_in_pages_txt(tmp_path):
+    """A page added after the cutover is declared in src/pages.txt; the frozen fixture (no pages.txt) still builds
+    exactly its own pages (test_cutover_fixture_byte_identical), and the missing/stray guards cover added pages."""
+    src = fixture_src(tmp_path)
+    (src / "pages" / "extra.html").write_bytes(b"<p>extra</p>\n")
+    (src / "pages.txt").write_bytes(b"# added later\n\nextra.html\n")
+    out = tmp_path / "out"
+    r = run_build("--src", src, "--out", out)
+    assert r.returncode == 0, r.stderr
+    assert sorted(p.name for p in out.iterdir()) == sorted(OUTPUTS + ["extra.html"])
+    assert (out / "extra.html").read_bytes() == b"<p>extra</p>\n"
+    # declared but its source is gone: refused and named
+    (src / "pages" / "extra.html").unlink()
+    r = run_build("--src", src, "--out", out, "--check")
+    assert r.returncode == 1 and "extra.html" in r.stdout + r.stderr, r.stderr
+    # bad, duplicate and already-built names are refused
+    (src / "pages" / "extra.html").write_bytes(b"<p>extra</p>\n")
+    for listing, why in ((b"../x.html\n", "not a page name"), (b"extra.html\nextra.html\n", "already declared"),
+                         (b"terms.html\n", "already declared"), (b"audio.html\n", "already declared")):
+        (src / "pages.txt").write_bytes(listing)
+        r = run_build("--src", src, "--out", tmp_path / "out2")
+        assert r.returncode == 1 and why in r.stderr, (listing, r.stderr)
+
+
+def test_repo_declares_its_added_pages():
+    """The repo's own src/ builds the cutover pages plus everything src/pages.txt adds (/pricing: PR-1)."""
+    r = run_build("--check")
+    assert r.returncode == 0, r.stdout + r.stderr
+    listed = [ln.strip() for ln in (ROOT / "src" / "pages.txt").read_text().splitlines()
+              if ln.strip() and not ln.startswith("#")]
+    assert "pricing.html" in listed
+
+
 def test_placeholder_cannot_inject_include(tmp_path):
     src = fixture_src(tmp_path)
     (src / "partials" / "v.html").write_bytes(b"<p>{{v}}</p>\n")
