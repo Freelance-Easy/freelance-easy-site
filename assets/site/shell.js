@@ -50,6 +50,15 @@
     var chapters = dlg.querySelector(".fe-menu-chapters"), list = chapters ? chapters.querySelector("ol") : null;
     var made = [];                                                  // body children this sheet made inert
 
+    // the sheet's own page link (Pricing on /pricing, How it works on /tour/) carries the page marker
+    (function () {
+      function norm(x) { return (x || "").replace(/\.html$/, "").replace(/\/index$/, "").replace(/\/+$/, "") || "/"; }
+      var here = norm(location.pathname), ls = dlg.querySelectorAll(".fe-menu-site a[href]");
+      for (var i = 0; i < ls.length; i++) {
+        if (norm(ls[i].pathname) === here) { ls[i].setAttribute("aria-current", "page"); ls[i].classList.add("is-current"); }
+      }
+    })();
+
     function story() { return document.querySelector(".story-nav") && window.FEStory ? window.FEStory : null; }
 
     function renderChapters() {

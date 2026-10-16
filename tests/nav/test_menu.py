@@ -172,6 +172,112 @@ def test_bar_fits(site_url, browser, width, theme):
                 ctx.close()
 
 
+DESKTOP_UAS = {
+    "mac": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+    "win": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+}
+
+# every item of the bar, left to right, with its text's own box (Range) so a word spilling out of its box shows
+SWEEP = """() => {
+  const sh = document.querySelector('.site-header .shell');
+  const els = [...sh.querySelectorAll('.brand, .nav > a, .nav > button, .dl-note, .fe-menu-btn')]
+    .filter(e => e.getClientRects().length && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden');
+  const items = els.map(e => { const b = e.getBoundingClientRect();
+    let tl = b.left, tr = b.right;
+    if (!e.matches('.fe-menu-btn, [data-theme-toggle]')) { const r = document.createRange(); r.selectNodeContents(e);
+      const t = r.getBoundingClientRect(); tl = t.left; tr = t.right; }
+    return { k: e.matches('.brand') ? 'brand' : e.matches('[data-menu-open]') ? 'menu' : e.matches('[data-theme-toggle]') ? 'theme'
+      : e.matches('[data-dl]') ? 'download' : e.matches('.dl-note') ? 'note' : e.textContent.trim(),
+      l: b.left, r: b.right, h: b.height, tl, tr, cy: b.top + b.height / 2 }; }).sort((a, b) => a.l - b.l);
+  return { vw: innerWidth, docw: document.documentElement.scrollWidth, items };
+}"""
+
+
+def _sweep_problems(m):
+    out = []
+    if m["docw"] > m["vw"]:
+        out.append("page wider than viewport")
+    for a in m["items"]:
+        if a["tl"] < a["l"] - 0.5 or a["tr"] > a["r"] + 0.5:
+            out.append(f"{a['k']} text spills its box ({a['tl']:.0f}-{a['tr']:.0f} vs {a['l']:.0f}-{a['r']:.0f})")
+        if a["h"] > 44:
+            out.append(f"{a['k']} grew to {a['h']:.0f} px")
+        if a["l"] < 0 or a["r"] > m["vw"]:
+            out.append(f"{a['k']} runs past the viewport")
+    for a, b in zip(m["items"], m["items"][1:]):
+        if a["r"] > b["l"] + 0.5 or a["tr"] > b["tl"] + 0.5:
+            out.append(f"{a['k']} overlaps {b['k']}")
+    return out
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+@pytest.mark.parametrize("os_", ["mac", "win"])
+@pytest.mark.parametrize("path", ["/", "/pricing.html"])
+def test_bar_sweep_600_to_1023(site_url, browser, path, os_, theme):
+    """Every 8 px from 600 to 1023 (and 1023): no bar item clips, overlaps or truncates, on a Mac and a Windows desktop."""
+    ctx = browser.new_context(viewport={"width": 1100, "height": 800}, user_agent=DESKTOP_UAS[os_])
+    ctx.add_init_script(f"try {{ localStorage.setItem('fe-theme', '{theme}'); }} catch (e) {{}}")
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + path)
+        if path == "/":
+            page.wait_for_function("() => window.FEStory && document.documentElement.classList.contains('fx-ready')", timeout=10000)
+        page.wait_for_timeout(500)
+        bad = {}
+        for w in list(range(600, 1024, 8)) + [1023]:
+            page.set_viewport_size({"width": w, "height": 800})
+            page.wait_for_timeout(60)
+            probs = _sweep_problems(page.evaluate(SWEEP))
+            if probs:
+                bad[w] = probs
+        assert not bad, f"{path} {os_} {theme}: {bad}"
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+@pytest.mark.parametrize("os_", ["mac", "win"])
+@pytest.mark.parametrize("width", [640, 660, 672, 700])
+def test_bar_fits_desktop_home(site_url, browser, width, os_, theme):
+    ctx = browser.new_context(viewport={"width": width, "height": 800}, user_agent=DESKTOP_UAS[os_])
+    ctx.add_init_script(f"try {{ localStorage.setItem('fe-theme', '{theme}'); }} catch (e) {{}}")
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + "/")
+        page.wait_for_function("() => window.FEStory && document.documentElement.classList.contains('fx-ready')", timeout=10000)
+        page.wait_for_timeout(500)
+        m = page.evaluate(SWEEP)
+        assert not _sweep_problems(m), (width, os_, theme, _sweep_problems(m), m)
+        keys = [i["k"] for i in m["items"]]
+        assert keys[0] == "brand" and "menu" in keys and keys[-1] == "menu" or "theme" in keys, keys
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("width", [360, 375])
+def test_theme_and_menu_centres_40_apart(site_url, browser, width):
+    ctx, page = _open(browser, site_url + "/", w=width, h=740, iphone=True)
+    try:
+        c = page.evaluate("() => ['[data-theme-toggle]', '[data-menu-open]'].map(s => { const b = document.querySelector(s).getBoundingClientRect(); return b.left + b.width / 2; })")
+        assert c[1] - c[0] >= 40, c
+    finally:
+        ctx.close()
+
+
+def test_sheet_marks_the_current_page(site_url, browser):
+    ctx, page = _open(browser, site_url + "/pricing.html", w=390, h=844)
+    try:
+        cur = page.evaluate("() => [...document.querySelectorAll('#fe-menu .fe-menu-site a[aria-current]')].map(a => [a.textContent.trim(), a.getAttribute('aria-current'), a.classList.contains('is-current')])")
+        assert cur == [["Pricing", "page", True]], cur
+    finally:
+        ctx.close()
+    ctx, page = _open(browser, site_url + "/install.html", w=390, h=844)
+    try:
+        assert page.evaluate("() => document.querySelectorAll('#fe-menu .fe-menu-site a[aria-current]').length") == 0
+    finally:
+        ctx.close()
+
+
 # ---- the dialog --------------------------------------------------------------------------------------------------------
 
 FOCUS_IN = "(s) => !!document.activeElement && document.querySelector(s).contains(document.activeElement)"
@@ -323,7 +429,9 @@ def test_same_list_as_rail(site_url, browser, width):
     src = (ROOT / "assets" / "site" / "shell.js").read_text()
     assert "FEStory.destinations" in src or "F.destinations" in src
     assert not re.search(r"aria-current", re.sub(r"//[^\n]*|/\*.*?\*/", "", src, flags=re.S)
-                         .replace('a[aria-current="location"]', "")), "shell.js writes aria-current"
+                         .replace('a[aria-current="location"]', "")
+                         .replace('setAttribute("aria-current", "page")', "")),  \
+        "shell.js writes aria-current (only the sheet's own page link may: aria-current=page)"  # (chapters: ICX-HL.5)
 
 
 # ---- every shell page --------------------------------------------------------------------------------------------------
