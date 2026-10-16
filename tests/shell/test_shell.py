@@ -18,6 +18,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIXTURE = "/tests/fixtures/shell/doc.html"
+PRICING = "/pricing.html"  # (PR-1) /pricing adopts the shell; the static server has no clean URLs
 HEAD_SPAN = re.compile(r"[ \t]*<!-- fe-shell:head .*?<!-- /fe-shell:head -->\n", re.S)
 FOOTER_SPAN = re.compile(r'<footer class="site-footer fe-shell-footer">.*?</footer>\n', re.S)
 FICTIONAL = "Clients, invoices and amounts in the demos, screenshots and tour are fictional."
@@ -89,7 +90,7 @@ def test_fixture_footer_mirrors_partial():
 # ---- axe -----------------------------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("theme", ["dark", "light"])
-@pytest.mark.parametrize("path", ["/", FIXTURE])
+@pytest.mark.parametrize("path", ["/", FIXTURE, PRICING])
 def test_axe_zero(site_url, browser, path, theme):
     found = []
     for width in (1440, 390):
@@ -102,7 +103,7 @@ def test_axe_zero(site_url, browser, path, theme):
 MANAGE = 'footer a[data-flag-href="/account"]'
 
 
-@pytest.mark.parametrize("path", ["/", FIXTURE])
+@pytest.mark.parametrize("path", ["/", FIXTURE, PRICING])
 def test_manage_link_hidden_without_flag(site_url, browser, path):
     """Manage subscription is in the footer, flagged web-billing, and hidden: with JS (the site switch is off) and
     without JS (the hidden attribute), at 1440 and 390. While off it is no link at all (no href: /account does not
@@ -139,7 +140,7 @@ def test_manage_link_shows_when_switch_on(site_url, browser):
     def serve(route):
         route.fulfill(status=200, content_type="application/javascript", body=on)
 
-    for path in ("/", FIXTURE):
+    for path in ("/", FIXTURE, PRICING):
         ctx, page = open_page(browser, site_url + path, route=("**/assets/site/shell.js", serve))
         try:
             to_bottom(page)
@@ -154,7 +155,7 @@ def test_manage_link_shows_when_switch_on(site_url, browser):
 
 def test_no_web_account_calls(site_url, browser):
     """B2 never calls the web-account API: no request to /web/* or to api.freelance-easy.com."""
-    for path in ("/", FIXTURE):
+    for path in ("/", FIXTURE, PRICING):
         seen = []
         ctx = browser.new_context(viewport={"width": 1440, "height": 900})
         try:
@@ -207,7 +208,7 @@ PROBE = """(el) => {
 
 @pytest.mark.parametrize("mode", ["motion", "calm", "nojs"])
 @pytest.mark.parametrize("theme", ["dark", "light"])
-@pytest.mark.parametrize("path", ["/", FIXTURE])
+@pytest.mark.parametrize("path", ["/", FIXTURE, PRICING])
 def test_footnote_fictional(site_url, browser, path, theme, mode):
     """R5 A.2's footer sentence: visible in every mode (motion, calm, no JS) at 1440, 800 and 390, >= 15 px, the
     text-2 colour, >= 4.5:1 on its background. Without JS no script reads the stored theme, so the no-JS light case

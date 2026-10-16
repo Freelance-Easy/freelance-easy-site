@@ -100,7 +100,8 @@ DERIVED = {"audio.html": "mac-audio.html"}
 
 # The generator owns a fixed list of outputs: every declared page needs src/pages/<name>, and a
 # source with no declared output is refused, so a deleted or stray source never slips past --check.
-PAGES = ("index.html", "install.html", "privacy.html", "terms.html", "404.html", "mac.html", "mac-audio.html")
+PAGES = ("index.html", "install.html", "privacy.html", "terms.html", "404.html", "mac.html", "mac-audio.html",
+         "pricing.html")
 
 
 class BuildError(Exception):
