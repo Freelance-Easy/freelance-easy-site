@@ -1293,6 +1293,7 @@
       if (kD === kR + 1) return startDip(kR, "skip");
       return decide();
     }
+    if (r.purpose === "reverse") land(kR);            // a reversed seam lands on its origin's rest frame (Terms; Sol C3-1 #3)
     if (kD === kR) return enforceRest(kR);
     phase = "transition";
     decide();
@@ -1316,10 +1317,13 @@
   function cut() {
     const d = dip;
     d.cut = true;
+    // (ICX-STEP.7: a skip whose dest is >= 2 away by its dark frame is the dip to dest instead; Sol C3-1 #1)
+    if (d.mode === "skip" && Math.abs(kD - kR) >= 2) d.mode = "entry";
     let k = d.k;
     if (d.mode === "entry") { k = kD; if (k === kR) d.mode = "rest"; }
     shown = d.mode === "entry" ? RE[k][0] : RE[k][1];
-    if (k !== kR) land(k); else { passK = -1; syncScroll(trackY(kR)); }
+    // a cut is a landing (Terms), a skip excepted (no new landing: rendered stays); back on the origin counts too
+    if (k !== kR || d.mode === "rest") land(k); else { passK = -1; syncScroll(trackY(kR)); }
     FX.gate.cursor = 1; FX.gate.press = 1;
     lastDrawn = null;
     render(shown); updateCaptions(shown, true);
@@ -1485,7 +1489,17 @@
   window.addEventListener("mousemove", (e) => { if (barHeld && e.buttons === 0) endHold(); }, true);
   window.addEventListener("blur", endHold);
   // hidden tab: time stops (rAF stops; the first visible frame continues from the paused time, ICX-HIDDEN)
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) { lastNow = clock(); wake(); } });
+  let hiddenAt = -1;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { hiddenAt = clock(); return; }
+    const gone = hiddenAt >= 0 ? clock() - hiddenAt : 0;
+    hiddenAt = -1;
+    if (dip) dip.t0 += gone;                            // (Sol C3-1 #2) a dip resumes where it paused
+    if (wait) wait += gone;
+    lastDipAt += gone;
+    lastNow = clock();
+    wake();
+  });
 
   /* ---------------- the loop: one rAF; sleeps when there is nothing to do ---------------- */
   function wake(t0) {
