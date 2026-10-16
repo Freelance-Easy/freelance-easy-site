@@ -1,5 +1,5 @@
-"""A7: the ad pages (/mac, /mac-audio, /audio) switch theme through FETheme (A5); the doc pages keep script.js's own
-theme path until B7 (CF-11).
+"""A7: the ad pages (/mac, /mac-audio, /audio) switch theme through FETheme (A5); the dated doc archives keep script.js's own
+theme path; the live doc pages moved to FETheme in B7 (CF-11).
 
 - test_dark_is_explicit: dark is data-theme="dark" on load and after a switch back, never a removed attribute
   (script.js's applyTheme removed it, :34 at the base).
@@ -23,7 +23,8 @@ import pytest
 from playwright.sync_api import sync_playwright
 
 AD_PAGES = ["mac", "mac-audio", "audio"]
-DOC_PAGES = ["install", "privacy", "terms", "privacy-2026-09-29", "terms-2026-09-29"]
+DOC_PAGES = ["privacy-2026-09-29", "terms-2026-09-29"]   # the dated archives: untouched, script.js's own path
+LIVE_DOC_PAGES = ["install", "privacy", "terms"]          # B7 (CF-11): on the shared shell, FETheme, explicit theme
 DARK, LIGHT = "#080a0f", "#f3f3f0"   # src/partials/campaign/head.html's theme-color metas
 
 
@@ -151,6 +152,19 @@ def test_doc_pages_theme_unchanged(browser, site_url, name, stored):
         assert theme_attr(page) == ("light" if stored == "light" else None)
         assert page.evaluate("() => typeof window.FETheme") == "undefined"
         assert not [u for u in requests if "/assets/shared/theme." in u]
+        assert not errors, errors
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("stored", [None, "dark", "light"])
+@pytest.mark.parametrize("name", LIVE_DOC_PAGES)
+def test_live_doc_pages_use_fetheme(browser, site_url, name, stored):
+    ctx, page, errors, requests = open_page(browser, f"{site_url}/{name}.html", stored=stored)
+    try:
+        assert theme_attr(page) == ("light" if stored == "light" else "dark")
+        assert page.evaluate("() => typeof window.FETheme") == "object"
+        assert not [u for u in requests if u.endswith("/script.js") and "/js/" not in u]
         assert not errors, errors
     finally:
         ctx.close()

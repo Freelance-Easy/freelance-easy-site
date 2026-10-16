@@ -81,6 +81,7 @@ def test_theme_head_identical(site_url):
 def test_fixture_footer_mirrors_partial():
     """The fixture's footer is footer.html byte for byte, so the fixture tests the footer that ships."""
     partial = (ROOT / "src" / "partials" / "footer.html").read_text(encoding="utf-8")
+    partial = partial.replace("{{dl_fallback}}", "#download")  # (B7) the placeholder; `/` and the fixture fill #download
     assert FOOTER_SPAN.findall(built(FIXTURE.lstrip("/"))) == [partial]
     assert FOOTER_SPAN.findall(built("index.html")) == [partial]
 

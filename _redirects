@@ -32,6 +32,7 @@
 # Pretty URLs (Cloudflare serves /privacy.html for /privacy automatically;
 # these catch the trailing-slash variants).
 /privacy/     /privacy     301
+/pricing/     /pricing     301
 /terms/       /terms       301
 /mac/         /mac         301
 /mac-audio/   /mac-audio   301

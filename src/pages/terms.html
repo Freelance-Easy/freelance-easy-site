@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,14 +7,9 @@
     <meta name="description" content="Freelance Easy terms of service, in plain English." />
     <link rel="canonical" href="https://freelance-easy.com/terms" />
     <link rel="icon" href="/favicon.ico" />
-    <script>
-      (function () {
-        try {
-          var t = localStorage.getItem("fe-theme");
-          if (t === "light") document.documentElement.setAttribute("data-theme", "light");
-        } catch (e) {}
-      })();
-    </script>
+    <!-- (B7) the body face is preloaded: its swap on the long pages shifted the text (terms CLS 0.0245) -->
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- #include partials/head.html -->
     <link rel="stylesheet" href="./styles.css" />
     <script async src="/js/script.js"></script>
     <script>
@@ -24,6 +19,7 @@
     </script>
   </head>
   <body data-page="terms">
+    <!-- #include partials/header.html dl_fallback=/install -->
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Terms of service</h1>
@@ -243,6 +239,8 @@
         Security: <a href="mailto:security@freelance-easy.com">security@freelance-easy.com</a>
       </p>
     </main>
-    <script src="./script.js"></script>
+    <!-- #include partials/footer.html dl_fallback=/install -->
+    <script>FETheme.init({ hashPolicy: "none" });</script>
+    <script src="/assets/story/download.js"></script>
   </body>
 </html>
