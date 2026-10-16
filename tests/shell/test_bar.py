@@ -56,18 +56,19 @@ def open_page(browser, url, *, width=1440, theme="dark", js=True, route=None, ua
 
 
 def to_band(page):
-    """Scroll the story onto the Ride's band (html.on-band, not past it) and let it settle."""
+    """Bring the story onto the Ride's band (html.on-band, not past it) with real wheel input. Since C3 the story moves
+    by checkpoints (docs/interaction-contract.md): four wheel gestures from New invoice land on Email, where the band is
+    the page. Each landing scrolls the page to its checkpoint's track position, so the bar is scrolled past too."""
     on = "() => { const c = document.documentElement.classList; return c.contains('on-band') && !c.contains('past-band'); }"
-    y = page.evaluate("() => __site.scrollFor('grow') || 0")
-    end = page.evaluate("() => __site.scrollFor('yours') || document.documentElement.scrollHeight")
-    while y < end:
-        y += 300
-        page.evaluate(f"() => window.scrollTo(0, {y})")
-        page.wait_for_timeout(600)
-        if page.evaluate(on):
-            break
-    page.evaluate(f"() => window.scrollTo(0, {y + 600})")
-    page.wait_for_timeout(1200)
+    vw = page.viewport_size
+    page.mouse.move(vw["width"] / 2, vw["height"] * 0.6)
+    page.wait_for_function("() => window.FEStory && FEStory.phase === 'rest'", timeout=15000)
+    for _ in range(4):
+        page.mouse.wheel(0, 100)
+        page.wait_for_timeout(300)
+    page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.beat === 'chase'; }", timeout=30000)
+    page.wait_for_timeout(300)
+    assert page.evaluate("() => scrollY") > 1000, "the wheel steps never scrolled the page"
     assert page.evaluate(on), "the story never put the header on the Ride's band"
 
 

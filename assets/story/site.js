@@ -1703,6 +1703,9 @@
           syncScroll(trackY(kR));
           lastDipAt = -1e9;
           decide();
+          // (INT-4) the arrival carries on as the arrival across a rebuild (a theme switch mid-arrival): the rail draws in
+          // only once it hands over, as on the base
+          if (keep.intro && run && run.purpose === "content" && kR === 0) run.intro = true;
         }
       } else if (firstLoad) init();
       else { kR = kD = 0; shown = RE[0][1]; }
@@ -1725,7 +1728,7 @@
   function snapshot() {
     if (!TL || !CP.length) return null;
     const sg = TL.segs[segAt(shown)];
-    return { cp: CP.join(), beat: CP[kR], dest: CP[kD], phase, id: sg.id, u: shown - sg.T0,
+    return { cp: CP.join(), beat: CP[kR], dest: CP[kD], phase, id: sg.id, u: shown - sg.T0, intro: !!(run && run.intro),
       past: phase === "released" ? readerY - storyEnd() : null };
   }
   function refresh() { start(false, snapshot()); }
