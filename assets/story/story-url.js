@@ -97,21 +97,40 @@
   document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
   window.addEventListener("pagehide", flush);
 
-  /* ---- a native scroll's arrival (calm, classic, tablet Price...): write once it has settled ---- */
-  var arrivalToken = 0;
-  function afterScroll(fn) {
-    var token = ++arrivalToken, idle = 0, backstop = 0, done = false;
+  /* ---- scroll settling: scrollend, or SETTLE_IDLE (160 ms with no scroll event) where scrollend is missing ---- */
+  // settled(cb): cb once the page's scroll has settled (once, 2.5 s backstop); returns a cancel function
+  function settled(cb) {
+    var idle = 0, backstop = 0, done = false;
     function stop() {
       clearTimeout(idle); clearTimeout(backstop);
       window.removeEventListener("scroll", bump);
       window.removeEventListener("scrollend", fin);
     }
-    function fin() { if (done) return; done = true; stop(); if (token === arrivalToken) fn(); }
+    function fin() { if (done) return; done = true; stop(); cb(); }
     function bump() { clearTimeout(idle); idle = setTimeout(fin, 160); }
     window.addEventListener("scroll", bump, { passive: true });
     window.addEventListener("scrollend", fin);
     backstop = setTimeout(fin, 2500);
     bump();
+    return function () { done = true; stop(); };
+  }
+
+  // ICX-HIST.9's suppression flags (all this file's own): the scroll-spy (fe:spy) writes nothing while one is set
+  var initializing = true;  // load, reload, deep link, legacy hash: until the scroll that load causes has settled
+  var restoring = false;    // popstate: until the scroll it causes has settled
+  var jumping = false;      // a native jump (ICX-JUMP.5): until its arrival, where the jump writes its own entry
+  var cancelArrival = null, cancelRestore = null;
+  (function waitInit(n) {
+    var ready = document.readyState === "complete" && (F.initial || ["calm", "classic", "static"].indexOf(F.mode) >= 0 || n > 30);
+    if (ready) settled(function () { initializing = false; });
+    else setTimeout(function () { waitInit(n + 1); }, 100);
+  })(0);
+
+  // a native scroll's arrival (calm, classic, tablet Price...): write once it has settled
+  function afterScroll(fn) {
+    if (cancelArrival) cancelArrival();
+    jumping = true;
+    cancelArrival = settled(function () { jumping = false; cancelArrival = null; fn(); });
   }
 
   // go to a chapter on behalf of a link: kind "push" (an explicit jump) or "hash" (the browser already added the entry)
@@ -147,13 +166,19 @@
       if (e.navigationType === "push" && e.hashChange) markLink();
     });
   }
-  window.addEventListener("click", function (e) {      // browsers without the Navigation API: a plain same-page hash link
+  // a plain left click on a same-page link whose hash names a chapter or a legacy alias (#download, #how...) is a jump to that
+  // chapter, even when the hash already equals it (no hashchange then): the hidden footer link, the phone's header link
+  window.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
-    if (!a || (a.target && a.target !== "_self")) return;
+    if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download")) return;
     var u;
     try { u = new URL(a.href, location.href); } catch (err) { return; }
-    if (u.origin === location.origin && u.pathname === location.pathname && u.search === location.search && u.hash && u.hash !== location.hash) markLink();
+    if (u.origin !== location.origin || u.pathname !== location.pathname || u.search !== location.search || !u.hash) return;
+    var key; try { key = decodeURIComponent(u.hash.slice(1)); } catch (err2) { return; }
+    var slug = slugOf(key);
+    if (slug) { flush(); e.preventDefault(); jumpTo(slug, "push"); return; }
+    if (u.hash !== location.hash) markLink();          // another fragment (#dark, an id): the browser's own navigation
   });
 
   /* ---- popstate: the same visuals as a jump, never a write (ICX-JUMP.4, ICX-HIST.3) ---- */
@@ -167,7 +192,11 @@
     var slug = key === "" || key === "dark" || key === "light" ? FIRST : slugOf(key);
     flushOrDrop();
     pending = "pop";                                // whatever was under way is now Back's: no write for it (ICX-HIST.3)
-    arrivalToken++;                                 // a native arrival write in flight is void
+    if (cancelArrival) { cancelArrival(); cancelArrival = null; }   // a native arrival write in flight is void
+    jumping = false;
+    restoring = true;
+    if (cancelRestore) cancelRestore();
+    cancelRestore = settled(function () { restoring = false; cancelRestore = null; });
     if (!slug) return;
     intent = "pop";
     try { F.goTo(slug, { source: "popstate" }); } finally { intent = null; }
@@ -180,6 +209,19 @@
     var slug = slugOf(hashKey());
     if (!slug) return;                              // #dark / #light / an unknown hash: not a chapter
     jumpTo(slug, "hash");
+  });
+
+  /* ---- scroll-spy history (ICX-HIST.9): the nav module dispatches fe:spy; this file owns the write ---- */
+  document.addEventListener("fe:spy", function (e) {
+    var d = e && e.detail;
+    if (!d || !d.slug || d.user === false || !rowOf(d.slug)) return;
+    if (initializing || restoring || jumping) return;
+    write("replace", d.slug);
+  });
+
+  /* ---- the explicit-jump entry point: rail, menu, logo (ICX-JUMP, ICX-HIST.2): one push at the landing / the arrival ---- */
+  window.FEStoryURL = Object.freeze({
+    jump: function (target) { var slug = slugOf(String(target)); return slug ? jumpTo(slug, "push") : false; },
   });
 
   /* ---- the logo on "/" is a jump to the first chapter (B4 judge LOW) ---- */

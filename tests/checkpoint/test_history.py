@@ -321,13 +321,13 @@ def test_no_grow_slug(story: Story):
 
 @pytest.mark.parametrize("key,idx,slug", [("download", 8, "get-the-app"), ("pricing", 6, "price"), ("templates", 1, "templates")])
 def test_hashchange_jumps(story: Story, key: str, idx: int, slug: str):
-    """ICX-HIST.6 / ICX-JUMP: a same-page link (#download, #pricing, a slug) is a jump to its chapter: the browser's own
+    """ICX-HIST.6 / ICX-JUMP: a hashchange (location.hash = ...: #download, #pricing, a slug) is a jump to its chapter: the browser's own
     entry is kept (history.length +1, not two), the script only replaces its URL with the slug (never a pushState); Back
     returns to the first chapter with no write."""
     page = story.page
     length0 = page.evaluate("() => history.length")
     mark = story.hist_mark()
-    page.evaluate("(k) => { const a = document.createElement('a'); a.href = '#' + k; a.id = 'probe-link'; document.body.appendChild(a); a.click(); }", key)
+    page.evaluate("(k) => { location.hash = k; }", key)
     step_ok(story.wait_rest(allowance(1)), idx, f"ICX-JUMP (#{key})")
     calls = story.hist()[0][mark[0]:]
     assert all(c[0] == "replaceState" for c in calls), f"ICX-HIST.6 (#{key}): hashchange must not pushState (the browser added the entry), saw {calls}"
@@ -380,7 +380,7 @@ def test_legacy_link_to_the_current_chapter_is_normalised(browser, site_url):
         step_ok(st.wait_rest(allowance(1)), 1, "precondition: deep link to Templates")
         length0 = st.page.evaluate("() => history.length")
         mark = st.hist_mark()
-        st.page.evaluate("() => { const a = document.createElement('a'); a.href = '#how'; document.body.appendChild(a); a.click(); }")
+        st.page.evaluate("() => { location.hash = 'how'; }")
         st.page.wait_for_function("() => location.hash === '#templates'", timeout=2000)
         calls = st.hist()[0][mark[0]:]
         assert [c[0] for c in calls] == ["replaceState"], f"ICX-HIST.6: got {calls}"
@@ -395,8 +395,7 @@ def test_link_during_an_unfinished_jump_adds_one_entry(story: Story):
     page = story.page
     length0 = page.evaluate("() => history.length")
     mark = story.hist_mark()
-    page.evaluate("""() => { FEStory.goTo(5, {source: 'jump'});
-      const a = document.createElement('a'); a.href = '#download'; document.body.appendChild(a); a.click(); }""")
+    page.evaluate("() => { FEStory.goTo(5, {source: 'jump'}); location.hash = 'download'; }")
     step_ok(story.wait_rest(allowance(3)), 8, "ICX-JUMP (link over a jump)")
     page.wait_for_function("() => location.hash === '#get-the-app'", timeout=2000)
     calls = story.hist()[0][mark[0]:]
@@ -414,3 +413,132 @@ def test_back_right_after_a_jump_finds_its_entry(story: Story):
     page.go_back()
     step_ok(story.wait_rest(allowance(1)), 0, "ICX-JUMP.4 (Back at once)")
     assert hash_now(page) == "" and page.evaluate("() => location.pathname") == "/"
+
+
+def _link(page, href: str, parent: str = "body") -> None:
+    page.evaluate("""([h, p]) => { const a = document.createElement('a'); a.href = h; a.className = 'probe-link';
+      document.querySelector(p).appendChild(a); a.click(); a.remove(); }""", [href, parent])
+
+
+def test_same_page_chapter_link_is_one_pushed_jump(story: Story):
+    """ICX-JUMP / ICX-HIST.2 (INT-4 gate): a click on a same-page chapter or legacy link is intercepted: one jump, one
+    pushState at the landing with the SLUG (never the legacy hash), no browser fragment entry on top; Back returns."""
+    page = story.page
+    length0 = page.evaluate("() => history.length")
+    mark = story.hist_mark()
+    _link(page, "#download")
+    step_ok(story.wait_rest(allowance(1)), 8, "ICX-JUMP (link)")
+    calls = story.hist()[0][mark[0]:]
+    assert [c[0] for c in calls] == ["pushState"] and calls[0][1].endswith("#get-the-app"), f"ICX-HIST.2: got {calls}"
+    assert page.evaluate("() => history.length") == length0 + 1 and hash_now(page) == "#get-the-app"
+    # the same link again with the hash already equal (no hashchange fires): still intercepted, nothing moves, nothing written
+    mark = story.hist_mark()
+    _link(page, "#download")
+    page.wait_for_timeout(700)
+    assert story.hist()[0][mark[0]:] == [] and page.evaluate("() => history.length") == length0 + 1, "ICX-JUMP.0: zero distance wrote"
+    page.go_back()
+    step_ok(story.wait_rest(allowance(1)), 0, "ICX-JUMP.4 (Back)")
+
+
+def tablet_page(browser, url: str):
+    """A tablet page (820x1180, motion on): price / a-note / your-data / get-the-app are native rows, scrolled to smoothly
+    (ICX-JUMP.5). The history spy is installed; the load's own settle (the `initializing` flag) has passed."""
+    ctx, page = open_page(browser, url, TABLET)
+    page.wait_for_timeout(1300)
+    return ctx, page
+
+
+def test_native_jump_pushes_on_arrival(browser, site_url):
+    """ICX-JUMP.5 / ICX-HIST.2: FEStoryURL.jump to a native row is a native anchor scroll and ONE pushState once it has
+    arrived (the smooth scroll is under way when the call returns); zero distance writes nothing."""
+    ctx, page = tablet_page(browser, site_url + "/")
+    try:
+        assert page.evaluate("() => typeof FEStoryURL === 'object' && typeof FEStoryURL.jump === 'function'"), "FEStoryURL.jump missing"
+        assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price is native on a tablet"
+        length0 = page.evaluate("() => history.length")
+        page.evaluate("() => { window.__r = FEStoryURL.jump('price'); }")
+        assert page.evaluate("() => window.__r") is True
+        assert page.evaluate("() => window.__c2hist.length") == 0, "ICX-JUMP.5: the push was written before the scroll arrived"
+        page.wait_for_function("() => window.__c2hist.length > 0", timeout=5000)
+        page.wait_for_timeout(600)
+        calls = page.evaluate("() => window.__c2hist.slice()")
+        assert [c[0] for c in calls] == ["pushState"] and calls[0][1] == "/#price", f"ICX-JUMP.5: got {calls}"
+        assert page.evaluate("() => history.length") == length0 + 1
+        top = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+        assert page.evaluate("() => window.scrollY") > 0 and -4 <= top <= 200, f"ICX-JUMP.5: arrived {top:.0f}px from the viewport top"
+        page.evaluate("() => FEStoryURL.jump('price')")      # zero distance
+        page.wait_for_timeout(900)
+        assert page.evaluate("() => window.__c2hist.length") == 1 and page.evaluate("() => history.length") == length0 + 1, "ICX-JUMP.0: zero distance wrote"
+    finally:
+        ctx.close()
+
+
+def test_spy_replaces_only_on_user_scroll(browser, site_url):
+    """ICX-HIST.9: fe:spy writes one replaceState with the section's URL (plain path for the first section); nothing while
+    initializing (load), restoring (popstate) or jumping (a native jump); a section the page does not have is ignored.
+    rail.js is not needed: the event is dispatched here."""
+    spy = "(s) => document.dispatchEvent(new CustomEvent('fe:spy', {detail: {slug: s, user: true}}))"
+    ctx0 = browser.new_context(viewport={"width": 820, "height": 1180}, reduced_motion="no-preference")
+    ctx0.add_init_script(lib._INIT)
+    p0 = ctx0.new_page()
+    try:     # initializing: right after load, before its scroll has settled
+        p0.goto(site_url + "/#invoices", wait_until="commit")
+        p0.wait_for_function("() => window.FEStory", timeout=10000)
+        p0.evaluate(spy, "dashboard")
+        assert p0.evaluate("() => window.__c2hist.length") == 0, "ICX-HIST.9: a spy event during `initializing` wrote"
+    finally:
+        ctx0.close()
+    ctx, page = tablet_page(browser, site_url + "/")
+    try:
+        length0 = page.evaluate("() => history.length")
+        page.evaluate(spy, "templates")
+        calls = page.evaluate("() => window.__c2hist.slice()")
+        assert [(c[0], c[1]) for c in calls] == [("replaceState", "/#templates")], f"ICX-HIST.9: got {calls}"
+        assert slug_state(page) == "templates" and page.evaluate("() => history.length") == length0
+        page.evaluate(spy, "new-invoice")
+        assert hash_now(page) == "" and page.evaluate("() => history.length") == length0, "ICX-HIST.5: first section = plain path"
+        page.evaluate(spy, "nope")
+        assert page.evaluate("() => window.__c2hist.length") == 2
+        # jumping: a native jump under way suppresses the spy; the arrival then pushes once
+        page.evaluate("() => FEStoryURL.jump('price')")
+        page.evaluate(spy, "invoices")
+        assert page.evaluate("() => window.__c2hist.length") == 2, "ICX-HIST.9: a spy event during `jumping` wrote"
+        page.wait_for_function("() => window.__c2hist.length === 3", timeout=5000)
+        page.wait_for_timeout(500)
+        # restoring: Back, then a spy event before its scroll settles
+        n_back = page.evaluate("""() => new Promise((res) => {
+          addEventListener('popstate', () => { document.dispatchEvent(new CustomEvent('fe:spy', {detail: {slug: 'invoices', user: true}})); res(window.__c2hist.length); }, { once: true });
+          history.back(); })""")
+        assert n_back == 3, "ICX-HIST.9: a spy event during `restoring` wrote (or popstate wrote)"
+        page.wait_for_timeout(900)
+        page.evaluate(spy, "invoices")
+        assert page.evaluate("() => window.__c2hist.length") == 4 and page.evaluate("() => window.__c2hist[3][0]") == "replaceState"
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("cell", VIEWPORTS, ids=[c.name for c in VIEWPORTS])
+def test_download_links_reach_card(browser, site_url, cell: Cell):
+    """INT-4 gate (M1 blocker): the footer 'Download' link (a hidden, moved section on the homepage) and the header link
+    (while its href is the same-page fallback) bring the Get the app card to rest, at 1440, 820 and 390, dark and light.
+    Never a real download URL: a header link that points elsewhere is not clicked."""
+    for theme in ("dark", "light"):
+        for where, sel in (("footer", "footer a[href='#download']"), ("header", "header a.nav-cta")):
+            ctx, page = open_page(browser, site_url + "/", cell, theme=theme)
+            try:
+                page.wait_for_timeout(600)
+                href = page.evaluate("(s) => { const a = document.querySelector(s); return a ? a.getAttribute('href') : null; }", sel)
+                if href != "#download":
+                    assert where == "header", f"{cell.name}/{theme}: the {where} Download link is missing or rewritten ({href!r})"
+                    continue      # the header link is a real download here (never clicked)
+                page.evaluate("(s) => document.querySelector(s).click()", sel)
+                page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 8 && s.dest === 8; }"
+                                       if cell.width != 820 else "() => true", timeout=int(allowance(6) * 1000))
+                if cell.width == 820:   # tablet: Get the app is a native row: the page's own (long, smooth) scroll to its section
+                    page.wait_for_function("() => location.hash === '#get-the-app'", timeout=8000)
+                    top = page.evaluate("() => document.getElementById('get-the-app').getBoundingClientRect().top")
+                    at_end = page.evaluate("() => window.scrollY >= document.documentElement.scrollHeight - innerHeight - 2")
+                    assert top <= page.evaluate('() => innerHeight') * 0.5 or at_end, f"ICX-JUMP.5 (tablet/{theme}/{where}): the card is {top:.0f}px from the top"
+                assert hash_now(page) == "#get-the-app", f"{cell.name}/{theme}/{where}: URL {hash_now(page)!r}"
+            finally:
+                ctx.close()
