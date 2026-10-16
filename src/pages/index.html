@@ -91,7 +91,7 @@
   </div>
 
   <!-- ============ 01 MAKE: the hero ============ -->
-  <section class="hero beat" data-beat="make" aria-labelledby="hero-title">
+  <section class="hero beat" id="new-invoice" data-beat="make" aria-labelledby="hero-title">
     <div class="shell hero-grid">
       <div class="hero-copy beat-copy" data-copy="make">
         <h1 id="hero-title"><span class="line">Invoice your next client</span> <span class="line tone">for $5 a month.</span></h1>
@@ -133,7 +133,8 @@
   </section>
 
   <!-- ============ 02-05: the product story ============ -->
-  <section class="chapter beat" id="how" data-beat="look" aria-labelledby="look-title">
+  <section class="chapter beat" id="templates" data-beat="look" aria-labelledby="look-title">
+    <span class="anchor-legacy" id="how" aria-hidden="true"></span><!-- legacy #how (decisions #19) -->
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="look">
         <span class="step">Templates</span><!-- NEW COPY (B3): the chapter name, not a number -->
@@ -148,7 +149,7 @@
     </div></div>
   </section>
 
-  <section class="chapter beat" data-beat="know" aria-labelledby="know-title">
+  <section class="chapter beat" id="invoices" data-beat="know" aria-labelledby="know-title">
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="know">
         <span class="step">Invoices</span><!-- NEW COPY (B3): the chapter name, not a number -->
@@ -164,7 +165,7 @@
     </div></div>
   </section>
 
-  <section class="chapter beat" data-beat="grow" aria-labelledby="grow-title">
+  <section class="chapter beat" id="dashboard" data-beat="grow" aria-labelledby="grow-title">
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="grow">
         <span class="step">Dashboard</span><!-- NEW COPY (B3): the chapter name, not a number -->
@@ -180,7 +181,7 @@
     </div></div>
   </section>
 
-  <section class="chapter chapter--chase beat" data-beat="chase" aria-labelledby="chase-title">
+  <section class="chapter chapter--chase beat" id="email" data-beat="chase" aria-labelledby="chase-title">
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="chase">
         <span class="step">Email</span><!-- NEW COPY (B3): the chapter name, not a number -->
@@ -197,7 +198,7 @@
   </section>
 
   <!-- ============ 06 Yours: what stays yours ============ -->
-  <section class="yours beat" data-beat="yours" aria-labelledby="yours-title">
+  <section class="yours beat" id="your-data" data-beat="yours" aria-labelledby="yours-title">
     <div class="shell">
       <div class="yours-copy beat-copy" data-copy="yours">
         <div class="section-head">
@@ -241,7 +242,8 @@
   </section>
 
   <!-- ============ 07 Price: one card ============ -->
-  <section class="price beat" id="pricing" data-beat="price" aria-labelledby="price-title">
+  <section class="price beat" id="price" data-beat="price" aria-labelledby="price-title">
+    <span class="anchor-legacy" id="pricing" aria-hidden="true"></span><!-- legacy #pricing (decisions #19) -->
     <div class="shell">
       <div class="price-copy beat-copy" data-copy="price">
         <div class="section-head">
@@ -284,7 +286,7 @@
   </section>
 
   <!-- ============ 08 A note from Daniel ============ -->
-  <section class="note beat" data-beat="note" aria-labelledby="note-title">
+  <section class="note beat" id="a-note" data-beat="note" aria-labelledby="note-title">
     <div class="shell">
       <div class="note-card beat-copy" data-copy="note">
         <h2 id="note-title">A note from Daniel</h2>
@@ -297,7 +299,8 @@
   </section>
 
   <!-- ============ 09 The brand ending: the last shape resolves into the mark ============ -->
-  <section class="brand-end beat" id="download" data-beat="end" aria-labelledby="end-title">
+  <section class="brand-end beat" id="get-the-app" data-beat="end" aria-labelledby="end-title">
+    <span class="anchor-legacy" id="download" aria-hidden="true"></span><!-- legacy #download (decisions #19) -->
     <div class="shell">
       <div class="brand-stage beat-static" role="img" aria-label="The Freelance Easy mark.">
         <div class="stage-static"><img src="/assets/story/fe-mark.png" alt="" width="128" height="128"></div>
@@ -325,6 +328,7 @@
 <script src="/assets/story/engine.js"></script>
 <script src="/assets/story/scenes.js"></script>
 <script src="/assets/story/seams.js"></script>
+<script src="/assets/shared/checkpoint-input.js"></script>
 <script src="/assets/story/site.js"></script>
 <script src="/assets/story/download.js"></script>
 <!-- the 25-second tour's dialog: native <dialog> + showModal() (Esc, inertness, top layer). tour-modal.js creates the

@@ -2055,6 +2055,12 @@ details.disclosure p a {
 .track {
   height: 0;
 }
+/* (C3, ICX-SETTLE-7) the checkpoint track: one viewport per checkpoint (site.js sets its height); the browser must not
+   move the page to keep an anchor in view when the track or a caption changes size (that scroll would read as FREE) */
+html.js.motion,
+html.js.motion body {
+  overflow-anchor: none;
+}
 /* the Ride's band: the bar's colour flooding the page from the stage outwards (clip-path, per frame) */
 .pin-band {
   position: absolute;
