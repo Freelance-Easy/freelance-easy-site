@@ -21,6 +21,7 @@ Exit 1 when any row fails.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 
@@ -68,6 +69,13 @@ SIG_JS = """
   return out;
 })
 """
+
+# the same hash at each story time in a list
+SIG_AT_JS = SIG_JS.replace("(([t0, t1, dt]) =>", "((times) =>").replace(
+    "for (let T = t0; T <= t1 + 1e-9; T += dt) { window.__site.seekMaster(T); out.push(sig()); }",
+    "for (const T of times) { window.__site.seekMaster(T); out.push(sig()); }")
+# Email's three cut still spans (scenes.js Chase: FX.cutTime), in the base's local seconds: [at, d]
+CHASE_CUTS = [(1.655, 0.08), (3.16, 0.52), (4.49, 0.18)]
 
 
 def open_story(browser, url: str, width: int, theme: str):
@@ -142,6 +150,67 @@ def moving_frames(page, m: dict, fps: int = 60) -> dict[str, int]:
     for s in m["segs"]:
         sig = activity(page, s["T0"], s["T1"], fps)
         out[s["id"]] = sum(1 for i in range(1, len(sig)) if sig[i] != sig[i - 1])
+    return out
+
+
+def base_time(seg_id: str, u: float, cut_len: float, base_len: float) -> float:
+    """The base (?pace=before) local time that C5's local time u plays. C5's only mechanism is removing still time: a
+    segment either keeps its start (the still tail is cut: identity) or, Chase, has CHASE_CUTS taken out of it, so a frame
+    at or after a cut's start (in C5 time) is the base's frame d later."""
+    if seg_id != "chase" or base_len - cut_len < 0.5:
+        return u
+    b, gone = u, 0.0
+    for at, d in CHASE_CUTS:
+        if u >= at - gone - 1e-9:
+            b += d
+        gone += d
+    return b
+
+
+def signature_diffs(page, base_page, m: dict, base_m: dict, fps: int = 60) -> list[str]:
+    """Every frame of every segment must be the SAME picture as the base's frame at the same moment of the move: C5 at
+    local u (u = k/fps from the segment's start) against ?pace=before at base_time(u), the cut still spans skipped.
+    A faster, slower or re-eased move (also one overlapping another move) changes some frame's signature; a count of
+    changed frames cannot see that. Also: what was cut must have been still in the base (a tail after the C5 segment's
+    end, the spans inside Chase). Returns messages naming the segment and local time."""
+    bad = []
+    base = {s["id"]: s for s in base_m["segs"]}
+    for s in m["segs"]:
+        b = base.get(s["id"])
+        if b is None:
+            bad.append(f"{s['id']}: not in the base timeline")
+            continue
+        c_len, b_len = s["T1"] - s["T0"], b["T1"] - b["T0"]
+        n = int(min(c_len, b_len + 0.02) * fps + 1e-6)
+        us = [k / fps for k in range(n + 1)]
+        got = page.evaluate(SIG_AT_JS, [s["T0"] + u for u in us])
+        want = base_page.evaluate(SIG_AT_JS, [b["T0"] + base_time(s["id"], u, c_len, b_len) for u in us])
+        diff = [us[k] for k in range(len(us)) if got[k] != want[k]]
+        if diff:
+            bad.append(f"{s['id']}: {len(diff)} of {len(us)} frames differ from the base (first at local {diff[0]:.3f} s, last {diff[-1]:.3f} s)")
+        # what was cut must be still in the base
+        spans = []
+        if s["id"] == "chase" and b_len - c_len >= 0.5:
+            spans = [(at, at + d) for at, d in CHASE_CUTS]
+        elif b_len - c_len > 0.02:
+            spans = [(c_len, b_len)]
+        for a, z in spans:
+            ts = [b["T0"] + a + (z - a) * i / 8 for i in range(1, 8)]  # (inside the span: its end frame is the next move's first)
+            sg = base_page.evaluate(SIG_AT_JS, ts)
+            if len(set(sg)) > 1:
+                bad.append(f"{s['id']}: the base moves in the span {a:.2f}-{z:.2f} s that C5 cut: a move was removed")
+    return bad
+
+
+def segment_digests(page, m: dict, fps: int = 60) -> dict[str, str]:
+    """Per segment: a digest of the stage signature at every 1/fps of its own time. Pinned from 67f6b3a (`?pace=before`,
+    tests/checkpoint/base_signatures.json): a move that plays faster, slower or re-eased in code BOTH timelines share
+    (which signature_diffs, `/` against the flag, cannot see) changes the digest."""
+    out = {}
+    for s in m["segs"]:
+        n = int((s["T1"] - s["T0"]) * fps + 1e-6)
+        sig = page.evaluate(SIG_AT_JS, [s["T0"] + k / fps for k in range(n + 1)])
+        out[s["id"]] = hashlib.sha1(",".join(map(str, sig)).encode()).hexdigest()[:12]
     return out
 
 
