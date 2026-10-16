@@ -9,7 +9,10 @@ State source, in this order:
           dest: int,        // signed destination, index into BEATS (ICX terms: dest)
           rendered: int,    // last checkpoint fully landed (ICX terms: rendered)
           T: number,        // story time in seconds (alias: time)
+          trackY: number,   // scrollY of the dest checkpoint's track position (ICX-CHECKPOINT.2: scrollY within 1 px)
+          beat: string,     // the active caption's beat id, a BEATS entry (ICX-CHECKPOINT.2)
           dip: boolean }    // optional; phase == "dip" also counts
+     "released" counts only with scrollY below the pinned track (ICX-REST.1).
   2. window.__site.state()    -- the base engine: { shown, target, vel, intro, dip, ... } (assets/story/site.js).
      The base has no gesture layer, no dest and no rendered; a wheel/key is scrubbed through mapScroll. The harness
      derives only what can honestly be derived: "rest" = the playhead is settled (shown == target, vel 0, no intro,
@@ -33,7 +36,7 @@ SLUGS = ["new-invoice", "templates", "invoices", "dashboard", "email", "your-dat
 SEED = 20261015
 REST_TOL = 0.015         # seconds of story time
 RATE_CEILING = 3.0       # ICX-SIGNED.7
-RATE_TOL = 1.25          # frame jitter allowance on the 3x ceiling
+RATE_TOL = 1.05          # jitter allowance on the 3x ceiling (3.15x), measured over >= 100 ms windows
 
 
 @dataclass(frozen=True)
@@ -68,7 +71,7 @@ _INIT = """
   window.__c2hist = [];
   for (const k of ['pushState', 'replaceState']) {
     const o = history[k];
-    history[k] = function (s, t, u) { window.__c2hist.push([k, u == null ? null : String(u)]); return o.apply(this, arguments); };
+    history[k] = function (s, t, u) { let st = null; try { st = window.__c2read(); } catch (e) { /* not ready */ } window.__c2hist.push([k, u == null ? null : String(u), st]); return o.apply(this, arguments); };
   }
   window.__c2read = () => {
     let fe = null;
@@ -165,23 +168,27 @@ class Story:
     def derive(self, raw: dict) -> Snap:
         fe, site, y = raw["fe"], raw["site"], raw["y"]
         info = self.info
-        released = y > info.end_y + 1
+        below = y > info.end_y + 1
         if fe:
             T = float(fe.get("T", fe.get("time", 0.0)))
             phase = str(fe.get("phase"))
             dest, rendered = fe.get("dest"), fe.get("rendered")
             dip = bool(fe.get("dip")) or phase == "dip"
+            # ICX-CHECKPOINT.2: rest = phase 'rest', rendered == dest, story time on the rest frame, scrollY within 1 px
+            # of the track position (fe.trackY) and the checkpoint's caption active (fe.beat).
             ok = (phase == "rest" and rendered is not None and rendered == dest and 0 <= rendered < info.n
-                  and abs(T - info.rest[rendered]) <= REST_TOL)
-            return Snap("FEStory", T, y, phase, dest, rendered, dip, rendered if ok else None, ok,
-                        released or phase == "released", raw["t"])
+                  and abs(T - info.rest[rendered]) <= REST_TOL
+                  and fe.get("trackY") is not None and abs(y - float(fe["trackY"])) <= 1
+                  and fe.get("beat") == BEATS[rendered])
+            released = below and phase == "released"   # ICX-REST.1: RELEASED = the phase AND scrollY below the pin
+            return Snap("FEStory", T, y, phase, dest, rendered, dip, rendered if ok else None, ok, released, raw["t"])
         s = site or {"shown": 0.0, "target": 0.0, "vel": 0.0, "intro": False, "dip": False}
         T = float(s["shown"])
         near = next((i for i, r in enumerate(info.rest) if abs(T - r) <= REST_TOL), None)
         settled = (not s["intro"]) and (not s["dip"]) and abs(s["shown"] - s["target"]) < 1e-3 and abs(s["vel"]) < 1e-6
         ok = settled and near is not None
         phase = "rest" if ok else ("dip" if s["dip"] else ("intro" if s["intro"] else ("moving" if not settled else "mid-segment")))
-        return Snap("__site", T, y, phase, None, None, bool(s["dip"]), near if ok else None, ok, released, raw["t"])
+        return Snap("__site", T, y, phase, None, None, bool(s["dip"]), near if ok else None, ok, below, raw["t"])
 
     def snap(self) -> Snap:
         return self.derive(self.page.evaluate("() => window.__c2read()"))
@@ -267,14 +274,21 @@ def dip_spans(frames: list[Snap]) -> list[tuple[float, float]]:
     return spans
 
 
-def max_rate(frames: list[Snap]) -> float:
-    """Largest |dT/dt| between consecutive frames, dips excluded (a cut is not playback) and gaps > 100 ms skipped."""
+def max_rate(frames: list[Snap], window: float = 0.1) -> float:
+    """Largest |dT/dt| over >= `window` s windows of frames, skipping any window that contains a dip frame (a cut is
+    not playback) or a frame gap above 250 ms."""
     worst = 0.0
-    for a, b in zip(frames, frames[1:]):
-        dt = (b.t - a.t) / 1000
-        if a.dip or b.dip or dt <= 0 or dt > 0.1:
+    for i, a in enumerate(frames):
+        if a.dip:
             continue
-        worst = max(worst, abs(b.T - a.T) / dt)
+        for j in range(i + 1, len(frames)):
+            b = frames[j]
+            if b.dip or (b.t - frames[j - 1].t) > 250:
+                break
+            dt = (b.t - a.t) / 1000
+            if dt >= window:
+                worst = max(worst, abs(b.T - a.T) / dt)
+                break
     return worst
 
 

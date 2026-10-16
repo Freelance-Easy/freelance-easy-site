@@ -59,7 +59,7 @@ def expect_rest(res, idx: int, row: str, base: str = SCRUB) -> None:
 # ---------------------------------------------------------------------------------------------------------- STEP
 
 @CELL
-@pending("ICX-STEP.1")
+@pending("ICX-STEP.1", "ICX-STEP.6")
 def test_wheel_step_lands_next_checkpoint(story: Story, cell: Cell):
     story.rec_start()
     story.wheel(100)
@@ -67,9 +67,12 @@ def test_wheel_step_lands_next_checkpoint(story: Story, cell: Cell):
     frames = story.rec_stop()
     expect_rest(res, 1, "ICX-STEP.1")
     assert not dip_spans(frames), f"ICX-STEP.1: a step from REST(make) must not dip, saw {dip_spans(frames)}"
-    assert max(f.T for f in frames) - story.info.rest[0] > 0.3, (
-        "ICX-STEP.1: the transition must play (story time advances through the seam); a 100 px notch moved the "
-        "playhead by less than 0.3 s, which is the base's scrub")
+    mid = [f for f in frames if story.info.rest[0] + 0.05 < f.T < story.info.rest[1] - 0.05]
+    assert len(mid) >= 10, (
+        f"ICX-STEP.1: the seam and content must play frame by frame; only {len(mid)} frames were between the two rest "
+        "frames (a 100 px notch moved the base's playhead by ~0.03 s; a teleport would show none)")
+    worst = max_rate(frames)
+    assert worst <= 1.0 * RATE_TOL, f"ICX-STEP.6: a step with no further input never plays faster than 1x, measured {worst:.2f}x"
     check_engine(res.snap, 1, "ICX-STEP.1")
 
 
@@ -114,7 +117,7 @@ def test_back_step_is_one_220ms_fade_to_previous_rest(story: Story, cell: Cell):
     spans = dip_spans(frames)
     assert len(spans) == 1, f"ICX-BACK.1: expected exactly one dip, saw {len(spans)}: {spans}"
     dur = spans[0][1] - spans[0][0]
-    assert 0.15 <= dur <= 0.40, f"ICX-BACK.1: the fade must take about 220 ms, measured {dur * 1000:.0f} ms"
+    assert 0.18 <= dur <= 0.26, f"ICX-BACK.1: the fade must take about 220 ms, measured {dur * 1000:.0f} ms"
     assert res.elapsed <= 0.8, f"ICX-BACK.1: back gesture to rest took {res.elapsed:.2f}s (a 220 ms fade, no replay)"
     check_engine(res.snap, 0, "ICX-BACK.1")
 
@@ -132,7 +135,7 @@ def test_end_key_is_one_dip_to_last_pinned(story: Story, cell: Cell):
     spans = dip_spans(frames)
     assert len(spans) == 1, f"ICX-DIP.1: distance {cell.last} must be exactly one dip, saw {len(spans)}: {spans}"
     dur = spans[0][1] - spans[0][0]
-    assert 0.15 <= dur <= 0.40, f"ICX-DIP.1: a dip is 220 ms in total, measured {dur * 1000:.0f} ms"
+    assert 0.18 <= dur <= 0.26, f"ICX-DIP.1: a dip is 220 ms in total, measured {dur * 1000:.0f} ms"
     between = rests_seen(frames) - {0, cell.last}
     assert not between, f"ICX-DIP.1/ICX-SIGNED.6: intermediate checkpoints {sorted(between)} rested during the dip"
     check_engine(res.snap, cell.last, "ICX-DIP.1")
@@ -253,6 +256,16 @@ def _since(story: Story, mark: tuple[int, int]):
     return calls[mark[0]:], length - mark[1]
 
 
+def _written_at_landing(call, idx: int, row: str) -> None:
+    """The history write must happen at the final landing: the engine state captured inside the call already has
+    rendered == dest == idx (never at gesture time, never at a pass-through landing)."""
+    st = (call[2] or {}).get("fe")
+    assert st is not None, f"{row}: no window.FEStory state at the time of the history write"
+    assert st.get("rendered") == st.get("dest") == idx, (
+        f"{row}: the write at {call[1]!r} happened with rendered={st.get('rendered')} dest={st.get('dest')}; "
+        f"it belongs at the final landing (rendered == dest == {idx})")
+
+
 def _url_slug(u: str | None) -> str:
     return "" if u is None else (u.split("#", 1)[1] if "#" in u else "")
 
@@ -268,6 +281,7 @@ def test_a_step_writes_replacestate_once_at_its_landing(story: Story, cell: Cell
         f"ICX-HIST.1: a step writes one replaceState '#{SLUGS[1]}' and leaves history.length unchanged; got {calls}, length +{grew} "
         f"(the base writes no chapter URL: it has no landing; wait ended {res.status}: {res.snap.describe()})")
     expect_rest(res, 1, "ICX-HIST.1")
+    _written_at_landing(calls[0], 1, "ICX-HIST.1")
 
 
 @CELL
@@ -283,6 +297,7 @@ def test_a_run_of_steps_writes_only_its_final_landing(story: Story, cell: Cell):
         f"ICX-HIST.1/ICX-SIGNED.6: a run of 3 steps writes once, '#{SLUGS[3]}', and never a passed-through chapter; got {calls}, "
         f"length +{grew} (the base writes no chapter URL; wait ended {res.status}: {res.snap.describe()})")
     expect_rest(res, 3, "ICX-HIST.1")
+    _written_at_landing(calls[0], 3, "ICX-HIST.1/ICX-SIGNED.6")
 
 
 @CELL
@@ -296,6 +311,7 @@ def test_a_jump_pushes_one_entry_at_its_landing(story: Story, cell: Cell):
         f"ICX-HIST.2: an End jump adds exactly one pushState '#{SLUGS[cell.last]}'; got {calls}, length +{grew} "
         f"(the base writes no history on End; wait ended {res.status}: {res.snap.describe()})")
     expect_rest(res, cell.last, "ICX-HIST.2")
+    _written_at_landing(calls[0], cell.last, "ICX-HIST.2")
 
 
 # ---------------------------------------------------------------------------------------------------------- REST fuzz
@@ -313,6 +329,8 @@ def test_fuzz_never_rests_mid_transition(browser, site_url, cell: Cell):
         fuzz = Fuzz(cell, random.Random(f"{SEED}-{cell.id}"))
         for n in range(SEQUENCES_PER_CELL):
             story.rec_start()
+            before = story.snap()
+            start_idx = before.index if before.index is not None else 0
             ops = fuzz.sequence(story, forward_first=(n % 2 == 0))
             res = story.wait_rest(allowance(6), stall_s=1.5)
             frames = story.rec_stop()
@@ -322,6 +340,10 @@ def test_fuzz_never_rests_mid_transition(browser, site_url, cell: Cell):
                 f"{res.snap.describe()}. Base behaviour: {SCRUB}")
             if res.status == "rest":
                 check_engine(res.snap, res.snap.index, f"ICX-REST.1 {where}")
+                due = allowance(abs(res.snap.index - start_idx))
+                assert res.elapsed <= due, (
+                    f"ICX-REST.1: {where} -> rest took {res.elapsed:.1f}s after the last input; transition + content + 1 s "
+                    f"for distance {abs(res.snap.index - start_idx)} is {due:.1f}s")
             worst = max_rate(frames)
             assert worst <= RATE_CEILING * RATE_TOL, f"ICX-SIGNED.7: {where} -> story time ran at {worst:.2f}x (ceiling 3x)"
     finally:
