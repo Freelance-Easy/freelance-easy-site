@@ -288,6 +288,14 @@ p {
   background: var(--bg-2);
   box-shadow: inset 0 0 0 1px var(--line-3);
 }
+/* (B4) on the Ride's band the header's text is --ride-text, which the page's --bg-2 hover fill matched (dark on dark,
+   white on light grey): there the pill fills with --ride-text and its label takes --text-0, the opposite end in both
+   themes (>= 4.5:1 whatever colour site.js reads for --ride) */
+html.on-band:where(:not(.past-band)) .site-header .nav a.nav-cta:hover {
+  color: var(--text-0);
+  background: var(--ride-text);
+  box-shadow: inset 0 0 0 1px var(--ride-text);
+}
 /* the theme toggle (2026-10-12, Daniel: "one button, not a slider pill"): the audio pages' round icon button
    (styles.css .theme-toggle), the moon in dark, the sun in light */
 .theme-toggle {

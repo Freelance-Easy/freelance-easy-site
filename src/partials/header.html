@@ -1,15 +1,20 @@
 <header class="site-header">
   <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
   <link rel="stylesheet" href="/assets/story/dl-status.css">
+  <!-- (B4) the slim bar (DEC-1): site-level actions only. No link here jumps inside the story: the chapter rail is the
+       page's own menu (B5). Sticky, never hides, 56 px (assets/site/shell.css). -->
   <div class="shell">
-    <a class="brand" href="#top" aria-label="Freelance Easy, back to the top">
+    <a class="brand" href="/" aria-label="Freelance Easy home"><!-- NEW COPY (aria-label) -->
       <img src="/assets/story/fe-mark.png" alt="" width="28" height="28">
       <span>Freelance Easy</span>
     </a>
     <nav class="nav" aria-label="Primary">
-      <!-- "How it works" opens the 25-second tour's dialog (tour-modal.js); #how stays the no-JS / no-<dialog> fallback -->
-      <a href="#how" data-tour-quick>How it works</a><!-- NEW COPY (nav label) -->
-      <a href="#pricing">Pricing</a>
+      <!-- "How it works" is the full tour, available at will (DEC-3) -->
+      <a href="/tour/">How it works</a><!-- NEW COPY (nav label) -->
+      <a href="/pricing">Pricing</a>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6) -->
+      <a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a><!-- NEW COPY (nav label) -->
       <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
            and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
       <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden></span>
@@ -18,6 +23,10 @@
         <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
         <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
       </button>
+      <!-- (B4) slots, empty until their pieces fill them (shell.css hides an empty slot): K1's classic switch beside the
+           theme toggle, B6's phone/tablet menu button -->
+      <span class="fe-shell-slot" data-classic-slot></span>
+      <span class="fe-shell-slot" data-menu-slot></span>
     </nav>
   </div>
   <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>

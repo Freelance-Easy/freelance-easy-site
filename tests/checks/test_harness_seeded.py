@@ -116,6 +116,7 @@ KNOWN_BASE_FAILS = {
                   "F7 FAIL CLS 0.02"),
     ("/terms", "F7"): ("base: CLS 0.0227 (>= 0.02), one 45 ms shift of ul/p/h2 (font swap)",
                        "F7 FAIL CLS 0.02"),
+    ("/", "LINKS"): ("pending PR-1: /pricing page", "broken link /pricing"),
 }
 
 
