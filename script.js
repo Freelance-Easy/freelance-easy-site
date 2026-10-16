@@ -28,17 +28,67 @@
   // ---- Theme ----
   var STORAGE_KEY = "fe-theme";
   var root = document.documentElement;
+  // The ad pages (/mac, /mac-audio, /audio) load the shared theme module
+  // (assets/shared/theme.js) just before this file: it owns data-theme (always
+  // an explicit "dark" or "light"), the toggle, the stored choice and the
+  // circle reveal. The pages that don't load it (install, privacy, terms and
+  // the dated archives, until B7) keep applyTheme below unchanged (CF-11).
+  var FET = window.FETheme || null;
 
   function applyTheme(t) {
     if (t === "light") root.setAttribute("data-theme", "light");
     else root.removeAttribute("data-theme");
   }
+
+  // Both theme-color metas take the shown theme's colour after a switch (each
+  // keeps its own colour, by its media query, until then).
+  var themeColors = {};
+  document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+    var media = m.getAttribute("media") || "";
+    if (/dark/.test(media)) themeColors.dark = m.getAttribute("content");
+    else if (/light/.test(media)) themeColors.light = m.getAttribute("content");
+  });
+  function syncThemeColor(t) {
+    var c = themeColors[t];
+    if (!c) return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+      m.setAttribute("content", c);
+    });
+  }
+
   // Each page's head script has already chosen the theme before the first paint
   // (the visitor's stored choice, else the page's default: dark, or light on
-  // /mac); keep it rather than recomputing.
-  applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
+  // /mac); keep it rather than recomputing. The ad pages read no theme hash.
+  if (FET) {
+    document.addEventListener("fe:themechange", function (e) {
+      var t = e.detail && e.detail.theme;
+      syncThemeColor(t);
+      restartDemos(syncDemoTheme(t));
+    });
+    // theme.css (the circle's mask) is only needed for a switch, so it is added
+    // here: off the first paint's path, and (unlike a <link> in the body) it
+    // doesn't hold back DOMContentLoaded, i.e. the download wiring below.
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "/assets/shared/theme.css";
+    document.head.appendChild(css);
+    // The toggle's click is handled here, not by the module: a press before
+    // theme.css applies switches at once rather than through the browser's
+    // default cross-fade. Its @property gives --vt-r a computed value only once
+    // the sheet is in effect.
+    FET.init({ hashPolicy: "none", toggle: "[data-fe-theme-unbound]" });
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("[data-theme-toggle]") : null;
+      if (!btn) return;
+      var ready = getComputedStyle(root).getPropertyValue("--vt-r").trim() !== "";
+      FET.set(FET.target() === "light" ? "dark" : "light", ready ? { from: btn } : undefined);
+    });
+  } else {
+    applyTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark");
+  }
 
   function bindToggle() {
+    if (FET) return; // FETheme handles the toggle's click
     var btn = document.querySelector("[data-theme-toggle]");
     if (!btn) return;
     btn.addEventListener("click", function () {
