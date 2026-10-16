@@ -57,8 +57,6 @@
       var rows = [];
       if (F) { try { rows = F.destinations || []; } catch (e) { rows = []; } }
       if (!list || !rows.length) { if (chapters) chapters.hidden = true; return; }
-      var on = document.querySelector('.story-nav a[aria-current="location"]');
-      var cur = on ? on.getAttribute("data-go") : null;            // the rail's state (rail.js owns it)
       while (list.firstChild) list.removeChild(list.firstChild);
       for (var i = 0; i < rows.length; i++) {
         var li = document.createElement("li"), a = document.createElement("a");
@@ -66,17 +64,37 @@
         a.setAttribute("data-go", rows[i].beat);
         a.setAttribute("data-slug", rows[i].slug);
         a.textContent = rows[i].name;
-        if (rows[i].beat === cur) {
-          a.className = "is-current";
-          var sr = document.createElement("span");
-          sr.className = "fe-menu-sr";
-          sr.textContent = " (current chapter)";                    // NEW COPY (screen-reader text)
-          a.appendChild(sr);
-        }
         li.appendChild(a);
         list.appendChild(li);
       }
       chapters.hidden = false;
+      markCurrent();
+    }
+
+    // the current chapter: read from the rail (rail.js owns aria-current, ICX-HL.5), re-read at every landing while open
+    // (a step or the intro's content still running when the sheet opened lands under it)
+    function markCurrent() {
+      if (!list) return;
+      var on = document.querySelector('.story-nav a[aria-current="location"]');
+      var cur = on ? on.getAttribute("data-go") : null;
+      var links = list.querySelectorAll("a[data-go]");
+      for (var i = 0; i < links.length; i++) {
+        var a = links[i], is = a.getAttribute("data-go") === cur, sr = a.querySelector(".fe-menu-sr");
+        a.classList.toggle("is-current", is);
+        if (is && !sr) {
+          sr = document.createElement("span");
+          sr.className = "fe-menu-sr";
+          sr.textContent = " (current chapter)";                    // NEW COPY (screen-reader text)
+          a.appendChild(sr);
+        } else if (!is && sr) a.removeChild(sr);
+      }
+    }
+    var F0 = story();
+    if (F0 && typeof F0.onLand === "function") {
+      // shell.js (deferred in the head) registers before rail.js: read once every landing listener has run, so the
+      // rail's aria-current has already moved
+      F0.onLand(function () { if (isOpen()) Promise.resolve().then(markCurrent); });
+      document.addEventListener("fe:spy", function () { if (isOpen()) markCurrent(); });
     }
 
     function focusables() {
@@ -131,9 +149,10 @@
       if (U && typeof U.jump === "function") U.jump(slug);
       else if (F) F.goTo(slug, { source: "jump" });
     });
-    // the focus trap: Tab and Shift+Tab wrap inside the sheet
-    dlg.addEventListener("keydown", function (e) {
-      if (e.key !== "Tab") return;
+    // the focus trap: Tab and Shift+Tab wrap inside the sheet, from anywhere (focus a click left on the bar's theme toggle
+    // comes back in too)
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab" || !isOpen()) return;
       var f = focusables();
       if (!f.length) return;
       var first = f[0], last = f[f.length - 1], at = document.activeElement;

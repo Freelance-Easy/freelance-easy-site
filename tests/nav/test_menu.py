@@ -108,12 +108,23 @@ def test_button_hidden_where_rail_and_links_show(site_url, browser, width):
         ctx.close()
 
 
+SHOWN = """() => [...document.querySelectorAll('.site-header .brand, .site-header .nav > a, .site-header .nav > button,'
+  + ' .site-header .fe-menu-btn')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden')
+  .map(e => e.matches('.brand') ? 'logo' : e.matches('[data-menu-open]') ? 'menu' : e.matches('[data-theme-toggle]') ? 'theme'
+       : e.matches('[data-dl]') ? 'download' : e.textContent.trim())"""
+
+
+@pytest.mark.parametrize("path", [p for p in SHELL_PAGES if p != "/"])
 @pytest.mark.parametrize("width,want", [(390, True), (800, False), (1280, False)])
-def test_button_on_doc_pages_only_where_links_drop(site_url, browser, width, want):
-    ctx, page = _open(browser, site_url + "/pricing.html", w=width, h=900)
+def test_button_on_doc_pages_only_where_links_drop(site_url, browser, path, width, want):
+    ctx, page = _open(browser, site_url + path, w=width, h=900)
     try:
-        assert _shown(page, '.site-header .nav > a[href="/pricing"]') is (not want)
-        assert _shown(page, BTN) is want
+        shown = page.evaluate(SHOWN)
+        if want:
+            assert shown == ["logo", "download", "theme", "menu"], (path, shown)
+        else:
+            assert shown == ["logo", "How it works", "Pricing", "download", "theme"], (path, shown)
+            assert page.evaluate("() => getComputedStyle(document.querySelector('[data-menu-slot]')).display") == "none"
     finally:
         ctx.close()
 
@@ -204,6 +215,12 @@ def test_dialog_focus_trap_esc_returns_focus(site_url, browser):
         page.click(".site-header [data-theme-toggle]")
         page.wait_for_timeout(700)
         assert page.get_attribute("html", "data-theme") != t0 and _is_open(page), "the theme toggle broke with the sheet open"
+        # the click left focus on the bar's toggle: Tab and Shift+Tab come straight back into the sheet
+        page.keyboard.press("Tab")
+        assert page.evaluate(FOCUS_IN, DLG), "Tab escaped the sheet from the bar's theme toggle"
+        page.focus(".site-header [data-theme-toggle]")
+        page.keyboard.press("Shift+Tab")
+        assert page.evaluate(FOCUS_IN, DLG), "Shift+Tab escaped the sheet from the bar's theme toggle"
         # Escape closes it and focus goes back to the button
         page.keyboard.press("Escape")
         assert not _is_open(page) and page.get_attribute(BTN, "aria-expanded") == "false"
@@ -287,6 +304,13 @@ def test_same_list_as_rail(site_url, browser, width):
         assert got["menu"] == got["dests"] == got["rail"], got
         assert got["cur"] == [got["railCur"]] == [got["dests"][3][0]], got
         assert got["ariaInMenu"] == 0, "the sheet wrote aria-current (rail.js is its only writer, ICX-HL.5)"
+        page.keyboard.press("Escape")
+        # a landing under the open sheet (a step still running when it opened) moves its current marker
+        page.evaluate("(s) => { FEStory.goTo(4, { source: 'jump' }); document.querySelector(s).click(); }", BTN)
+        assert _is_open(page)
+        _rest(page, 4)
+        got = page.evaluate(LISTS, DLG)
+        assert got["cur"] == [got["railCur"]] == [got["dests"][4][0]], got
         page.keyboard.press("Escape")
         # a mode change re-reads the source: still row for row
         page.set_viewport_size({"width": 800 if width == 390 else 390, "height": 900})
