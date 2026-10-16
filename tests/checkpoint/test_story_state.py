@@ -5,8 +5,8 @@ rules are asserted: step (ICX-STEP, ICX-KEY), back (ICX-BACK), dip with distance
 arithmetic and the clamp (ICX-SIGNED, ICX-RELEASE.4), the rest invariant (ICX-REST) with a seeded fuzz, and history
 on the final landing (ICX-HIST). Each runs at desktop 1440x900 and tablet 820x1180, dark and light.
 
-C3 rebuilt the story and removed its markers. The three ICX-HIST tests stay xfail(strict=True) "pending C4": history
-is C4's (story-url.js); C3 writes none (main's ruling, 2026-10-15).
+C3 rebuilt the story and removed its markers. The three ICX-HIST tests were pending C4 (history is story-url.js's; C3
+writes none, main's ruling 2026-10-15); C4 removed their xfail markers.
 Every assertion message starts with its ICX row id.
 
 Fuzz (marked slow; see its docstring for the run time): SEED is fixed; 50 sequences per cell x 4 cells = 200 sequences. A sequence is 2-6 random inputs, then idle until
@@ -51,11 +51,6 @@ CELL = pytest.mark.parametrize("cell", CELLS, ids=[c.id for c in CELLS])
 
 SCRUB = ("the base scrubs wheel/key deltas through mapScroll (no gesture detector, no checkpoint snap): a 100 px "
          "notch moves story time by ~0.03 s, so the story either parks mid-segment or never leaves the first rest frame")
-
-
-def pending_c4(*rows: str):
-    """History is C4's (story-url.js, main's ruling 2026-10-15): C3 writes none; C4 removes these markers."""
-    return pytest.mark.xfail(strict=True, reason="pending C4: " + ", ".join(rows))
 
 
 @pytest.fixture(scope="module")
@@ -308,7 +303,6 @@ def _url_slug(u: str | None) -> str:
 
 
 @CELL
-@pending_c4("ICX-HIST.1")
 def test_a_step_writes_replacestate_once_at_its_landing(story: Story, cell: Cell):
     mark = story.hist_mark()
     story.wheel(100)
@@ -322,7 +316,6 @@ def test_a_step_writes_replacestate_once_at_its_landing(story: Story, cell: Cell
 
 
 @CELL
-@pending_c4("ICX-HIST.1", "ICX-SIGNED.6")
 def test_a_run_of_steps_writes_only_its_final_landing(story: Story, cell: Cell):
     mark = story.hist_mark()
     for _ in range(3):
@@ -338,7 +331,6 @@ def test_a_run_of_steps_writes_only_its_final_landing(story: Story, cell: Cell):
 
 
 @CELL
-@pending_c4("ICX-HIST.2", "ICX-HIST.5")
 def test_a_jump_pushes_one_entry_at_its_landing(story: Story, cell: Cell):
     mark = story.hist_mark()
     story.key("End")
