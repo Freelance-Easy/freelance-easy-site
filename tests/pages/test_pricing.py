@@ -106,7 +106,7 @@ def ledger_rows() -> dict[str, tuple[str, str]]:
     rows = {}
     for line in LEDGER.read_text(encoding="utf-8").splitlines():
         cells = [c.strip() for c in line.strip().strip("|").split(" | ")]
-        if len(cells) == 4 and cells[0].isdigit():
+        if len(cells) == 4 and re.fullmatch(r"\d+[a-z]?", cells[0]):
             rows[cells[1]] = (cells[2], cells[3])
     return rows
 
@@ -152,12 +152,14 @@ def test_every_sentence_logged(site_url):
     for s in marked:
         where, ruling = rows[s]
         assert where and ruling, s
-    # nothing in <main> escapes the ledger: each sentence is marked (A9's download labels and the back link excepted:
-    # shipped copy, verbatim from src/pages/index.html and install.html)
-    shipped = (ROOT / "src" / "pages" / "index.html").read_text(encoding="utf-8") + \
-        (ROOT / "src" / "pages" / "install.html").read_text(encoding="utf-8")
-    unmarked = [s for s in main_sentences(source) if s not in marked and s not in shipped]
+    # nothing in <main> escapes the ledger: each sentence is marked, except this explicit list of shipped labels
+    unmarked = [s for s in main_sentences(source) if s not in marked and s not in UNMARKED_OK]
     assert unmarked == [], f"sentences in <main> with no NEW COPY marker: {unmarked}"
+
+
+# Shipped labels that may sit in <main> unmarked: the doc pages' back link (install.html) and A9's download labels
+# (index.html; download.js rewrites them). Anything else in <main> carries NEW COPY and a ledger row.
+UNMARKED_OK = frozenset({"← Back to Freelance Easy", "Download for Mac", "Download for Windows"})
 
 
 # ---- banned phrases ------------------------------------------------------------------------------------------------
@@ -217,9 +219,21 @@ def test_jsonld_matches_visible_prices(site_url, browser):
             heading = c.evaluate("e => e.closest('h2').textContent.replace(/\\s+/g, ' ').trim()")
             assert heading == f"${c.get_attribute('data-price')} a {c.get_attribute('data-period')}", heading
             visible.add((amount, c.get_attribute("data-period")))
+        main_text = page.locator("main").inner_text()
     finally:
         ctx.close()
     assert visible == ld, (visible, ld)
+
+    # every other price the page states agrees: the meta description names exactly the offers' prices, and any amount
+    # in the visible text is an offer price or the yearly plan's per-month figure (2026-10b: $50 / 12 = $4.17)
+    def amounts(text):
+        return {float(a) for a in re.findall(r"\$(\d+(?:\.\d+)?)", text)}
+
+    prices = {p for p, _ in ld}
+    desc = html.unescape(re.search(r'<meta name="description" content="([^"]*)"', built()).group(1))
+    assert amounts(desc) == prices, (desc, prices)
+    per_month = {round(p / 12, 2) for p, unit in ld if unit == "year"}
+    assert amounts(main_text) <= prices | per_month, (amounts(main_text), prices, per_month)
 
 
 # ---- the web path --------------------------------------------------------------------------------------------------

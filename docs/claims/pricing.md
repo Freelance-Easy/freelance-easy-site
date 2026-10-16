@@ -20,7 +20,6 @@ Sources, as read 2026-10-16:
 | 3 | Try every feature free for seven days, no card. | Terms §2 "Free trial: every feature for seven days … No card."; LS `server/config.py` `_trial_days` default 7 | R5 C.1 draft 2; G1 (no speed claim) |
 | 4 | How to buy, how to pay and how to cancel. | The page's own sections (How to buy, Paying, Cancelling) | none needed (describes the page) |
 | 5 | Pricing | The bar's existing "Pricing" label | none needed (a heading) |
-| 6 | $5 a month, or $50 a year. | Terms §2; App `templates/_pro_plans.html` | R5 C.1 draft 1; G8 |
 | 7 | One subscription, no add-ons. | Terms §2 (one paid plan, two billing periods); App `free_tier.py` `PRO_FEATURES["plans"]` "Every feature … for one price" | R5 C.1 G7 (allowed form; never "no extra fees", "$5 total") |
 | 8 | Pro: every feature, unlimited invoices and clients. | App `templates/_pro_plans.html` `.plan-fineprint` (verbatim) | R5 C.1 G8 |
 | 9 | $5 a month | App `templates/_pro_plans.html` monthly card `$5` `a month` | R5 C.1 G8 |
@@ -40,7 +39,7 @@ Sources, as read 2026-10-16:
 | 23 | Download the app. | `src/pages/install.html` (desktop app, Mac + Windows installers) | R5 C.1 DO (platform notes beside any download: next row) |
 | 24 | For Apple Silicon Macs (M1 or later) and Windows 10 or 11, 64-bit. | `src/pages/install.html` Requirements ("M1 or later", "Windows 10 or 11, 64-bit"); `src/pages/index.html` support line | R5 C.1 DO "Apple Silicon Macs (M1 or later)", "Windows 10 or 11, 64-bit" |
 | 25 | Intel Macs aren't supported. | `src/pages/install.html` Mac requirements (verbatim) | none beyond R5 C.1 DO |
-| 26 | The Windows installer isn't code-signed yet, so Windows shows a security warning the first time you open it: what to click. | `src/pages/index.html` support line "The installer isn't code-signed yet, so Windows shows a security warning the first time you open it."; `src/pages/install.html#windows` | R5 C.1 (a catch, stated plainly) |
+| 26 | The Windows installer isn't code-signed yet, so Windows shows a security warning when you run it, and some Windows 11 PCs with Smart App Control block it outright: what to do. | `src/pages/install.html#windows` ("the installer isn't code-signed yet … Windows protected your PC"; "some Windows 11 PCs have Smart App Control turned on, which blocks unsigned apps outright"); main's round-two ruling 3 (fe:claims wording) | R5 C.1 (a catch, stated plainly) |
 | 27 | Open it and sign in with Google. | `src/pages/install.html` "Both versions ask you to sign in with Google the first time" | R5 C.1 G1 (no time claim beside sign-in) |
 | 28 | Your seven-day trial starts the first time you sign in, one trial per account. | LS `server/services/subscriptions.py` header (clock starts at the first sign-in from a trial-aware app; `sign_in_trial_ends_at`); Terms §2 "starting the first time you sign in … (one trial per account)" | R5 C.1 trial fact; G1 |
 | 29 | To subscribe, click See plans in the app, then Continue monthly or Continue yearly. | App `templates/base.html` trial and free-plan bars "See plans"; `templates/settings.html` "See plans"; `templates/_pro_plans.html` buttons "Continue yearly", "Continue monthly" | R5 C.1 (the app path is today's only path) |
@@ -54,16 +53,18 @@ Sources, as read 2026-10-16:
 | 37 | There is a field for it at checkout. | App `templates/_pro_plans.html` `.plan-promo` (verbatim); LS `billing.py` `allow_promotion_codes` | none beyond G7 |
 | 38 | Before you buy | Daniel's feedback note ("all the gotchas") | none needed (a heading) |
 | 39 | After the trial, these need a subscription: Reports, recurring invoices, sending email from the app, your logo and colors, all four templates, documents, automatic backups, your own invoice numbers and default notes. | App `free_tier.py` `PRO_FEATURES` (reports, recurring, email, theme, templates, documents, backup, numbering, notes) | R5 C.1 draft 2; DO "list the Pro features by name"; G1b/G8 |
-| 40 | Opening and exporting what you made is never locked. | App `free_tier.py` "NEVER locked … opening and downloading your own invoices"; `PRO_EXEMPT_ENDPOINTS` (`backup.zip_all`) | R5 C.1 free-plan fact |
+| 40 | Opening and downloading your invoices isn't a Pro feature: the free plan and a lapsed subscription can do both. | App `free_tier.py`: not in `PRO_FEATURES`; `PRO_EXEMPT_ENDPOINTS` (`backup.zip_all`); `LAPSED_READABLE` (`invoices.invoice_detail`, `invoices.invoice_pdf`, `backup.zip_all`) | R5 C.1 free-plan fact; main's round-two ruling 2 (fe:claims wording, no absolute) |
 | 41 | One person per account. | Terms §3 (verbatim) | R5 C.1 "for one person" (Terms §3), never "on one computer" |
 | 42 | If more people in your business need the app, each needs their own account. | Terms §3 (verbatim) | R5 C.1 (Terms §3) |
 | 43 | You can install it on the computers you own or control. | Terms §4 "install and use the app on computers you own or control" | R5 C.1 "Do not copy … on one computer" (Terms §4) |
+| 43a | The app checks your subscription when it starts. | Terms §8 "The app checks your subscription with our server when it starts and after you sign in." | main's round-two ruling 4 (Terms §8 facts only) |
+| 43b | A subscribed app keeps working offline for at least seven days after its last check, then asks you to sign in again; your files stay on your computer. | Terms §8 "a subscribed app keeps working offline for at least seven days after its last successful check … After that, the app asks you to sign in again before it opens; your files stay on your computer." | main's round-two ruling 4 (Terms §8 facts only); G6 (no "never leaves") |
 | 44 | There's no minimum term. | Terms §7 (verbatim) | R5 C.1 (renewal terms near the price) |
 | 45 | Cancelling, refunds and price changes | Terms §7 | none needed (a heading) |
 | 46 | You can also cancel by emailing support@freelance-easy.com, or from your Link account at link.com if checkout named Link as the seller. | Terms §7 "Cancel any time: … from your Link account at link.com for subscriptions sold through Link, or by emailing support@freelance-easy.com" | R5 C.1 Seller (conditional on checkout; never states who sells) |
 | 47 | Cancelling stops the next renewal. | Terms §7 (verbatim) | R5 C.1 |
-| 48 | When the period you've paid for ends, the app turns read-only: you can still open and download everything you made. | App `session.py` `plan_state` (`canceled` → `PLAN_LAPSED`, "read-only"); `free_tier.py` docstring "A LAPSED subscription … is read-only: it can open and download everything it made", `LAPSED_READABLE` | R5 C.1 "A lapsed subscription is read-only" |
-| 49 | Cancelling doesn't refund the rest of a period you've paid for, except as Terms §7 describes. | Terms §7 "Apart from that and the rights described below, we don't refund the unused part of a period you've paid for." | R5 C.1 refund fact |
+| 48 | When the period you've paid for ends, the app turns read-only. | App `session.py` `plan_state` (`canceled` → `PLAN_LAPSED`, "read-only"); `free_tier.py` docstring "A LAPSED subscription … is read-only: it can open and download everything it made", `LAPSED_READABLE` | R5 C.1 "A lapsed subscription is read-only" |
+| 49 | Cancelling doesn't refund the rest of a period you've paid for, except as the Terms describe. | Terms §7 (14-day refund, billing mistakes, rights the law gives you), §10 (refund on cancelling over a Service change), §11 (refund of the unused period on cancelling over new terms), §12 (termination) | R5 C.1 refund fact; main's round-two ruling 1 |
 | 50 | If we change the price of your plan, we'll email you between 14 and 30 days before your first renewal at the new price. | Terms §7 "Price changes" (verbatim opening) | R5 C.1 price-change fact |
 | 51 | The full rules are in the Terms: §2 for the trial and plans, §7 for payment, cancelling and refunds. | Terms §2 "What you get", §7 "Payment" | none needed (a pointer) |
 
@@ -74,6 +75,7 @@ Not on the page because neither Terms nor code proves it:
   buyer), so no list is provable.
 - **Switching between monthly and yearly.** No in-app switch route found in the v0.3.2-beta templates; the Stripe
   portal's plan-switch setting is dashboard-only (unread).
-- **Offline use.** No Terms sentence; the app's license-check grace behaviour was not checked for a customer claim.
+- **A failed payment.** It makes the app read-only at once (`past_due` → `PLAN_LAPSED`, App `session.py` `plan_state`), not at the end of the period; the Terms are silent on it.
+- **Live values not read:** `FREE_TRIAL_DAYS` and `STRIPE_MANAGED_PAYMENTS` on Railway (the page relies on the code default of 7 days and on Terms §2), and the Stripe portal's "cancel at period end" setting (the page relies on Terms §7 and the 2026-10b wording).
 - **Who the seller is.** Managed Payments' live state (`STRIPE_MANAGED_PAYMENTS` on Railway) is unread; the page only
   says checkout shows the seller.
