@@ -6,9 +6,12 @@ One quiet label on the stage, only while the story's money is identifiable:
   the tablet story has no Chase -> Yours: its pinned timeline ends on Chase's money, so its window ends on its own
   timeline at chase.T1 (inclusive) instead of never (Infinity). No label on Make or Look (G12: a single invoice).
   The same frames in both scroll directions.
-- size: >= 12.5 px (>= 12 px under 640 px), weight >= 500 (R5: what Sol cleared; never smaller, lighter or timed).
+- size: >= 12.5 px at every width, rendered (after any stage zoom/transform), weight >= 500 (R5: what Sol cleared;
+  never smaller, lighter or timed). (LABEL, 2026-10-17: the phone row under the stage was 12 px, under the floor.)
 - contrast: >= 4.5:1 between the label's text colour and the WORST rendered pixel behind its words (the text hidden,
-  the frame re-shot), on the stage, on the Ride's band and on the page, both themes.
+  the frame re-shot), on the stage, on the Ride's band and on the page, both themes. The crop is the words' own box,
+  so whatever is under them is what gets measured: the stage's records and shadows where the label has no backing,
+  the halo or chip where it has one (LABEL: plain text wherever that alone holds).
 - calm / no-JS: the static Know, Grow and Chase figures keep their visible "Fictional data" caption (an adjacent
   caption counts, G12); the Make and Look captions and the trailing "Fictional data." in the three stage aria-labels
   (said twice next to the caption) are trimmed; the pinned story's screen-reader text (STAGE_ARIA) keeps it.
@@ -116,9 +119,57 @@ def test_label_size(browser, site_url, mode):
         page.evaluate(SEEK_JS, w["know"] - 0.02)
         px, weight = page.evaluate("() => { const cs = getComputedStyle(document.querySelector('.stage-label'));"
                                    " return [parseFloat(cs.fontSize), parseFloat(cs.fontWeight)]; }")
-        floor = 12.0 if MODES[mode][0] < 640 else 12.5
-        assert px >= floor, (mode, px, floor)
+        assert px >= 12.5, (mode, px, 12.5)
         assert weight >= 500, (mode, weight)
+    finally:
+        ctx.close()
+
+
+# the rendered size: the computed font size times any scale between the label and the screen (a stage zoom or
+# transform), at the phone widths where the label has its own row under the stage (LABEL: that row was 12 px)
+RENDERED_JS = """() => { const l = document.querySelector('.stage-label'), r = l.getBoundingClientRect();
+  const ch = parseFloat(getComputedStyle(l).height);     // unrounded (offsetHeight rounds 20.25 to 20)
+  return { fs: parseFloat(getComputedStyle(l).fontSize), scale: ch ? r.height / ch : 0,
+    row: l.offsetHeight }; }"""
+
+
+@pytest.mark.parametrize("width", [360, 390, 1024, 1440])
+def test_label_rendered_size(browser, site_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 844 if width < 640 else 900}, device_scale_factor=1)
+    ctx.add_init_script("try{localStorage.setItem('fe-theme','dark')}catch(e){}")
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + "/", wait_until="load")
+        page.wait_for_function("() => document.documentElement.classList.contains('fx-ready') && "
+                               "window.__site && !!window.__site.TL", timeout=8000)
+        w = page.evaluate(WINDOW_JS)
+        page.evaluate(SEEK_JS, w["know"] - 0.02)
+        got = page.evaluate(RENDERED_JS)
+        assert got["fs"] * got["scale"] >= 12.5 - 1e-6, (width, got)
+        if width < 640:
+            assert got["row"] == 20, ("the phone label row keeps its height, so the captions never move", got)
+    finally:
+        ctx.close()
+
+
+FIELD_JS = """() => { const l = document.querySelector('.stage-label'), p = document.createElement('i');
+  p.style.color = 'var(--ride-text)'; l.parentElement.appendChild(p);
+  const want = getComputedStyle(p).color; p.remove();
+  return { onField: !!l.closest('.pin.on-field'), color: getComputedStyle(l).color, want,
+    chip: getComputedStyle(l).backgroundColor }; }"""
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_label_field_palette(browser, site_url, theme):
+    """On the Ride's field (desktop) the label takes the field's palette (LABEL: a broken comment once swallowed the
+    rule, leaving the page's grey and chip on the teal; the contrast test cannot tell, both pass 4.5:1)."""
+    ctx, page = open_story(browser, site_url, "desktop", theme)
+    try:
+        w = page.evaluate(WINDOW_JS)
+        page.evaluate(SEEK_JS, w["chaseT1"] - 0.5)
+        got = page.evaluate(FIELD_JS)
+        assert got["onField"], got
+        assert got["color"] == got["want"], (theme, got)
     finally:
         ctx.close()
 
