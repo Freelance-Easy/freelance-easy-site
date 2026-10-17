@@ -91,9 +91,12 @@
     try {
       if (kind === "push") {
         if (url !== here()) {
-          var m = siteRestoration();
-          if (m === "auto") {
+          var m = siteRestoration(), from = urlSlug();
+          // the entry left keeps the reader's place when it holds one: anywhere in calm / classic, a native row in the
+          // story modes (main's ruling on Sol RELOAD-1 HIGH 2: Back from a menu jump returns to the pixel, as the live site)
+          if (m === "auto" || (from && holdsPlace(from))) {
             var cur = copyState();
+            if (from && !cur.story) cur.story = from;
             cur.y = Math.round(typeof departY === "number" ? departY : window.scrollY);
             cur.w = window.innerWidth; cur.m = F.mode;
             history.replaceState(cur, "");
@@ -137,8 +140,12 @@
     if (queued) { pending = queued.kind; queued = null; }   // the run goes on: the same kind of write at its end
   }
 
+  // where an explicit jump STARTED (its first dest event, before the story moves): a pinned jump's push is written at its
+  // landing, when scrollY is already the target's; the entry it leaves keeps this offset (Back returns to it)
+  var departY0 = null;
   F.onDest(function (p) {
     if (!p || p.preview || p.source === "free") return;
+    if (p.source === "jump" && departY0 == null) departY0 = window.scrollY;
     unqueue();
     if (cancelArrival) { cancelArrival(); cancelArrival = null; }   // a pinned move supersedes a native jump still scrolling
     jumping = false;
@@ -155,12 +162,12 @@
   F.onLand(function (p) {
     if (!p || !p.final) return;                    // a pass-through landing writes nothing (ICX-HIST.1)
     unqueue();
-    var kind = pending;
-    pending = null;
+    var kind = pending, dy = departY0;
+    pending = null; departY0 = null;
     if (p.source === "init") return;               // load, reload, deep link: never a write (ICX-HIST.3)
     if (kind == null) kind = p.source === "jump" ? "push" : p.source === "popstate" ? "pop" : "replace";
     if (kind === "pop") return;
-    if (kind === "push") { write("push", p.slug); return; }   // at the landing itself: Back must find the entry
+    if (kind === "push") { write("push", p.slug, dy); return; }   // at the landing itself: Back must find the entry
     queued = { kind: "replace", slug: p.slug };
     quietTimer = setTimeout(flush, QUIET);
   });
@@ -236,7 +243,9 @@
       var there = !!before && before.rendered === idx && before.dest === idx;     // ICX-JUMP.0: nothing will move
       intent = kind;
       var ok;
+      departY0 = window.scrollY;                    // before goTo: from below the pin the engine moves the page at once
       try { ok = F.goTo(slug, { source: "jump" }); } finally { intent = null; }
+      if (!ok) departY0 = null;
       if (ok) { if (cancelArrival) { cancelArrival(); cancelArrival = null; } jumping = false; }   // a same-chapter jump has no dest event
       // a run already heading for this chapter (a step in flight) has no new dest event: the explicit jump still owns it
       if (kind === "push" && ok && before && before.dest === idx && before.rendered !== idx) raise("push");
@@ -293,9 +302,19 @@
     restoring = true;
     if (cancelRestore) cancelRestore();
     cancelRestore = settled(function () { restoring = false; cancelRestore = null; setRestoration(siteRestoration()); });
+    departY0 = null;
     if (!slug) return;
-    var st = history.state;
-    if (siteRestoration() === "auto" && st && typeof st.y === "number") {   // a native mode: the exact pixel the reader left
+    var st = history.state, row = rowOf(slug);
+    // a native mode: the exact pixel the reader left; in the story modes the same for a NATIVE row, when the entry's place
+    // was kept for this chapter in this mode at this width (pinned rows keep ICX-JUMP.4: goTo below)
+    var heldNative = !!(row && row.kind === "native" && st && st.story === slug && typeof st.y === "number" &&
+      st.w === window.innerWidth && st.m === F.mode);
+    if (heldNative && siteRestoration() !== "auto") {   // the story modes: the engine's own native scroll, to that pixel
+      intent = "pop";
+      try { F.goTo(slug, { source: "popstate", y: st.y }); } finally { intent = null; }
+      return;
+    }
+    if (st && typeof st.y === "number" && siteRestoration() === "auto") {
       window.scrollTo({ top: st.y, left: 0, behavior: "instant" });
       return;
     }

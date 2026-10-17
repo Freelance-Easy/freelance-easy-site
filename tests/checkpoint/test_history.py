@@ -506,6 +506,32 @@ def test_reload_in_native_section_restores_pixel_fresh_link_lands_on_anchor(brow
         ctx.close()
 
 
+@pytest.mark.parametrize("cell", [TABLET, PHONE], ids=["tablet", "phone"])
+def test_back_to_native_restores_pixel(browser, site_url, cell: Cell):
+    """RELOAD (main's ruling on Sol RELOAD-1 HIGH 2): in the story modes a reader 300 px inside Price (a native row) who
+    jumps to a chapter (the rail / menu sheet: FEStoryURL.jump) and presses Back returns to that pixel (within 2 px), as the
+    live site does, not to Price's anchor. Pinned rows keep ICX-JUMP.4."""
+    ctx, page = open_page(browser, site_url + "/", cell)
+    try:
+        page.wait_for_timeout(1300)
+        assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price native"
+        page.evaluate("() => window.scrollTo(0, document.getElementById('price').getBoundingClientRect().top + scrollY - 64 + 300)")
+        page.wait_for_timeout(900)
+        assert hash_now(page) == "#price", f"harness: the spy should have written /#price, got {hash_now(page)!r}"
+        top0 = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+        page.evaluate("() => FEStoryURL.jump('new-invoice')")
+        page.wait_for_function("() => location.hash === '' && FEStory.state().phase === 'rest' && FEStory.state().rendered === 0", timeout=12000)
+        page.wait_for_timeout(400)
+        page.evaluate("() => history.back()")
+        page.wait_for_function("() => location.hash === '#price'", timeout=5000)
+        page.wait_for_timeout(1500)
+        top1 = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+        s = page.evaluate("() => ({fe: FEStory.state(), st: history.state, y: scrollY})")
+        assert abs(top1 - top0) <= 2, f"RELOAD ({cell.name}): Back moved #price from {top0:.0f} to {top1:.0f} ({s})"
+    finally:
+        ctx.close()
+
+
 def test_spy_replaces_only_on_user_scroll(browser, site_url):
     """ICX-HIST.9: fe:spy writes one replaceState with the section's URL (plain path for the first section); nothing while
     initializing (load), restoring (popstate) or jumping (a native jump); a section the page does not have is ignored.

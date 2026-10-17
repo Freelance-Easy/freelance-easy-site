@@ -1915,7 +1915,8 @@
   // mode: desktop | tablet | phone | calm | classic | static. rendered / dest: BEATS indexes. phase: rest | transition |
   // dip | free | released. state(): {phase, dest, rendered, T, trackY, beat, dip, step, settles, mode, scrollend}.
   // goTo(target, {source}): target = a BEATS index, beat id, slug or legacy hash; source step | jump | init | popstate
-  // (a native row is a smooth anchor scroll, instant in calm, ICX-JUMP.5).
+  // (a native row is a smooth anchor scroll, instant in calm, ICX-JUMP.5; opts.y, native rows only: scroll to that offset
+  // instead of the anchor, story-url.js's Back to a held native place).
   // onDest(fn): fn({index, beat, slug, source, preview?}) whenever dest changes (the highlight, ICX-HL.1; source "free"
   //   with preview: true is FREE's nearest, ICX-HL.3).
   // onLand(fn): fn({index, beat, slug, source: step | jump | settle | init | popstate | focus, final}) at every landing; final =
@@ -1932,7 +1933,9 @@
       const hh = header ? header.getBoundingClientRect().height : 0;
       const smooth = motion() && !mq.matches;
       nativeSeq++;                                      // a new native scroll: a cancelled one's residue guard no longer applies
-      window.scrollTo({ top: Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)), behavior: smooth ? "smooth" : "instant" });
+      // opts.y (RELOAD): Back to a native entry lands on the pixel the reader left (story-url.js), not the anchor
+      const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
+      window.scrollTo({ top: Math.max(0, Math.round(to)), behavior: smooth ? "smooth" : "instant" });
       if (smooth && TL && motion() && CP.length && !held) startNative();
       return true;
     }
