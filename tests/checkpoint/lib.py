@@ -73,13 +73,19 @@ _INIT = """
     const o = history[k];
     history[k] = function (s, t, u) { let st = null; try { st = window.__c2read(); } catch (e) { /* not ready */ } window.__c2hist.push([k, u == null ? null : String(u), st]); return o.apply(this, arguments); };
   }
+  // FADEDEF: count every held frame the content skip adds, so a skip whose held frame a jump removes inside one frame
+  // still marks its cut (the recorder may never see the copy itself)
+  window.__c2xfn = 0;
+  new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.classList && n.classList.contains('stage-wrap') && n.inert) window.__c2xfn++; })
+    .observe(document, { childList: true, subtree: true });
   window.__c2read = () => {
     let fe = null;
     const F = window.FEStory;
     if (F) { const st = typeof F.state === 'function' ? F.state() : F.state; if (st) fe = JSON.parse(JSON.stringify(st)); }
     let site = null;
     if (window.__site && window.__site.state) { const s = window.__site.state(); site = { shown: s.shown, target: s.target, vel: s.vel, intro: s.intro, dip: s.dip }; }
-    return { fe, site, y: window.scrollY, t: performance.now() };
+    // FADEDEF: the content skip's crossfade holds an inert copy of .stage-wrap over the stage (a cut, not playback)
+    return { fe, site, y: window.scrollY, t: performance.now(), xf: document.querySelectorAll('.stage-wrap').length > 1, xfn: window.__c2xfn };
   };
   window.__c2rec = null;
   window.__c2start = () => {
@@ -104,6 +110,8 @@ class Snap:
     is_rest: bool
     released: bool
     t: float                 # performance.now() ms
+    xf: bool = False         # FADEDEF: the content skip's held frame is up (its cut to the rest frame is not playback)
+    xfn: int = 0             # FADEDEF: held frames added so far (a change between two frames = a skip's cut between them)
 
     def describe(self) -> str:
         where = f"REST({BEATS[self.index]})" if self.index is not None else "not on a rest frame"
@@ -181,7 +189,8 @@ class Story:
                   and fe.get("trackY") is not None and abs(y - float(fe["trackY"])) <= 1
                   and fe.get("beat") == BEATS[rendered])
             released = below and phase == "released"   # ICX-REST.1: RELEASED = the phase AND scrollY below the pin
-            return Snap("FEStory", T, y, phase, dest, rendered, dip, rendered if ok else None, ok, released, raw["t"])
+            return Snap("FEStory", T, y, phase, dest, rendered, dip, rendered if ok else None, ok, released, raw["t"],
+                        bool(raw.get("xf")), int(raw.get("xfn") or 0))
         s = site or {"shown": 0.0, "target": 0.0, "vel": 0.0, "intro": False, "dip": False}
         T = float(s["shown"])
         near = next((i for i, r in enumerate(info.rest) if abs(T - r) <= REST_TOL), None)
@@ -275,15 +284,15 @@ def dip_spans(frames: list[Snap]) -> list[tuple[float, float]]:
 
 
 def max_rate(frames: list[Snap], window: float = 0.1) -> float:
-    """Largest |dT/dt| over >= `window` s windows of frames, skipping any window that contains a dip frame (a cut is
-    not playback) or a frame gap above 250 ms."""
+    """Largest |dT/dt| over >= `window` s windows of frames, skipping any window that contains a dip frame or a content
+    skip's crossfade frame (both cut; a cut is not playback) or a frame gap above 250 ms."""
     worst = 0.0
     for i, a in enumerate(frames):
-        if a.dip:
+        if a.dip or a.xf:
             continue
         for j in range(i + 1, len(frames)):
             b = frames[j]
-            if b.dip or (b.t - frames[j - 1].t) > 250:
+            if b.dip or b.xf or b.xfn != a.xfn or (b.t - frames[j - 1].t) > 250:
                 break
             dt = (b.t - a.t) / 1000
             if dt >= window:

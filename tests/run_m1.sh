@@ -96,7 +96,7 @@ run "probe:caption (rest captions, 820 + 390x664)" "probe-caption" "${PW[@]}" $P
 run "probe:theme (A5 contract)" "probe-theme" "${PW[@]}" $P/theme_probe.py "$URL"
 run "probe:footnote (fictional sentence)" "probe-footnote" "${PW[@]}" $P/footnote_probe.py "$URL"
 run "probe:webkit (bar 600-1023)" "probe-webkit" "${PW[@]}" $P/webkit_probe.py "$URL"
-run "probe:flags (?ci-tune, ?ci-dip)" "probe-flags" "${PW[@]}" $P/flags_probe.py "$URL"
+run "probe:flags (?ci-tune, content-skip crossfade)" "probe-flags" "${PW[@]}" $P/flags_probe.py "$URL"
 
 # (Sol C8-1 HIGH#1 + MEDIUM#3, main's ruling) "ALL PASS" is the gate line: only with --wrangler (F17) AND RUNSLOW=1 (fuzz)
 MISSING=""

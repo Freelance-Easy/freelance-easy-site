@@ -1,10 +1,10 @@
-"""Dev-flag probe (C8): the two opt-in URL flags stay opt-in.
+"""Dev-flag probe (C8): the opt-in URL flag stays opt-in; the content skip is the crossfade (FADEDEF).
 
   /?ci-tune          C7's overlay loads (#ci-tune present, tuning panel in view) and is INVISIBLE without the flag
                      (no #ci-tune, no request for checkpoint-tune.js);
-  /?ci-dip=fade|seam FLICKER2's prototypes load with no console error and no page error; the default "/" (and an unknown
-                     value) has no held-frame element: FLICKER2 stays opt-in until Daniel picks. A held frame is the inert
-                     clone of `.stage-wrap` that holdFrame() adds after the stage (it lives ~0.25 s, only with the flag).
+  /                  (FADEDEF: ?ci-dip is gone) no held-frame element at rest; a Look content skip holds a frame (the
+                     crossfade) and never sets `dip`; none left after the crossfade ends. A held frame is the inert clone
+                     of `.stage-wrap` that holdFrame() adds after the stage (it lives 0.22 s).
 Usage: flags_probe.py http://127.0.0.1:<port>
 """
 from __future__ import annotations
@@ -49,36 +49,32 @@ def main() -> int:
             page.wait_for_timeout(800)
             rep.check(page.locator("#ci-tune").count() == 0 and not any("checkpoint-tune" in u for u in reqs),
                       "/: no overlay and no request for it without the flag", [u for u in reqs if "tune" in u])
-            rep.check(page.evaluate(HELD) == 0, "/: no held-frame element by default", page.evaluate(HELD))
-            page.keyboard.press("ArrowDown")                      # mid-content skip would be the held frame's trigger
-            page.wait_for_timeout(300)
+            rep.check(page.evaluate(HELD) == 0, "/: no held-frame element at rest", page.evaluate(HELD))
+            page.mouse.move(700, 450)
             page.keyboard.press("ArrowDown")
-            page.wait_for_timeout(500)
-            rep.check(page.evaluate(HELD) == 0, "/: still none after two quick steps", page.evaluate(HELD))
+            # wait for the LANDING (rendered === dest === 1), not the step's start: dest flips at the seam's start, and a
+            # second step during the seam extends the run instead of skipping content (main, 2026-10-17)
+            page.wait_for_function("() => { const s = FEStory.state(); return s.dest === 1 && s.rendered === 1; }",
+                                   timeout=8000)
+            page.wait_for_timeout(1200)                          # into Templates' content (it runs ~5 s), then skip it
+            page.evaluate("""() => { window.__held = 0; window.__dip = 0; new MutationObserver(() => { window.__held = Math.max(
+              window.__held, document.querySelectorAll('.stage-wrap').length - 1); }).observe(document.body, { childList: true, subtree: true });
+              const tick = () => { if (FEStory.state().dip) window.__dip++; if (window.__dip >= 0) requestAnimationFrame(tick); };
+              requestAnimationFrame(tick); }""")
+            still = page.evaluate("() => FEStory.state().phase")
+            rep.check(still != "rest", "/: precondition, Templates' content is still playing", still)
+            page.keyboard.press("ArrowDown")
+            page.wait_for_timeout(1500)
+            # FADEDEF (Daniel picked fade, 2026-10-17): decision #13's content skip is the crossfade by default
+            rep.check(page.evaluate("() => window.__held") >= 1, "/: the content skip held a frame (the crossfade ran)",
+                      page.evaluate("() => window.__held"))
+            rep.check(page.evaluate("() => window.__dip") == 0, "/: the content skip never set dip (no dark frame)",
+                      page.evaluate("() => window.__dip"))
+            rep.check(page.evaluate(HELD) == 0, "/: no held-frame element after the crossfade ends", page.evaluate(HELD))
+            rep.check(not errs, "/: steps and skips with no console/page error", errs[:3])
+            rep.check(page.evaluate("() => FEStory.state().dest") >= 2, "/: the story moved on")
         finally:
             ctx.close()
-        for flag in ("fade", "seam"):
-            ctx, page, errs, _ = load(browser, f"{base}/?ci-dip={flag}")
-            try:
-                page.mouse.move(700, 450)
-                page.keyboard.press("ArrowDown")
-                # wait for the LANDING (rendered === dest === 1), not the step's start: dest flips at the seam's start, and a
-                # second step during the seam extends the run instead of skipping content (main, 2026-10-17)
-                page.wait_for_function("() => { const s = FEStory.state(); return s.dest === 1 && s.rendered === 1; }",
-                                       timeout=8000)
-                page.wait_for_timeout(1200)                      # into Templates' content (it runs ~5 s), then skip it
-                page.evaluate("""() => { window.__held = 0; new MutationObserver(() => { window.__held = Math.max(window.__held,
-                  document.querySelectorAll('.stage-wrap').length - 1); }).observe(document.body, { childList: true, subtree: true }); }""")
-                still = page.evaluate("() => FEStory.state().phase")
-                rep.check(still != "rest", f"/?ci-dip={flag}: precondition, Templates' content is still playing", still)
-                page.keyboard.press("ArrowDown")
-                page.wait_for_timeout(1500)
-                rep.check(page.evaluate("() => window.__held") >= 1, f"/?ci-dip={flag}: the skip held a frame (the flag path ran)",
-                          page.evaluate("() => window.__held"))
-                rep.check(not errs, f"/?ci-dip={flag}: loads and steps with no console/page error", errs[:3])
-                rep.check(page.evaluate("() => FEStory.state().dest") >= 1, f"/?ci-dip={flag}: the story moved on")
-            finally:
-                ctx.close()
         browser.close()
     return rep.finish()
 
