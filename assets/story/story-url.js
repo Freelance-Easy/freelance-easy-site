@@ -257,6 +257,9 @@
       return ok;
     }
     var y0 = window.scrollY;                         // where the reader left from: Back in calm / classic returns here
+    // the latest explicit jump wins (RACE; Sol RACE-1): a pinned move this native jump cancels never lands, so its pending
+    // write kind is void here (left set, the next ordinary step would push); a landing still queued is the entry being left
+    flush(); pending = null;
     var ok2 = F.goTo(slug, { source: "jump" });
     if (ok2) afterScroll(function () { write(kind === "push" ? "push" : "replace", slug, y0); });
     return ok2;

@@ -1932,6 +1932,11 @@
       if (!sec) return false;
       const hh = header ? header.getBoundingClientRect().height : 0;
       const smooth = motion() && !mq.matches;
+      // the latest explicit jump wins (C4-engine), the reverse of stopNative: a pinned run or dip still in flight is
+      // cancelled now, before its cut or arrival can land and pin the page back (an instant scroll ends the smooth one).
+      // The engine goes FREE here, exactly as the native scroll's first event would make it: no cut, no landing, no
+      // announce, no history from the cancelled move; the dip's fade is cleared (clearDip) and the settle plans afresh.
+      if (TL && motion() && CP.length && !held && (run || dip || wait) && phase !== "free" && phase !== "released") foreign(window.scrollY);
       nativeSeq++;                                      // a new native scroll: a cancelled one's residue guard no longer applies
       // opts.y (RELOAD): Back to a native entry lands on the pixel the reader left (story-url.js), not the anchor
       const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
