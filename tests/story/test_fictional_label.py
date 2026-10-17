@@ -128,7 +128,8 @@ def test_label_size(browser, site_url, mode):
 # the rendered size: the computed font size times any scale between the label and the screen (a stage zoom or
 # transform), at the phone widths where the label has its own row under the stage (LABEL: that row was 12 px)
 RENDERED_JS = """() => { const l = document.querySelector('.stage-label'), r = l.getBoundingClientRect();
-  return { fs: parseFloat(getComputedStyle(l).fontSize), scale: l.offsetHeight ? r.height / l.offsetHeight : 0,
+  const ch = parseFloat(getComputedStyle(l).height);     // unrounded (offsetHeight rounds 20.25 to 20)
+  return { fs: parseFloat(getComputedStyle(l).fontSize), scale: ch ? r.height / ch : 0,
     row: l.offsetHeight }; }"""
 
 
