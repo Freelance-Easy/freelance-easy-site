@@ -684,6 +684,14 @@ def test_native_pinned_native_rapid(browser, site_url):
             assert page.evaluate("() => history.length") == length0 + 1
             # (read right after the call: stage, overlay and band back at rest, not left mid-fade by the cancelled dip)
             assert timing["fade"] == ["", "", ""], f"RACE: the cancelled dip left a partial fade {timing['fade']}"
+            # (Sol RACE-1 HIGH) the cancelled jump's push intent is void too: the next ordinary step's landing replaces
+            page.evaluate("() => FEStory.goTo('invoices', {source: 'step'})")
+            page.wait_for_function("() => FEStory.state().phase === 'rest'", timeout=6000)
+            page.wait_for_timeout(600)       # past story-url.js's QUIET window
+            more = page.evaluate("() => window.__c2hist.slice()")[len(calls):]
+            assert more and all(c[0] == "replaceState" for c in more), (
+                f"ICX-HIST.2: a step after the native jump replaces (the cancelled jump's push must not leak); saw {more}")
+            assert page.evaluate("() => history.length") == length0 + 1
             return
         finally:
             ctx.close()
