@@ -229,7 +229,8 @@
             <button type="button" id="play" class="play" aria-label="Play">
               <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
               <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.5v13H7zM13.5 5.5H17v13h-3.5z" fill="currentColor" /></svg>
-              <span class="play-label">Play</span>
+              <!-- (TOUR r2) both words always laid out, one shown: the button never changes width, so the track never moves -->
+              <span class="play-label"><span class="pl-play">Play</span><span class="pl-pause" aria-hidden="true">Pause</span></span>
             </button>
             <div class="progress" id="progress" role="progressbar" aria-label="Tour progress" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><span id="progress-fill"></span></div>
             <span class="time" id="time">0:00 / 1:20</span>

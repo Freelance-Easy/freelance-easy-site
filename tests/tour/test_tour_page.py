@@ -339,10 +339,13 @@ def test_end_card_and_next_step(site_url, browser):
     try:
         page.click('[data-chapter="3"]')
         track = page.locator("#progress").bounding_box()
+        page.evaluate("() => { __tour.jump(6); __tour.play(); }")
+        page.wait_for_function("() => __tour.state().playing")
+        playing = page.locator("#progress").bounding_box()      # (Sol-3) "Pause" showing, then the end
         _end(page)
         assert page.is_visible("#end-card") and page.is_hidden("#play")
-        # (TOUR r2, judge) the track stays put when the button steps aside at the end
-        assert page.locator("#progress").bounding_box() == track
+        # (TOUR r2, judge + Sol-3) the track stays put: paused, playing and when the button steps aside at the end
+        assert page.locator("#progress").bounding_box() == track == playing, (track, playing)
         assert page.inner_text("#replay").strip() == "Watch again"
         link = page.locator("#end-card a")
         assert link.inner_text().strip() == "Get the app" and link.get_attribute("href") == "#get-the-app"

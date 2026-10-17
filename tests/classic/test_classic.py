@@ -496,8 +496,17 @@ def test_tour_stop(site_url, browser):
         assert not page._k1_errs, page._k1_errs
     finally:
         ctx.close()
-    # (Sol K1-1) on a tablet the switch and the theme toggle do not overlap
+    # (TOUR r2) a tablet at 820: as on "/", the bar has the menu button and the switch is the sheet's row
     ctx, page = _open(browser, site_url, path="/tour/", w=820, h=1180, ua="iphone", phone=True)
+    try:
+        page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
+        assert not page.is_visible(BAR_BTN) and page.is_visible("[data-menu-open]")
+        page.click("[data-menu-open]")
+        page.wait_for_selector(SHEET_BTN, state="visible")
+    finally:
+        ctx.close()
+    # (Sol K1-1) on a tablet with the switch in the bar (>= 1024) the switch and the theme toggle do not overlap
+    ctx, page = _open(browser, site_url, path="/tour/", w=1024, h=1366, ua="iphone", phone=True)
     try:
         t = page.locator(".site-header [data-theme-toggle]").bounding_box()
         c = page.locator(".site-header .classic-toggle").bounding_box()

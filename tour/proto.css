@@ -105,6 +105,11 @@
 :root[data-theme="light"] .play:hover { background: var(--ink-hover); }
 /* (TOUR r2) at the end the end card offers Watch again: the button keeps its room (the track stays put), not its look */
 .play.is-done { visibility: hidden; }
+/* (TOUR r2, Sol-3) "Play" and "Pause" share one cell, the wider sets the width: the button, and the track beside it,
+   never move as the state changes (the button's aria-label names it; the words are its look) */
+.play .play-label { display: inline-grid; }
+.play .play-label > span { grid-area: 1 / 1; }
+.play[data-state="playing"] .pl-play, .play:not([data-state="playing"]) .pl-pause { visibility: hidden; }
 .play svg { width: 18px; height: 18px; flex: none; }
 .play .i-pause, .play[data-state="playing"] .i-play { display: none; }
 .play[data-state="playing"] .i-pause { display: block; }

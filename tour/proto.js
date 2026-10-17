@@ -113,7 +113,6 @@
     TOUR.chapter = chapterAt(TOUR.t);
     const playBtn = $('#play');
     playBtn.dataset.state = TOUR.playing ? 'playing' : 'paused';
-    $('.play-label', playBtn).textContent = TOUR.playing ? 'Pause' : 'Play';
     playBtn.setAttribute('aria-label', TOUR.playing ? 'Pause' : 'Play');   // (TOUR r2) the poster's is "Play the tour"
     playBtn.hidden = reduced;
     // (TOUR r2) at the end the button gives up its look, not its room: the track beside it stays where it was
