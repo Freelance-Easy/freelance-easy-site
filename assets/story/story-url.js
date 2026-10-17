@@ -51,6 +51,41 @@
   // the URL and history.length are untouched); popstate in a native mode restores it. `departY` is the offset where the jump
   // STARTED (a native row's push is written at its arrival, when scrollY is already the target's). The pinned modes save
   // nothing: the story's goTo places the reader there.
+  // RELOAD: a reload carries the chapter URL the scroll-spy wrote (/#price), so the reader's place inside a native section
+  // (any mode) or anywhere in calm / classic / static is kept: y (scrollY), w (innerWidth), m (FEStory.mode).
+  //  - In the entry's state, with every chapter URL written for such a place (spy replace, a native jump's arrival, a settle).
+  //  - In sessionStorage HELD when the page is left (pagehide, a hidden tab), since the reader may have scrolled on inside the
+  //    section: a replaceState made in pagehide does not reach the reloaded entry (Chromium reloads the state it had before).
+  //    The record names its entry by the state's key `k` (each written entry gets its own; a deep link's has none).
+  // On load, when the URL's chapter is the one the record (same entry) or the state names, in the same mode at the same
+  // width, that pixel is restored instead of the anchor landing: site.js's init in the story modes (heldY there reads the
+  // same format), restoreHeld() below in calm / classic / static. Pinned rows keep ICX-JUMP.3 (nothing held); a fresh
+  // deep link is a new entry and lands on the anchor; the load itself writes nothing (ICX-HIST.3).
+  var HELD = "fe-story-held";
+  function holdsPlace(slug) { var r = rowOf(slug); return siteRestoration() === "auto" || !!(r && r.kind === "native"); }
+  function newKey() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function entryKey() { var s = history.state; return s && typeof s === "object" && s.k ? s.k : null; }
+  function mark(o, slug, y) {
+    if (!o.k) o.k = newKey();
+    delete o.y; delete o.w; delete o.m;
+    if (holdsPlace(slug)) { o.y = Math.round(typeof y === "number" ? y : window.scrollY); o.w = window.innerWidth; o.m = F.mode; }
+    return o;
+  }
+  // the chapter the URL names now: the plain path is the first chapter; a theme hash or a non-chapter id names none
+  function urlSlug() { var k = hashKey(); return k === "" ? FIRST : slugOf(k); }
+  // the held pixel for this entry's chapter `slug`, or null: the leave-time record first (newer), then the entry's state
+  function heldY(slug) {
+    var nav = null;
+    try { nav = performance.getEntriesByType("navigation")[0].type; } catch (e) { nav = null; }
+    if (nav !== "reload" && nav !== "back_forward") return null;   // a fresh visit (a deep link) lands on the anchor
+    function fits(p) { return !!p && p.story === slug && typeof p.y === "number" && p.w === window.innerWidth && p.m === F.mode; }
+    var p = null, s = history.state;
+    try { p = JSON.parse(sessionStorage.getItem(HELD) || "null"); } catch (e) { p = null; }
+    if (fits(p) && p.path === location.pathname && (p.k || null) === entryKey()) return Math.max(0, Math.round(p.y));
+    if (s && typeof s === "object" && fits(s)) return Math.max(0, Math.round(s.y));
+    return null;
+  }
+
   function write(kind, slug, departY) {
     var url = urlFor(slug);
     try {
@@ -60,16 +95,17 @@
           if (m === "auto") {
             var cur = copyState();
             cur.y = Math.round(typeof departY === "number" ? departY : window.scrollY);
+            cur.w = window.innerWidth; cur.m = F.mode;
             history.replaceState(cur, "");
           }
           setRestoration("manual");
           var st = stateFor(slug);
-          delete st.y;                                // the new entry's offset is saved when the reader leaves it
-          history.pushState(st, "", url);
+          st.k = newKey();                             // a new entry: its own key (the copied one names the entry left)
+          history.pushState(mark(st, slug), "", url);   // the arrival's place; refreshed when the reader leaves it
           setRestoration(m);
         }
       }
-      else history.replaceState(stateFor(slug), "", url);
+      else history.replaceState(mark(stateFor(slug), slug), "", url);
     } catch (e) { /* a sandboxed file:// page may refuse; the story still works */ }
   }
 
@@ -129,8 +165,20 @@
     quietTimer = setTimeout(flush, QUIET);
   });
   function flushOrDrop() { queued = null; clearTimeout(quietTimer); }   // Back arrived: the entry being left is not rewritten
-  document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
-  window.addEventListener("pagehide", flush);
+  // RELOAD: leaving the page (a reload, another page, a hidden tab) records the current entry's place in HELD (no history
+  // write). Not while the load's own scroll, a Back or a native jump is still settling: the record keeps what it had.
+  function holdPlace() {
+    if (initializing || restoring || jumping) return;
+    var slug = urlSlug();
+    try {
+      if (!slug || !holdsPlace(slug)) { sessionStorage.removeItem(HELD); return; }
+      sessionStorage.setItem(HELD, JSON.stringify({ path: location.pathname, story: slug, k: entryKey(),
+        y: Math.round(window.scrollY), w: window.innerWidth, m: F.mode }));
+    } catch (e) { /* storage off: the state's own y (or the anchor) */ }
+  }
+  function leave() { flush(); holdPlace(); }
+  document.addEventListener("visibilitychange", function () { if (document.hidden) leave(); });
+  window.addEventListener("pagehide", leave);
 
   /* ---- scroll settling: scrollend, or SETTLE_IDLE (160 ms with no scroll event) where scrollend is missing ---- */
   // settled(cb): cb once the page's scroll has settled (once, 2.5 s backstop); returns a cancel function
@@ -157,9 +205,18 @@
   var cancelArrival = null, cancelRestore = null;
   (function waitInit(n) {
     var ready = document.readyState === "complete" && (F.initial || ["calm", "classic", "static"].indexOf(F.mode) >= 0 || n > 30);
-    if (ready) settled(function () { initializing = false; });
+    if (ready) { restoreHeld(); settled(function () { initializing = false; }); }
     else setTimeout(function () { waitInit(n + 1); }, 100);
   })(0);
+
+  // RELOAD in calm / classic / static: the browser's own restoration ("auto") normally has the pixel already; where a
+  // fragment scroll won over it, the held place is put back (instant, during `initializing`, so the spy writes nothing).
+  // The story modes restore in site.js's init, before the engine's first frame.
+  function restoreHeld() {
+    if (siteRestoration() !== "auto") return;
+    var slug = urlSlug(), y = slug ? heldY(slug) : null;
+    if (y != null && Math.abs(window.scrollY - y) > 1) window.scrollTo({ top: y, left: 0, behavior: "instant" });
+  }
 
   // a native scroll's arrival (calm, classic, tablet Price...): write once it has settled
   function afterScroll(fn) {

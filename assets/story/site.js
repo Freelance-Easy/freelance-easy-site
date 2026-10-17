@@ -1578,6 +1578,22 @@
   function savedPlace() {
     try { const p = JSON.parse(sessionStorage.getItem(PLACE_KEY) || "null"); sessionStorage.removeItem(PLACE_KEY); return p; } catch (e) { return null; }
   }
+  // RELOAD: story-url.js keeps the reader's place inside a native section ({story, y, w, m}) in the entry's history.state and,
+  // when the page is left, in sessionStorage "fe-story-held" (+ path and the entry's state key k). A reload or history visit
+  // to that same chapter, in the same mode at the same width, comes back to that pixel, not the chapter's anchor (the
+  // shipped site, with no chapter hashes, kept the pixel). A fresh deep link lands on the anchor. Same rule as story-url.js
+  // heldY (calm / classic restore there); kept in both because this runs before the engine's first frame.
+  function heldY(slug) {
+    const nt = navType();
+    if (nt !== "reload" && nt !== "back_forward") return null;
+    const fits = (p) => !!p && p.story === slug && typeof p.y === "number" && p.w === window.innerWidth && p.m === mode();
+    const s = history.state, k = s && typeof s === "object" && s.k ? s.k : null;
+    let p = null;
+    try { p = JSON.parse(sessionStorage.getItem("fe-story-held") || "null"); } catch (e) { p = null; }
+    if (fits(p) && p.path === location.pathname && (p.k || null) === k) return Math.max(0, Math.round(p.y));
+    if (s && typeof s === "object" && fits(s)) return Math.max(0, Math.round(s.y));
+    return null;
+  }
   function init() {
     // the engine owns the reading place: the browser's own scroll restoration on a reload or a history visit would land
     // after this one, read as a foreign scroll and settle elsewhere (not a history write: no entry, no URL change)
@@ -1599,7 +1615,9 @@
     }
     if (b) {                                           // a native row in this layout: the anchor's own section
       const sec = document.getElementById(SLUG[b]);
-      if (sec) window.scrollTo(0, Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - (L ? L.hh : 0))));
+      const held = heldY(SLUG[b]);                     // a reload / history visit inside it: the reader's pixel (RELOAD)
+      if (held != null) window.scrollTo(0, held);
+      else if (sec) window.scrollTo(0, Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - (L ? L.hh : 0))));
       initial = { index: BEATS.indexOf(b), source: "native" };
       return;
     }
