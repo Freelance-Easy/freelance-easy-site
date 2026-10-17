@@ -1196,14 +1196,14 @@
     const atRest = Math.abs(shown - rs) <= 0.002;
     if (kD === kR) {
       if (atRest) return enforceRest(kR);
-      if (shown < rs) return passK === kR ? startDip(kR, "skip", t0) : contentRun(t0);
+      if (shown < rs) return passK === kR ? skipContent(t0) : contentRun(t0);
       const c = rushCap(shown, rs, CFG.ABORT_RATE, CFG.ABORT_RATE);   // part-way into the next seam: back to rest
       if (c != null) return startRun("reverse", rs, CFG.ABORT_RATE, c, true, t0);
       return startDip(kR, "rest", t0);
     }
     if (kD === kR + 1) {
       if (atRest || shown > rs) return startRun("seam", RE[kR + 1][0], 1, 1, false, t0);   // ICX-STEP.1
-      if (passK === kR || rs - shown > CFG.CONTENT_FINISH_MAX + EPS) return startDip(kR, "skip", t0);
+      if (passK === kR || rs - shown > CFG.CONTENT_FINISH_MAX + EPS) return skipContent(t0);
       return contentRun(t0);                            // the rest of the content at 1x, then the seam (ICX-STEP.7)
     }
     if (kD === kR - 1) return startDip(kD, "rest", t0); // the back-fade (ICX-BACK.1/.2)
@@ -1213,6 +1213,11 @@
   // stage, the stage cuts to kR's rest frame underneath (no landing: rendered stays, as the dip's cut) and the held
   // frame crossfades away; the seam starts when the crossfade ends (decide, at `wait`). It counts as a dip for the
   // cooldown (ICX-DIP.4) and re-syncs the scroll position the way the dip's cut does.
+  // (FADEDEF r3, main's ruling) EVERY content skip is this crossfade: mid-content (decide's content run), a pass-through
+  // landing in a multi-step run (arrive; ICX-SIGNED.6), and the still-frame skips (decide's no-run branch: passK, or
+  // > CONTENT_FINISH_MAX left after FREE or a cooldown stopped the move). Inside the cooldown it waits it out like a dip
+  // (cooling() sets `wait`; at its end decide() takes the no-run branch, where passK === kR routes back here), so a
+  // run never stalls and the passed chapter's content never plays: no content run starts while passK === kR.
   function skipContent(t0) {
     const t = t0 != null ? t0 : clock();
     if (cooling(t)) return;
@@ -1235,7 +1240,7 @@
       if (kD === kR) { if (RE[kR][1] - shown > EPS) contentRun(); else enforceRest(kR); return; }
       passK = kR;                                       // a pass-through landing: its content never plays (ICX-SIGNED.6)
       phase = "transition";
-      if (kD === kR + 1) return startDip(kR, "skip");
+      if (kD === kR + 1) return skipContent();         // FADEDEF r3: the pass-through's skip is the crossfade too
       return decide();
     }
     if (r.purpose === "reverse") land(kR);            // a reversed seam lands on its origin's rest frame (Terms; Sol C3-1 #3)
@@ -1361,7 +1366,7 @@
     endFree();
     run = null; wait = 0; passK = -1;
     if (dip) { dip = null; clearDip(); }
-    dropXf();
+    dropXf();                                           // defensive, untested: only foreign() reaches here mid-crossfade, and it drops it first
     kR = kD = last(); shown = RE[kR][1]; phase = "rest";
     syncScroll(storyEnd());
     announce(kR);                                       // re-entry is a final landing on the last pinned (ICX-KEY.2)

@@ -30,10 +30,11 @@ def browser():
 
 
 # (theme, k, wait, width, height): Look 2 s after landing (2.9 s of content left); Email 3 s (2.2 s left; the Ride's exit
-# seam follows); a phone (390 x 664, the real Safari viewport) on Look.
+# seam follows); a phone (390 x 664, the real Safari viewport) on Look, and on Email (judge FADEDEF-1 LOW #3: the
+# closest luminance margin of the sweep, 0.013 under the floor, inside TOL).
 CASES = [("dark", 1, 2.0, 1440, 900), ("light", 1, 2.0, 1440, 900), ("dark", 4, 3.0, 1440, 900),
-         ("light", 4, 3.0, 1440, 900), ("dark", 1, 2.0, 390, 664)]
-IDS = ["dark-look", "light-look", "dark-email", "light-email", "phone-dark-look"]
+         ("light", 4, 3.0, 1440, 900), ("dark", 1, 2.0, 390, 664), ("dark", 4, 3.0, 390, 664)]
+IDS = ["dark-look", "light-look", "dark-email", "light-email", "phone-dark-look", "phone-dark-email"]
 
 
 @pytest.mark.parametrize("theme,k,wait,width,height", CASES, ids=IDS)
@@ -195,33 +196,6 @@ def test_release_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
     assert n1 == 1, f"{n1} stage-wraps two frames after a release inside the crossfade"
 
 
-_REENTER = r"""() => { const end = document.querySelector('.track').getBoundingClientRect().bottom + scrollY - innerHeight;
-  window.scrollTo({ top: Math.round(end + 400), behavior: 'instant' });          // below the pin, its scroll event not yet seen
-  const x = innerWidth / 2, y = innerHeight / 2;
-  const w = new WheelEvent('wheel', { deltaY: -600, deltaMode: 0, clientX: x, clientY: y, bubbles: true, cancelable: true });
-  Object.defineProperty(w, 'wheelDeltaY', { value: 720 }); document.elementFromPoint(x, y).dispatchEvent(w);
-  return [Math.round(end), scrollY]; }"""
-
-
-@pytest.mark.skip(reason="FADEDEF: harness does not yet reach reenter() with the held frame up (removing reenter's "
-                         "dropXf left it green); Sol FADEDEF-2 re-entry finding still open")
-def test_reentry_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
-    """(Sol FADEDEF-2) a scroll below the pin and a back wheel crossing into it in the same task (isBypassed sees y past
-    the end before the scroll event released the pin) re-enters on REST(last): the held frame goes at once."""
-    ctx, page = _to_content(browser, site_url)
-    try:
-        page.evaluate(_WHEEL)
-        page.wait_for_timeout(40)
-        n0 = page.evaluate(_HELD)
-        where = page.evaluate(_REENTER)
-        n1, _ = page.evaluate(_TWO_FRAMES)
-        st = page.evaluate("() => [FEStory.state().rendered, FEStory.state().phase]")
-    finally:
-        ctx.close()
-    assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
-    assert n1 == 1, f"{n1} stage-wraps two frames after a re-entry inside the crossfade (end/scrollY {where}, state {st})"
-
-
 def test_content_skip_resyncs_the_scroll(browser, site_url):
     """(judge FLICKER2 LOW) the skip re-syncs scrollY to the chapter's track position, as the dip's cut does: a 1 px
     drift inside the landing's acknowledged window (ICX-SETTLE-1) is put right by the skip."""
@@ -289,3 +263,106 @@ def test_rebuild_mid_blend_drops_the_held_frame(browser, site_url):
         ctx.close()
     assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
     assert n1 == 1, f"{n1} stage-wraps 120 ms after a rebuild mid-blend (the held frame outlived the rebuild)"
+
+
+# ---- FADEDEF round three: every content skip is the crossfade (main's ruling 2026-10-17) ------------------------------
+# The skip of a pass-through landing in a multi-step run (ICX-SIGNED.6: the middle chapter's content never plays) and the
+# still-frame skips (after FREE or a cooldown stopped the move) use the same crossfade as the mid-content skip.
+# (theme, k, gap s, width, height): Look from Make (the 2.58 s step ends in the PDF -> Look reveal, CAP 1.4x, so it rushes
+# only near its end: the second notch comes 2.0 s in; earlier it is the designed entry dip to Invoices; the phone's step
+# is 1.7 s, so 1.3 s in); Email from Dashboard (the Ride, 1.45 s, rushes at once).
+DOUBLE = [("dark", 1, 2.0, 1440, 900), ("light", 1, 1.3, 390, 664), ("dark", 4, 0.25, 1440, 900),
+          ("light", 4, 0.25, 390, 664)]
+DOUBLE_IDS = ["look-1440-dark", "look-390-light", "email-1440-dark", "email-390-light"]
+
+
+def _middle_never_plays(rec, k, entry_T, rest_T):
+    """ICX-SIGNED.6: no frame of the passed chapter's content (story time strictly inside its entry..rest) and no
+    content run while it is the rendered chapter."""
+    played = [r for r in rec if r[3] == k and (r[8] == "content" or entry_T + 0.02 < r[4] < rest_T - 0.02)]
+    assert not played, f"chapter {k}'s content played on {len(played)} frames (first T={played[0][4]}, step {played[0][8]})"
+
+
+@pytest.mark.parametrize("theme,k,gap,width,height", DOUBLE, ids=DOUBLE_IDS)
+def test_double_step_through_a_chapter_crossfades(browser, site_url, theme, k, gap, width, height):
+    ctx, page = dipprobe.open_page(browser, f"{site_url}/", width, height, theme)
+    try:
+        tr = dipprobe.run_double(page, k, gap)
+    finally:
+        ctx.close()
+    lands = [(x[1], x[2]) for x in tr.land]
+    assert lands == [(k, False), (k + 1, True)], f"harness: landings {tr.land}, want a pass-through on {k} then {k + 1}"
+    after = tr.after()
+    dips = sum(1 for r in after if r[5])
+    assert dips == 0, f"FEStory.state().dip set on {dips} frames of a double step through {k} (the skip dipped)"
+    op = min(r[6] for r in after)
+    assert op >= 0.999, f"the stage faded to opacity {op:.3f} in a double step through {k}"
+    assert tr.xf_at is not None, f"no held frame on the pass-through landing on {k} (no crossfade)"
+    low = tr.window_min(tr.xf_at, tr.xf_at + BLEND_MS)
+    assert low >= tr.floor() - TOL, (
+        f"k={k}: a frame at Y={low:.3f} in the crossfade, darker than the pictures it blends "
+        f"(held {tr.held_y:.3f}, rest {tr.rest_y:.3f})")
+    assert tr.steps == [k, k + 1], f"steps {tr.steps}, want exactly [{k}, {k + 1}] (two chapters)"
+    _middle_never_plays(after, k, tr.entry_T, tr.rest_T)
+    assert after[-1][1:4] == ["rest", k + 1, k + 1], f"ended {after[-1][1:4]}"
+    assert not any(r[1] in ("free", "released") for r in after), "went FREE"
+    pushes = [h for h in tr.hist if h[1] == "pushState"]
+    assert len(pushes) <= 1 and all(h[0] >= [x[0] for x in tr.land if x[2]][0] - 1 for h in tr.hist), (
+        f"history writes {tr.hist}: the run writes once, at its final landing (ICX-HIST.1)")
+
+
+def test_pass_through_inside_the_cooldown_waits_it_out(browser, site_url):
+    """(ICX-DIP.4) a skip inside the previous skip's 600 ms cooldown waits it out, then crossfades: Look's content skip,
+    then a notch during the short Look -> Invoices seam (0.5 s) rushes it to a pass-through on Invoices ~0.5 s after the
+    first skip. The second crossfade starts once the cooldown ends, the run never stalls, Invoices' content never plays."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        d = page.evaluate("() => __site.map().dests[2]")
+        page.evaluate(dipprobe._REC)
+        t1 = page.evaluate(dipprobe._NOTCH, page.evaluate("() => performance.now() + 20"))
+        page.evaluate(dipprobe._NOTCH, t1 + 300)
+        page.wait_for_function(dipprobe._REST, arg=3, timeout=20000)
+        m = page.evaluate("() => { const r = window.__xp; const o = {rec: r.rec, land: r.land}; r.rec = null; return o; }")
+    finally:
+        ctx.close()
+    rec = [r for r in m["rec"] if r[0] >= t1]
+    held = [r[0] for r in rec if r[7] > 1]
+    thru = [x[0] for x in m["land"] if x[0] >= t1 and x[1] == 2 and not x[2]]
+    assert held and thru, f"harness: the case needs a skip and a pass-through on Invoices (lands {m['land']})"
+    assert thru[0] - held[0] < 560, f"harness: the pass-through came {thru[0] - held[0]:.0f} ms after the skip (not inside the cooldown)"
+    second = [t for t in held if t >= thru[0]]
+    assert second, "no crossfade for the pass-through on Invoices"
+    assert second[0] - held[0] >= 560, f"the second skip started {second[0] - held[0]:.0f} ms after the first (cooldown 600 ms)"
+    dips = sum(1 for r in rec if r[5])
+    assert dips == 0, f"FEStory.state().dip set on {dips} frames (a skip dipped)"
+    _middle_never_plays(rec, 2, d["entry"], d["rest"])
+    assert rec[-1][1:4] == ["rest", 3, 3], f"ended {rec[-1][1:4]}"
+
+
+def test_skip_after_a_free_settle_mid_content_crossfades(browser, site_url):
+    """A foreign scroll during Look's content goes FREE and settles on Invoices: the rest of Look's content is skipped
+    with the crossfade (decide's still-frame branch), then the seam; never a dip."""
+    ctx, page = dipprobe.open_page(browser, f"{site_url}/", 1440, 900, "dark")
+    try:
+        page.evaluate("() => FEStory.goTo(2, {source: 'jump'})")
+        page.wait_for_function(dipprobe._REST, arg=2, timeout=20000)
+        y2 = page.evaluate("() => window.scrollY")
+        page.evaluate("() => FEStory.goTo(0, {source: 'jump'})")
+        page.wait_for_function(dipprobe._REST, arg=0, timeout=20000)
+        page.wait_for_timeout(900)
+        page.evaluate(_WHEEL)
+        page.wait_for_function("() => { const s = FEStory.state(); return s.rendered === 1 && s.step === 'content'; }", timeout=15000)
+        page.wait_for_timeout(600)
+        page.evaluate(dipprobe._REC)
+        page.evaluate(f"() => window.scrollTo({{ top: {y2}, behavior: 'instant' }})")
+        page.wait_for_function(dipprobe._REST, arg=2, timeout=20000)
+        rec = page.evaluate("() => { const r = window.__xp; const o = r.rec; r.rec = null; return o; }")
+    finally:
+        ctx.close()
+    free = [i for i, r in enumerate(rec) if r[1] == "free"]
+    assert free, "harness: the scroll did not go FREE"
+    after = rec[free[-1] + 1:]
+    dips = sum(1 for r in after if r[5])
+    assert dips == 0, f"FEStory.state().dip set on {dips} frames of the skip after FREE"
+    assert min(r[6] for r in after) >= 0.999, "the stage faded during the skip after FREE"
+    assert any(r[7] > 1 for r in after), "no held frame: the skip after FREE did not crossfade"
