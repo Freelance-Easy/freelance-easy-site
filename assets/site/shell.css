@@ -120,12 +120,13 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
   }
 }
 /* the story page by its body attribute, not body:has(.story-nav): the rail sits after the bar in the source, so a first
-   paint before the parser reaches it would show the bar without the button, then shift it in (test_bar_polish F7) */
+   paint before the parser reaches it would show the bar without the button, then shift it in (test_bar_polish F7).
+   (TOUR r2) /tour/ has the same bar items, so every story-page bar rule below names it too: same width, same place */
 @media (max-width: 1023px) {
-  .js body[data-page="home"] .fe-menu-btn {
+  .js body:is([data-page="home"], [data-page="tour"]) .fe-menu-btn {
     display: grid;
   }
-  .js body[data-page="home"] [data-menu-slot]:has(> .fe-menu-btn) {
+  .js body:is([data-page="home"], [data-page="tour"]) [data-menu-slot]:has(> .fe-menu-btn) {
     display: flex;
   }
 }
@@ -141,7 +142,7 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
   }
 }
 @media (max-width: 1023px) {
-  .js body[data-page="home"] .site-header .nav:has(> [data-menu-slot] > .fe-menu-btn) {
+  .js body:is([data-page="home"], [data-page="tour"]) .site-header .nav:has(> [data-menu-slot] > .fe-menu-btn) {
     padding-right: 12px;
     margin-right: -12px;
   }
@@ -153,20 +154,31 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
    items, 12 px between the brand and the nav, the two text links 6 px padding each side (measured 2026-10-17: with the
    switch gone the brand still ran 24 px into How it works at 640, 0 px by 664) */
 @media (min-width: 640px) and (max-width: 679px) {
-  html.js body[data-page="home"] .site-header .shell {
+  html.js body:is([data-page="home"], [data-page="tour"]) .site-header .shell {
     gap: 12px;
   }
-  body[data-page="home"] .site-header .nav {
+  body:is([data-page="home"], [data-page="tour"]) .site-header .nav {
     gap: 2px;
   }
-  body[data-page="home"] .site-header .nav a:not(.nav-cta) {
+  body:is([data-page="home"], [data-page="tour"]) .site-header .nav a:not(.nav-cta) {
     padding-left: 6px;
     padding-right: 6px;
   }
-  body[data-page="home"] .site-header .theme-toggle,
-  .js body[data-page="home"] .fe-menu-btn {
+  body:is([data-page="home"], [data-page="tour"]) .site-header .theme-toggle,
+  .js body:is([data-page="home"], [data-page="tour"]) .fe-menu-btn {
     width: 34px;
     height: 34px;
+  }
+}
+/* (TOUR r2) /tour/ wears the doc pages' bar (styles.css: the links at --fs-sm, 15 px; the menu button 2 px off the
+   toggle, below), 8-9 px wider than "/"'s: with the rule above its brand still ran into How it works at 640-647 and
+   680 (measured 2026-10-17). Where its bar has "/"'s items and the menu button, it takes "/"'s sizes too */
+@media (min-width: 640px) and (max-width: 1023px) {
+  body[data-page="tour"] .site-header .nav a {
+    font-size: 14.5px;
+  }
+  .js body[data-page="tour"] .site-header .fe-menu-btn {
+    margin-left: 0;
   }
 }
 /* the narrowest phones (measured at 360 with "Get it on Mac"): the button's 34 px + gap left the brand 9 px short, so
@@ -176,7 +188,7 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
   html.js .site-header .shell:has(.fe-menu-btn) {
     gap: 8px;
   }
-  .js body[data-page="home"] .fe-menu-btn {
+  .js body:is([data-page="home"], [data-page="tour"]) .fe-menu-btn {
     width: 32px;
     height: 32px;
     margin-left: 3px;
@@ -271,7 +283,7 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
   }
 }
 @media (max-width: 1023px) {
-  body[data-page="home"] .site-header [data-classic-slot]:has(> .classic-toggle) {
+  body:is([data-page="home"], [data-page="tour"]) .site-header [data-classic-slot]:has(> .classic-toggle) {
     display: none;
   }
 }
@@ -284,7 +296,7 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
   }
 }
 @media (max-width: 1023px) {
-  body[data-page="home"] .fe-menu-classic:not([hidden]) {
+  body:is([data-page="home"], [data-page="tour"]) .fe-menu-classic:not([hidden]) {
     display: block;
   }
 }

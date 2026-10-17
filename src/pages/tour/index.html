@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark light">
-    <title>Watch the tour · Freelance Easy</title>
+    <title>How it works · Freelance Easy</title>
     <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
     <link rel="canonical" href="https://freelance-easy.com/tour/">
     <meta property="og:type" content="website">
@@ -44,8 +44,9 @@
       <div class="shell">
         <section class="tour-intro" aria-labelledby="tour-title">
           <!-- NEW COPY --><p class="tour-eyebrow">How it works</p>
-          <!-- NEW COPY --><h1 id="tour-title">One invoice, from sign-in to paid.</h1>
-          <!-- NEW COPY --><p class="tour-lead">Play it through, or pick any step. All data shown is fictional.</p>
+          <!-- NEW COPY --><h1 id="tour-title">One invoice, from sign-in to marking it paid.</h1>
+          <!-- NEW COPY (proto.js swaps the first sentence to "Pick any step." in Classic / reduced motion, where there is no Play) -->
+          <p class="tour-lead"><span id="tour-lead-act">Play it through, or pick any step.</span> Clients, invoices and amounts in the player are fictional.</p>
         </section>
         <section class="tour-stage" aria-label="Freelance Easy walkthrough">
           <div class="frame-surround">
@@ -55,7 +56,7 @@
               <!-- (TOUR) the poster: the frame is never an empty box. It holds the play button from the first paint, over
                    the tour's last screen once the frame is ready; proto.js hides it on the first play or chapter pick. -->
               <div class="poster" id="poster">
-                <button type="button" class="poster-play" id="poster-play" aria-label="Play tour">
+                <button type="button" class="poster-play" id="poster-play" aria-label="Play the tour">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
                 </button>
                 <!-- NEW COPY --><p class="poster-label">Play the tour <span>1:20</span></p>
@@ -68,7 +69,7 @@
             </div>
           </div>
           <div class="controls">
-            <button type="button" id="play" class="play" aria-label="Play tour">
+            <button type="button" id="play" class="play" aria-label="Play">
               <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
               <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.5v13H7zM13.5 5.5H17v13h-3.5z" fill="currentColor" /></svg>
               <span class="play-label">Play</span>
@@ -77,15 +78,16 @@
             <span class="time" id="time">0:00 / 1:20</span>
           </div>
           <div class="caption" aria-live="polite" aria-atomic="true">
-            <p class="caption-title" id="caption-title">Sign in</p>
-            <!-- NEW COPY --><p id="caption">Sign in with Google, then finish signing in in your browser.</p>
+            <!-- (TOUR r2) empty while the poster shows: proto.js fills them on the first play or chapter pick -->
+            <p class="caption-title" id="caption-title"></p>
+            <p id="caption"></p>
           </div>
           <!-- NEW COPY --><p class="player-note" id="player-note">1 min 20 sec · Space to play or pause</p>
           <!-- (TOUR) the chapters, rail-style (B5's look, this page's own rules in proto.css): names only, no counter;
                the current one is aria-current, brighter and a step bigger -->
           <nav class="tour-steps" aria-label="Tour chapters">
             <ol class="chapters" id="chapters">
-              <li><button type="button" data-chapter="0" aria-current="step"><span class="tk" aria-hidden="true"></span><span class="nm">Sign in</span></button></li>
+              <li><button type="button" data-chapter="0"><span class="tk" aria-hidden="true"></span><span class="nm">Sign in</span></button></li>
               <li><button type="button" data-chapter="1"><span class="tk" aria-hidden="true"></span><span class="nm">Your name</span></button></li>
               <li><button type="button" data-chapter="2"><span class="tk" aria-hidden="true"></span><span class="nm">Dashboard</span></button></li>
               <li><button type="button" data-chapter="3"><span class="tk" aria-hidden="true"></span><span class="nm">Invoices</span></button></li>

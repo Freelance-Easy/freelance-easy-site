@@ -100,6 +100,11 @@
   transition: background var(--tour-t) var(--ease-swift);
 }
 .play:hover { background: var(--bg-4); }
+/* (TOUR r2) light theme: the pale pill all but vanished on the page (~1.1:1), so there it takes the ink, as the poster's play */
+:root[data-theme="light"] .play { background: var(--ink); color: var(--ink-on); }
+:root[data-theme="light"] .play:hover { background: var(--ink-hover); }
+/* (TOUR r2) at the end the end card offers Watch again: the button keeps its room (the track stays put), not its look */
+.play.is-done { visibility: hidden; }
 .play svg { width: 18px; height: 18px; flex: none; }
 .play .i-pause, .play[data-state="playing"] .i-play { display: none; }
 .play[data-state="playing"] .i-pause { display: block; }
@@ -165,6 +170,19 @@
   .chapters::-webkit-scrollbar { display: none; }
   .chapters li { flex: none; }
   .chapters button { padding-right: var(--s-3); }
+}
+/* (TOUR r2, judge) 640-1023: all seven names in view, never behind the fade: the row wraps (a second line only where
+   the names need it) and the gaps tighten; the sideways scroller is for phones, where the cut-off name is the hint */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .tour-page .chapters {
+    flex-wrap: wrap;
+    column-gap: var(--s-4);
+    overflow-x: visible;
+    padding-right: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .chapters button { padding-right: var(--s-2); }
 }
 
 /* ---- the end: what to do next, as the homepage ends ---- */

@@ -415,6 +415,46 @@ def test_bar_fits_with_classic(site_url, browser, ua, theme):
         ctx.close()
 
 
+@pytest.mark.parametrize("theme", ["dark", "light"])
+@pytest.mark.parametrize("ua", ["mac", "win"])
+def test_tour_bar_fits_with_classic(site_url, browser, ua, theme):
+    """(TOUR r2, PLAN.md GATEFIX "same width = same place on every page") /tour/'s bar has the same items as "/" (links,
+    the platform note, Download, theme, Classic), so it follows the same rule: below 1024 the menu button and the switch
+    as the sheet's row, from 1024 the switch in the bar; one row, nothing over the brand, the note beside Download."""
+    ctx, page = _open(browser, site_url, path="/tour/", w=1100, h=800, ua=ua, theme=theme)
+    try:
+        page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
+        bad = {}
+        for w in sorted(set(list(range(600, 1024, 8)) + list(range(640, 681)) + list(range(696, 733)) + [820, 1023, 1024, 1440])):
+            page.set_viewport_size({"width": w, "height": 800})
+            page.wait_for_timeout(40)
+            m = page.evaluate(SWEEP)
+            probs = _problems(m)
+            keys = [i["k"] for i in m["items"]]
+            if w >= 1024 and ("classic" not in keys or "menu" in keys):
+                probs.append("not the desktop bar (switch in the bar, no menu button)")
+            if w < 1024 and ("classic" in keys or keys[-1] != "menu"):
+                probs.append(f"the classic switch is in the bar or no menu button: {keys}")
+            if "note" not in keys and w >= 640:
+                probs.append("no platform note beside Download")
+            if probs:
+                bad[w] = probs
+        assert not bad, f"{ua} {theme}: {bad}"
+        # at 820 the switch is the sheet's row and works there
+        page.set_viewport_size({"width": 820, "height": 800})
+        page.wait_for_timeout(100)
+        assert not page.is_visible(BAR_BTN)
+        page.click("[data-menu-open]")
+        assert page.is_visible(SHEET_BTN)
+        assert page.inner_text(SHEET_BTN).strip() == "Classic view"
+        page.click(SHEET_BTN)
+        assert page.get_attribute(SHEET_BTN, "aria-pressed") == "true"
+        assert page.evaluate("() => FEClassic.isOn()") and _stored(page) == "1"
+        assert page.evaluate("() => document.querySelector('#fe-menu').open"), "the sheet closed under the switch"
+    finally:
+        ctx.close()
+
+
 # ---- /tour/ ----------------------------------------------------------------------------------------------------------
 
 def test_tour_stop(site_url, browser):

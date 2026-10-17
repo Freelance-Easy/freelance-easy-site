@@ -114,21 +114,30 @@
     const playBtn = $('#play');
     playBtn.dataset.state = TOUR.playing ? 'playing' : 'paused';
     $('.play-label', playBtn).textContent = TOUR.playing ? 'Pause' : 'Play';
-    playBtn.setAttribute('aria-label', TOUR.playing ? 'Pause tour' : 'Play tour');
-    playBtn.hidden = reduced || TOUR.t >= TOUR.total;
+    playBtn.setAttribute('aria-label', TOUR.playing ? 'Pause' : 'Play');   // (TOUR r2) the poster's is "Play the tour"
+    playBtn.hidden = reduced;
+    // (TOUR r2) at the end the button gives up its look, not its room: the track beside it stays where it was
+    playBtn.classList.toggle('is-done', TOUR.t >= TOUR.total);
     $('#end-card').hidden = reduced || TOUR.t < TOUR.total;
-    $('#poster').classList.toggle('is-gone', reduced || !poster);
+    const posterUp = !reduced && poster;
+    $('#poster').classList.toggle('is-gone', !posterUp);
     $('#progress-fill').style.transform = `scaleX(${TOUR.t / TOUR.total})`;
     $('#progress').setAttribute('aria-valuenow', TOUR.t.toFixed(1));
     $('#time').textContent = `${fmt(TOUR.t)} / ${fmt(TOUR.total)}`;
-    // the chapter's name heads its caption (no "01 / 07" counter: names only, as the rail)
-    if ($('#caption-title').textContent !== STEPS[TOUR.chapter].title) $('#caption-title').textContent = STEPS[TOUR.chapter].title;
-    if ($('#caption').textContent !== captions[TOUR.chapter]) $('#caption').textContent = captions[TOUR.chapter];
+    // the chapter's name heads its caption (no "01 / 07" counter: names only, as the rail). (TOUR r2, judge) while the
+    // poster shows (a still of the last screen) no chapter is current and no caption shows: they start on the first play
+    // or chapter pick
+    const title = posterUp ? '' : STEPS[TOUR.chapter].title, words = posterUp ? '' : captions[TOUR.chapter];
+    if ($('#caption-title').textContent !== title) $('#caption-title').textContent = title;
+    if ($('#caption').textContent !== words) $('#caption').textContent = words;
     $$('[data-chapter]').forEach(b => {
-      if (+b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
+      if (!posterUp && +b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
-    if (shownChapter !== TOUR.chapter && !posterPaint) { shownChapter = TOUR.chapter; keepChapterInView(); }
+    // (TOUR r2) no Play in the reduced / Classic mode: the lead says what there is to do
+    const act = reduced ? 'Pick any step.' : 'Play it through, or pick any step.';   // NEW COPY (both sentences)
+    if ($('#tour-lead-act').textContent !== act) $('#tour-lead-act').textContent = act;
+    if (shownChapter !== TOUR.chapter && !posterPaint && !posterUp) { shownChapter = TOUR.chapter; keepChapterInView(); }
     const why = window.FEClassic && window.FEClassic.chosen() && !hashReduced() ? 'Classic view' : 'Reduced motion';   // NEW COPY (K1: "Classic view")
     $('#player-note').textContent = reduced ? `${why} · Choose a chapter to view its final screen.` : '1 min 20 sec · Space to play or pause';
   }
