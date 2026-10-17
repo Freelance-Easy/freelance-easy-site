@@ -100,7 +100,9 @@
   function holdFrame(t) {
     dropXf();
     const el = stageWrap.cloneNode(true);
-    for (const n of [el, ...el.querySelectorAll("[id], [data-stage]")]) { n.removeAttribute("id"); n.removeAttribute("data-stage"); }
+    // ids stay (Sol FLICKER2-1 #1: id rules style the stage, e.g. Make's #invoice-form): the copy comes after the stage
+    // in document order, so every id lookup still finds the live one, and it is inert and gone within XF_DUR
+    for (const n of [el, ...el.querySelectorAll("[data-stage]")]) n.removeAttribute("data-stage");
     el.setAttribute("aria-hidden", "true");
     el.inert = true;
     Object.assign(el.style, { position: "absolute", left: `${stageWrap.offsetLeft}px`, top: `${stageWrap.offsetTop}px`,
