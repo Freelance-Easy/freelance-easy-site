@@ -377,3 +377,12 @@ def test_axe_poster_and_end(site_url, browser, theme):
         finally:
             ctx.close()
     assert found == [], found
+
+
+def test_static_lead_has_no_play():
+    """(TOUR r2, claims LOW) the HTML ships the lead without Play: no-script, Classic and reduced-motion visitors (no Play
+    button) never read "Play it through"; proto.js adds it once the player runs with motion."""
+    html = BUILT.read_text(encoding="utf-8")
+    m = re.search(r'<span id="tour-lead-act">([^<]*)</span>', html)
+    assert m, "the lead's act span is in the built page"
+    assert m.group(1) == "Pick any step.", m.group(1)
