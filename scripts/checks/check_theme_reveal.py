@@ -15,6 +15,11 @@ prefers-reduced-motion. Each reveal must:
 Under reduced motion the switch must be instant (flipped synchronously on click, no reveal animation).
 Prints one line per check and "ALL PASS (N checks)"; exits 0 only if every check passes.
 
+--gpu (REVEAL, 2026-10-17): launch Chromium on the GPU (new headless, Metal ANGLE, GPU raster) and print its WebGL
+renderer. The start budget is a latency claim about a real browser: the default headless build composites in software,
+where drawing the reveal's render passes at 1440x900 takes ~16 ms and costs the light->dark switch a frame (median
+54 ms) that a GPU never pays (median 21 ms). The homepage's latency test runs with --gpu; the budget stays 50 ms.
+
   uv run --with playwright python3 scripts/checks/check_theme_reveal.py http://127.0.0.1:8803/tests/fixtures/theme/
 """
 from __future__ import annotations
@@ -213,7 +218,15 @@ def describe(p: dict) -> str:
             f"click), centre ({p['vtX']:.1f}, {p['vtY']:.1f}), end r {p['rEnd']:.1f} px")
 
 
-def run(url: str, toggle: str, widths: list[int], browser_name: str, max_start_ms: float = MAX_START_MS) -> int:
+GPU_LAUNCH = {"channel": "chromium",
+              "args": ["--use-angle=metal", "--enable-gpu-rasterization", "--ignore-gpu-blocklist", "--enable-gpu"]}
+RENDERER_JS = """() => { const c = document.createElement('canvas').getContext('webgl');
+  if (!c) return 'no webgl'; const e = c.getExtension('WEBGL_debug_renderer_info');
+  return e ? c.getParameter(e.UNMASKED_RENDERER_WEBGL) : c.getParameter(c.RENDERER); }"""
+
+
+def run(url: str, toggle: str, widths: list[int], browser_name: str, max_start_ms: float = MAX_START_MS,
+        gpu: bool = False) -> int:
     from playwright.sync_api import sync_playwright
 
     host = (urllib.parse.urlsplit(url).hostname or "").lower()
@@ -232,8 +245,15 @@ def run(url: str, toggle: str, widths: list[int], browser_name: str, max_start_m
             print(f"PASS {name}: {describe(p)}")
 
     with sync_playwright() as pw:
-        browser = getattr(pw, browser_name).launch()
+        browser = getattr(pw, browser_name).launch(**(GPU_LAUNCH if gpu and browser_name == "chromium" else {}))
         try:
+            if gpu:
+                pg = browser.new_page()
+                renderer = pg.evaluate(RENDERER_JS)
+                pg.close()
+                soft = re.search(r"swiftshader|llvmpipe|software|no webgl", renderer, re.I)
+                print(f"{'WARN' if soft else 'GPU'}: WebGL renderer {renderer}"
+                      + (" (software: start times include software compositing)" if soft else ""))
             for w in widths:
                 vp = {"width": w, "height": HEIGHTS.get(w, 900)}
                 for reduced in (False, True):
@@ -267,8 +287,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--browser", default="chromium", choices=("chromium", "webkit"))
     ap.add_argument("--max-start-ms", type=float, default=MAX_START_MS,
                     help=f"latest the circle may start after the click (default {MAX_START_MS:g})")
+    ap.add_argument("--gpu", action="store_true", help="run Chromium on the GPU (see the docstring)")
     a = ap.parse_args(argv)
-    return run(a.url, a.toggle, a.width or [1440, 390], a.browser, a.max_start_ms)
+    return run(a.url, a.toggle, a.width or [1440, 390], a.browser, a.max_start_ms, a.gpu)
 
 
 if __name__ == "__main__":

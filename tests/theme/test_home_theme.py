@@ -195,8 +195,12 @@ def test_reveal_check_passes_on_home(site_url):
     # C5b: the circle starts within 50 ms of the press in both directions (the check clicks twice: first and back),
     # now that the scenes rebuild after the circle starts instead of inside the view-transition update. Everything
     # else is unchanged: duration, easing, centre, no corner snap at 390 and 1440, instant under reduced motion.
-    r = run_check(site_url + "/", "--max-start-ms", "50")
+    # REVEAL (2026-10-17): measured on the GPU (--gpu). Software compositing in the default headless build adds a frame
+    # to the 1440 light->dark switch (median 54 ms; 21 ms on the GPU), a cost of the test machine, not of the page.
+    # Budget unchanged. The GPU line is asserted so a silent fallback to software can't pass as GPU numbers.
+    r = run_check(site_url + "/", "--max-start-ms", "50", "--gpu")
     assert r.returncode == 0, r.stdout + r.stderr
+    assert r.stdout.startswith("GPU: "), r.stdout
     assert r.stdout.strip().splitlines()[-1].startswith("ALL PASS"), r.stdout
 
 
