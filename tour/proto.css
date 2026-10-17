@@ -182,6 +182,7 @@
   .tour-page .chapters {
     flex-wrap: wrap;
     column-gap: var(--s-4);
+    row-gap: var(--s-1);
     overflow-x: visible;
     padding-right: 0;
     -webkit-mask-image: none;
@@ -189,6 +190,9 @@
   }
   .chapters button { padding-right: var(--s-2); }
 }
+
+/* (TOUR r2) the H1 never breaks inside "sign-in" (640 split it at the hyphen) */
+.tour-page .nb { white-space: nowrap; }
 
 /* ---- the end: what to do next, as the homepage ends ---- */
 .tour-end { margin-top: var(--s-section); text-align: center; }
