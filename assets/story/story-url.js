@@ -33,12 +33,12 @@
   function slugOf(key) { return LEGACY[key] || (rowOf(key) ? key : null); }
   function urlFor(slug) { return location.pathname + location.search + (slug === FIRST ? "" : "#" + slug); }
   function here() { return location.pathname + location.search + location.hash; }
-  function stateFor(slug) {
+  function copyState() {
     var s = history.state, o = {};
     if (s && typeof s === "object") for (var k in s) if (Object.prototype.hasOwnProperty.call(s, k)) o[k] = s[k];
-    o.story = slug;
     return o;
   }
+  function stateFor(slug) { var o = copyState(); o.story = slug; return o; }
   // The entry a jump leaves is marked scrollRestoration "manual" (the mode is per entry): Back to it is the story's own
   // traversal (popstate -> goTo places the reader), never the browser's pixel restore. A native row's push is written at
   // its arrival, so "auto" would restore the ARRIVAL position over goTo's scroll (C4-engine: calm rail -> Templates ->
@@ -46,14 +46,26 @@
   // reload there keeps the exact pixel; "manual" in the story); popstate puts it back once its scroll has settled.
   function siteRestoration() { return ["calm", "classic", "static"].indexOf(F.mode) >= 0 ? "auto" : "manual"; }
   function setRestoration(m) { try { if ("scrollRestoration" in history && history.scrollRestoration !== m) history.scrollRestoration = m; } catch (e) { /* ignore */ } }
-  function write(kind, slug) {
+  // Back in a native mode (calm / classic / static) returns the reader to the exact pixel they left (main's ruling on Sol
+  // C4-engine MEDIUM 3): before a push, the departing entry's state gets its scroll offset `y` (replaceState with no URL, so
+  // the URL and history.length are untouched); popstate in a native mode restores it. `departY` is the offset where the jump
+  // STARTED (a native row's push is written at its arrival, when scrollY is already the target's). The pinned modes save
+  // nothing: the story's goTo places the reader there.
+  function write(kind, slug, departY) {
     var url = urlFor(slug);
     try {
       if (kind === "push") {
         if (url !== here()) {
           var m = siteRestoration();
+          if (m === "auto") {
+            var cur = copyState();
+            cur.y = Math.round(typeof departY === "number" ? departY : window.scrollY);
+            history.replaceState(cur, "");
+          }
           setRestoration("manual");
-          history.pushState(stateFor(slug), "", url);
+          var st = stateFor(slug);
+          delete st.y;                                // the new entry's offset is saved when the reader leaves it
+          history.pushState(st, "", url);
           setRestoration(m);
         }
       }
@@ -96,7 +108,11 @@
     jumping = false;
     if (p.source === "popstate") raise("pop");
     else if (p.source === "jump") raise(intent === "hash" ? "hash" : "push");
-    else if (p.source === "focus") raise("replace");   // focus reaching a caption: like a settle, never a push (C4-engine)
+    // focus reaching a caption: like a settle, it never STARTS a push (C4-engine). raise() keeps a higher pending kind, so a
+    // focus landing that extends a run an explicit jump started keeps that run's one pushState: ICX-HIST.2 ("If gestures
+    // extend the run after the jump, the run still writes one entry, with pushState, at its final landing, so Back undoes
+    // the whole run"); main's ruling on Sol C4-engine HIGH 2 (test_focus_after_jump_keeps_one_push).
+    else if (p.source === "focus") raise("replace");
     else raise("replace");                         // step, settle
   });
 
@@ -174,8 +190,9 @@
       }
       return ok;
     }
+    var y0 = window.scrollY;                         // where the reader left from: Back in calm / classic returns here
     var ok2 = F.goTo(slug, { source: "jump" });
-    if (ok2) afterScroll(function () { write(kind === "push" ? "push" : "replace", slug); });
+    if (ok2) afterScroll(function () { write(kind === "push" ? "push" : "replace", slug, y0); });
     return ok2;
   }
 
@@ -220,6 +237,11 @@
     if (cancelRestore) cancelRestore();
     cancelRestore = settled(function () { restoring = false; cancelRestore = null; setRestoration(siteRestoration()); });
     if (!slug) return;
+    var st = history.state;
+    if (siteRestoration() === "auto" && st && typeof st.y === "number") {   // a native mode: the exact pixel the reader left
+      window.scrollTo({ top: st.y, left: 0, behavior: "instant" });
+      return;
+    }
     intent = "pop";
     try { F.goTo(slug, { source: "popstate" }); } finally { intent = null; }
   });

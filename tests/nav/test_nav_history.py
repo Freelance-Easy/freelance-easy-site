@@ -60,7 +60,9 @@ def _one_entry_then_back(page, row: dict, i: int, length0: int, start_y: float, 
         page.wait_for_function(AT_SECTION, arg=row["anchor"], timeout=8000)
     page.wait_for_function("() => window.__h.length > 0", timeout=5000)
     page.wait_for_timeout(700)
-    calls = page.evaluate("() => window.__h.slice()")
+    raw = page.evaluate("() => window.__h.slice()")
+    # a replaceState with no URL is the departing entry's saved offset (calm / classic, Sol C4-engine 3): not a URL write
+    calls = [c for c in raw if not (c[0] == "replaceState" and c[1] is None)]
     assert calls == [["pushState", "/#" + row["slug"]]], f"ICX-HIST.2 ({what}): one pushState '#{row['slug']}', saw {calls}"
     assert page.evaluate("() => history.length") == length0 + 1, f"ICX-HIST.2 ({what}): not exactly one new entry"
     page.go_back()
@@ -73,7 +75,7 @@ def _one_entry_then_back(page, row: dict, i: int, length0: int, start_y: float, 
         raise AssertionError(f"ICX-JUMP.4 ({what}): Back left the reader at {got}, not at scrollY {start_y}") from None
     page.wait_for_timeout(500)
     assert page.evaluate("() => location.hash") == "", f"ICX-HIST.5 ({what}): Back did not return to plain '/'"
-    assert page.evaluate("() => window.__h.length") == len(calls), f"ICX-HIST.3 ({what}): Back wrote {page.evaluate('() => window.__h')}"
+    assert page.evaluate("() => window.__h.length") == len(raw), f"ICX-HIST.3 ({what}): Back wrote {page.evaluate('() => window.__h')}"
     assert page.evaluate("() => history.length") == length0 + 1
     assert not page._errs, page._errs
 
@@ -175,5 +177,46 @@ def test_reload_keeps_place_calm_classic(browser, site_url, mode, slug, after_ba
         assert after[1] == before[1], f"reload changed the chapter: before {before}, after {after}"
         if mode.split("-")[0] in ("calm", "classic"):
             assert abs(delta) <= h / 3, f"reload moved the reader {delta}px (before {before}, after {after})"
+    finally:
+        ctx.close()
+
+
+# ---- Back restores the reader's pixel in calm / classic (Sol C4-engine MEDIUM 3, main's ruling) -------------------------
+
+@pytest.mark.parametrize("mode", ["calm-1440", "classic-1440"])
+def test_back_restores_offset_calm(browser, site_url, mode):
+    """In calm / classic (native rows, the page's own scroll), a reader part-way into Price who takes the rail to Templates
+    and presses Back returns to the exact pixel they left (within 2 px), not to Price's anchor: story-url.js saves the
+    departing entry's scroll offset in its history.state before the push, and popstate in a native mode restores it."""
+    w, h, reduce, classic = MODES[mode]
+    ctx = browser.new_context(viewport={"width": w, "height": h}, reduced_motion="reduce" if reduce else "no-preference")
+    pref = f"localStorage.setItem('fe-classic', '{classic}');" if classic else ""
+    ctx.add_init_script(f"try {{ localStorage.setItem('fe-theme', 'dark'); {pref} }} catch (e) {{}}")
+    ctx.add_init_script(SPY)
+    page = ctx.new_page()
+    errs: list[str] = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        page.goto(site_url + "/", wait_until="load")
+        page.wait_for_function("() => window.FEStory && window.FEStoryURL && document.documentElement.classList.contains('fx-ready')", timeout=10000)
+        page.wait_for_timeout(2500)
+        assert page.evaluate("() => FEStory.mode") in ("calm", "classic"), f"harness: mode {page.evaluate('() => FEStory.mode')}"
+        y0 = page.evaluate("() => { const b = document.getElementById('price').getBoundingClientRect();"
+                           " return Math.round(scrollY + b.top + b.height / 3); }")
+        page.evaluate("(y) => window.scrollTo({top: y, behavior: 'instant'})", y0)
+        page.wait_for_timeout(1200)          # the spy's replace for Price has happened
+        before = page.evaluate("() => scrollY")
+        row = page.evaluate("() => FEStory.destinations.find(d => d.slug === 'templates')")
+        page.wait_for_function("() => { const n = document.querySelector('.story-nav'); return n && !n.hidden; }", timeout=8000)
+        page.click(f".story-nav a[data-go='{row['beat']}']")
+        page.wait_for_function(AT_SECTION, arg=row["anchor"], timeout=8000)
+        page.wait_for_function("() => location.hash === '#templates'", timeout=5000)
+        page.wait_for_timeout(500)
+        page.go_back()
+        page.wait_for_timeout(1500)
+        after = page.evaluate("() => scrollY")
+        assert abs(after - before) <= 2, f"Back left the reader at {after}, not at {before} ({mode}; hash {page.evaluate('() => location.hash')})"
+        assert page.evaluate("() => location.hash") == "#price"
+        assert not errs, errs
     finally:
         ctx.close()

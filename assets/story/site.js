@@ -1021,7 +1021,7 @@
   let shown = 0, raf = 0, lastNow = 0, held = false, lastDrawn = null, srcD = "init", initial = null;
   let free = null, ack = null, geomAt = -1e9, reentryUntil = -1e9, releasing = -1e9, swallow = -1, settles = 0;
   let barHeld = false, holdTimer = 0, classicPref = null, lastMode = null;
-  let nativeStopAt = -1e9;
+  let nativeSeq = 0, nativeStop = null;                // native anchor scrolls started (goTo) | the one stopNative cancelled: {seq, at}
   let native = null;                                    // a native row's smooth scroll in flight: null | {phase0, k, timer}
   const listeners = { dest: [], land: [], mode: [] };
   function emit(kind, p) { for (const fn of listeners[kind].slice()) { try { fn(p); } catch (e) { console.warn(e); } } }
@@ -1383,8 +1383,9 @@
     if (ack && t <= ack.until && Math.abs(y - ack.y) <= CFG.ACK_TOL) return;
     if (ack && t > ack.until) ack = null;
     if (t / 1000 - geomAt < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free" && y <= storyEnd() + 1) { syncScroll(trackY(kR)); return; }
-    // the last frames of a native smooth scroll a later jump cancelled (stopNative) are its residue, not the reader's
-    if (t / 1000 - nativeStopAt < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free") { syncScroll(trackY(kR)); return; }
+    // the last frames of a native smooth scroll a later jump cancelled (stopNative) are its residue, not the reader's; only
+    // while no NEWER native scroll has started (seq): a native jump issued inside the window is the latest target (Sol C4-engine 1)
+    if (nativeStop && nativeStop.seq === nativeSeq && t / 1000 - nativeStop.at < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free") { syncScroll(trackY(kR)); return; }
     foreign(y);                                         // BT-1: FREE is entered here, synchronously in the scroll event
   }
   window.addEventListener("scroll", onScroll, { passive: true });
@@ -1417,7 +1418,7 @@
     ack = { y, until: performance.now() + CFG.ACK_MS };
     window.scrollTo({ top: y, left: 0, behavior: "instant" });   // forced, even at the same y: it ends the smooth scroll
     readerY = window.scrollY;
-    nativeStopAt = clock();
+    nativeStop = { seq: nativeSeq, at: clock() };       // the guard acts on this scroll's residue only
     wake();
   }
   // the zoom-out of a zoomed FREE episode: settle once, after the pinch's own last scrolls have gone quiet
@@ -1887,6 +1888,7 @@
       if (!sec) return false;
       const hh = header ? header.getBoundingClientRect().height : 0;
       const smooth = motion() && !mq.matches;
+      nativeSeq++;                                      // a new native scroll: a cancelled one's residue guard no longer applies
       window.scrollTo({ top: Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)), behavior: smooth ? "smooth" : "instant" });
       if (smooth && TL && motion() && CP.length && !held) startNative();
       return true;
