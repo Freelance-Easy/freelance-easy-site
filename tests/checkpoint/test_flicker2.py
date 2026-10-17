@@ -1,12 +1,13 @@
-"""FLICKER2 (2026-10-17, Daniel: "still seing that flicker kinda when on a page then pausing for a few seconds then
-scrolling again"). Measured: decision #13's content skip, a 220 ms dip through dark to the chapter's rest frame, when a
-gesture comes with > CONTENT_FINISH_MAX of the content left (Look 0-4.35 s after landing, Email 0-4.68 s, ...).
-?ci-dip=fade | seam are the prototypes for his A/B: the content's frame is held over the stage and crossfades away.
+"""FLICKER2 / FADEDEF (2026-10-17, Daniel: "still seing that flicker kinda when on a page then pausing for a few seconds
+then scrolling again"; then, of the A/B: "fade feels smoothest"). Decision #13's content skip (a gesture with
+> CONTENT_FINISH_MAX of the content left: Look 0-4.35 s after landing, Email 0-4.68 s, ...) is the crossfade by default:
+the content's frame is held over the stage and dissolves onto the chapter's rest frame, never through dark; then the
+seam. Until FADEDEF it was a 220 ms dip through dark (?ci-dip=fade was the prototype).
 
-Requirement (main, 2026-10-17): no frame darker than the darker of the two pictures it blends between (stage luminance
-per frame), exactly one step, rests on the next chapter, no FREE. Today's dip (no flag) fails the luminance check
-only on dark Look (judge 2026-10-17: at base, dark Email and light Email stay within TOL because the dip fades onto the
-band/page colour); those cases are regression cover for one step / rest / no FREE, not proof of the dark frame.
+Requirement (main, 2026-10-17; Sol FLICKER2-1 #3): no frame darker than the darker of the two pictures it blends (stage
+luminance per frame against min(content, rest)); FEStory.state().dip never set and the stage never faded during the
+skip (these see a dip on every chapter, which luminance cannot: light Look fades onto the page colour, dark Email onto
+the band); exactly one step, rests on the next chapter, no FREE.
 Run: uv run --with pytest --with playwright --with pillow python3 -m pytest tests/checkpoint/test_flicker2.py -q
 """
 from __future__ import annotations
@@ -17,7 +18,7 @@ from playwright.sync_api import sync_playwright
 import dipprobe
 
 TOL = 0.02          # Y (0..1): JPEG + the moving cursor
-BLEND_MS = {"fade": 220, "seam": 280}   # site.js XF_DUR; today's dip is darkest at 100 ms, inside both
+BLEND_MS = 220      # site.js XF_DUR
 
 
 @pytest.fixture(scope="module")
@@ -28,26 +29,27 @@ def browser():
         b.close()
 
 
-# (theme, k, wait): Look 2 s after landing (2.9 s of content left); Email 3 s (2.2 s left; the Ride's exit seam
-# follows). Light Look is not a case: today's dip there fades the white paper onto the light page, so luminance cannot
-# tell it (measured: no frame darker). Only dark Look is red at base f6481e2; dark/light Email pass at base (light Email
-# 0.471 vs floor 0.484, inside TOL — judge 2026-10-17), so they guard the modes' step/rest behaviour only.
-CASES = [("dark", 1, 2.0), ("dark", 4, 3.0), ("light", 4, 3.0)]
+# (theme, k, wait, width, height): Look 2 s after landing (2.9 s of content left); Email 3 s (2.2 s left; the Ride's exit
+# seam follows); a phone (390 x 664, the real Safari viewport) on Look.
+CASES = [("dark", 1, 2.0, 1440, 900), ("light", 1, 2.0, 1440, 900), ("dark", 4, 3.0, 1440, 900),
+         ("light", 4, 3.0, 1440, 900), ("dark", 1, 2.0, 390, 664)]
+IDS = ["dark-look", "light-look", "dark-email", "light-email", "phone-dark-look"]
 
 
-@pytest.mark.parametrize("mode", ["fade", "seam"])
-@pytest.mark.parametrize("theme,k,wait", CASES, ids=["dark-look", "dark-email", "light-email"])
-def test_content_skip_never_darker(browser, site_url, mode, k, wait, theme):
-    ctx, page = dipprobe.open_page(browser, f"{site_url}/?ci-dip={mode}", 1440, 900, theme)
+@pytest.mark.parametrize("theme,k,wait,width,height", CASES, ids=IDS)
+def test_content_skip_crossfades(browser, site_url, theme, k, wait, width, height):
+    ctx, page = dipprobe.open_page(browser, f"{site_url}/", width, height, theme)
     try:
-        tr = dipprobe.run(page, k, wait)
+        tr = dipprobe.run(page, k, wait, width=width)
     finally:
         ctx.close()
-    blend = BLEND_MS[mode]
-    low, floor = tr.window_min(0, blend), tr.floor(blend)
+    assert tr.dip_frames == 0, f"k={k}: FEStory.state().dip set on {tr.dip_frames} frames of a content skip (it dipped)"
+    assert tr.min_opacity >= 0.999, f"k={k}: the stage faded to opacity {tr.min_opacity:.3f} during a content skip"
+    assert tr.held_frames > 0, f"k={k}: no held content frame (no crossfade)"
+    low, floor = tr.window_min(0, BLEND_MS), tr.floor()
     assert low >= floor - TOL, (
-        f"?ci-dip={mode} k={k}: a frame at Y={low:.3f} in the first {blend} ms, darker than the pictures it blends "
-        f"(content {tr.pre_y:.3f}, rest {tr.rest_y:.3f}, after {tr.y_at(blend + 30):.3f}): it dipped")
+        f"k={k}: a frame at Y={low:.3f} in the first {BLEND_MS} ms, darker than the pictures it blends "
+        f"(content {tr.pre_y:.3f}, rest {tr.rest_y:.3f})")
     assert tr.steps == [k + 1], f"steps {tr.steps}, want exactly [{k + 1}]"
     assert tr.end == ["rest", k + 1, k + 1], f"ended {tr.end}"
     assert not tr.free, "went FREE"
@@ -60,10 +62,13 @@ _COUNT = r"""() => { const F = window.__hf = []; const tick = () => { if (!windo
 _WHEEL = r"""() => { const x = innerWidth / 2, y = innerHeight / 2;
   const w = new WheelEvent('wheel', { deltaY: 100, deltaMode: 0, clientX: x, clientY: y, bubbles: true, cancelable: true });
   Object.defineProperty(w, 'wheelDeltaY', { value: -120 }); document.elementFromPoint(x, y).dispatchEvent(w); }"""
+_HELD = "() => document.querySelectorAll('.stage-wrap').length"
+_TWO_FRAMES = r"""() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => {
+  const w = document.querySelectorAll('.stage-wrap'); r([w.length, w.length > 1 ? parseFloat(w[1].style.opacity) : null]); })))"""
 
 
 def _to_content(browser, site_url, k=1):
-    ctx, page = dipprobe.open_page(browser, f"{site_url}/?ci-dip=seam", 1440, 900, "dark")
+    ctx, page = dipprobe.open_page(browser, f"{site_url}/", 1440, 900, "dark")
     if k > 1:
         page.evaluate(f"() => FEStory.goTo({k - 1}, {{source: 'jump'}})")
         page.wait_for_function(f"() => {{ const s = FEStory.state(); return s.phase === 'rest' && s.rendered === {k - 1}; }}", timeout=20000)
@@ -75,38 +80,85 @@ def _to_content(browser, site_url, k=1):
 
 
 def test_held_frame_never_shows_through_a_dip(browser, site_url):
-    """A jump inside the blend that dips at once: the held frame goes when the dip starts, so
-    the dip never fades the stage under a bright copy of the old one."""
+    """A back jump inside the crossfade that dips: the held frame goes at once, so the dip never fades the stage under a
+    bright copy of the old one."""
     ctx, page = _to_content(browser, site_url)
     try:
         page.evaluate(_COUNT)
         page.evaluate(_WHEEL)
         page.wait_for_timeout(60)
-        # inside the blend, back past the origin: a running seam never rushes or reverses there, it dips (decide)
         page.evaluate("() => FEStory.goTo(0, {source: 'jump'})")
         page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 0 && s.dest === 0; }", timeout=20000)
         rec = page.evaluate("() => { const r = window.__hf; window.__hf = null; return r; }")
     finally:
         ctx.close()
-    t0 = rec[0][0]
     dips = [r for r in rec if r[1] == "dip"]
-    assert dips and dips[0][0] - t0 < 250, "harness: no dip inside the blend (the case needs one)"
+    assert dips, "harness: no dip after the back jump (the case needs one)"
     held = [r for r in dips if r[2] > 1]
     assert not held, f"{len(held)} dip frames with the held content frame still on the stage"
     assert rec[-1][2] == 1, "the held frame outlived the move"
 
 
-def test_rebuild_mid_blend_drops_the_held_frame(browser, site_url):
-    """A theme switch inside the blend rebuilds the story (resetEngine): the held frame goes with it at once."""
+def test_jump_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
+    """(judge FLICKER2 LOW) a rail / menu / Home-End / popstate jump (all FEStory.goTo -> jump) inside the crossfade removes
+    the held frame on its next frame, rather than letting it fade on for up to 220 ms over the new move."""
     ctx, page = _to_content(browser, site_url)
     try:
         page.evaluate(_WHEEL)
         page.wait_for_timeout(40)
-        n0 = page.evaluate("() => document.querySelectorAll('.stage-wrap').length")
-        page.evaluate("() => document.querySelector('[data-theme-toggle]').click()")
-        page.wait_for_timeout(120)
-        n1 = page.evaluate("() => document.querySelectorAll('.stage-wrap').length")
+        n0 = page.evaluate(_HELD)
+        page.evaluate("() => FEStory.goTo(4, {source: 'jump'})")
+        n1, _ = page.evaluate(_TWO_FRAMES)
+        page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 4; }", timeout=20000)
     finally:
         ctx.close()
-    assert n0 == 2, f"harness: the blend's held frame was not up 40 ms in ({n0} stage-wraps)"
+    assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
+    assert n1 == 1, f"{n1} stage-wraps two frames after a jump inside the crossfade (the held frame faded on)"
+
+
+_HIDE = r"""() => { window.__rafQ = []; window.__raf0 = window.requestAnimationFrame;
+  window.requestAnimationFrame = (f) => { window.__rafQ.push(f); return 1; };   // a hidden tab runs no frames
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+  document.dispatchEvent(new Event('visibilitychange'));
+  const w = document.querySelectorAll('.stage-wrap'); return w.length > 1 ? parseFloat(w[1].style.opacity) : null; }"""
+_SHOW = r"""() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+  window.requestAnimationFrame = window.__raf0; document.dispatchEvent(new Event('visibilitychange'));
+  const q = window.__rafQ; window.__rafQ = []; for (const f of q) requestAnimationFrame(f);
+  return new Promise((r) => requestAnimationFrame(() => {             // the first visible frame (after the queued tick)
+    const w = document.querySelectorAll('.stage-wrap'); r([w.length, w.length > 1 ? parseFloat(w[1].style.opacity) : null]); })); }"""
+
+
+def test_hidden_tab_mid_crossfade_resumes_it(browser, site_url):
+    """(Sol FLICKER2-1 #2, ICX-HIDDEN "time stops") a tab hidden inside the crossfade and shown again later continues the
+    crossfade from where it paused: the held frame is still up, about as opaque as when the tab was hidden."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(50)
+        a0 = page.evaluate(_HIDE)
+        page.wait_for_timeout(600)                     # longer than the whole crossfade
+        n1, a1 = page.evaluate(_SHOW)
+        page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 2; }", timeout=20000)
+        n2 = page.evaluate(_HELD)
+    finally:
+        ctx.close()
+    assert a0 is not None and a0 > 0.3, f"harness: the held frame was not up when the tab hid (opacity {a0})"
+    assert n1 == 2 and a1 is not None, "back from a hidden tab mid-crossfade, the held frame dropped at once (a cut)"
+    assert a1 >= a0 - 0.2, f"the crossfade jumped ahead while hidden: opacity {a0:.2f} at hide, {a1:.2f} on the first visible frame"
+    assert n2 == 1, "the held frame outlived the move"
+
+
+def test_rebuild_mid_blend_drops_the_held_frame(browser, site_url):
+    """A theme switch inside the crossfade rebuilds the story (resetEngine): the held frame goes with it at once."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(40)
+        n0 = page.evaluate(_HELD)
+        page.evaluate("() => document.querySelector('[data-theme-toggle]').click()")
+        page.wait_for_timeout(120)
+        n1 = page.evaluate(_HELD)
+    finally:
+        ctx.close()
+    assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
     assert n1 == 1, f"{n1} stage-wraps 120 ms after a rebuild mid-blend (the held frame outlived the rebuild)"

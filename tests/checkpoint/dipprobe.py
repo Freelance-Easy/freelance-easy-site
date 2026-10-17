@@ -1,4 +1,4 @@
-"""FLICKER2: the content-interrupt probe (test_flicker2.py and the strip sheets use it).
+"""FLICKER2 / FADEDEF: the content-interrupt probe (test_flicker2.py and the strip sheets use it).
 
 One trial: land on chapter k by one notch from REST(k-1), wait `wait` s while k's content plays, one notch forward.
 CDP screencast frames from the gesture -150 ms to +span ms; per frame the stage's mean luminance (Rec. 709 Y, 0..1,
@@ -19,7 +19,9 @@ _REC = r"""() => {
   FEStory.onLand(p => M.land.push([performance.now(), p.index, p.final, p.source]));
   FEStory.onDest(p => M.dest.push([performance.now(), p.index, p.source, !!p.preview]));
   const tick = () => { if (!M.rec) return; const s = FEStory.state();
-    M.rec.push([performance.now(), s.phase, s.dest, s.rendered, s.T, s.dip ? 1 : 0]); requestAnimationFrame(tick); };
+    const op = parseFloat(getComputedStyle(document.querySelector('.stage-wrap')).opacity);
+    M.rec.push([performance.now(), s.phase, s.dest, s.rendered, s.T, s.dip ? 1 : 0, op,
+      document.querySelectorAll('.stage-wrap').length]); requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
 }"""
 _NOTCH = r"""(at) => new Promise((done) => setTimeout(() => {
@@ -42,6 +44,9 @@ class Trial:
     steps: list = field(default_factory=list)
     end: list = field(default_factory=list)
     free: bool = False
+    dip_frames: int = 0                     # engine frames after the gesture with FEStory.state().dip set
+    min_opacity: float = 1.0                # the live stage's lowest computed opacity after the gesture
+    held_frames: int = 0                    # engine frames after the gesture with the held copy up (2 .stage-wrap)
 
     def window_min(self, lo: float = 0, hi: float = 400) -> float:
         return min(f[1] for f in self.frames if lo <= f[0] <= hi)
@@ -49,10 +54,10 @@ class Trial:
     def y_at(self, ms: float) -> float:
         return min(self.frames, key=lambda f: abs(f[0] - ms))[1]
 
-    def floor(self, blend_ms: float) -> float:
-        """The darker of the pictures the blend runs between: the content frame before the gesture, the rest frame,
-        and the frame just after the blend (with ?ci-dip=seam the seam is already moving underneath)."""
-        return min(self.pre_y, self.rest_y, self.y_at(blend_ms + 30))
+    def floor(self) -> float:
+        """The darker of the two pictures the crossfade blends: the content frame before the gesture and the rest frame
+        (Sol FLICKER2-1 #3: never a frame from the transition under test)."""
+        return min(self.pre_y, self.rest_y)
 
 
 def _lum(jpeg: bytes, rect, scale) -> float:
@@ -102,6 +107,10 @@ def run(page, k: int, wait: float, span: int = 1200, width: int = 1440) -> Trial
     tr.steps = [d[1] for d in rec["dest"] if d[0] >= tr.at - 1 and d[2] == "step"]
     tr.end = rec["rec"][-1][1:4]
     tr.free = any(r[1] in ("free", "released") for r in rec["rec"] if r[0] >= tr.at)
+    after = [r for r in rec["rec"] if r[0] >= tr.at]
+    tr.dip_frames = sum(1 for r in after if r[5])
+    tr.min_opacity = min((r[6] for r in after), default=1.0)
+    tr.held_frames = sum(1 for r in after if r[7] > 1)
     rect = page.evaluate(_RECT)
     vw = page.evaluate("() => innerWidth")
     for t, jpg in shots:

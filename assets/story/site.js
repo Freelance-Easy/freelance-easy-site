@@ -88,13 +88,12 @@
     if (c.getAttribute("style") === "") c.removeAttribute("style");
   }
   function clearDip() { for (const el of [stageWrap, over, band]) if (el) el.style.removeProperty("opacity"); unDipCopy(); dropXf(); }
-  // FLICKER2 (Daniel 2026-10-17: "when on a page then pausing for a few seconds then scrolling again" it flickers): a
-  // gesture during a chapter's content with more than CONTENT_FINISH_MAX left dips through dark to the chapter's rest
-  // frame (decision #13). ?ci-dip=fade | seam are prototypes for Daniel's A/B; without the flag nothing changes. Both
-  // hold the content's frame as a still copy over the stage and crossfade it away, so no frame is darker than the two
-  // pictures it blends: "fade" onto the rest frame, then the seam; "seam" with the seam already playing underneath.
-  const CI_DIP = (() => { const m = new URLSearchParams(location.search).get("ci-dip"); return m === "fade" || m === "seam" ? m : null; })();
-  const XF_DUR = { fade: 0.22, seam: 0.28 };
+  // FLICKER2 / FADEDEF (Daniel 2026-10-17: "when on a page then pausing for a few seconds then scrolling again" it
+  // flickered; he picked the crossfade: "fade feels smoothest"): a gesture during a chapter's content with more than
+  // CONTENT_FINISH_MAX left (decision #13) holds the content's frame as a still copy over the stage and crossfades it
+  // onto the chapter's rest frame underneath, never through dark (no frame darker than the two pictures it blends);
+  // the seam starts when the crossfade ends.
+  const XF_DUR = 0.22;
   let xf = null;                                        // the held content frame: {t0, dur, el}
   function dropXf() { if (xf) { xf.el.remove(); xf = null; } }
   function holdFrame(t) {
@@ -108,7 +107,7 @@
     Object.assign(el.style, { position: "absolute", left: `${stageWrap.offsetLeft}px`, top: `${stageWrap.offsetTop}px`,
       width: `${stageWrap.offsetWidth}px`, height: `${stageWrap.offsetHeight}px`, margin: "0", pointerEvents: "none" });
     stageWrap.after(el);
-    xf = { t0: t, dur: XF_DUR[CI_DIP], el };
+    xf = { t0: t, dur: XF_DUR, el };
   }
   function xfStep(now) {
     const a = 1 - (now - xf.t0) / xf.dur;
@@ -1130,6 +1129,7 @@
   function landAt(k) {                                  // instant (a mode flip keeps the place: restorePlace)
     run = null; wait = 0; passK = -1; endFree();
     if (dip) { dip = null; clearDip(); }
+    dropXf();                                           // (FADEDEF, judge FLICKER2 LOW) a jump never lets the held frame fade on
     kD = kR = k; shown = RE[k][1]; phase = "rest";
     syncScroll(trackY(k));
     lastDrawn = null; capIdx = -1;
@@ -1144,14 +1144,16 @@
     wake(t0);
   }
   const contentRun = (t0) => startRun("content", RE[kR][1], 1, 1, false, t0);
+  function cooling(t) {                                 // ICX-DIP.4: dest is kept; the decision is taken again at its end
+    if (t - lastDipAt >= CFG.COOLDOWN - 1e-3) return false;
+    wait = lastDipAt + CFG.COOLDOWN;
+    if (phase === "rest") phase = "transition";
+    wake();
+    return true;
+  }
   function startDip(k, mode, t0) {
     const t = t0 != null ? t0 : clock();
-    if (t - lastDipAt < CFG.COOLDOWN - 1e-3) {         // ICX-DIP.4: dest is kept; the decision is taken again at its end
-      wait = lastDipAt + CFG.COOLDOWN;
-      if (phase === "rest") phase = "transition";
-      wake();
-      return;
-    }
+    if (cooling(t)) return;
     run = null; wait = 0; dropXf();
     dip = { t0: t, mode, k, cut: false, band0: bandOnAt(shown) };
     lastDipAt = t;
@@ -1186,8 +1188,7 @@
       if (kD === kR) return;
       if (kD > kR) {
         if (rs - shown <= CFG.CONTENT_FINISH_MAX + EPS) return;     // it finishes at 1x; decided again at its end
-        if (kD === kR + 1 && CI_DIP) return skipContent(t0);
-        return kD === kR + 1 ? startDip(kR, "skip", t0) : startDip(kD, "entry", t0);
+        return kD === kR + 1 ? skipContent(t0) : startDip(kD, "entry", t0);
       }
       return kD === kR - 1 ? startDip(kD, "rest", t0) : startDip(kD, "entry", t0);
     }
@@ -1208,19 +1209,22 @@
     if (kD === kR - 1) return startDip(kD, "rest", t0); // the back-fade (ICX-BACK.1/.2)
     return startDip(kD, "entry", t0);                   // distance >= 2 (ICX-DIP.1)
   }
-  // ?ci-dip=fade | seam (FLICKER2): decision #13's skip without the dark frame. The content's frame is held over the
-  // stage, the stage cuts to kR's rest frame underneath (no landing: rendered stays) and the held frame crossfades away;
-  // "seam" starts the seam at once, "fade" starts it when the crossfade ends.
+  // decision #13's content skip (FLICKER2 "fade", the default since FADEDEF): the content's frame is held over the
+  // stage, the stage cuts to kR's rest frame underneath (no landing: rendered stays, as the dip's cut) and the held
+  // frame crossfades away; the seam starts when the crossfade ends (decide, at `wait`). It counts as a dip for the
+  // cooldown (ICX-DIP.4) and re-syncs the scroll position the way the dip's cut does.
   function skipContent(t0) {
     const t = t0 != null ? t0 : clock();
+    if (cooling(t)) return;
     holdFrame(t);
     run = null; wait = 0;
+    lastDipAt = t;
     shown = RE[kR][1];
+    passK = -1; syncScroll(trackY(kR));
     FX.gate.cursor = 1; FX.gate.press = 1;
     lastDrawn = null;
     render(shown); updateCaptions(shown, true);
     phase = "transition";
-    if (CI_DIP === "seam") return startRun("seam", RE[kR + 1][0], 1, 1, false, t);
     wait = t + xf.dur;
     wake(t);
   }
@@ -1298,6 +1302,9 @@
     if (native && source !== "settle" && source !== "step") stopNative();   // the latest explicit jump wins (C4-engine)
     if (phase === "released") reenter();
     if (phase === "free") { endFree(); syncScroll(trackY(kR)); }
+    // (FADEDEF, judge FLICKER2 LOW) an explicit jump inside the content skip's crossfade removes the held frame at once
+    // and ends the crossfade's wait: the stage is already on kR's rest frame, so the jump is planned from there now
+    if (xf) { dropXf(); wait = 0; }
     if (!dip && k === kR && kD === kR && (phase === "rest" || (run && run.purpose === "content"))) {
       if (phase === "rest") syncScroll(trackY(kR));   // ICX-JUMP.0: nothing moves, nothing replays
       return;
@@ -1351,6 +1358,7 @@
     endFree();
     run = null; wait = 0; passK = -1;
     if (dip) { dip = null; clearDip(); }
+    dropXf();
     kR = kD = last(); shown = RE[kR][1]; phase = "rest";
     syncScroll(storyEnd());
     announce(kR);                                       // re-entry is a final landing on the last pinned (ICX-KEY.2)
@@ -1362,6 +1370,7 @@
     endFree();
     run = null; wait = 0; passK = -1;
     if (dip) { dip = null; clearDip(); }
+    dropXf();
     if (kR !== last() || Math.abs(shown - RE[last()][1]) > EPS) { kR = last(); shown = RE[kR][1]; lastDrawn = null; }
     kD = kR;
     phase = "released";
@@ -1389,6 +1398,7 @@
       if (phase === "released") { kR = kD = last(); free.back = true; }   // a re-entry from below begins here
       run = null; wait = 0;                             // the stage keeps its frame; the settle plans afresh
       if (dip) { dip = null; clearDip(); }
+      dropXf();                                         // (FADEDEF) a native scroll / goTo's native row drops the held frame at once
       phase = "free";
     }
     if (zoomed()) free.zoomed = true;
@@ -1508,6 +1518,7 @@
     const gone = hiddenAt >= 0 ? clock() - hiddenAt : 0;
     hiddenAt = -1;
     if (dip) dip.t0 += gone;                            // (Sol C3-1 #2) a dip resumes where it paused
+    if (xf) xf.t0 += gone;                              // (Sol FLICKER2-1 #2) so does the content skip's crossfade
     if (wait) wait += gone;
     lastDipAt += gone;
     lastNow = clock();
