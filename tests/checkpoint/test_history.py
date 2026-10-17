@@ -636,33 +636,58 @@ def test_pinned_jump_during_native_scroll(browser, site_url, gap: int):
 
 # ------------------------------------------------------------------------------------------- C4-engine fix (Sol round 1)
 
+# Invoices' dip is started, then Price's native jump is issued on the last frame before the dip's cut (DIP_OUT - 20 ms or
+# later, the dip still uncut). A smooth scroll's first scroll event comes 2-3 frames after the call, so without a cancel
+# the cut lands first: its instant scroll ends the smooth one and pins the page on Invoices (RACE: failed 3 of 45 runs
+# with a fixed 50 ms gap; every run with this timing). Resolves {ok, u, o, fade: [inline opacities right after the call]}.
+_JUMP_BEFORE_CUT = """() => new Promise((res) => {
+  const o = FEStory.state().rendered, D = FEStory.CONFIG.DIP_OUT * 1000;
+  const fade = () => ['.stage-wrap', '.pin-over', '.pin-band'].map((s) => { const e = document.querySelector(s); return e ? e.style.opacity : ''; });
+  FEStoryURL.jump('invoices');
+  const t0 = performance.now();
+  const f = () => {
+    const s = FEStory.state(), u = performance.now() - t0;
+    if (!s.dip || s.rendered !== o) return res({ ok: false, u, o, s });
+    if (u >= D - 20) { FEStoryURL.jump('price'); return res({ ok: true, u, o, fade: fade() }); }
+    requestAnimationFrame(f);
+  };
+  requestAnimationFrame(f);
+})"""
+
+
 def test_native_pinned_native_rapid(browser, site_url):
-    """Sol C4-engine HIGH 1: native -> pinned -> native in quick succession. The pinned jump cancels the first native scroll
-    (stopNative); the second native jump, started inside the cancel's 250 ms residue window, is a NEW scroll and must not be
-    snapped back as the cancelled one's residue. The latest target (Price) is reached, its URL is pushed once and only
-    once it arrived, no other entry is written, and the story does not end up released anywhere but at Price."""
-    ctx, page = tablet_page(browser, site_url + "/")
-    try:
-        assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price native"
-        length0 = page.evaluate("() => history.length")
-        page.evaluate("() => FEStoryURL.jump('price')")
-        page.wait_for_timeout(400)
-        page.evaluate("() => FEStoryURL.jump('invoices')")
-        page.wait_for_timeout(50)            # inside the cancel's residue window (RESIZE_GRACE, 250 ms)
-        page.evaluate("() => FEStoryURL.jump('price')")
-        page.wait_for_timeout(3500)          # past the native arrival's backstop (2.5 s) and any FREE settle
-        top = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
-        s = page.evaluate("() => FEStory.state()")
-        calls = page.evaluate("() => window.__c2hist.slice()")
-        assert -4 <= top <= 200, f"the latest jump (Price) was not reached: price top {top:.0f}px, state {s}, writes {calls}"
-        assert hash_now(page) == "#price", f"URL {hash_now(page)!r}, writes {calls}"
-        # one push per jump that landed: Price's, after Invoices' own if its dip cut landed before the second native jump
-        got = [(c[0], c[1]) for c in calls]
-        assert got in ([("pushState", "/#price")], [("pushState", "/#invoices"), ("pushState", "/#price")]), (
-            f"ICX-HIST.2: one push per landed jump, the last for Price; saw {calls}")
-        assert page.evaluate("() => history.length") == length0 + len(got)
-    finally:
-        ctx.close()
+    """Sol C4-engine HIGH 1 + RACE: native -> pinned -> native in quick succession. The pinned jump cancels the first native
+    scroll (stopNative); the second native jump, issued while the pinned jump's dip is still in flight (before its cut),
+    cancels that dip (the latest explicit jump wins): no cut lands, no half-dip stays on screen, no entry is written for
+    Invoices, and it is not snapped back as the cancelled scroll's residue. Price is reached and its URL pushed once, at
+    its arrival. (A fresh context per attempt; an attempt whose frames missed the pre-cut window is re-run, max 3.)"""
+    for _attempt in range(3):
+        ctx, page = tablet_page(browser, site_url + "/")
+        try:
+            assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price native"
+            length0 = page.evaluate("() => history.length")
+            page.evaluate("() => FEStoryURL.jump('price')")
+            page.wait_for_timeout(400)
+            timing = page.evaluate(_JUMP_BEFORE_CUT)
+            if not timing["ok"]:
+                continue                     # the dip cut before a frame inside its window (a busy machine): again
+            page.wait_for_timeout(3500)      # past the native arrival's backstop (2.5 s) and any FREE settle
+            top = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+            s = page.evaluate("() => FEStory.state()")
+            calls = page.evaluate("() => window.__c2hist.slice()")
+            assert -4 <= top <= 200, (f"the latest jump (Price) was not reached: price top {top:.0f}px, state {s}, "
+                                      f"jump at {timing['u']:.0f} ms into the dip, writes {calls}")
+            assert hash_now(page) == "#price", f"URL {hash_now(page)!r}, writes {calls}"
+            got = [(c[0], c[1]) for c in calls]
+            assert got == [("pushState", "/#price")], (
+                f"ICX-HIST.2: the cancelled dip writes nothing, Price pushes once at its arrival; saw {calls}")
+            assert page.evaluate("() => history.length") == length0 + 1
+            # (read right after the call: stage, overlay and band back at rest, not left mid-fade by the cancelled dip)
+            assert timing["fade"] == ["", "", ""], f"RACE: the cancelled dip left a partial fade {timing['fade']}"
+            return
+        finally:
+            ctx.close()
+    pytest.fail("harness: 3 attempts, the native jump never fell inside the dip's pre-cut window")
 
 
 def test_focus_after_jump_keeps_one_push(story: Story):
