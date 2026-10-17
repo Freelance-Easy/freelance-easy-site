@@ -306,9 +306,9 @@ def test_double_step_through_a_chapter_crossfades(browser, site_url, theme, k, g
     _middle_never_plays(after, k, tr.entry_T, tr.rest_T)
     assert after[-1][1:4] == ["rest", k + 1, k + 1], f"ended {after[-1][1:4]}"
     assert not any(r[1] in ("free", "released") for r in after), "went FREE"
-    pushes = [h for h in tr.hist if h[1] == "pushState"]
-    assert len(pushes) <= 1 and all(h[0] >= [x[0] for x in tr.land if x[2]][0] - 1 for h in tr.hist), (
-        f"history writes {tr.hist}: the run writes once, at its final landing (ICX-HIST.1)")
+    final = [x[0] for x in tr.land if x[2]][0]
+    assert len(tr.hist) == 1 and tr.hist[0][0] >= final - 1, (
+        f"history writes {tr.hist} (final landing at {final} ms): the run writes once, after its final landing (ICX-HIST.1)")
 
 
 def test_pass_through_inside_the_cooldown_waits_it_out(browser, site_url):
