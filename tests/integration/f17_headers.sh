@@ -20,7 +20,9 @@ for d in $DIRS; do
   code="$(printf '%s\n' "$hdrs" | head -1)"
   cc="$(printf '%s\n' "$hdrs" | grep -i '^cache-control:' || true)"
   n="$(printf '%s' "$cc" | grep -c . || true)"
-  if printf '%s' "$code" | grep -q ' 200' && [ "$n" = 1 ] && printf '%s' "$cc" | grep -qi 'max-age=0, must-revalidate'; then
+  val="$(printf '%s' "${cc#*:}" | sed 's/^ *//; s/ *$//' | tr 'A-Z' 'a-z')"
+  # exactly one Cache-Control header and exactly this value: a stacked "max-age=2592000, ..., max-age=0" is a FAIL
+  if printf '%s' "$code" | grep -q ' 200' && [ "$n" = 1 ] && [ "$val" = "public, max-age=0, must-revalidate" ]; then
     echo "F17 ok   /$rel -> ${cc#*: }"
   else
     echo "F17 FAIL /$rel -> [$code] [${cc:-no cache-control}]"

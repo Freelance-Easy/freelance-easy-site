@@ -63,11 +63,17 @@ def main() -> int:
                 page.mouse.move(700, 450)
                 page.keyboard.press("ArrowDown")
                 page.wait_for_function("() => FEStory.state().dest === 1", timeout=5000)
-                page.wait_for_timeout(1200)                      # into Templates' content, then skip it with a step
+                page.wait_for_timeout(1200)                      # into Templates' content (it runs ~5 s), then skip it
+                page.evaluate("""() => { window.__held = 0; new MutationObserver(() => { window.__held = Math.max(window.__held,
+                  document.querySelectorAll('.stage-wrap').length - 1); }).observe(document.body, { childList: true, subtree: true }); }""")
+                still = page.evaluate("() => FEStory.state().phase")
+                rep.check(still != "rest", f"/?ci-dip={flag}: precondition, Templates' content is still playing", still)
                 page.keyboard.press("ArrowDown")
                 page.wait_for_timeout(1500)
+                rep.check(page.evaluate("() => window.__held") >= 1, f"/?ci-dip={flag}: the skip held a frame (the flag path ran)",
+                          page.evaluate("() => window.__held"))
                 rep.check(not errs, f"/?ci-dip={flag}: loads and steps with no console/page error", errs[:3])
-                rep.check(page.evaluate("() => FEStory.state().dest") >= 1, f"/?ci-dip={flag}: the story moved")
+                rep.check(page.evaluate("() => FEStory.state().dest") >= 1, f"/?ci-dip={flag}: the story moved on")
             finally:
                 ctx.close()
         browser.close()

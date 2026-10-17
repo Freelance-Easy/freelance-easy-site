@@ -100,8 +100,10 @@ run "probe:flags (?ci-tune, ?ci-dip)" "probe-flags" "${PW[@]}" $P/flags_probe.py
 
 if [ "$FAILS" -eq 0 ] && [ -n "${M1_ONLY:-}" ]; then
   echo "M1 SUITE: SUBSET PASS (M1_ONLY=$M1_ONLY; not the gate)"
-elif [ "$FAILS" -eq 0 ]; then
+elif [ "$FAILS" -eq 0 ] && [ "$WRANGLER" = 1 ]; then
   echo "M1 SUITE: ALL PASS"
+elif [ "$FAILS" -eq 0 ]; then
+  echo "M1 SUITE: ALL PASS (F17 header check SKIPPED: the M1 gate runs with --wrangler)"
 else
   echo "M1 SUITE: FAIL ($FAILS)"
 fi

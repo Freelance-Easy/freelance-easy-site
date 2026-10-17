@@ -2,7 +2,7 @@
 
 At 820 (tablet) and 390x664 (phone), step FORWARD through every pinned checkpoint and then BACKWARD (real ArrowDown /
 ArrowUp). At each rest the caption shown must be that checkpoint's own: FEStory.state().beat is the checkpoint, and in
-the DOM exactly one `.captions .beat-copy` is not idle, it is `data-copy=<checkpoint>` (the phone's Your data caption is `yours-cap`), and it has text (ICX-CHECKPOINT.2:
+the DOM exactly one `.captions .beat-copy` is not idle, it is `data-copy=<checkpoint>` (the phone's Your data caption is `yours-cap`), and it has text and is rendered (display, visibility, opacity, size) (ICX-CHECKPOINT.2:
 no empty caption, no neighbour's). Usage: caption_probe.py http://127.0.0.1:<port>
 """
 from __future__ import annotations
@@ -15,7 +15,9 @@ sys.path.insert(0, __import__("pathlib").Path(__file__).resolve().parent.as_posi
 from _common import Report, SLUGS, base_url, open_story, walk, run_main  # noqa: E402
 
 SHOWN = """() => [...document.querySelectorAll('.captions .beat-copy')].filter(e => !e.classList.contains('is-idle'))
-  .map(e => [e.dataset.copy, e.textContent.trim().length])"""
+  .map(e => { const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+    const shown = cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.9 && r.width > 0 && r.height > 0;
+    return [e.dataset.copy, e.textContent.trim().length, shown]; })"""
 
 
 def main() -> int:
@@ -28,7 +30,7 @@ def main() -> int:
                 def on_rest(direction, beat, st):
                     page.wait_for_timeout(150)                      # a caption's own fade settles
                     shown = page.evaluate(SHOWN)
-                    rep.check(st["beat"] == beat and len(shown) == 1 and shown[0][0] in (beat, beat + "-cap") and shown[0][1] > 0,
+                    rep.check(st["beat"] == beat and len(shown) == 1 and shown[0][0] in (beat, beat + "-cap") and shown[0][1] > 0 and shown[0][2],
                               f"{mode} {direction} {SLUGS[beat]}: its own caption shows", {"state": st["beat"], "dom": shown})
 
                 first = page.evaluate(SHOWN)
