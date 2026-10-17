@@ -379,17 +379,49 @@ html.fe-menu-open {
   color: var(--text-0);
   background: color-mix(in srgb, var(--bg-0) 72%, transparent);
   overscroll-behavior: contain;
-  overflow: auto;
+  overflow: hidden;
 }
 .fe-menu:not([open]) {
   display: none;
 }
+/* (PHONE) the sheet fits the visible viewport with the bars showing (100svh, never the taller layout viewport) and
+   ends at least --fe-menu-out above the bottom: that strip is the dim area, a tap there closes the sheet and can never
+   land on a control. The list scrolls inside the sheet (.fe-menu-scroll); Close sits below it, always in view. */
 .fe-menu-panel {
+  --fe-menu-out: 64px;
+  display: flex;
+  flex-direction: column;
+  max-height: min(calc(100% - var(--fe-menu-out)), calc(100svh - var(--header-h) - var(--fe-menu-out)));
   background: var(--bg-1);
   border-bottom: 1px solid var(--line-2);
   border-radius: 0 0 20px 20px;
   box-shadow: var(--shadow-card, none);
   padding: 8px var(--pad, 16px) 16px;
+}
+.fe-menu-scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* a cut list says it goes on: a sticky fade at the scroller's foot over the rows that continue below it; at the end of
+   the list it sits in its own empty strip under the last row */
+.fe-menu-scroll::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 28px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-1) 0%, transparent), var(--bg-1));
+  pointer-events: none;
+}
+.fe-menu-panel > .fe-menu-close {
+  flex: none;
+}
+/* the Classic row under the site links: a separated row of its own, its switch track saying on or off */
+.fe-menu-scroll > .fe-menu-classic {
+  margin: 6px 0 4px;
+  border-bottom: 1px solid var(--line-1);
 }
 .fe-menu-panel ul,
 .fe-menu-panel ol {

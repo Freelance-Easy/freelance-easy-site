@@ -61,7 +61,10 @@
   }
 
   // the phone sheet's row (< 640 px, where the bar has no room: shell.css): the same switch, its name as its words
+  // (PHONE) right under the sheet's site links, above the chapter list: never the sheet's last control, where a stray
+  // "tap outside" at the bottom edge would land (it was, on a 390x664 iPhone, and turned Classic on)
   function makeSheetRow(panel) {
+    var site = panel.querySelector(".fe-menu-site");
     var close = panel.querySelector("[data-menu-close]");
     var row = document.createElement("div");
     row.className = "fe-menu-classic";
@@ -71,7 +74,8 @@
     b.setAttribute("data-classic-toggle", "");
     b.innerHTML = ICON + '<span class="classic-label">Classic view</span><span class="classic-state" aria-hidden="true"></span>';
     row.appendChild(b);
-    panel.insertBefore(row, close && close.parentNode === panel ? close : null);
+    if (site && site.parentNode) site.parentNode.insertBefore(row, site.nextSibling);
+    else panel.insertBefore(row, close && close.parentNode === panel ? close : null);
     return b;
   }
 

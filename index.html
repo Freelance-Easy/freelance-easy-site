@@ -208,6 +208,10 @@
 </script>
 <dialog class="fe-menu" id="fe-menu" aria-label="Menu"><!-- NEW COPY (aria-label) -->
   <div class="fe-menu-panel">
+    <!-- (PHONE) the list scrolls inside the sheet; Close stays below it, always in view, and the sheet ends above a dim
+         tap-out strip (shell.css). classic.js puts the Classic view row right under the site links, away from the
+         sheet's end, where a stray "tap outside" lands -->
+    <div class="fe-menu-scroll">
     <nav class="fe-menu-site" aria-label="Site"><!-- NEW COPY (aria-label) -->
       <ul>
         <li><a href="/tour/">How it works</a></li>
@@ -221,6 +225,7 @@
       <p class="fe-menu-label" id="fe-menu-chapters-h">Chapters</p><!-- NEW COPY -->
       <ol></ol>
     </nav>
+    </div>
     <button type="button" class="fe-menu-close" data-menu-close>Close</button><!-- NEW COPY -->
   </div>
 </dialog>

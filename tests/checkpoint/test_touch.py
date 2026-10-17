@@ -573,7 +573,7 @@ def test_sheet_scrolls_natively(browser, site_url):
         p.page.click("[data-menu-open]")
         p.page.wait_for_function("() => document.querySelector('#fe-menu').open")
         p.page.wait_for_timeout(300)
-        geo = p.page.evaluate("""() => { const d = document.querySelector('#fe-menu'); const r = d.getBoundingClientRect();
+        geo = p.page.evaluate("""() => { const d = document.querySelector('#fe-menu .fe-menu-scroll'); const r = d.getBoundingClientRect();
             return { sh: d.scrollHeight, ch: d.clientHeight, top: d.scrollTop, x: r.left + r.width / 2, y: r.top + r.height * 0.7 }; }""")
         assert geo["sh"] > geo["ch"] + 20, f"the sheet does not overflow at 390x664, nothing to scroll: {geo}"
         p.log()
@@ -581,10 +581,10 @@ def test_sheet_scrolls_natively(browser, site_url):
         p.swipe(160, 300, y0=geo["y"])             # a slow forward drag inside the sheet
         p.page.wait_for_timeout(600)
         L = p.read()
-        after = p.page.evaluate("() => document.querySelector('#fe-menu').scrollTop")
+        after = p.page.evaluate("() => document.querySelector('#fe-menu .fe-menu-scroll').scrollTop")
         assert L["moves"], "no touchmove reached the page"
         assert not any(prev for _, prev in L["moves"]), f"a touch scroll inside the open sheet was prevented: {L['moves'][:6]}"
-        want = min(40, geo["sh"] - geo["ch"]) - 1      # the sheet's own range (it overflows by ~38 px at 390x664)
+        want = min(40, geo["sh"] - geo["ch"]) - 1      # the list's own range (PHONE: the list scrolls inside the sheet, Close below it)
         assert after >= geo["top"] + want, f"the sheet did not scroll ({geo['top']} -> {after}, range {geo['sh'] - geo['ch']})"
         st = p.st()
         assert L["dest"] == [] and not L["steps"] and st["rendered"] == 1, f"the story moved under the sheet: {st} {L['dest']}"
