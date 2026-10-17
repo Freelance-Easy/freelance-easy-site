@@ -344,7 +344,10 @@
     window.FETheme.set(window.FETheme.get() === 'light' ? 'dark' : 'light');
   }));
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable], [data-classic-toggle]')) return;   // K1: Space presses the Classic switch itself
+    // K1: Space presses the Classic switch itself; (TOUR) and any focused control (the bar's menu, a chapter, Play), and
+    // nothing plays under the open menu sheet: Space is the page's play key only when no control has it
+    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || document.querySelector('dialog[open]') ||
+        e.target.closest?.('input, textarea, select, [contenteditable], button, a[href], summary, [role="button"], [data-classic-toggle]')) return;
     e.preventDefault();
     if (reduced) return;
     if (TOUR.t >= TOUR.total) replay(); else TOUR.playing ? pause() : play();

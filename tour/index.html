@@ -96,7 +96,7 @@
     </script>
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="proto.css">
-    <!-- (K1) the Classic switch: classic.js fills the bar's slot (inside .tour-header); proto.js stops the tour on it -->
+    <!-- (K1) the Classic switch: classic.js fills the bar's slot (body[data-page="tour"]); proto.js stops the tour on it -->
     <script src="/assets/shared/classic.js" defer></script>
     <script src="release-screens.js" defer></script>
     <script src="fe-motion.js" defer></script>
@@ -104,8 +104,8 @@
     <script src="/assets/story/download.js" defer></script>
   </head>
   <body data-page="tour">
-    <!-- (TOUR) the shared slim bar; .tour-header (display: contents) is how classic.js and proto.js find the tour's bar -->
-    <div class="tour-header">
+    <!-- (TOUR) the shared slim bar, a direct child of <body> (sticky; shell.js keeps it live while the menu sheet is open);
+         classic.js wires its Classic slot to the tour by body[data-page="tour"] -->
 <header class="site-header">
   <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
   <link rel="stylesheet" href="/assets/story/dl-status.css">
@@ -165,7 +165,6 @@
   </div>
   <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
 </header>
-    </div>
 <!-- (B6) the phone/tablet menu sheet. Its button goes in the bar's [data-menu-slot] (the script below moves it there
      before the first paint); shell.js opens and closes the sheet, fills the chapter list from FEStory.destinations (the
      rail's source, rail.js) and hands a chapter tap to FEStoryURL.jump / FEStory.goTo. shell.css shows the button where

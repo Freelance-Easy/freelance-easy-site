@@ -1,7 +1,7 @@
 """TOUR (2026-10-17): /tour/ on the site's shell, with the chapters as rail-style navigation.
 
 - The page is generated (src/pages/tour/index.html, declared in src/pages.txt) and carries the shared head, bar, menu
-  sheet and footer byte for byte; classic.js and proto.js find the bar through .tour-header.
+  sheet and footer byte for byte, the bar a direct child of <body>; classic.js wires the bar to the tour by data-page.
 - The chapter list: the seven names, nothing else (no "01 / 07" counter anywhere in the stage), one aria-current, the
   current name brighter and a step bigger.
 - No empty frame at load: the poster (a play button over the tour's last screen) is up from the first paint; the frame
@@ -70,8 +70,8 @@ def test_shell_present():
         assert _partial(name) in html, name
     assert "tour/index.html" in [ln.strip() for ln in (ROOT / "src" / "pages.txt").read_text().splitlines()]
     assert (ROOT / "src" / "pages" / "tour" / "index.html").is_file()
-    # the bar sits in .tour-header (classic.js and the tour's tests find it there); one bar, one footer
-    assert re.search(r'<div class="tour-header">\s*<header class="site-header">', html)
+    # the bar is a direct child of <body> (sticky; shell.js keeps body > .site-header live under the menu sheet)
+    assert re.search(r'<body data-page="tour">\s*(<!--.*?-->\s*)*<header class="site-header">', html, re.S)
     assert html.count("<header") == 1 and html.count("<footer") == 1
     assert '<body data-page="tour">' in html
     assert html.index("<header") < html.index("<main") < html.index("<footer")
@@ -84,8 +84,8 @@ def test_shell_rendered(site_url, browser, w):
         assert page.locator(".site-header").is_visible()
         assert page.locator(".site-header .brand").is_visible()
         assert page.locator("footer.site-footer").count() == 1
-        # the bar's Classic switch is the tour's (classic.js: .tour-header), wired to the tour
-        assert page.locator(".tour-header .classic-toggle").count() == 1
+        # the bar's Classic switch is the tour's (classic.js: data-page="tour")
+        assert page.locator(".site-header .classic-toggle").count() == 1
         assert page.locator(".back").count() == 0          # the old corner link is gone: the brand goes home
         assert not page._errs, page._errs
     finally:
@@ -199,6 +199,43 @@ def test_space_plays(site_url, browser):
         ctx.close()
 
 
+def test_bar_sticky_and_live_under_menu(site_url, browser):
+    """(Sol TOUR-1) the bar stays at the top as the page scrolls, and stays live (not inert) while the menu sheet is open."""
+    ctx, page = _page(browser, site_url, w=390)
+    try:
+        page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
+        page.wait_for_timeout(200)
+        box = page.locator(".site-header").bounding_box()
+        assert abs(box["y"]) < 1 and page.locator(".site-header .brand").is_visible(), box
+        page.click("[data-menu-open]")
+        page.wait_for_selector("#fe-menu[open]")
+        assert page.evaluate("() => !document.querySelector('.site-header').closest('[inert]')")
+        page.click("[data-menu-open]")   # the bar's own button closes the sheet again
+        page.wait_for_function("() => !document.querySelector('#fe-menu[open]')")
+    finally:
+        ctx.close()
+
+
+def test_space_on_controls(site_url, browser):
+    """(Sol TOUR-1) Space on a focused control is that control's (a chapter is picked, not playback toggled); with the
+    menu sheet open, Space never starts the tour."""
+    ctx, page = _page(browser, site_url)
+    try:
+        page.focus('[data-chapter="3"]')
+        page.keyboard.press("Space")
+        page.wait_for_timeout(200)
+        st = page.evaluate("() => __tour.state()")
+        assert st["chapter"] == 3 and not st["playing"], st
+        page.set_viewport_size({"width": 390, "height": 844})
+        page.click("[data-menu-open]")
+        page.wait_for_selector("#fe-menu[open]")
+        page.keyboard.press("Space")
+        page.wait_for_timeout(200)
+        assert not page.evaluate("() => __tour.state().playing")
+    finally:
+        ctx.close()
+
+
 def test_chapter_pick_ends_poster(site_url, browser):
     ctx, page = _page(browser, site_url)
     try:
@@ -212,7 +249,7 @@ def test_chapter_pick_ends_poster(site_url, browser):
 def test_classic_end_states(site_url, browser):
     ctx, page = _page(browser, site_url, classic="1")
     try:
-        assert page.get_attribute(".tour-header .classic-toggle", "aria-pressed") == "true"
+        assert page.get_attribute(".site-header .classic-toggle", "aria-pressed") == "true"
         assert page.locator("#poster.is-gone").count() == 1 and page.is_hidden("#play")
         for k in range(7):
             page.click(f'[data-chapter="{k}"]')

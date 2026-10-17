@@ -394,14 +394,14 @@ def test_tour_stop(site_url, browser):
     ctx, page = _open(browser, site_url, path="/tour/", w=1440, h=900)
     try:
         page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
-        btn = ".tour-header .classic-toggle"
+        btn = ".site-header .classic-toggle"
         assert page.get_attribute(btn, "aria-pressed") == "false"
         assert page.inner_text(btn).strip() == "Classic"
         page.evaluate("() => __tour.jump(2)")
         t_start = page.evaluate("() => __tour.state().t")
         page.click("#play")
         page.wait_for_function("() => __tour.state().playing && __tour.state().t > %f + 0.3" % t_start)
-        st = page.evaluate("""() => { document.querySelector('.tour-header .classic-toggle').click(); return __tour.state(); }""")
+        st = page.evaluate("""() => { document.querySelector('.site-header .classic-toggle').click(); return __tour.state(); }""")
         assert st["playing"] is False, st
         t_end = st["t"]
         assert st["chapter"] == 2 and t_end > t_start + 0.3, (t_start, st)   # chapter 2's end state, not its start
@@ -432,8 +432,8 @@ def test_tour_stop(site_url, browser):
     # (Sol K1-1) on a tablet the switch and the theme toggle do not overlap
     ctx, page = _open(browser, site_url, path="/tour/", w=820, h=1180, ua="iphone", phone=True)
     try:
-        t = page.locator(".tour-header [data-theme-toggle]").bounding_box()
-        c = page.locator(".tour-header .site-header .classic-toggle").bounding_box()
+        t = page.locator(".site-header [data-theme-toggle]").bounding_box()
+        c = page.locator(".site-header .classic-toggle").bounding_box()
         assert c["x"] >= t["x"] + t["width"], (t, c)
     finally:
         ctx.close()
@@ -441,7 +441,7 @@ def test_tour_stop(site_url, browser):
     ctx, page = _open(browser, site_url, path="/tour/", w=375, h=740, ua="iphone", phone=True)
     try:
         page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
-        assert not page.is_visible(".tour-header .site-header .classic-toggle")
+        assert not page.is_visible(".site-header .classic-toggle")
         page.click("[data-menu-open]")
         page.wait_for_selector(SHEET_BTN, state="visible")
         page.click(SHEET_BTN)

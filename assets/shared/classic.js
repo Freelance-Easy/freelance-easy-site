@@ -147,7 +147,7 @@
     if (!slot || slot.getAttribute("data-wired")) return;
     slot.setAttribute("data-wired", "1");
     if (document.body && document.body.getAttribute("data-page") === "home") initHome(slot);
-    else if (slot.closest(".tour-header")) initTour(slot);
+    else if (slot.closest(".tour-header") || (document.body && document.body.getAttribute("data-page") === "tour")) initTour(slot);
   }
   // on "/" this runs in the tail, after the bar is parsed: at once, so Classic reaches the engine before its first start
   if (document.readyState !== "loading" || document.querySelector("[data-classic-slot]")) ready();
