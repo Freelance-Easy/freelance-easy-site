@@ -2036,7 +2036,7 @@ html.js.motion body {
    moved away from the text (--text-1 is the opposite end of --ride-text in both themes), so what passes under it
    never changes the ratio.) LABEL: plain --ride-text on the field measures 4.11-4.16:1 light (white on the rendered
    rgb(65, 135, 136)) and 1.5:1 dark under the Email dialog's shadow, so the chip stays, but only 16% off the band
-   (was 28%), feathered: close to the field's own colour, worst frame light 4.91:1, dark 6.49:1 *
+   (was 28%), feathered: close to the field's own colour, worst frame light 4.91:1, dark 6.49:1 */
 .pin.on-field .stage-label {
   --label-chip: color-mix(in srgb, var(--ride) 84%, var(--text-1));
   color: var(--ride-text);

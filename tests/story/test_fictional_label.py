@@ -151,6 +151,28 @@ def test_label_rendered_size(browser, site_url, width):
         ctx.close()
 
 
+FIELD_JS = """() => { const l = document.querySelector('.stage-label'), p = document.createElement('i');
+  p.style.color = 'var(--ride-text)'; l.parentElement.appendChild(p);
+  const want = getComputedStyle(p).color; p.remove();
+  return { onField: !!l.closest('.pin.on-field'), color: getComputedStyle(l).color, want,
+    chip: getComputedStyle(l).backgroundColor }; }"""
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_label_field_palette(browser, site_url, theme):
+    """On the Ride's field (desktop) the label takes the field's palette (LABEL: a broken comment once swallowed the
+    rule, leaving the page's grey and chip on the teal; the contrast test cannot tell, both pass 4.5:1)."""
+    ctx, page = open_story(browser, site_url, "desktop", theme)
+    try:
+        w = page.evaluate(WINDOW_JS)
+        page.evaluate(SEEK_JS, w["chaseT1"] - 0.5)
+        got = page.evaluate(FIELD_JS)
+        assert got["onField"], got
+        assert got["color"] == got["want"], (theme, got)
+    finally:
+        ctx.close()
+
+
 # ---- contrast on the rendered pixels ----
 
 def _png_pixels(png: bytes):
