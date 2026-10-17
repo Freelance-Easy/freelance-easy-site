@@ -397,7 +397,21 @@ It resets for each new gesture.
 
 - **ICX-CLASS.1** The detector's class for every event of a gesture equals the class of its first event.
 - **ICX-CLASS.2** The gesture ends after a quiet gap longer than `QUIET_NOTCH` (notch) or `QUIET_SMOOTH` (smooth);
-  the next event starts a new gesture and is classified afresh.
+  the next event starts a new gesture and is classified afresh, except a gap inside a still-moving inertia tail
+  (ICX-CLASS.4).
+- **ICX-CLASS.4** (FLICKER, 2026-10-16, main-approved) A gap is the hand going quiet only if the hand could have been
+  heard: an inertia tail emits an event every frame while it moves, so a gap in one is the page or browser holding input
+  back (a busy main thread; Chrome coalesces held wheel events). A gap > `QUIET_SMOOTH` does not end a smooth flick
+  (peak ≥ `V_RISE_MIN`) whose rate when the gap began was ≥ `TAIL_LIVE`, when the next event is in the same
+  direction, comes ≤ `JOIN_MAX` after the last one and has no mouse notch's signature (`deltaMode` 1, or a
+  `wheelDeltaY` that is a multiple of 120): the gesture carries on, with no new start step. A deliberate new flick in
+  it still steps by the rise test. Measured: one flick read as two gestures at 22–26 of 26 stall positions before
+  (tests/checkpoint/test_flicker.py), the second step dipping mid-Ride (Daniel: "flicker for a second before it moves
+  again").
+- **ICX-CLASS.5** (FLICKER) Rates are measured over the time the input covers: a smooth event more than `SPREAD_MIN`
+  after the previous one counts its delta spread evenly over that gap (a coalesced event carries the frames the page
+  did not hear), and events under `BUNCH_MS` after such an event are the same held-back delivery. A held-back burst is
+  therefore never a rise (a 40–45 ms stall at 120 Hz stepped twice before).
 - **ICX-CLASS.3** A smooth flick whose first delta is ≥ 50 px (so it gets the notch hint) still steps once
   (ICX-SETTLE-D1).
 

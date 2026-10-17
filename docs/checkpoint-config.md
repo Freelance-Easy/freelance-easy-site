@@ -26,7 +26,7 @@ delegation (decisions-2026-10-15.md in the run dir); not yet implemented.
 | `MIN_DELTA` | 0.5 px | 0–2 px | resting fingers on a Windows precision touchpad step by themselves → raise | R1 §3.4 |
 | `START_PX` | 8 px | 4–20 px | brushing the trackpad steps → raise; a deliberate small scroll is ignored → lower | R1 §3.4 |
 | `START_WIN` | 120 ms | unset (R1) | (paired with `START_PX`) | R1 §3.4 |
-| `QUIET_SMOOTH` | 140 ms | 100–250 ms | — (a tail has no gaps; this only ends slow drags) | R1 §3.4; ICX-CLASS |
+| `QUIET_SMOOTH` | 140 ms | 100–250 ms | — (ends slow drags; a moving inertia tail CAN show gaps when the page or browser holds input back, measured by FLICKER 2026-10-16: those are joined by ICX-CLASS.4, not ended here) | R1 §3.4; ICX-CLASS |
 | `QUIET_NOTCH` | 220 ms | 150–400 ms | "click, click, click" counts as one → lower; a fast spin splits into several → raise | R1 §3.4; ICX-CLASS |
 | `W_NOW` | 50 ms | fixed | — | R1 §3.4 |
 | `W_PREV` | 120 ms | fixed | — | R1 §3.4 |
@@ -37,6 +37,10 @@ delegation (decisions-2026-10-15.md in the run dir); not yet implemented.
 | `MIN_STEP_MS` | 250 ms | 150–400 ms | a double step at gesture onset → raise | R1 §3.4 |
 | `REPEAT_MS` | 850 ms | 600–1200 ms | a long spin feels sluggish → lower; one long trackpad drag goes too far → raise | R1 §3.4 |
 | `SUSTAIN_K` | 0.7 (smooth **and notch** gestures, ICX-SETTLE-D1) | 0.5–0.9 | a long notch spin stops repeating → lower | R1 §3.4; C0a D1 (`S1__*-r1notch.json`) |
+| `TAIL_LIVE` | 20 px/s (ICX-CLASS.4) | 10–60 px/s | a stalled late tail still adds a step → lower; a slow drag right after a flick's natural end is swallowed → raise | FLICKER stall matrix (60 left 1/26 residue at s0 1300–1400 ms; 20 none on the C1 tails) |
+| `JOIN_MAX` | 600 ms (ICX-CLASS.4) | 300–1000 ms | a long page stall still splits a flick → raise; a second gesture soon after a moving tail is swallowed → lower | FLICKER: stalls 150–500 ms joined; > `JOIN_MAX` is a new gesture |
+| `SPREAD_MIN` | 24 ms (ICX-CLASS.5) | 17–45 ms | a coalesced burst still reads as a rise → lower; a 60 Hz stream's rates look smeared → raise | FLICKER: above one 60 Hz frame plus jitter; 120 Hz 40–45 ms stalls 2–4/26 → 0/26 |
+| `BUNCH_MS` | 4 ms (ICX-CLASS.5) | 2–8 ms | held-back events delivered in a burst still read as a rise → raise | FLICKER: below any device's frame interval (8 ms at 120 Hz) |
 | `REVERSE_PX` | 12 px summed within 80 ms | 8–20 px (window fixed at 80 ms) — **PICKED by C0b per PLAN (not from R1); tune in C7** | a deliberate reversal during a tail is missed → lower; trackpad jitter reverses a step → raise | value: R1 §3.4 (and C0a ran it); range: PICKED by C0b per PLAN § C0b, R1 leaves it unset |
 | Notch hint: first delta | ≥ 50 px with no event in the previous 30 ms | unset (R1) | smooth flicks get the notch hint too often → raise (D1 already guards the repeat) | R1 §3.4 normalisation; C0a D1 |
 
