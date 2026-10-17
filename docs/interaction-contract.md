@@ -37,7 +37,7 @@ Decisions: `.orchestrate/2026-10-14-site-ux/decisions-2026-10-15.md` (§A DEC an
 | `phase` | The engine state; `"rest"` means resting on a checkpoint with nothing playing |
 | transition | The seam from one checkpoint toward the next (ends where the next checkpoint's content starts) |
 | content | The checkpoint's own autoplay, from the end of its transition to its rest frame |
-| dip | The 220 ms fade out → cut → fade in (ICX-DIP). Used by ICX-DIP (distance ≥ 2), ICX-BACK (the back-fade), ICX-STEP.7 (skipping content) and ICX-SIGNED.5 (a transition that cannot finish within 0.6 s at ≤ 3×) |
+| dip | The 220 ms fade out → cut → fade in (ICX-DIP). Used by ICX-DIP (distance ≥ 2), ICX-BACK (the back-fade) and ICX-SIGNED.5 (a transition that cannot finish within 0.6 s at ≤ 3×) |
 | rest-entry | A checkpoint's content start (the end of its seam; R1 §3.3 `S_b`). A dip that lands on a checkpoint's rest-entry then plays its content (decisions §C) (was OPEN-7) |
 | dead time | Story time during which the rendered stage frame does not change (no moving element): holds, waits and pauses. DEC-8's ceilings trim only dead time (ICX-STEP.2) |
 | step | One gesture (wheel gesture, swipe, step key): ±1 |
@@ -152,11 +152,17 @@ C5 adds a row here only with before/after frame strips showing the seam has no d
   is never fast-forwarded:
   - if ≤ 0.6 s of `b`'s content is left (`CONTENT_FINISH_MAX`), it finishes at 1×, then the `b → b + 1` transition
     plays (ICX-STEP.1);
-  - if more is left, one 220 ms dip skips the rest of it: the cut lands on `b`'s rest frame (no new landing,
-    `rendered` stays `b`), then the `b → b + 1` transition plays.
+  - if more is left, the content's frame is held and crossfades over 220 ms onto `b`'s rest frame (never through dark;
+    no new landing, `rendered` stays `b`), then the `b → b + 1` transition plays (amended 2026-10-17, FADEDEF —
+    Daniel picked the crossfade over the old dip: "fade feels smoothest").
+  - The same crossfade skips the content of a chapter reached by a pass-through landing with `distance = 1` still to
+    go (ICX-SIGNED.6), and of a chapter found part-played on a still frame (after FREE or a cooldown stopped the move).
+    Inside the cooldown it waits for the cooldown's end, then crossfades. The skipped content never plays.
   - Either way, if further gestures make `distance ≥ 2` by the decision point (the end of the finishing content, or
-    the dip's dark frame), it is ICX-DIP to `dest` instead.
-  - A back gesture during content is ICX-BACK.2. The dip cooldown (ICX-DIP.4) applies to the skip dip.
+    the end of the crossfade), it is ICX-DIP to `dest` instead.
+  - A back gesture during content is ICX-BACK.2. The dip cooldown (ICX-DIP.4) applies to the skip's crossfade (it
+    holds gesture steps only). An explicit jump or a foreign scroll during the crossfade removes the held frame at once
+    and the jump's own transition starts at once; a hidden tab pauses the crossfade (ICX-HIDDEN).
 
 ### ICX-BACK — Step −1
 
@@ -225,7 +231,9 @@ pass-through landing (Terms); only the final landing plays content, rests, annou
   `c* = max(1.5×, the smallest c ≤ 3× with T_c(R) ≤ 0.6 s)` (at `A = 12 /s²` this holds for `R ≤ 1.706 s`);
   otherwise the 220 ms fade to the origin's rest frame.
 - **ICX-SIGNED.6** A checkpoint passed through on the way to `dest` (a pass-through landing, or cut past by a dip)
-  renders none of its content frames, never rests, is never announced, and is never written to history.
+  renders none of its content frames, never rests, is never announced, and is never written to history. A
+  pass-through landing's frame crossfades onto its rest frame (ICX-STEP.7, no dip) and the next transition plays from
+  there (added 2026-10-17, FADEDEF).
 - **ICX-SIGNED.7** Rate ceiling (decisions §C): story time on the story or tour stage never advances or reverses
   faster than 3× in any mode, input or phase (checked on `__fxTrace` story time per frame, dips excluded since a cut
   is not playback).
