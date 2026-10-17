@@ -347,6 +347,10 @@ for explicit jumps. A checkpoint passed through is never written.
   the URL for the chapter's own (`/` for `#top`). `history.length` is unchanged.
 - **ICX-HIST.7** Theme hashes `#dark`/`#light` keep working on load (A5 reads them); home never writes them. They are
   not chapter hashes: the page starts on the first chapter, and nothing is written until the next final landing.
+- **ICX-HIST.10** (added 2026-10-16, C4-engine) A landing caused by keyboard focus moving onto a chapter (source `focus`)
+  writes like a step: `replaceState` at its final landing, never `pushState`, so Tab-ing through the page never fills
+  Back. Focus never STARTS a push; a focus landing that extends a run started by an explicit jump keeps that run's single
+  `pushState` (ICX-HIST.2). In calm/classic the entry a jump leaves records its scroll offset, and Back restores it.
 - **ICX-HIST.8** A FREE settle writes its final landing with `replaceState`; a distance-0 re-alignment writes nothing
   (ICX-SETTLE-4).
 - **ICX-HIST.9** Scroll-spy history (main's ruling, 2026-10-15; owner amended 2026-10-16). In native sections
