@@ -87,7 +87,31 @@
     c.style.removeProperty("filter");
     if (c.getAttribute("style") === "") c.removeAttribute("style");
   }
-  function clearDip() { for (const el of [stageWrap, over, band]) if (el) el.style.removeProperty("opacity"); unDipCopy(); }
+  function clearDip() { for (const el of [stageWrap, over, band]) if (el) el.style.removeProperty("opacity"); unDipCopy(); dropXf(); }
+  // FLICKER2 (Daniel 2026-10-17: "when on a page then pausing for a few seconds then scrolling again" it flickers): a
+  // gesture during a chapter's content with more than CONTENT_FINISH_MAX left dips through dark to the chapter's rest
+  // frame (decision #13). ?ci-dip=fade | seam are prototypes for Daniel's A/B; without the flag nothing changes. Both
+  // hold the content's frame as a still copy over the stage and crossfade it away, so no frame is darker than the two
+  // pictures it blends: "fade" onto the rest frame, then the seam; "seam" with the seam already playing underneath.
+  const CI_DIP = (() => { const m = new URLSearchParams(location.search).get("ci-dip"); return m === "fade" || m === "seam" ? m : null; })();
+  const XF_DUR = { fade: 0.22, seam: 0.28 };
+  let xf = null;                                        // the held content frame: {t0, dur, el}
+  function dropXf() { if (xf) { xf.el.remove(); xf = null; } }
+  function holdFrame(t) {
+    dropXf();
+    const el = stageWrap.cloneNode(true);
+    for (const n of [el, ...el.querySelectorAll("[id], [data-stage]")]) { n.removeAttribute("id"); n.removeAttribute("data-stage"); }
+    el.setAttribute("aria-hidden", "true");
+    el.inert = true;
+    Object.assign(el.style, { position: "absolute", left: `${stageWrap.offsetLeft}px`, top: `${stageWrap.offsetTop}px`,
+      width: `${stageWrap.offsetWidth}px`, height: `${stageWrap.offsetHeight}px`, margin: "0", pointerEvents: "none" });
+    stageWrap.after(el);
+    xf = { t0: t, dur: XF_DUR[CI_DIP], el };
+  }
+  function xfStep(now) {
+    const a = 1 - (now - xf.t0) / xf.dur;
+    if (a <= 0) dropXf(); else xf.el.style.opacity = a.toFixed(3);
+  }
   // C5 (test_dip_fades_band) a dip whose cut turns the Ride's band on or off (a jump into or out of Email) fades the band
   // with the stage: left alone it flipped the whole pin's colour in one frame at the dark frame. A dip that stays inside
   // the band (or outside it) leaves the band put, as v2.1 asked. The band's state is the timeline's, at a story time.
@@ -1124,7 +1148,7 @@
       wake();
       return;
     }
-    run = null; wait = 0;
+    run = null; wait = 0; dropXf();
     dip = { t0: t, mode, k, cut: false, band0: bandOnAt(shown) };
     lastDipAt = t;
     phase = "dip";
@@ -1158,6 +1182,7 @@
       if (kD === kR) return;
       if (kD > kR) {
         if (rs - shown <= CFG.CONTENT_FINISH_MAX + EPS) return;     // it finishes at 1x; decided again at its end
+        if (kD === kR + 1 && CI_DIP) return skipContent(t0);
         return kD === kR + 1 ? startDip(kR, "skip", t0) : startDip(kD, "entry", t0);
       }
       return kD === kR - 1 ? startDip(kD, "rest", t0) : startDip(kD, "entry", t0);
@@ -1178,6 +1203,22 @@
     }
     if (kD === kR - 1) return startDip(kD, "rest", t0); // the back-fade (ICX-BACK.1/.2)
     return startDip(kD, "entry", t0);                   // distance >= 2 (ICX-DIP.1)
+  }
+  // ?ci-dip=fade | seam (FLICKER2): decision #13's skip without the dark frame. The content's frame is held over the
+  // stage, the stage cuts to kR's rest frame underneath (no landing: rendered stays) and the held frame crossfades away;
+  // "seam" starts the seam at once, "fade" starts it when the crossfade ends.
+  function skipContent(t0) {
+    const t = t0 != null ? t0 : clock();
+    holdFrame(t);
+    run = null; wait = 0;
+    shown = RE[kR][1];
+    FX.gate.cursor = 1; FX.gate.press = 1;
+    lastDrawn = null;
+    render(shown); updateCaptions(shown, true);
+    phase = "transition";
+    if (CI_DIP === "seam") return startRun("seam", RE[kR + 1][0], 1, 1, false, t);
+    wait = t + xf.dur;
+    wake(t);
   }
   function arrive(r) {
     if (r.purpose === "seam") {
@@ -1469,6 +1510,7 @@
     const now = clock();
     const dt = clamp(now - lastNow, 0, 0.1);
     lastNow = now;
+    if (xf) xfStep(now);
     if (dip) dipStep(now);
     else if (run) runStep(dt);
     if (!dip && wait && now >= wait) { wait = 0; decide(); }
@@ -1478,7 +1520,7 @@
     // BT-1 backstop: a foreign scroll seen on the frame even if its event is late
     if (ack && performance.now() > ack.until) ack = null;
     if (CP.length && !dip && !ack && phase !== "free" && phase !== "released" && Math.abs(window.scrollY - trackY(kR)) > CFG.ACK_TOL) foreign(window.scrollY);
-    let busy = !!(run || dip || wait);
+    let busy = !!(run || dip || wait || xf);
     // the direction gate: the hand never walks backwards (it fades while the story runs back) and presses squash only
     // forwards; it comes back on the way to rest
     const gTo = run && run.dir < 0 ? 0 : 1;
