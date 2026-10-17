@@ -473,6 +473,65 @@ def test_native_jump_pushes_on_arrival(browser, site_url):
         ctx.close()
 
 
+def test_reload_in_native_section_restores_pixel_fresh_link_lands_on_anchor(browser, site_url):
+    """RELOAD (ICX-HIST.3 / ICX-JUMP.3): a fresh deep link to a native row (/#price on a tablet, no history state) lands on
+    the anchor and writes nothing; the reader scrolls 300 px into Price and reloads: the reload writes nothing and comes
+    back to that pixel; a fresh visit to the same URL afterwards (a new entry, no state) lands on the anchor again."""
+    anchor = "() => Math.round(document.getElementById('price').getBoundingClientRect().top)"
+    ctx, page = tablet_page(browser, site_url + "/#price")
+    try:
+        assert page.evaluate("() => window.__c2hist.slice()") == [], "ICX-HIST.3: the deep link wrote"
+        top_a = page.evaluate(anchor)
+        assert -4 <= top_a <= 140, f"ICX-JUMP.3: the deep link left #price at {top_a}px"
+        page.evaluate("() => window.scrollBy(0, 300)")
+        page.wait_for_timeout(900)
+        assert hash_now(page) == "#price", f"harness: 300 px into Price the URL should still be #price, got {hash_now(page)!r}"
+        top0 = page.evaluate(anchor)
+        length = page.evaluate("() => history.length")
+        page.reload(wait_until="load")
+        page.wait_for_function("() => window.__site && window.__site.TL && window.FEStory", timeout=10000)
+        page.wait_for_timeout(900)
+        assert page.evaluate("() => window.__c2hist.slice()") == [], "ICX-HIST.3: the reload wrote"
+        assert page.evaluate("() => history.length") == length and hash_now(page) == "#price"
+        top1 = page.evaluate(anchor)
+        assert abs(top1 - top0) <= 2, f"RELOAD: the reload moved #price from {top0}px to {top1}px (the anchor is {top_a}px)"
+        page.goto("about:blank")
+        page.goto(site_url + "/#price", wait_until="load")      # a new entry: no state, a fresh deep link
+        page.wait_for_function("() => window.__site && window.__site.TL && window.FEStory", timeout=10000)
+        page.wait_for_timeout(900)
+        assert page.evaluate("() => window.__c2hist.slice()") == [], "ICX-HIST.3: the fresh deep link wrote"
+        top2 = page.evaluate(anchor)
+        assert abs(top2 - top_a) <= 2, f"ICX-JUMP.3: a fresh deep link landed #price at {top2}px, the anchor is {top_a}px"
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("cell", [TABLET, PHONE], ids=["tablet", "phone"])
+def test_back_to_native_restores_pixel(browser, site_url, cell: Cell):
+    """RELOAD (main's ruling on Sol RELOAD-1 HIGH 2): in the story modes a reader 300 px inside Price (a native row) who
+    jumps to a chapter (the rail / menu sheet: FEStoryURL.jump) and presses Back returns to that pixel (within 2 px), as the
+    live site does, not to Price's anchor. Pinned rows keep ICX-JUMP.4."""
+    ctx, page = open_page(browser, site_url + "/", cell)
+    try:
+        page.wait_for_timeout(1300)
+        assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price native"
+        page.evaluate("() => window.scrollTo(0, document.getElementById('price').getBoundingClientRect().top + scrollY - 64 + 300)")
+        page.wait_for_timeout(900)
+        assert hash_now(page) == "#price", f"harness: the spy should have written /#price, got {hash_now(page)!r}"
+        top0 = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+        page.evaluate("() => FEStoryURL.jump('new-invoice')")
+        page.wait_for_function("() => location.hash === '' && FEStory.state().phase === 'rest' && FEStory.state().rendered === 0", timeout=12000)
+        page.wait_for_timeout(400)
+        page.evaluate("() => history.back()")
+        page.wait_for_function("() => location.hash === '#price'", timeout=5000)
+        page.wait_for_timeout(1500)
+        top1 = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+        s = page.evaluate("() => ({fe: FEStory.state(), st: history.state, y: scrollY})")
+        assert abs(top1 - top0) <= 2, f"RELOAD ({cell.name}): Back moved #price from {top0:.0f} to {top1:.0f} ({s})"
+    finally:
+        ctx.close()
+
+
 def test_spy_replaces_only_on_user_scroll(browser, site_url):
     """ICX-HIST.9: fe:spy writes one replaceState with the section's URL (plain path for the first section); nothing while
     initializing (load), restoring (popstate) or jumping (a native jump); a section the page does not have is ignored.

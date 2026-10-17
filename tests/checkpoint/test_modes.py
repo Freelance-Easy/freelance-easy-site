@@ -329,3 +329,73 @@ def test_reload_keeps_place(browser, site_url, case):
         assert st["phase"] == "released", st
     finally:
         ctx.close()
+
+
+RELOAD_MODES = {
+    "tablet": ("tablet", dict(viewport={"width": 820, "height": 1180})),
+    "phone": ("phone", dict(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)),
+    "calm": ("calm", dict(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")),
+    "classic": ("classic", dict(viewport={"width": 1440, "height": 900})),
+}
+
+
+def _ready_any(page):
+    """_ready for every mode: classic has no timeline either."""
+    page.wait_for_function("() => window.FEStory && document.documentElement.classList.contains('fx-ready') && (window.__site.TL || ['calm', 'classic'].includes(FEStory.mode))", timeout=10000)
+
+
+def test_reload_keeps_pixel_from_state_when_storage_is_off(browser, site_url):
+    """RELOAD: with sessionStorage unavailable (the leave-time record cannot be kept), the y that story-url.js writes into the
+    entry's history.state with the spy's chapter URL still brings a reload 300 px inside Price (tablet) back to that pixel."""
+    ctx = browser.new_context(viewport={"width": 820, "height": 1180})
+    ctx.add_init_script("Object.defineProperty(window, 'sessionStorage', { configurable: true, get() { throw new DOMException('blocked', 'SecurityError'); } });")
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + "/", wait_until="load")
+        _ready_any(page)
+        assert page.evaluate("() => { try { sessionStorage; return false; } catch (e) { return true; } }"), "harness: storage should throw"
+        page.wait_for_timeout(400)
+        page.evaluate("() => window.scrollTo(0, document.querySelector('#price').getBoundingClientRect().top + scrollY - 64 + 300)")
+        page.wait_for_timeout(900)
+        top0 = page.locator("#price").bounding_box()["y"]
+        assert page.evaluate("() => location.hash") == "#price", "harness: the spy should have written /#price"
+        page.reload(wait_until="load")
+        _ready_any(page)
+        page.wait_for_timeout(700)
+        top1 = page.locator("#price").bounding_box()["y"]
+        st = page.evaluate("() => history.state")
+        assert abs(top1 - top0) <= 2, f"RELOAD (no storage): reload moved #price from {top0:.0f} to {top1:.0f} (state {st})"
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("off", [0, 300, 800])
+@pytest.mark.parametrize("mode", list(RELOAD_MODES))
+def test_reload_mid_section_keeps_pixel(browser, site_url, mode, off):
+    """RELOAD: the scroll-spy gives a native section's position a chapter URL (/#price, ICX-HIST.9), so a reload carries
+    that hash. Inside a native section (tablet / phone story's Price and A note; calm and classic) the reload still comes
+    back to the reader's exact pixel (within 2 px), not the chapter's anchor: the shipped site (no chapter hashes) did."""
+    want, kw = RELOAD_MODES[mode]
+    ctx = browser.new_context(**kw)
+    if mode == "classic":
+        ctx.add_init_script("try { localStorage.setItem('fe-classic', '1'); } catch (e) {}")
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + "/", wait_until="load")
+        _ready_any(page)
+        assert page.evaluate("() => FEStory.mode") == want, page.evaluate("() => FEStory.mode")
+        page.wait_for_timeout(400)
+        page.evaluate("(o) => window.scrollTo(0, document.querySelector('#price').getBoundingClientRect().top + scrollY - 64 + o)", off)
+        page.wait_for_timeout(900)                     # the spy's replaceState (ICX-HIST.9) has landed
+        top0 = page.locator("#price").bounding_box()["y"]
+        hash0 = page.evaluate("() => location.hash")
+        assert hash0 in ("#price", "#a-note"), f"harness: the spy should have named a native chapter, got {hash0!r}"
+        page.reload(wait_until="load")
+        _ready_any(page)
+        page.wait_for_timeout(700)
+        top1 = page.locator("#price").bounding_box()["y"]
+        info = page.evaluate("() => ({mode: FEStory.mode, y: Math.round(scrollY), hash: location.hash, state: history.state})")
+        assert abs(top1 - top0) <= 2, f"RELOAD {mode} +{off}: reload moved #price from {top0:.0f} to {top1:.0f} ({info})"
+        assert info["hash"] == hash0, f"RELOAD {mode} +{off}: the reload changed the URL ({info})"
+    finally:
+        ctx.close()
