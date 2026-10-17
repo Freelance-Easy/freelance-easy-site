@@ -402,9 +402,10 @@ It resets for each new gesture.
 - **ICX-CLASS.4** (FLICKER, 2026-10-16, main-approved) A gap is the hand going quiet only if the hand could have been
   heard: an inertia tail emits an event every frame while it moves, so a gap in one is the page or browser holding input
   back (a busy main thread; Chrome coalesces held wheel events). A gap > `QUIET_SMOOTH` does not end a smooth flick
-  (peak ≥ `V_RISE_MIN`) whose rate when the gap began was ≥ `TAIL_LIVE`, when the next event is in the same
-  direction, comes ≤ `JOIN_MAX` after the last one and has no mouse notch's signature (`deltaMode` 1, or a
-  `wheelDeltaY` that is a multiple of 120): the gesture carries on, with no new start step. A deliberate new flick in
+  (peak ≥ `V_RISE_MIN`, frame-paced: at least 3 event gaps under `SPREAD_MIN`, which mouse notches never are) whose rate
+  when the gap began was ≥ `TAIL_LIVE`, when the next event is in the same direction, comes ≤ `JOIN_MAX` after the last
+  one and is not a line-mode (`deltaMode` 1) event: the gesture carries on, with no new start step. (A `wheelDeltaY`
+  multiple of 120 is NOT a notch signature here: Chrome's coalesced trackpad events can carry ±240 — Sol FLICKER-1 #1.) A deliberate new flick in
   it still steps by the rise test. Measured: one flick read as two gestures at 22–26 of 26 stall positions before
   (tests/checkpoint/test_flicker.py), the second step dipping mid-Ride (Daniel: "flicker for a second before it moves
   again").
