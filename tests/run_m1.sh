@@ -98,12 +98,16 @@ run "probe:footnote (fictional sentence)" "probe-footnote" "${PW[@]}" $P/footnot
 run "probe:webkit (bar 600-1023)" "probe-webkit" "${PW[@]}" $P/webkit_probe.py "$URL"
 run "probe:flags (?ci-tune, ?ci-dip)" "probe-flags" "${PW[@]}" $P/flags_probe.py "$URL"
 
+# (Sol C8-1 HIGH#1 + MEDIUM#3, main's ruling) "ALL PASS" is the gate line: only with --wrangler (F17) AND RUNSLOW=1 (fuzz)
+MISSING=""
+[ "$WRANGLER" = 1 ] || MISSING="--wrangler (F17)"
+[ -n "$SLOW" ] || MISSING="${MISSING:+$MISSING, }RUNSLOW=1 (fuzz)"
 if [ "$FAILS" -eq 0 ] && [ -n "${M1_ONLY:-}" ]; then
   echo "M1 SUITE: SUBSET PASS (M1_ONLY=$M1_ONLY; not the gate)"
-elif [ "$FAILS" -eq 0 ] && [ "$WRANGLER" = 1 ]; then
+elif [ "$FAILS" -eq 0 ] && [ -z "$MISSING" ]; then
   echo "M1 SUITE: ALL PASS"
 elif [ "$FAILS" -eq 0 ]; then
-  echo "M1 SUITE: ALL PASS (F17 header check SKIPPED: the M1 gate runs with --wrangler)"
+  echo "M1 SUITE: PASS, NOT THE GATE (missing: $MISSING; the gate is RUNSLOW=1 bash tests/run_m1.sh <url> --wrangler)"
 else
   echo "M1 SUITE: FAIL ($FAILS)"
 fi
