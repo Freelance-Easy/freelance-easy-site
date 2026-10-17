@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Build the eight root pages from src/ (stdlib only).
+"""Build the site's generated pages from src/ (stdlib only).
 
 Layout:
   src/pages/<name>.html     one source per output page; written to <out>/<name>.html
+  src/pages/<dir>/index.html  a page served from a folder (/tour/); written to <out>/<dir>/index.html. One level
+                            only, index.html only, and only when declared in src/pages.txt (TOUR)
   src/partials/**.html      shared spans, pulled in with an include line
 
 The only template feature is the include line. A line that holds nothing but an
@@ -104,6 +106,8 @@ DERIVED = {"audio.html": "mac-audio.html"}
 # "#" comments), so the frozen cutover fixture, which has no pages.txt, still builds exactly its own.
 PAGES = ("index.html", "install.html", "privacy.html", "terms.html", "404.html", "mac.html", "mac-audio.html")
 ADDED_PAGES = "pages.txt"
+# a declared name: a flat page (pricing.html) or a folder's index page (tour/index.html), one level deep (TOUR)
+PAGE_NAME = re.compile(r"(?:[a-z0-9][a-z0-9-]*/index|[a-z0-9][a-z0-9-]*)\.html")
 
 
 class BuildError(Exception):
@@ -184,9 +188,10 @@ def render_partial(src: pathlib.Path, rel: str, args: str, where: str) -> str:
 
 def render_page(src: pathlib.Path, page: pathlib.Path) -> str:
     out: list[str] = []
-    path = source_file(src, page, page.name)
+    label = page.relative_to(src / "pages").as_posix()   # tour/index.html, not a bare index.html
+    path = source_file(src, page, label)
     for n, line in enumerate(read_text(path).splitlines(keepends=True), 1):
-        where = f"{page.name}:{n}"
+        where = f"{label}:{n}"
         m = INCLUDE_LINE.match(line)
         if m:
             text = render_partial(src, m.group(1), m.group(2), where)
@@ -224,12 +229,30 @@ def declared_pages(src: pathlib.Path) -> tuple[str, ...]:
         name = line.strip()
         if not name or name.startswith("#"):
             continue
-        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*\.html", name):
+        if not PAGE_NAME.fullmatch(name):
             raise BuildError(f"{ADDED_PAGES}:{n}: not a page name: {name!r}")
         if name in PAGES or name in DERIVED or name in added:
             raise BuildError(f"{ADDED_PAGES}:{n}: {name} is already declared")
         added.append(name)
     return PAGES + tuple(added)
+
+
+def page_sources(pages_dir: pathlib.Path) -> list[str]:
+    """Every page source under pages/, as its output name: <name>.html, and <dir>/<name>.html one folder down. A
+    symlinked folder, or a folder inside a folder, is refused, so no source is ever silently skipped (TOUR)."""
+    names: list[str] = []
+    for p in pages_dir.iterdir():
+        if p.is_symlink() and p.is_dir():
+            raise BuildError(f"{p} is a symlink; sources must be regular files inside {pages_dir.parent}")
+        if p.is_dir():
+            for q in p.iterdir():
+                if q.is_dir():
+                    raise BuildError(f"{q}: page folders are one level deep (pages/<dir>/index.html)")
+                if q.name.endswith(".html"):
+                    names.append(f"{p.name}/{q.name}")
+        elif p.name.endswith(".html"):
+            names.append(p.name)
+    return names
 
 
 def build(src: pathlib.Path) -> dict[str, bytes]:
@@ -239,7 +262,7 @@ def build(src: pathlib.Path) -> dict[str, bytes]:
     if pages_dir.is_symlink():
         raise BuildError(f"{pages_dir} is a symlink; sources must be regular files inside {src}")
     pages = declared_pages(src)
-    found = sorted(p.name for p in pages_dir.iterdir() if p.name.endswith(".html"))
+    found = sorted(page_sources(pages_dir))
     derived = sorted(set(found) & set(DERIVED))
     if derived:
         raise BuildError(f"{', '.join(derived)} is derived, not built from a source; remove it from {pages_dir}")
@@ -283,6 +306,7 @@ def main(argv: list[str] | None = None) -> int:
     for name, data in outputs.items():
         target = args.out / name
         if not target.is_file() or target.read_bytes() != data:
+            target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
     print(f"build-site: {len(outputs)} pages built into {args.out}")
     return 0

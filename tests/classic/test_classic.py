@@ -415,20 +415,60 @@ def test_bar_fits_with_classic(site_url, browser, ua, theme):
         ctx.close()
 
 
+@pytest.mark.parametrize("theme", ["dark", "light"])
+@pytest.mark.parametrize("ua", ["mac", "win"])
+def test_tour_bar_fits_with_classic(site_url, browser, ua, theme):
+    """(TOUR r2, PLAN.md GATEFIX "same width = same place on every page") /tour/'s bar has the same items as "/" (links,
+    the platform note, Download, theme, Classic), so it follows the same rule: below 1024 the menu button and the switch
+    as the sheet's row, from 1024 the switch in the bar; one row, nothing over the brand, the note beside Download."""
+    ctx, page = _open(browser, site_url, path="/tour/", w=1100, h=800, ua=ua, theme=theme)
+    try:
+        page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
+        bad = {}
+        for w in sorted(set(list(range(600, 1024, 8)) + list(range(640, 681)) + list(range(696, 733)) + [820, 1023, 1024, 1440])):
+            page.set_viewport_size({"width": w, "height": 800})
+            page.wait_for_timeout(40)
+            m = page.evaluate(SWEEP)
+            probs = _problems(m)
+            keys = [i["k"] for i in m["items"]]
+            if w >= 1024 and ("classic" not in keys or "menu" in keys):
+                probs.append("not the desktop bar (switch in the bar, no menu button)")
+            if w < 1024 and ("classic" in keys or keys[-1] != "menu"):
+                probs.append(f"the classic switch is in the bar or no menu button: {keys}")
+            if "note" not in keys and w >= 640:
+                probs.append("no platform note beside Download")
+            if probs:
+                bad[w] = probs
+        assert not bad, f"{ua} {theme}: {bad}"
+        # at 820 the switch is the sheet's row and works there
+        page.set_viewport_size({"width": 820, "height": 800})
+        page.wait_for_timeout(100)
+        assert not page.is_visible(BAR_BTN)
+        page.click("[data-menu-open]")
+        assert page.is_visible(SHEET_BTN)
+        assert page.inner_text(SHEET_BTN).strip() == "Classic view"
+        page.click(SHEET_BTN)
+        assert page.get_attribute(SHEET_BTN, "aria-pressed") == "true"
+        assert page.evaluate("() => FEClassic.isOn()") and _stored(page) == "1"
+        assert page.evaluate("() => document.querySelector('#fe-menu').open"), "the sheet closed under the switch"
+    finally:
+        ctx.close()
+
+
 # ---- /tour/ ----------------------------------------------------------------------------------------------------------
 
 def test_tour_stop(site_url, browser):
     ctx, page = _open(browser, site_url, path="/tour/", w=1440, h=900)
     try:
         page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
-        btn = ".tour-header .classic-toggle"
+        btn = ".site-header .classic-toggle"
         assert page.get_attribute(btn, "aria-pressed") == "false"
         assert page.inner_text(btn).strip() == "Classic"
         page.evaluate("() => __tour.jump(2)")
         t_start = page.evaluate("() => __tour.state().t")
         page.click("#play")
         page.wait_for_function("() => __tour.state().playing && __tour.state().t > %f + 0.3" % t_start)
-        st = page.evaluate("""() => { document.querySelector('.tour-header .classic-toggle').click(); return __tour.state(); }""")
+        st = page.evaluate("""() => { document.querySelector('.site-header .classic-toggle').click(); return __tour.state(); }""")
         assert st["playing"] is False, st
         t_end = st["t"]
         assert st["chapter"] == 2 and t_end > t_start + 0.3, (t_start, st)   # chapter 2's end state, not its start
@@ -456,12 +496,33 @@ def test_tour_stop(site_url, browser):
         assert not page._k1_errs, page._k1_errs
     finally:
         ctx.close()
-    # (Sol K1-1) on a phone the switch and the theme toggle do not overlap
+    # (TOUR r2) a tablet at 820: as on "/", the bar has the menu button and the switch is the sheet's row
+    ctx, page = _open(browser, site_url, path="/tour/", w=820, h=1180, ua="iphone", phone=True)
+    try:
+        page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
+        assert not page.is_visible(BAR_BTN) and page.is_visible("[data-menu-open]")
+        page.click("[data-menu-open]")
+        page.wait_for_selector(SHEET_BTN, state="visible")
+    finally:
+        ctx.close()
+    # (Sol K1-1) on a tablet with the switch in the bar (>= 1024) the switch and the theme toggle do not overlap
+    ctx, page = _open(browser, site_url, path="/tour/", w=1024, h=1366, ua="iphone", phone=True)
+    try:
+        t = page.locator(".site-header [data-theme-toggle]").bounding_box()
+        c = page.locator(".site-header .classic-toggle").bounding_box()
+        assert c["x"] >= t["x"] + t["width"], (t, c)
+    finally:
+        ctx.close()
+    # (TOUR) the tour is on the shared bar: on a phone (< 640 px) the switch is the menu sheet's row, as on "/"
     ctx, page = _open(browser, site_url, path="/tour/", w=375, h=740, ua="iphone", phone=True)
     try:
-        t = page.locator(".tour-header [data-theme-toggle]").bounding_box()
-        c = page.locator(".tour-header .classic-toggle").bounding_box()
-        assert c["x"] >= t["x"] + t["width"], (t, c)
+        page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
+        assert not page.is_visible(".site-header .classic-toggle")
+        page.click("[data-menu-open]")
+        page.wait_for_selector(SHEET_BTN, state="visible")
+        page.click(SHEET_BTN)
+        assert page.get_attribute(SHEET_BTN, "aria-pressed") == "true" and _stored(page) == "1"
+        assert page.evaluate("() => document.getElementById('app-frame').contentDocument.documentElement.dataset.motion") == "reduced"
     finally:
         ctx.close()
 

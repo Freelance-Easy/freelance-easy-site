@@ -9,7 +9,7 @@
  * "/"      the button fills the bar's [data-classic-slot] beside the theme toggle and drives FEStory.setClassic (site.js),
  *          which keeps the reading place. It is not shown where calm is automatic (a short touch screen, the same test
  *          as head.html and site.js): a dead control there. The stored choice is kept for larger screens.
- * /tour/   the button fills the tour header's [data-classic-slot]; proto.js listens for "fe:classicchange" and, in
+ * /tour/   the button fills the bar's [data-classic-slot] and, below 1024 px (as on "/", shell.css), a menu-sheet row; proto.js listens for "fe:classicchange" and, in
  *          Classic, stops playback and shows each chapter's end state.
  * Focus never moves: the button keeps it. The button's state is aria-pressed.
  */
@@ -131,7 +131,10 @@
   function initTour(slot) {
     btn = makeButton(slot);
     btns.push(btn);
-    btn.addEventListener("click", toggle);
+    // (TOUR) the tour is on the shared bar now: below 1024 px the switch is a sheet row there, as on "/" (shell.css)
+    var panel = document.querySelector("#fe-menu .fe-menu-panel");
+    if (panel) btns.push(makeSheetRow(panel));
+    for (var i = 0; i < btns.length; i++) btns[i].addEventListener("click", toggle);
     if (rm && rm.addEventListener) rm.addEventListener("change", sync);
     sync();
   }
@@ -144,7 +147,7 @@
     if (!slot || slot.getAttribute("data-wired")) return;
     slot.setAttribute("data-wired", "1");
     if (document.body && document.body.getAttribute("data-page") === "home") initHome(slot);
-    else if (slot.closest(".tour-header")) initTour(slot);
+    else if (document.body && document.body.getAttribute("data-page") === "tour") initTour(slot);
   }
   // on "/" this runs in the tail, after the bar is parsed: at once, so Classic reaches the engine before its first start
   if (document.readyState !== "loading" || document.querySelector("[data-classic-slot]")) ready();

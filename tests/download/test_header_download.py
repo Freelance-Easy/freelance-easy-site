@@ -263,6 +263,30 @@ def test_note_beside_download_without_crowding(dl_site, visit, width):
     assert page.evaluate("document.querySelector('.site-header .nav').scrollWidth <= document.querySelector('.site-header .nav').clientWidth + 1")
 
 
+@pytest.mark.parametrize("width", [640, 800, 1024])
+def test_tour_note_beside_download(dl_site, visit, width):
+    """(TOUR r2) /tour/ has the same bar as "/": the requirement in view beside Download from 640, one row, no nav link
+    wraps, nothing over the brand, and below 1024 the menu button (not the Classic switch) closes the row."""
+    page = visit("mac", dl_site.url + "/tour/", width=width)
+    page.wait_for_timeout(300)
+    note, cta = page.locator(NOTE), page.locator(CTA)
+    assert note.is_visible(), f"the requirement is in view beside Download at {width}"
+    n, c = note.bounding_box(), cta.bounding_box()
+    header = page.locator(".site-header").bounding_box()
+    assert n["x"] + n["width"] <= c["x"] + 1, "the note sits left of the button"
+    assert n["y"] >= header["y"] and n["y"] + n["height"] <= header["y"] + header["height"], "inside the header"
+    tops = page.evaluate("[...document.querySelectorAll('.site-header .nav > *')].filter(e => e.offsetParent).map(e => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2))")
+    assert max(tops) - min(tops) <= 2, f"one row: {tops}"
+    lines = page.evaluate("[...document.querySelectorAll('.site-header .nav a')].filter(e => e.offsetParent).map(e => e.getClientRects().length === 1 && e.getBoundingClientRect().height < 44)")
+    assert all(lines), f"no nav link wraps at {width}: {lines}"
+    brand = page.locator(".site-header .brand").bounding_box()
+    nav = page.locator(".site-header .nav").bounding_box()
+    assert brand["x"] + brand["width"] < nav["x"], "nothing overlaps the brand"
+    assert page.evaluate("document.querySelector('.site-header .nav').scrollWidth <= document.querySelector('.site-header .nav').clientWidth + 1")
+    assert page.locator(".site-header .fe-menu-btn").is_visible() == (width < 1024), "the menu button below 1024 only"
+    assert page.locator(".site-header .classic-toggle").is_visible() == (width >= 1024), "the switch in the bar from 1024 only"
+
+
 def test_platforms_option_mac_only(dl_site, visit):
     fixture = dl_site.url + "/tests/download/fixtures/mac-only.html"
     mac = visit("mac", fixture)
