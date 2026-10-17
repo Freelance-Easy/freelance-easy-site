@@ -168,10 +168,22 @@
     if (kind == null) kind = p.source === "jump" ? "push" : p.source === "popstate" ? "pop" : "replace";
     if (kind === "pop") return;
     if (kind === "push") { write("push", p.slug, dy); return; }   // at the landing itself: Back must find the entry
+    // (INT5-fix 6) a re-entry from below (the page scrolled back into the pinned story from a native section or the footer)
+    // is a FREE settle's final landing (ICX-HIST.8): its chapter's URL, unless the URL already names it (distance 0)
+    if (p.reentry && urlFor(p.slug) === here()) return;
     queued = { kind: "replace", slug: p.slug };
     quietTimer = setTimeout(flush, QUIET);
   });
   function flushOrDrop() { queued = null; clearTimeout(quietTimer); }   // Back arrived: the entry being left is not rewritten
+  // (INT5-fix 1; Sol + Astra INT-5) a mode change (Classic on / off, a rotation across a layout line) rebuilds the story:
+  // a pinned jump still in flight never lands, and a native jump's arrival would be written wherever the rebuild left the
+  // page. Both are void, as in RACE's native-jump cancel: left set, the next ordinary step would push (ICX-HIST.1). A
+  // landing still queued is a real one: written first.
+  if (typeof F.onModeChange === "function") F.onModeChange(function () {
+    flush(); pending = null; departY0 = null;
+    if (cancelArrival) { cancelArrival(); cancelArrival = null; }
+    jumping = false;
+  });
   // RELOAD: leaving the page (a reload, another page, a hidden tab) records the current entry's place in HELD (no history
   // write). Not while the load's own scroll, a Back or a native jump is still settling: the record keeps what it had.
   function holdPlace() {
@@ -317,7 +329,10 @@
       try { F.goTo(slug, { source: "popstate", y: st.y }); } finally { intent = null; }
       return;
     }
-    if (st && typeof st.y === "number" && siteRestoration() === "auto") {
+    // (INT5-fix 2) only a place recorded for this chapter in this mode at this width (as RELOAD's reload path): an entry
+    // written in the story modes, or at another width, lands on the chapter's anchor (goTo below)
+    if (st && typeof st.y === "number" && siteRestoration() === "auto" && st.story === slug && st.m === F.mode &&
+        st.w === window.innerWidth) {
       window.scrollTo({ top: st.y, left: 0, behavior: "instant" });
       return;
     }
