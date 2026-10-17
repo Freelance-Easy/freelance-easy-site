@@ -1217,6 +1217,7 @@
     const t = t0 != null ? t0 : clock();
     if (cooling(t)) return;
     holdFrame(t);
+    xf.dipAt0 = lastDipAt;                              // an explicit jump inside the crossfade is not held by its cooldown
     run = null; wait = 0;
     lastDipAt = t;
     shown = RE[kR][1];
@@ -1303,8 +1304,10 @@
     if (phase === "released") reenter();
     if (phase === "free") { endFree(); syncScroll(trackY(kR)); }
     // (FADEDEF, judge FLICKER2 LOW) an explicit jump inside the content skip's crossfade removes the held frame at once
-    // and ends the crossfade's wait: the stage is already on kR's rest frame, so the jump is planned from there now
-    if (xf) { dropXf(); wait = 0; }
+    // and ends the crossfade's wait: the stage is already on kR's rest frame, so the jump is planned from there now.
+    // (main's ruling 2026-10-17, "feel instant") its own transition starts in this frame: the skip's cooldown holds
+    // gesture steps only (as after a dip's cut, where the skip's dip became the jump), so it is undone for a jump
+    if (xf) { lastDipAt = xf.dipAt0; dropXf(); wait = 0; }
     if (!dip && k === kR && kD === kR && (phase === "rest" || (run && run.purpose === "content"))) {
       if (phase === "rest") syncScroll(trackY(kR));   // ICX-JUMP.0: nothing moves, nothing replays
       return;

@@ -133,14 +133,17 @@ def test_foreign_scroll_mid_crossfade_drops_the_held_frame_at_once(browser, site
 
 
 def test_content_skip_counts_for_the_dip_cooldown(browser, site_url):
-    """(judge FLICKER2 LOW; ICX-DIP.4) the content skip counts as a dip for the cooldown: a back jump inside the crossfade
-    fades back only once 0.6 s have passed since the skip, never two fades back to back."""
+    """(judge FLICKER2 LOW; ICX-DIP.4) the content skip counts as a dip for the cooldown of GESTURE steps: two back steps
+    inside the crossfade fade back only once 0.6 s have passed since the skip, never two fades back to back."""
     ctx, page = _to_content(browser, site_url)
     try:
         page.evaluate(_COUNT)
         page.evaluate(_WHEEL)
         page.wait_for_timeout(60)
-        page.evaluate("() => FEStory.goTo(0, {source: 'jump'})")
+        page.keyboard.press("ArrowUp")
+        page.wait_for_timeout(30)
+        page.keyboard.press("ArrowUp")
+        assert page.evaluate("() => FEStory.state().dest") == 0, "harness: two back steps did not set dest 0"
         page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 0; }", timeout=20000)
         rec = page.evaluate("() => { const r = window.__hf; window.__hf = null; return r; }")
     finally:
@@ -150,6 +153,67 @@ def test_content_skip_counts_for_the_dip_cooldown(browser, site_url):
     assert held and dips, "harness: the case needs a crossfade and then a dip"
     gap = dips[0] - held[0]
     assert gap >= 560, f"the back dip started {gap:.0f} ms after the content skip (cooldown 600 ms)"
+
+
+_JUMP_NOW = r"""(k) => new Promise((r) => { FEStory.goTo(k, {source: 'jump'}); const s0 = FEStory.state().phase;
+  requestAnimationFrame(() => r([s0, FEStory.state().phase, document.querySelectorAll('.stage-wrap').length])); })"""
+
+
+@pytest.mark.parametrize("k", [4, 0], ids=["far-forward", "back"])
+def test_jump_mid_crossfade_starts_at_once(browser, site_url, k):
+    """(main's ruling 2026-10-17, "feel instant") a rail / menu / Home-End / popstate jump (FEStory.goTo, as rail.js
+    calls it) ~100 ms into a Look skip's crossfade starts its own transition (the dip) in the same frame: the skip's
+    cooldown holds gesture steps only."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(100)
+        n0 = page.evaluate(_HELD)
+        p0, p1, n1 = page.evaluate(_JUMP_NOW, k)
+        page.wait_for_function(f"() => {{ const s = FEStory.state(); return s.phase === 'rest' && s.rendered === {k}; }}", timeout=20000)
+    finally:
+        ctx.close()
+    assert n0 == 2, f"harness: the crossfade's held frame was not up 100 ms in ({n0} stage-wraps)"
+    assert p0 == "dip" and p1 == "dip", f"the jump's dip did not start at once: phase {p0} at the jump, {p1} a frame later"
+    assert n1 == 1, "the held frame outlived the jump"
+
+
+def test_release_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
+    """A scroll past the story's end inside the crossfade releases the pin (setReleased): the held frame goes at once."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(40)
+        n0 = page.evaluate(_HELD)
+        page.evaluate("() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })")
+        n1, _ = page.evaluate(_TWO_FRAMES)
+        phase = page.evaluate("() => FEStory.state().phase")
+    finally:
+        ctx.close()
+    assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
+    assert phase == "released", f"harness: the scroll did not release the pin (phase {phase})"
+    assert n1 == 1, f"{n1} stage-wraps two frames after a release inside the crossfade"
+
+
+def test_content_skip_resyncs_the_scroll(browser, site_url):
+    """(judge FLICKER2 LOW) the skip re-syncs scrollY to the chapter's track position, as the dip's cut does: a 1 px
+    drift inside the landing's acknowledged window (ICX-SETTLE-1) is put right by the skip."""
+    ctx, page = dipprobe.open_page(browser, f"{site_url}/", 1440, 900, "dark")
+    try:
+        page.evaluate("() => { window.__drift = null; FEStory.onLand((p) => { if (p.index === 1 && p.final) {"
+                      " window.scrollTo({ top: window.scrollY + 1, behavior: 'instant' }); window.__drift = window.scrollY; } }); }")
+        page.evaluate(_WHEEL)
+        page.wait_for_function("() => { const s = FEStory.state(); return s.rendered === 1 && s.step === 'content'; }", timeout=15000)
+        page.wait_for_timeout(1000)
+        before = page.evaluate("() => [window.scrollY, FEStory.state().trackY, FEStory.state().phase]")
+        page.evaluate(_WHEEL)
+        after = page.evaluate("() => new Promise((r) => requestAnimationFrame(() => r([window.scrollY, FEStory.state().trackY, document.querySelectorAll('.stage-wrap').length])))")
+    finally:
+        ctx.close()
+    assert before[2] != "free" and abs(before[0] - before[1]) >= 0.5, f"harness: no drift survived into the content {before}"
+    assert after[2] == 2, "harness: no crossfade"
+    # state().trackY follows dest (now k + 1); the skip re-syncs to the rendered chapter's position, before[1]
+    assert abs(after[0] - before[1]) < 0.5, f"scrollY {after[0]} vs Look's track {before[1]} after the skip: not re-synced"
 
 
 _HIDE = r"""() => { window.__rafQ = []; window.__raf0 = window.requestAnimationFrame;
