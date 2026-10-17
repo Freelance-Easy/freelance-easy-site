@@ -1262,7 +1262,12 @@
   }
   function onJump(target, src, info) {
     if (!TL || !CP.length || held) return;
-    jump(target === "first" ? 0 : last(), "jump");
+    const k = target === "first" ? 0 : last();
+    // (INT5-fix 4; Sol INT-5) through story-url.js's jump path when it is there (as the rail and the menu): it saves the
+    // departing offset BEFORE a re-entry from a native section moves the page, so Back returns to the reader's pixel
+    const U = window.FEStoryURL;
+    if (U && typeof U.jump === "function" && U.jump(SLUG[CP[k]])) return;
+    jump(k, "jump");
   }
   // let the gesture pass natively (true) or intercept it: the edges (ICX-RELEASE, ICX-BACK.5), FREE's clamp (ICX-SETTLE-5),
   // the crossing from below (ICX-SETTLE-8), and overlays
@@ -1276,6 +1281,7 @@
         const dy = ev.deltaY * (ev.deltaMode === 1 ? 33.3 : ev.deltaMode === 2 ? window.innerHeight : 1);
         if (y + dy >= end) return true;                 // still below the pin: native
         reenter();                                      // the crossing event: prevented, REST(last), the rest swallowed
+        reentered();
         swallow = info.gesture;
         return false;
       }
@@ -1375,8 +1381,12 @@
     jump(b, "settle");
     // a touch / momentum re-entry lands on REST(last) with no new landing (kR was already the last pinned): it is
     // still a final landing for ICX-KEY.2 (Sol C6-sol-1 #3); a sticky continuation of it says nothing again
-    if (back && b === last() && kR === last() && kD === kR) announce(kR);
+    if (back && b === last() && kR === last() && kD === kR) { announce(kR); reentered(); }
   }
+  // (INT5-fix 6; Astra INT-5) a re-entry from below is a final landing on the last pinned with no landing of its own (kR
+  // already was the last pinned): story-url.js writes its URL like any FREE settle's (ICX-HIST.8), or the address kept
+  // the native section's (#price) the reader came from. reentry: true marks it (a URL that already names it: no write)
+  function reentered() { emit("land", payload(kR, "settle", { final: true, reentry: true })); }
   function onScroll() {
     if (!TL || !CP.length || held || !motion()) return;
     const y = window.scrollY, t = performance.now();
@@ -1396,9 +1406,9 @@
   // still under way cancels that scroll (an instant scroll ends a smooth one), puts back the place the scroll left (its
   // FREE episode, or the release it caused, never happened) and then jumps from there: no settle undoes the dip, no stray
   // release at the native target.
-  function startNative() {
+  function startNative(aim) {
     if (native) clearTimeout(native.timer);
-    native = { phase0: native ? native.phase0 : phase, k: native ? native.k : kR, timer: setTimeout(endNative, 2500) };
+    native = { phase0: native ? native.phase0 : phase, k: native ? native.k : kR, aim, timer: setTimeout(endNative, 2500) };
   }
   function endNative() { if (native) { clearTimeout(native.timer); native = null; } }
   function stopNative() {
@@ -1566,12 +1576,14 @@
   // hash is the engine's: saved on pagehide (the checkpoint in the pin, or the distance below it) and re-applied by
   // init() after layout. Per tab (sessionStorage), this page only; a new visit (navigate) never reads it.
   const PLACE_KEY = "fe-story-place";
+  const entryK = () => { const s = history.state; return s && typeof s === "object" && s.k ? s.k : null; };   // story-url.js's entry key
   window.addEventListener("pagehide", () => {
     try {
       if (!TL || !CP.length || !motion()) { sessionStorage.removeItem(PLACE_KEY); return; }
       const below = phase === "released" || window.scrollY > storyEnd() + 1;
       const p = below ? { past: Math.round(window.scrollY - storyEnd()) } : { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR] };
       p.path = location.pathname; p.cp = CP.join();
+      p.h = location.hash; p.k = entryK();             // (INT5-fix 5) the entry left: its URL's chapter and its key
       sessionStorage.setItem(PLACE_KEY, JSON.stringify(p));
     } catch (e) { /* storage off: the page starts on its first chapter */ }
   });
@@ -1603,8 +1615,19 @@
     const b = LEGACY[h] || BEATS.find((x) => SLUG[x] === h) || null;
     const nt = navType();
     kR = kD = 0; shown = RE[0][1]; phase = "rest";
+    const saved = savedPlace();                        // read once: savedPlace() removes the record
     if (b && CP.includes(b)) {
       const k = CP.indexOf(b);
+      // (INT5-fix 5; Sol + Astra INT-5) a reload / history visit of the SAME entry the reader left below the story (scrolled
+      // past it into the footer: the URL still names the chapter it was released from): that same distance past it, not
+      // the chapter's rest frame. A fresh visit (navigate), another entry or another URL lands on the chapter.
+      if (nt !== "navigate" && saved && saved.past != null && saved.cp === CP.join() && saved.path === location.pathname &&
+          saved.h === location.hash && (saved.k || null) === entryK()) {
+        phase = "released"; kR = kD = last(); shown = RE[kR][1];
+        keepPast(Math.max(2, saved.past));
+        initial = { index: bi(kR), source: "restored" };
+        return;
+      }
       kR = kD = k; srcD = "init";
       initial = { index: BEATS.indexOf(b), source: nt === "navigate" ? "init" : nt };
       syncScroll(trackY(k));
@@ -1621,7 +1644,6 @@
       initial = { index: BEATS.indexOf(b), source: "native" };
       return;
     }
-    const saved = savedPlace();
     if (saved && nt !== "navigate" && saved.path === location.pathname) {
       if (saved.past != null && saved.cp === CP.join()) {   // below the pin: the same distance past it
         phase = "released"; kR = kD = last(); shown = RE[kR][1];
@@ -1648,6 +1670,11 @@
   // reading place is restorePlace's job.
   function start(firstLoad, keep, pre) {
     dropRebuild(pre);                                   // any other (re)start supersedes a theme rebuild in flight
+    // (INT5-fix 3; Astra INT-5) a native row's smooth scroll still in flight (the tablet menu's Price, then the theme
+    // toggled): the reader asked to go there, so the rebuild carries it through to its target. The snapshot's place is
+    // the scroll's mid-way FREE / release, and restoring it (an instant scroll) ended the smooth one at the pinned origin
+    // while story-url.js's arrival still pushed the target's URL.
+    const nat = native && typeof native.aim === "number" ? native : null;
     try {
       resetEngine();
       layoutKey = key();
@@ -1670,7 +1697,13 @@
       if (keep && keep.cp === CP.join()) {
         kR = Math.max(0, CP.indexOf(keep.beat)); kD = Math.max(0, CP.indexOf(keep.dest));
         const pl = placeIn(keep.id, keep.u);
-        if (keep.phase === "released") {
+        if (nat) {
+          // the engine as the native jump had it (its origin's rest; released if it began below), the page left to the
+          // scroll, which is asked again for the same target (smooth: it carries on from wherever it is now)
+          kR = kD = nat.phase0 === "released" ? last() : nat.k; shown = RE[kR][1]; phase = nat.phase0 === "released" ? "released" : "rest";
+          window.scrollTo({ top: nat.aim, behavior: "smooth" });
+          startNative(nat.aim);
+        } else if (keep.phase === "released") {
           phase = "released"; kR = kD = last(); shown = RE[kR][1];
           if (keep.past != null) keepPast(keep.past);
         } else if (keep.phase === "rest" || !pl) {
@@ -1941,7 +1974,7 @@
       // opts.y (RELOAD): Back to a native entry lands on the pixel the reader left (story-url.js), not the anchor
       const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
       window.scrollTo({ top: Math.max(0, Math.round(to)), behavior: smooth ? "smooth" : "instant" });
-      if (smooth && TL && motion() && CP.length && !held) startNative();
+      if (smooth && TL && motion() && CP.length && !held) startNative(Math.max(0, Math.round(to)));
       return true;
     }
     jump(CP.indexOf(b), source);
