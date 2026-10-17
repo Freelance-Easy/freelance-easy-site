@@ -1,97 +1,300 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark light">
+<html lang="en" class="no-js" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>Watch the tour · Freelance Easy</title>
+    <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
+    <link rel="canonical" href="https://freelance-easy.com/tour/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Watch the tour · Freelance Easy">
+    <meta property="og:description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
+    <meta property="og:url" content="https://freelance-easy.com/tour/">
+    <meta property="og:image" content="https://freelance-easy.com/assets/tour/og-tour.png">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
+    <script>
+      (function () {
+        // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
+        // then this visit's theme from /mac (fe-theme-visit, the audio pages' contract), else dark
+        var d = document.documentElement, t = null, h = location.hash.slice(1);
+        if (h === "dark" || h === "light") t = h;
+        if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+        d.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        var calm = false;
+        try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { calm = false; }
+        // a short touch screen (a phone with its browser bars, or any phone held sideways: under 600 px of small
+        // viewport) gets the stacked beats too: a pinned stage plus its caption would leave a thumbnail. Touch only
+        // (pointer: coarse), so a desktop window is never affected. site.js re-checks on rotation (the same test).
+        var short = false;
+        if (!calm) {
+          try {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              var pr = document.createElement("div");
+              pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+              d.appendChild(pr);
+              var sv = pr.getBoundingClientRect().height || window.innerHeight;
+              d.removeChild(pr);
+              short = sv < 600;
+            }
+          } catch (e) { short = false; }
+        }
+        d.classList.remove("no-js");
+        d.classList.add("js", calm || short ? "calm" : "motion");
+        if (short) d.classList.add("short-touch");
+        // a safety net: if the engine never comes up, the beats fall back to their stacked, static layout
+        setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
+      })();
+    </script>
+    <!-- fe-classic (K1): the visitor's remembered view decides calm or motion before the first paint, over the
+         reduced-motion query: "1" = Classic (calm), "0" = the story. A short touch screen stays calm either way, and is
+         marked calm-auto (the Classic switch is not shown there: calm is automatic). -->
+    <script>
+      (function () {
+        var d = document.documentElement, c = null, short = false;
+        try {
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            var pr = document.createElement("div");
+            pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+            d.appendChild(pr);
+            short = (pr.getBoundingClientRect().height || window.innerHeight) < 600;
+            d.removeChild(pr);
+          }
+        } catch (e) { short = false; }
+        if (short) d.classList.add("calm-auto");
+        try { c = localStorage.getItem("fe-classic"); } catch (e) { c = null; }
+        if (c !== "1" && c !== "0") return;
+        if (!d.classList.contains("motion") && !d.classList.contains("calm")) return;
+        // "1": calm, as site.js's setClassic(true) leaves it (Classic by choice, not a short touch screen)
+        if (c === "1") { d.classList.remove("motion", "short-touch"); d.classList.add("calm"); return; }
+        // "0": only a page made calm by the reduced-motion query turns to the story, never a short touch screen
+        if (!d.classList.contains("calm")) return;
+        if (short) { d.classList.add("short-touch"); return; }
+        d.classList.remove("calm"); d.classList.add("motion");
+      })();
+    </script>
+    <!-- /fe-classic -->
+    <link rel="stylesheet" href="/assets/shared/theme.css" />
+    <script src="/assets/shared/theme.js"></script>
+    <link rel="stylesheet" href="/assets/site/shell.css" />
+    <script src="/assets/site/shell.js" defer></script>
+    <script src="/assets/story/story-url.js" defer></script>
+    <!-- /fe-shell:head -->
+    <script>
+      (function () {
+        // (TOUR) the tour's own hash flags, after the shared head: the shell reads #light / #dark alone; the tour also
+        // reads them among other flags (#light&reduced&email), as it always has. Then fe-theme, then fe-theme-visit.
+        var t = null, f = location.hash.slice(1).split(/[&,]/);
+        if (f.indexOf("light") >= 0) t = "light"; else if (f.indexOf("dark") >= 0) t = "dark";
+        if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      })();
+    </script>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="proto.css">
+    <!-- (K1) the Classic switch: classic.js fills the bar's slot (inside .tour-header); proto.js stops the tour on it -->
+    <script src="/assets/shared/classic.js" defer></script>
+    <script src="release-screens.js" defer></script>
+    <script src="fe-motion.js" defer></script>
+    <script src="proto.js" defer></script>
+    <script src="/assets/story/download.js" defer></script>
+  </head>
+  <body data-page="tour">
+    <!-- (TOUR) the shared slim bar; .tour-header (display: contents) is how classic.js and proto.js find the tour's bar -->
+    <div class="tour-header">
+<header class="site-header">
+  <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
+  <link rel="stylesheet" href="/assets/story/dl-status.css">
   <script>
-    (function () {
-      // the theme, before the first paint (the site's contract, as on /audio and the homepage): #light / #dark first
-      // (the homepage's dialog passes its theme so), then the visitor's stored choice (fe-theme), then this visit's
-      // theme from /mac (fe-theme-visit), else dark
-      var t = null, f = location.hash.slice(1).split(/[&,]/);
-      if (f.indexOf("light") >= 0) t = "light"; else if (f.indexOf("dark") >= 0) t = "dark";
-      if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
-      if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
-      document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
-    })();
+      /* (BX) a Mac or Windows desktop, decided like download.js's detectPlatform, before the first paint, ahead of the nav it sizes */
+      (function () {
+        var u = (navigator.userAgent || "").toLowerCase(), p = (navigator.platform || "").toLowerCase();
+        if (/iphone|ipod|ipad|android|windows phone/.test(u)) return;
+        var mac = /mac/.test(p) || /mac os x|macintosh/.test(u);
+        if (mac && navigator.maxTouchPoints > 1) return;
+        var win = !mac && (/win/.test(p) || /windows/.test(u));
+        if (mac || win) document.documentElement.setAttribute("data-dl-os", mac ? "mac" : "win");
+      })();
   </script>
-  <title>Watch the tour · Freelance Easy</title>
-  <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
-  <link rel="canonical" href="https://freelance-easy.com/tour/">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Watch the tour · Freelance Easy">
-  <meta property="og:description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
-  <meta property="og:url" content="https://freelance-easy.com/tour/">
-  <meta property="og:image" content="https://freelance-easy.com/assets/tour/og-tour.png">
-  <link rel="stylesheet" href="proto.css">
-  <link rel="stylesheet" href="/assets/shared/theme.css">
-  <script src="/assets/shared/theme.js" defer></script>
-  <!-- (K1) the Classic switch: beside the theme toggle; classic.js fills the slot, proto.js stops the tour on it -->
-  <style>
-    .tour-header .theme-toggle { margin-left: auto; }
-    .tour-header [data-classic-slot] { display: flex; margin-left: -12px; }
-    .tour-header [data-classic-slot]:empty { display: none; }
-    @media (max-width: 600px) { .tour-header [data-classic-slot] { margin-left: -4px; } }   /* proto.css: the gap is 8 px there */
-    .classic-toggle { width: 40px; height: 40px; display: grid; place-items: center; flex: none; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
-    .classic-toggle:hover, .classic-toggle[aria-pressed="true"] { color: var(--ink); background: var(--line); }
-    .classic-toggle svg { width: 16px; height: 16px; }
-    .classic-toggle .classic-label { display: none; }
-    @media (min-width: 1024px) {
-      .classic-toggle { width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px 0 12px; font: inherit; font-size: 13px; font-weight: 500; }
-      .classic-toggle .classic-label { display: inline; }
-    }
-  </style>
-  <script src="/assets/shared/classic.js" defer></script>
-  <script src="release-screens.js" defer></script>
-  <script src="fe-motion.js" defer></script>
-  <script src="proto.js" defer></script>
-</head>
-<body>
-  <main class="tour-page">
-    <header class="tour-header">
-      <a class="back" href="/">← Back to the homepage</a>
+  <!-- (B4) the slim bar (DEC-1): site-level actions only. No link here jumps inside the story: the chapter rail is the
+       page's own menu (B5). Sticky, never hides, 56 px (assets/site/shell.css). -->
+  <div class="shell">
+    <a class="brand" href="/" aria-label="Freelance Easy home"><!-- NEW COPY (aria-label) -->
+      <img src="/assets/story/fe-mark.png" alt="" width="28" height="28">
+      <span>Freelance Easy</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <!-- "How it works" is the full tour, available at will (DEC-3) -->
+      <a href="/tour/">How it works</a><!-- NEW COPY (nav label) -->
+      <a href="/pricing">Pricing</a>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6) -->
+      <a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a><!-- NEW COPY (nav label) -->
+      <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
+           and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
+      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden><!-- (BX) the words download.js will put here, held invisibly so the fill moves nothing (dl-status.css); keep them equal to NOTES in download.js (tests/shell/test_bar_polish.py checks) --><span data-ph="mac"><span class="dl-note-part">Apple Silicon Macs</span><span class="dl-note-sep"> </span><span class="dl-note-part">(M1 or later)</span></span><span data-ph="win"><span class="dl-note-part">Windows 10 and 11</span><span class="dl-note-sep">, </span><span class="dl-note-part">64-bit</span></span></span><!-- NEW COPY -->
+      <a class="nav-cta" href="/install" data-dl data-placement="header" data-platforms="mac,win">Download</a>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
         <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
         <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
       </button>
-      <span class="tour-classic-slot" data-classic-slot></span>
-    </header>
-    <section class="intro" aria-labelledby="tour-title">
-      <p class="eyebrow">Freelance Easy · Desktop app</p>
-      <h1 id="tour-title">Watch the tour</h1>
-      <!-- NEW COPY (legal v-story) -->
-      <p>Follow an invoice from sign-in to marking it paid, using fictional data.</p>
-    </section>
-    <section class="player" aria-label="Freelance Easy walkthrough">
-      <div class="frame-surround">
-        <div class="frame-top"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Freelance Easy</span><span class="fictional">Fictional data</span></div>
-        <div class="pframe-box" id="pframe-box">
-          <iframe id="app-frame" title="Example of the released Freelance Easy app" width="1440" height="900" inert tabindex="-1" aria-hidden="true"></iframe>
-        </div>
+      <!-- (B4) slots, empty until their pieces fill them (shell.css hides an empty slot): K1's classic switch beside the
+           theme toggle, B6's phone/tablet menu button -->
+      <span class="fe-shell-slot" data-classic-slot></span>
+      <span class="fe-shell-slot" data-menu-slot></span>
+    </nav>
+    <script>
+      /* (K1) the Classic view switch, on the story page only, put in its slot as the parser passes (before the first
+         paint, so it never shifts the bar in); assets/shared/classic.js wires it. Hidden where calm is automatic
+         (html.calm-auto, head.html). The doc pages keep the slot empty. */
+      (function () {
+        if (!document.body || document.body.getAttribute("data-page") !== "home") return;
+        var s = document.querySelector(".site-header [data-classic-slot]"), d = document.documentElement, on = false;
+        if (!s || s.firstChild) return;
+        try { var c = localStorage.getItem("fe-classic"); on = c === "1" ? true : c === "0" ? false : window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { on = false; }
+        s.innerHTML = '<button type="button" class="classic-toggle" data-classic-toggle aria-pressed="' + on + '" aria-label="Classic view" title="Classic view">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="2" /><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" /></svg>' +
+          '<span class="classic-label">Classic</span></button>';   // NEW COPY (aria-label, tooltip, bar label)
+        if (d.classList.contains("calm-auto")) s.firstChild.hidden = true;
+      })();
+    </script>
+  </div>
+  <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
+</header>
+    </div>
+<!-- (B6) the phone/tablet menu sheet. Its button goes in the bar's [data-menu-slot] (the script below moves it there
+     before the first paint); shell.js opens and closes the sheet, fills the chapter list from FEStory.destinations (the
+     rail's source, rail.js) and hands a chapter tap to FEStoryURL.jump / FEStory.goTo. shell.css shows the button where
+     the bar has dropped How it works and Pricing (< 640 px) and, on the story page, wherever the chapter rail is hidden
+     (< 1024 px). Without JS the button stays hidden (.js gate in shell.css): no dead control; the footer keeps the links. -->
+<button type="button" class="fe-menu-btn" data-menu-open aria-controls="fe-menu" aria-expanded="false" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <svg class="fe-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path class="fe-menu-bars" d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" /><path class="fe-menu-x" d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
+</button>
+<script>
+  (function () {
+    var b = document.querySelector("[data-menu-open]"), s = document.querySelector(".site-header [data-menu-slot]");
+    if (b && s && b.parentNode !== s) s.appendChild(b);
+  })();
+</script>
+<dialog class="fe-menu" id="fe-menu" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <div class="fe-menu-panel">
+    <nav class="fe-menu-site" aria-label="Site"><!-- NEW COPY (aria-label) -->
+      <ul>
+        <li><a href="/tour/">How it works</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <!-- web sign-up is paused: exactly as the bar's Sign in (header.html), shown with its href only when shell.js's
+             web-signup flag is on -->
+        <li><a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a></li>
+      </ul>
+    </nav>
+    <nav class="fe-menu-chapters" aria-labelledby="fe-menu-chapters-h" hidden>
+      <p class="fe-menu-label" id="fe-menu-chapters-h">Chapters</p><!-- NEW COPY -->
+      <ol></ol>
+    </nav>
+    <button type="button" class="fe-menu-close" data-menu-close>Close</button><!-- NEW COPY -->
+  </div>
+</dialog>
+    <main class="doc tour-page">
+      <div class="shell">
+        <section class="tour-intro" aria-labelledby="tour-title">
+          <!-- NEW COPY --><p class="tour-eyebrow">How it works</p>
+          <!-- NEW COPY --><h1 id="tour-title">One invoice, from sign-in to paid.</h1>
+          <!-- NEW COPY --><p class="tour-lead">Play it through, or pick any step. All data shown is fictional.</p>
+        </section>
+        <section class="tour-stage" aria-label="Freelance Easy walkthrough">
+          <div class="frame-surround">
+            <div class="frame-top"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Freelance Easy</span><span class="fictional">Fictional data</span></div>
+            <div class="pframe-box" id="pframe-box">
+              <iframe id="app-frame" title="Example of the released Freelance Easy app" width="1440" height="900" inert tabindex="-1" aria-hidden="true"></iframe>
+              <!-- (TOUR) the poster: the frame is never an empty box. It holds the play button from the first paint, over
+                   the tour's last screen once the frame is ready; proto.js hides it on the first play or chapter pick. -->
+              <div class="poster" id="poster">
+                <button type="button" class="poster-play" id="poster-play" aria-label="Play tour">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+                </button>
+                <!-- NEW COPY --><p class="poster-label">Play the tour <span>1:20</span></p>
+              </div>
+              <!-- (TOUR) the end: watch again, or get the app -->
+              <div class="end-card" id="end-card" hidden>
+                <button type="button" id="replay" class="btn tour-btn-quiet">Watch again</button>
+                <!-- NEW COPY --><a class="btn btn-primary" href="#get-the-app">Get the app</a>
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <button type="button" id="play" class="play" aria-label="Play tour">
+              <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+              <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.5v13H7zM13.5 5.5H17v13h-3.5z" fill="currentColor" /></svg>
+              <span class="play-label">Play</span>
+            </button>
+            <div class="progress" id="progress" role="progressbar" aria-label="Tour progress" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><span id="progress-fill"></span></div>
+            <span class="time" id="time">0:00 / 1:20</span>
+          </div>
+          <div class="caption" aria-live="polite" aria-atomic="true">
+            <p class="caption-title" id="caption-title">Sign in</p>
+            <!-- NEW COPY --><p id="caption">Sign in with Google, then finish signing in in your browser.</p>
+          </div>
+          <!-- NEW COPY --><p class="player-note" id="player-note">1 min 20 sec · Space to play or pause</p>
+          <!-- (TOUR) the chapters, rail-style (B5's look, this page's own rules in proto.css): names only, no counter;
+               the current one is aria-current, brighter and a step bigger -->
+          <nav class="tour-steps" aria-label="Tour chapters">
+            <ol class="chapters" id="chapters">
+              <li><button type="button" data-chapter="0" aria-current="step"><span class="tk" aria-hidden="true"></span><span class="nm">Sign in</span></button></li>
+              <li><button type="button" data-chapter="1"><span class="tk" aria-hidden="true"></span><span class="nm">Your name</span></button></li>
+              <li><button type="button" data-chapter="2"><span class="tk" aria-hidden="true"></span><span class="nm">Dashboard</span></button></li>
+              <li><button type="button" data-chapter="3"><span class="tk" aria-hidden="true"></span><span class="nm">Invoices</span></button></li>
+              <li><button type="button" data-chapter="4"><span class="tk" aria-hidden="true"></span><span class="nm">New invoice</span></button></li>
+              <li><button type="button" data-chapter="5"><span class="tk" aria-hidden="true"></span><span class="nm">Email</span></button></li>
+              <li><button type="button" data-chapter="6"><span class="tk" aria-hidden="true"></span><span class="nm">Paid</span></button></li>
+            </ol>
+          </nav>
+        </section>
+        <noscript><p class="tour-noscript">This tour needs JavaScript to show the app screens.</p></noscript>
+        <!-- (TOUR) the clear end, as the homepage ends: its heading, buttons and trial line, verbatim -->
+        <section class="tour-end" id="get-the-app" aria-labelledby="tour-end-title">
+          <img src="/assets/story/fe-mark.png" alt="" width="56" height="56">
+          <h2 id="tour-end-title">Invoice your next client <span class="tone">for $5 a month.</span></h2>
+          <div class="cta-row" data-dl data-placement="tour-end">
+            <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac">
+              <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-icon="mac"><path d="M11.18 8.43c-.02-2.04 1.66-3.02 1.74-3.07-.95-1.39-2.43-1.58-2.95-1.6-1.26-.13-2.45.74-3.09.74-.65 0-1.63-.72-2.68-.7-1.38.02-2.65.8-3.36 2.04C-.6 8.4.43 12 1.85 13.97c.7.97 1.52 2.06 2.6 2.02 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.62.68 2.73.66 1.13-.02 1.84-.99 2.53-1.97.8-1.13 1.13-2.23 1.15-2.29-.03-.01-2.2-.84-2.22-3.32-.02-2.07 1.69-3.07 1.77-3.12-.97-1.42-2.47-1.58-2.99-1.62zM9.27 2.42c.57-.7.96-1.66.85-2.62-.83.04-1.83.55-2.42 1.24-.53.62-1 1.6-.87 2.54.93.07 1.87-.46 2.44-1.16z"/></svg>
+              <span data-label>Download for Mac</span>
+            </a>
+            <a class="tour-link-quiet" data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>
+          </div>
+          <p class="tour-disclose">Free for seven days, with every feature and no card.</p>
+          <p class="tour-fine"><span data-support="mac">For Apple Silicon Macs, M1 or later, running macOS 12 Monterey or later. Intel Macs aren't supported. The app is signed with an Apple Developer ID and notarized by Apple.</span><span data-support="win">For Windows 10 and 11, 64-bit. The installer isn't code-signed yet, so Windows shows a security warning the first time you open it.</span><span data-support="mobile">Runs on Apple Silicon Macs (M1 or later) and Windows 10 or 11. Send yourself the link and download it there.</span><span class="dl-status" data-share-status data-for="tour-end" aria-live="polite"></span></p>
+          <!-- NEW COPY --><p class="tour-more"><a href="/pricing">See pricing</a></p>
+        </section>
       </div>
-      <div class="controls">
-        <button type="button" id="play" class="play" aria-label="Play tour">▶ <span>Play</span></button>
-        <div class="progress" id="progress" role="progressbar" aria-label="Tour progress" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><span id="progress-fill"></span></div>
-        <span class="time" id="time">0:00 / 1:20</span>
-        <button type="button" id="replay" hidden>Watch again</button>
-      </div>
-      <ol class="chapters" id="chapters" aria-label="Tour chapters">
-        <li><button type="button" data-chapter="0" aria-current="step"><i></i>Sign in</button></li>
-        <li><button type="button" data-chapter="1"><i></i>Your name</button></li>
-        <li><button type="button" data-chapter="2"><i></i>Dashboard</button></li>
-        <li><button type="button" data-chapter="3"><i></i>Invoices</button></li>
-        <li><button type="button" data-chapter="4"><i></i>New invoice</button></li>
-        <li><button type="button" data-chapter="5"><i></i>Email</button></li>
-        <li><button type="button" data-chapter="6"><i></i>Paid</button></li>
-      </ol>
-      <div class="caption" aria-live="polite" aria-atomic="true"><span id="caption-number">01 / 07</span><!-- NEW COPY --><p id="caption">Sign in with Google, then finish signing in in your browser.</p></div>
-      <!-- NEW COPY --><p class="player-note" id="player-note">1 min 20 sec · Space to play or pause</p>
+    </main>
+<footer class="site-footer fe-shell-footer">
+  <div class="shell">
+    <!-- the footnotes block (B2): the site's fine print, collected here; page-specific notes join this list -->
+    <section class="fe-shell-footnotes" aria-label="Footnotes">
+      <!-- NEW COPY --><p class="fe-shell-footnote" data-footnote="fictional">Clients, invoices and amounts in the demos, screenshots and tour are fictional.</p>
     </section>
-    <noscript><p>This tour needs JavaScript to show the app screens.</p></noscript>
-  </main>
-  <!-- Captions are the tour's presentation copy; app copy is released markup. -->
-  <template id="caption-copy">
+    <a class="brand" href="#top"><img src="/assets/story/fe-mark.png" alt="" width="22" height="22"><span>Freelance Easy</span></a>
+    <ul class="foot-links">
+      <li><a href="/install">Download</a></li>
+      <li><a href="/tour/">Watch the tour</a></li>
+      <li><a href="/install">Installation help</a></li>
+      <li><a href="/releases"><span class="version">v0.3.2-beta</span> on GitHub</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/terms">Terms</a></li>
+      <li><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></li>
+      <!-- web billing is paused: shell.js shows this, and gives it its href, only when its web-billing flag is on
+           (web-account contract § 6); /account does not exist yet, so the off state ships no link to it -->
+      <li data-flag="web-billing" hidden><a data-flag-href="/account">Manage subscription</a></li>
+    </ul>
+    <p class="foot-meta">© 2026 Freelance Easy LLC</p>
+  </div>
+</footer>
+    <!-- Captions are the tour's presentation copy; app copy is released markup. -->
+    <template id="caption-copy">
     <!-- NEW COPY --><p>Sign in with Google, then finish signing in in your browser.</p>
     <!-- NEW COPY --><p>Set the name that appears on your invoices.</p>
     <!-- NEW COPY --><p>The dashboard shows collected, outstanding, and overdue amounts.</p>
@@ -100,5 +303,5 @@
     <!-- NEW COPY --><p>Review the invoice and send it once email is set up.</p>
     <!-- NEW COPY --><p>Mark the invoice paid, then return to the updated dashboard.</p>
   </template>
-</body>
+  </body>
 </html>

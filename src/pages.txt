@@ -1,3 +1,5 @@
 # Pages added after the cutover (scripts/build-site.py builds these plus its own PAGES list).
 # One file name from src/pages/ per line.
 pricing.html
+# (TOUR) /tour/ on the shared shell; tour/quick/ stays hand-written (it 301s to /tour/, B12)
+tour/index.html

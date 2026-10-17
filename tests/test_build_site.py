@@ -214,6 +214,51 @@ def test_added_pages_declared_in_pages_txt(tmp_path):
         assert r.returncode == 1 and why in r.stderr, (listing, r.stderr)
 
 
+def test_folder_index_page(tmp_path):
+    """(TOUR) a page served from a folder, declared as <dir>/index.html in pages.txt, builds into <out>/<dir>/; the
+    missing / stray / symlink guards cover it, and nothing deeper than one folder or other than index.html is accepted."""
+    src = fixture_src(tmp_path)
+    (src / "pages" / "tour").mkdir()
+    (src / "pages" / "tour" / "index.html").write_bytes(b"<main>\n<!-- #include partials/footer.html -->\n</main>\n")
+    (src / "pages.txt").write_bytes(b"tour/index.html\n")
+    out = tmp_path / "out"
+    r = run_build("--src", src, "--out", out)
+    assert r.returncode == 0, r.stderr
+    built = (out / "tour" / "index.html").read_bytes()
+    assert built.startswith(b"<main>\n") and b"#include" not in built and b"<footer" in built
+    assert run_build("--src", src, "--out", out, "--check").returncode == 0
+    # a hand edit to the folder page is drift, named by its path
+    (out / "tour" / "index.html").write_bytes(built + b"<!-- hand edit -->\n")
+    r = run_build("--src", src, "--out", out, "--check")
+    assert r.returncode == 1 and "tour/index.html" in r.stdout, r.stdout
+    # a folder source with no declaration is refused, not skipped
+    (src / "pages.txt").write_bytes(b"# nothing\n")
+    r = run_build("--src", src, "--out", tmp_path / "o2")
+    assert r.returncode == 1 and "tour/index.html" in r.stderr, r.stderr
+    # names: one folder, index.html only
+    for listing in (b"tour/other.html\n", b"a/b/index.html\n", b"../index.html\n", b"/tour/index.html\n", b"Tour/index.html\n"):
+        (src / "pages.txt").write_bytes(listing)
+        r = run_build("--src", src, "--out", tmp_path / "o3")
+        assert r.returncode == 1 and "not a page name" in r.stderr, (listing, r.stderr)
+    # a folder inside a page folder is refused (its sources would never be seen)
+    (src / "pages.txt").write_bytes(b"tour/index.html\n")
+    (src / "pages" / "tour" / "deeper").mkdir()
+    (src / "pages" / "tour" / "deeper" / "index.html").write_bytes(b"<p>deep</p>\n")
+    r = run_build("--src", src, "--out", tmp_path / "o4")
+    assert r.returncode == 1 and "one level deep" in r.stderr, r.stderr
+    shutil.rmtree(src / "pages" / "tour" / "deeper")
+    # a symlinked page folder is refused
+    elsewhere = tmp_path / "elsewhere-tour"
+    shutil.move(str(src / "pages" / "tour"), elsewhere)
+    (src / "pages" / "tour").symlink_to(elsewhere, target_is_directory=True)
+    r = run_build("--src", src, "--out", tmp_path / "o5")
+    assert r.returncode == 1 and "symlink" in r.stderr, r.stderr
+    # ... and named as a symlink when it is found, before any declaration is looked at
+    (src / "pages.txt").write_bytes(b"# nothing\n")
+    r = run_build("--src", src, "--out", tmp_path / "o6")
+    assert r.returncode == 1 and "symlink" in r.stderr, r.stderr
+
+
 def test_repo_declares_its_added_pages():
     """The repo's own src/ builds the cutover pages plus everything src/pages.txt adds (/pricing: PR-1)."""
     r = run_build("--check")

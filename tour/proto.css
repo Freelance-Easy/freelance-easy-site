@@ -1,66 +1,207 @@
-/* Presentation layer adapted from ../app/proto.css. App styles live inside the inert frame. */
-@font-face { font-family: Inter; font-style: normal; font-weight: 300 700; font-display: swap; src: url('fonts/Inter-Variable-latin.woff2') format('woff2'); }
-:root { --stage: #080a0f; --ink: #edf0f6; --muted: #929aaa; --line: #252a34; --panel: #11151c; --accent: #b9cddd; color-scheme: dark; }
-:root[data-theme="light"] { --stage: #f4f5f6; --ink: #171d27; --muted: #616b79; --line: #d7dce3; --panel: #fff; --accent: #36556f; color-scheme: light; }
-* { box-sizing: border-box; }
-html { min-width: 0; background: var(--stage); }
-body { margin: 0; color: var(--ink); font: 14px/1.6 Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-body, .frame-top, button { transition: background-color 240ms ease, color 240ms ease, border-color 240ms ease; }
-.tour-page { width: min(1100px, calc(100% - 64px)); margin: 0 auto; padding: 32px 0 42px; }
-a { color: inherit; text-decoration: none; }
-a:hover { text-decoration: underline; }
-.tour-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.back { color: var(--muted); font-size: 12px; }
-button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 8px 14px; }
-button:hover { border-color: var(--muted); }
-button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-/* the theme toggle (2026-10-12): the site's one round icon button (styles.css .theme-toggle), moon in dark, sun in light */
-.theme-toggle { width: 40px; height: 40px; display: grid; place-items: center; flex: none; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--muted); }
-.theme-toggle:hover { color: var(--ink); background: var(--line); }
-.theme-toggle svg { width: 16px; height: 16px; }
-.theme-toggle .icon-sun, :root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
-:root[data-theme="light"] .theme-toggle .icon-sun { display: block; }
-.intro { margin: 43px 0 27px; }
-.eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .15em; color: var(--muted); margin: 0 0 9px; }
-h1 { font-size: clamp(32px, 4vw, 46px); line-height: 1.12; font-weight: 550; letter-spacing: -.055em; margin: 0 0 12px; }
-.intro > p:last-child { color: var(--muted); margin: 0; font-size: 14px; }
-.frame-surround { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 24px 80px -35px #0008; background: var(--panel); }
-.frame-top { height: 34px; display: flex; align-items: center; gap: 13px; padding: 0 14px; font-size: 12px; color: var(--muted); }
-.window-dots { display: flex; gap: 5px; }
-.window-dots i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .35; }
-/* the legal label: the same size as the homepage stage's "Fictional data" (12.5 px) */
-.fictional { margin-left: auto; color: var(--ink); font-size: 12.5px; font-weight: 540; }
-.pframe-box { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; }
-#app-frame { display: block; width: 1440px; height: 900px; position: absolute; inset: 0; border: 0; transform-origin: 0 0; pointer-events: none; user-select: none; }
-.controls { display: flex; align-items: center; gap: 16px; margin-top: 19px; min-width: 0; }
-.play { min-width: 99px; font-size: 12px; }
-.progress { height: 3px; flex: 1; min-width: 50px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.progress > span { display: block; height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
-.time { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
-#replay { font-size: 12px; }
-[hidden] { display: none !important; }
-.chapters { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 0; margin: 18px 0 0; list-style: none; }
-.chapters button { display: flex; align-items: center; gap: 7px; color: var(--muted); border: 0; background: transparent; padding: 9px 0; font-size: 11px; border-radius: 3px; }
-.chapters i { width: 5px; height: 5px; border-radius: 50%; background: var(--line); box-shadow: 0 0 0 1px var(--muted); }
-.chapters button[aria-current] { color: var(--ink); }
-.chapters button[aria-current] i { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
-.caption { display: flex; align-items: baseline; gap: 17px; border-top: 1px solid var(--line); padding-top: 17px; margin-top: 12px; min-height: 60px; }
-.caption > span { color: var(--muted); font-size: 10px; letter-spacing: .08em; white-space: nowrap; }
-.caption p { margin: 0; font-size: 14px; }
-.player-note, .example-note { font-size: 10px; color: var(--muted); margin: 9px 0 0; }
-.example-note { opacity: 1; } /* (legal qualifier: full strength, >= 4.5:1 in both themes; axe 2026-10-08) */
-@media (max-width: 600px) {
- .tour-page { width: calc(100% - 28px); padding-top: 19px; }
- .tour-header { gap: 8px; }
- .back { font-size: 10px; }
- .intro { margin: 34px 0 22px; }
- .intro > p:last-child { font-size: 12px; max-width: 310px; }
- .controls { flex-wrap: wrap; gap: 10px; }
- .progress { min-width: 90px; }
- .play { min-width: 82px; }
- .chapters { justify-content: flex-start; gap: 0 16px; }
- .caption { gap: 12px; min-height: 73px; }
- .caption p { font-size: 12px; }
- .frame-top { padding: 0 9px; gap: 9px; }
+/* /tour/ (TOUR, 2026-10-17): the tour on the site's shell. The bar, the menu sheet and the footer are the shared
+   partials (styles.css + assets/site/shell.css); this file only lays out the page between them. Tokens only
+   (scripts/checks/token_lint.py): the site's colours, type scale, radii and spacing from styles.css. The app's own
+   styles live inside the inert frame (app.css, frame.css). The chapter list borrows the chapter rail's look (B5,
+   assets/story/rail.css: tick + name, gray idle, the current one brighter and a step bigger, no counters) with its own
+   rules here. */
+:root {
+  --tour-t: 240ms;          /* token-lint: allow (the tour's one motion length: overlays, names, ticks) */
+  --tour-steps-w: 156px;    /* the chapter column: the tick + the longest name at its current size ("New invoice") */
+  --tour-tk-a: 0.5;         /* the idle tick (>= 3:1 on the page, as the rail's --nav-a0) */
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+:root[data-theme="light"] { --tour-tk-a: 0.45; }
+
+/* main is .doc (the shell's doc-page bar, menu and footer follow body:has(> main.doc), shell.css): none of .doc's column */
+.doc.tour-page { max-width: none; margin: 0; padding: var(--s-6) 0 var(--s-9); }
+.tour-page .chapters li { margin: 0; }
+
+/* ---- the hero: what you'll see, in one line ---- */
+.tour-intro { max-width: 62em; margin-bottom: var(--s-5); }
+.tour-page .tour-eyebrow { margin: 0 0 var(--s-3); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
+.tour-intro h1 { margin: 0 0 var(--s-3); font-size: clamp(34px, 2.4vw + 18px, 48px); font-weight: 680; line-height: 1.08; letter-spacing: -0.035em; text-wrap: balance; }
+.tour-page .tour-lead { margin: 0; font-size: var(--fs-lg); line-height: 1.5; color: var(--text-1); }
+
+/* ---- the stage: the player is the centrepiece; the chapters sit beside it (desktop) or under it ---- */
+.tour-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "frame" "controls" "steps" "caption" "note";
+}
+.frame-surround { grid-area: frame; }
+.controls { grid-area: controls; }
+.tour-steps { grid-area: steps; }
+.caption { grid-area: caption; }
+.tour-page .player-note { grid-area: note; }
+@media (min-width: 1024px) {
+  .tour-stage {
+    grid-template-columns: var(--tour-steps-w) minmax(0, 1fr);
+    grid-template-areas: "steps frame" ". controls" ". caption" ". note";
+    column-gap: var(--s-7);
+  }
+  .tour-steps { align-self: center; }
+}
+
+/* the app window */
+.frame-surround { overflow: hidden; border-radius: var(--r-lg); background: var(--bg-1); box-shadow: var(--shadow-window); }
+.frame-top { height: 36px; display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-4); font-size: var(--fs-xs); color: var(--text-2); border-bottom: 1px solid var(--line-1); }
+.window-dots { display: flex; gap: 6px; }
+.window-dots i { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--line-3); }
+/* the legal label (main, Daniel 2026-10-17): as quiet as the law allows: the same words, always shown while the frame shows records, plain --text-2 (measured >= 4.5:1 on the bar behind it, both themes, see the TOUR report), 12.5 px at every width; no chip, no fade */
+.fictional { margin-left: auto; color: var(--text-2); font-size: 12.5px; font-weight: 500; }
+.pframe-box { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; background: var(--bg-2); }
+#app-frame { display: block; width: 1440px; height: 900px; position: absolute; inset: 0; border: 0; transform-origin: 0 0; pointer-events: none; user-select: none; }
+
+/* the poster and the end card: one quiet scrim over the frame, never a dialog (no glass) */
+.poster, .end-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  background: color-mix(in srgb, var(--bg-0) 58%, transparent);
+  transition: opacity var(--tour-t) var(--ease-swift), visibility 0s linear var(--tour-t);
+}
+.poster { cursor: pointer; }
+.poster.is-gone { opacity: 0; visibility: hidden; pointer-events: none; }
+.poster-play {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--ink-on);
+  box-shadow: var(--shadow-window);
+  transition: transform var(--tour-t) var(--ease-swift), background var(--tour-t) var(--ease-swift);
+}
+.poster-play svg { width: 30px; height: 30px; margin-left: 4px; }
+.poster:hover .poster-play { transform: scale(1.05); background: var(--ink-hover); }
+.tour-page .poster-label { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--text-0); }
+.poster-label span { margin-left: var(--s-2); font-weight: 500; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.end-card { flex-direction: row; flex-wrap: wrap; gap: var(--s-3); }
+.tour-btn-quiet { background: var(--bg-1); color: var(--text-0); box-shadow: 0 0 0 1px var(--line-3); }
+.tour-btn-quiet:hover { background: var(--bg-3); }
+
+/* the controls: one round-cornered play / pause, a hairline track, the time */
+.controls { display: flex; align-items: center; gap: var(--s-4); margin-top: var(--s-4); min-width: 0; }
+.play {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 40px;
+  padding: 0 var(--s-4) 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--text-0);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: background var(--tour-t) var(--ease-swift);
+}
+.play:hover { background: var(--bg-4); }
+.play svg { width: 18px; height: 18px; flex: none; }
+.play .i-pause, .play[data-state="playing"] .i-play { display: none; }
+.play[data-state="playing"] .i-pause { display: block; }
+.progress { position: relative; height: 4px; flex: 1; min-width: 60px; border-radius: var(--r-pill); background: var(--line-2); overflow: hidden; }
+.progress > span { display: block; height: 100%; border-radius: inherit; background: var(--text-0); transform: scaleX(0); transform-origin: 0 50%; }
+.time { font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--text-2); white-space: nowrap; }
+
+/* the caption: the chapter's name, then what happens in it */
+.caption { margin-top: var(--s-5); min-height: 64px; }
+.tour-page .caption-title { margin: 0 0 var(--s-1); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.012em; color: var(--text-0); }
+.caption p:not(.caption-title) { margin: 0; max-width: 60ch; font-size: var(--fs-md); line-height: 1.55; color: var(--text-1); }
+.tour-page .player-note { margin: var(--s-3) 0 0; font-size: var(--fs-xs); color: var(--text-2); }
+
+/* ---- the chapters, rail-style ---- */
+.tour-page .chapters { list-style: none; margin: 0; padding: 0; }
+.chapters button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 var(--s-2) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: var(--r-sm);
+  transition: color var(--tour-t) var(--ease-swift);
+}
+.chapters .tk { flex: none; width: 18px; height: 2px; position: relative; }
+.chapters .tk::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: var(--tour-tk-a);
+  transition: width var(--tour-t) var(--ease-swift), opacity var(--tour-t) var(--ease-swift);
+}
+.chapters .nm { display: inline-block; transform-origin: 0 50%; transition: scale var(--tour-t) var(--ease-swift); }
+.chapters button[aria-current] { color: var(--text-0); font-weight: 600; }
+.chapters button[aria-current] .nm { scale: 1.12; }
+.chapters button[aria-current] .tk::before { width: 18px; opacity: 1; }
+@media (hover: hover) {
+  .chapters button:not([aria-current]):hover { color: var(--text-1); }
+  .chapters button:not([aria-current]):hover .tk::before { width: 14px; opacity: 0.85; }
+}
+/* under the player (< 1024 px): one row, scrolling sideways on a phone; proto.js keeps the current one in view */
+@media (max-width: 1023px) {
+  .tour-steps { margin-top: var(--s-4); }
+  .tour-page .chapters {
+    display: flex;
+    gap: var(--s-5);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 var(--s-4) 0 0;
+    -webkit-mask-image: linear-gradient(90deg, currentColor calc(100% - 32px), transparent);
+    mask-image: linear-gradient(90deg, currentColor calc(100% - 32px), transparent);
+  }
+  .chapters::-webkit-scrollbar { display: none; }
+  .chapters li { flex: none; }
+  .chapters button { padding-right: var(--s-3); }
+}
+
+/* ---- the end: what to do next, as the homepage ends ---- */
+.tour-end { margin-top: var(--s-section); text-align: center; }
+.tour-end img { margin: 0 auto var(--s-5); }
+.tour-end h2 { margin: 0 auto; max-width: 16ch; font-size: var(--fs-h2); line-height: 1.04; letter-spacing: -0.04em; }
+.tour-end h2 .tone { color: var(--text-2); }
+.tour-end .cta-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--s-3) var(--s-5); margin-top: var(--s-6); }
+.tour-end .btn svg { width: 15px; height: 15px; margin-top: -1px; }
+.tour-page .tour-link-quiet { font-size: var(--fs-sm); font-weight: 520; color: var(--text-1); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 4px; }
+.tour-link-quiet:hover { color: var(--text-0); text-decoration-color: var(--line-3); }
+/* the trial line is a disclosure: never under 15 px, never under 4.5:1 (legal 2026-10-05) */
+.tour-page .tour-disclose { margin: var(--s-5) auto 0; font-size: var(--fs-sm); font-weight: 540; color: var(--text-1); }
+.tour-page .tour-fine { margin: var(--s-2) auto 0; max-width: 54ch; font-size: var(--fs-xs); line-height: 1.55; color: var(--text-2); }
+.tour-fine [data-support="win"], .tour-fine [data-support="mobile"],
+[data-os="win"] .tour-fine [data-support="mac"], [data-os="mobile"] .tour-fine [data-support="mac"],
+[data-os="mobile"] .tour-fine [data-support="win"], [data-os="mobile"] .tour-end [data-role="alt"] { display: none; }
+[data-os="win"] .tour-fine [data-support="win"], [data-os="mobile"] .tour-fine [data-support="mobile"] { display: inline; }
+.tour-fine .dl-status:empty { display: none; }
+.tour-page .tour-more { margin: var(--s-4) 0 0; font-size: var(--fs-sm); }
+.tour-more a { color: var(--link); text-decoration: underline; text-underline-offset: 4px; }
+.tour-page .tour-noscript { color: var(--text-1); }
+
+@media (max-width: 600px) {
+  .doc.tour-page { padding-top: var(--s-5); }
+  .tour-page .tour-lead { font-size: var(--fs-md); }
+  .frame-top { height: 30px; padding: 0 var(--s-3); gap: var(--s-2); }
+  .window-dots i { width: 6px; height: 6px; }
+  .poster-play { width: 56px; height: 56px; }
+  .poster-play svg { width: 24px; height: 24px; margin-left: 3px; }
+  .tour-page .poster-label { font-size: var(--fs-xs); }
+  .end-card .btn { min-height: 40px; padding: var(--s-2) var(--s-4); }
+  .controls { gap: var(--s-3); }
+  .play .play-label { display: none; }
+  .play { width: 40px; padding: 0; justify-content: center; }
+  .tour-page .caption-title { font-size: var(--fs-md); }
+  .caption p:not(.caption-title) { font-size: var(--fs-sm); }
+  .caption { min-height: 80px; }
+}
+@media (prefers-reduced-motion: reduce) { .tour-page *, .tour-page *::before, .tour-page *::after { transition: none !important; } }

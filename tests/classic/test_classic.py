@@ -429,12 +429,24 @@ def test_tour_stop(site_url, browser):
         assert not page._k1_errs, page._k1_errs
     finally:
         ctx.close()
-    # (Sol K1-1) on a phone the switch and the theme toggle do not overlap
-    ctx, page = _open(browser, site_url, path="/tour/", w=375, h=740, ua="iphone", phone=True)
+    # (Sol K1-1) on a tablet the switch and the theme toggle do not overlap
+    ctx, page = _open(browser, site_url, path="/tour/", w=820, h=1180, ua="iphone", phone=True)
     try:
         t = page.locator(".tour-header [data-theme-toggle]").bounding_box()
-        c = page.locator(".tour-header .classic-toggle").bounding_box()
+        c = page.locator(".tour-header .site-header .classic-toggle").bounding_box()
         assert c["x"] >= t["x"] + t["width"], (t, c)
+    finally:
+        ctx.close()
+    # (TOUR) the tour is on the shared bar: on a phone (< 640 px) the switch is the menu sheet's row, as on "/"
+    ctx, page = _open(browser, site_url, path="/tour/", w=375, h=740, ua="iphone", phone=True)
+    try:
+        page.wait_for_function("() => window.__tour && window.__tour.ready", timeout=15000)
+        assert not page.is_visible(".tour-header .site-header .classic-toggle")
+        page.click("[data-menu-open]")
+        page.wait_for_selector(SHEET_BTN, state="visible")
+        page.click(SHEET_BTN)
+        assert page.get_attribute(SHEET_BTN, "aria-pressed") == "true" and _stored(page) == "1"
+        assert page.evaluate("() => document.getElementById('app-frame').contentDocument.documentElement.dataset.motion") == "reduced"
     finally:
         ctx.close()
 

@@ -98,21 +98,37 @@
     if (doc) doc.documentElement.dataset.theme = theme;
     docs.forEach(d => { void d.documentElement.offsetWidth; d.documentElement.classList.remove('fe-theme-instant'); });
   }
+  // (TOUR) the poster: the play button over the tour's last screen until the first play or chapter pick (never in the
+  // reduced / Classic mode, which shows each chapter's end state instead); a press before the frame is ready plays on ready
+  let poster = true, playOnReady = false, shownChapter = -1, posterPaint = false;
+  function keepChapterInView() {
+    // under the player the chapter row scrolls sideways on a phone: bring the current name into view (the row only)
+    const row = $('#chapters'), b = $(`[data-chapter="${TOUR.chapter}"]`);
+    if (!row || !b || row.scrollWidth <= row.clientWidth) return;
+    const rr = row.getBoundingClientRect(), br = b.getBoundingClientRect();
+    if (br.left >= rr.left && br.right <= rr.right - 32) return;
+    row.scrollTo({ left: row.scrollLeft + br.left - rr.left - (rr.width - br.width) / 2, behavior: reduced ? 'auto' : 'smooth' });
+  }
   function ui() {
     TOUR.chapter = chapterAt(TOUR.t);
-    $('#play').innerHTML = TOUR.playing ? 'Ⅱ <span>Pause</span>' : '▶ <span>Play</span>';
-    $('#play').setAttribute('aria-label', TOUR.playing ? 'Pause tour' : 'Play tour');
-    $('#play').hidden = reduced || TOUR.t >= TOUR.total;
-    $('#replay').hidden = reduced || TOUR.t < TOUR.total;
+    const playBtn = $('#play');
+    playBtn.dataset.state = TOUR.playing ? 'playing' : 'paused';
+    $('.play-label', playBtn).textContent = TOUR.playing ? 'Pause' : 'Play';
+    playBtn.setAttribute('aria-label', TOUR.playing ? 'Pause tour' : 'Play tour');
+    playBtn.hidden = reduced || TOUR.t >= TOUR.total;
+    $('#end-card').hidden = reduced || TOUR.t < TOUR.total;
+    $('#poster').classList.toggle('is-gone', reduced || !poster);
     $('#progress-fill').style.transform = `scaleX(${TOUR.t / TOUR.total})`;
     $('#progress').setAttribute('aria-valuenow', TOUR.t.toFixed(1));
     $('#time').textContent = `${fmt(TOUR.t)} / ${fmt(TOUR.total)}`;
-    $('#caption-number').textContent = `0${TOUR.chapter + 1} / 07`;
+    // the chapter's name heads its caption (no "01 / 07" counter: names only, as the rail)
+    if ($('#caption-title').textContent !== STEPS[TOUR.chapter].title) $('#caption-title').textContent = STEPS[TOUR.chapter].title;
     if ($('#caption').textContent !== captions[TOUR.chapter]) $('#caption').textContent = captions[TOUR.chapter];
     $$('[data-chapter]').forEach(b => {
       if (+b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
+    if (shownChapter !== TOUR.chapter && !posterPaint) { shownChapter = TOUR.chapter; keepChapterInView(); }
     const why = window.FEClassic && window.FEClassic.chosen() && !hashReduced() ? 'Classic view' : 'Reduced motion';   // NEW COPY (K1: "Classic view")
     $('#player-note').textContent = reduced ? `${why} · Choose a chapter to view its final screen.` : '1 min 20 sec · Space to play or pause';
   }
@@ -294,6 +310,7 @@
   }
   function play() {
     if (!TOUR.ready || reduced || TOUR.t >= TOUR.total || TOUR.playing) return;
+    poster = false;
     staticPreview = false;
     TOUR.playing = true; last = performance.now(); ui(); raf = requestAnimationFrame(tick);
   }
@@ -303,6 +320,7 @@
     if (typeof k === 'string') k = STEPS.findIndex(s => s.title.toLowerCase() === k.toLowerCase());
     if (!Number.isInteger(k) || k < 0 || k >= STEPS.length) throw new RangeError('Chapter must be 0–6 or its label.');
     const wasPlaying = TOUR.playing; pause();
+    poster = false;
     TOUR.t = reduced ? STEPS[k].end - .001 : STEPS[k].start;
     delete screen.dataset.paperPaid;
     render(true, !wasPlaying);
@@ -315,6 +333,7 @@
   };
   $('#play').addEventListener('click', () => TOUR.playing ? pause() : play());
   $('#replay').addEventListener('click', replay);
+  $('#poster').addEventListener('click', () => { if (TOUR.ready) play(); else playOnReady = true; });
   $$('[data-chapter]').forEach(b => b.addEventListener('click', () => jump(+b.dataset.chapter)));
   // the theme toggle is FETheme's ("tour": it remembers fe-theme and rewrites only a #light / #dark flag among the others)
   document.addEventListener('fe:themechange', e => setTheme(e.detail.theme));
@@ -353,6 +372,14 @@
     await doc.fonts.ready;
     TOUR.ready = true;
     if (reduced) TOUR.t = STEPS[0].end - .001;
+    else if (poster) {
+      // the poster's picture: the tour's last screen (the updated dashboard), still; the clock stays at 0:00 and Play
+      // starts from Sign in (the first render after it installs the login screen)
+      // (the chapter row does not follow this paint: it stays on Sign in)
+      posterPaint = true; TOUR.t = STEPS.at(-1).end - .001; render(true, true); posterPaint = false; TOUR.t = 0; ui();
+      if (playOnReady) play();
+      return;
+    }
     render(true, true);
   }, { once: true });
   frame.srcdoc = `<!doctype html><html lang="en" data-theme="${window.FETheme.get()}"><head><meta charset="utf-8"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="frame.css">${NO_FADE_STYLE}</head><body inert><div id="screen"></div><div id="page-ghost" aria-hidden="true"></div><div id="modal-root"></div><div id="tour-flash" class="flash-container"></div><svg id="fe-cursor" class="fe-cursor" viewBox="0 0 28 40" aria-hidden="true"><path d="M3 3 L3 31.5 L10 25 L14.6 35.6 L19.3 33.6 L14.8 23.2 L24.2 23.2 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg></body></html>`;
