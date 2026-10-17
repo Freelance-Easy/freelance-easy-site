@@ -179,6 +179,39 @@ def test_5_reload_below_the_desktop_story_keeps_the_footer(browser, site_url):
         ctx.close()
 
 
+def test_7_reentry_after_back_onto_native_writes_the_last_pinned_url(browser, site_url):
+    """Astra INT5-2: Back onto native Price (a popstate: its native scroll never lands, so its `pop` write kind is left
+    pending), then a wheel up into the pinned story: the re-entry still writes Email's URL, one replaceState, no push."""
+    ctx, page = open_page(browser, site_url + "/", TABLET)
+    try:
+        pinned = [d["slug"] for d in page.evaluate("() => FEStory.destinations") if d["kind"] == "pinned"]
+        last = SLUGS.index(pinned[-1])
+        into_price(page)
+        page.evaluate("() => FEStoryURL.jump('new-invoice')")
+        page.wait_for_function("() => location.hash === ''", timeout=12000)
+        at_rest(page, 0)
+        page.wait_for_timeout(400)
+        page.evaluate("() => history.back()")
+        page.wait_for_function("() => location.hash === '#price'", timeout=5000)
+        page.wait_for_timeout(1500)            # Back's own scroll has settled (`restoring` is over)
+        length0 = page.evaluate("() => history.length")
+        n0 = len(calls(page))
+        for _ in range(60):
+            page.mouse.wheel(0, -120)
+            page.wait_for_timeout(120)
+            if page.evaluate("() => FEStory.state().phase === 'rest'"):
+                break
+        at_rest(page, last, timeout=4000)
+        page.wait_for_timeout(700)             # past story-url.js's QUIET window
+        new = [(c[0], c[1]) for c in calls(page)[n0:]]
+        now = page.evaluate("() => location.hash")
+        assert now == "#" + pinned[-1], f"7 (ICX-HIST.8): the re-entry after Back left the URL at {now!r}; writes {new}"
+        assert new and all(c[0] == "replaceState" for c in new), f"7: a re-entry replaces; saw {new}"
+        assert page.evaluate("() => history.length") == length0
+    finally:
+        ctx.close()
+
+
 def test_6_reentry_from_native_writes_the_last_pinned_url(browser, site_url):
     ctx, page = open_page(browser, site_url + "/", TABLET)
     try:

@@ -166,6 +166,9 @@
     pending = null; departY0 = null;
     if (p.source === "init") return;               // load, reload, deep link: never a write (ICX-HIST.3)
     if (kind == null) kind = p.source === "jump" ? "push" : p.source === "popstate" ? "pop" : "replace";
+    // (INT5-fix round 2; Astra INT5-2) a Back onto a native row (its own scroll: no landing ever consumes its `pop`) leaves
+    // `pop` pending; a re-entry is never Back's landing, so a stale `pop` does not silence it (ICX-HIST.8)
+    if (p.reentry && kind === "pop") kind = "replace";
     if (kind === "pop") return;
     if (kind === "push") { write("push", p.slug, dy); return; }   // at the landing itself: Back must find the entry
     // (INT5-fix 6) a re-entry from below (the page scrolled back into the pinned story from a native section or the footer)
