@@ -575,3 +575,112 @@ def test_jump_to_an_inflight_steps_destination_pushes(story: Story):
     calls = story.hist()[0][mark[0]:]
     assert [c[0] for c in calls] == ["pushState"] and calls[0][1].endswith("#templates"), f"ICX-HIST.2: got {calls}"
     assert page.evaluate("() => history.length") == length0 + 1
+
+
+# --------------------------------------------------------------------------------------------- C4-engine (main's rulings)
+
+def test_focus_landing_replaces(story: Story):
+    """ICX-HIST (main's ruling, C4 gap 3b): focus reaching an idle caption (a screen reader's cursor, Tab) brings that
+    chapter up as source "focus": ONE replaceState at its final landing, never a pushState, history.length unchanged."""
+    page = story.page
+    length0 = page.evaluate("() => history.length")
+    mark = story.hist_mark()
+    seen = page.evaluate("""() => { window.__srcs = []; FEStory.onLand((p) => { if (p.final) __srcs.push(p.source); });
+      const c = document.querySelector('.captions .beat-copy[data-copy="grow"]');
+      if (!c || c.classList.contains('is-on')) return false;
+      c.tabIndex = -1; c.focus(); return document.activeElement === c; }""")
+    assert seen, "harness: the Dashboard caption could not take focus"
+    step_ok(story.wait_rest(allowance(3)), 3, "ICX-HIST focus")
+    story.idle(500)                 # past story-url.js's QUIET window
+    calls = story.hist()[0][mark[0]:]
+    assert [c[0] for c in calls] == ["replaceState"] and calls[0][1].endswith("#" + SLUGS[3]), (
+        f"ICX-HIST focus: a focus landing writes one replaceState '#{SLUGS[3]}', saw {calls}")
+    assert page.evaluate("() => history.length") == length0, "ICX-HIST focus: a focus landing added a history entry"
+    assert page.evaluate("() => __srcs") == ["focus"], f"onLand source: {page.evaluate('() => __srcs')}"
+
+
+@pytest.mark.parametrize("gap", [400, 0], ids=["400ms", "same-tick"])
+def test_pinned_jump_during_native_scroll(browser, site_url, gap: int):
+    """Main's ruling (C4 gap 3a): the latest explicit jump wins. A pinned jump issued while a native jump's smooth scroll is
+    in flight (400 ms in, or in the same tick) cancels that scroll and lands at REST on its own target, pushing exactly ONE
+    entry (its own); no stray release; Back returns to the first chapter."""
+    ctx, page = tablet_page(browser, site_url + "/")
+    try:
+        assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price native"
+        length0 = page.evaluate("() => history.length")
+        if gap:
+            page.evaluate("() => FEStoryURL.jump('price')")
+            page.wait_for_timeout(gap)
+            page.evaluate("() => FEStoryURL.jump('invoices')")
+        else:
+            page.evaluate("() => { FEStoryURL.jump('price'); FEStoryURL.jump('invoices'); }")
+        try:
+            page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 2 && s.dest === 2; }",
+                                   timeout=6000)
+        except Exception:
+            pass
+        page.wait_for_timeout(3000)    # past the native arrival's backstop (2.5 s) and any FREE settle
+        s = page.evaluate("() => FEStory.state()")
+        assert s["phase"] == "rest" and s["rendered"] == 2 and s["dest"] == 2, f"the latest jump (Invoices) must win: {s}"
+        assert abs(page.evaluate("() => window.scrollY") - s["trackY"]) <= 2, f"not on Invoices' track position: {s}"
+        calls = page.evaluate("() => window.__c2hist.slice()")
+        assert [(c[0], c[1]) for c in calls] == [("pushState", "/#invoices")], f"ICX-HIST.2: exactly one push, saw {calls}"
+        assert page.evaluate("() => history.length") == length0 + 1
+        page.go_back()
+        page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 0 && s.dest === 0; }",
+                               timeout=8000)
+        assert hash_now(page) == ""
+    finally:
+        ctx.close()
+
+
+# ------------------------------------------------------------------------------------------- C4-engine fix (Sol round 1)
+
+def test_native_pinned_native_rapid(browser, site_url):
+    """Sol C4-engine HIGH 1: native -> pinned -> native in quick succession. The pinned jump cancels the first native scroll
+    (stopNative); the second native jump, started inside the cancel's 250 ms residue window, is a NEW scroll and must not be
+    snapped back as the cancelled one's residue. The latest target (Price) is reached, its URL is pushed once and only
+    once it arrived, no other entry is written, and the story does not end up released anywhere but at Price."""
+    ctx, page = tablet_page(browser, site_url + "/")
+    try:
+        assert page.evaluate("() => FEStory.destinations.find(d => d.slug === 'price').kind") == "native", "harness: price native"
+        length0 = page.evaluate("() => history.length")
+        page.evaluate("() => FEStoryURL.jump('price')")
+        page.wait_for_timeout(400)
+        page.evaluate("() => FEStoryURL.jump('invoices')")
+        page.wait_for_timeout(50)            # inside the cancel's residue window (RESIZE_GRACE, 250 ms)
+        page.evaluate("() => FEStoryURL.jump('price')")
+        page.wait_for_timeout(3500)          # past the native arrival's backstop (2.5 s) and any FREE settle
+        top = page.evaluate("() => document.getElementById('price').getBoundingClientRect().top")
+        s = page.evaluate("() => FEStory.state()")
+        calls = page.evaluate("() => window.__c2hist.slice()")
+        assert -4 <= top <= 200, f"the latest jump (Price) was not reached: price top {top:.0f}px, state {s}, writes {calls}"
+        assert hash_now(page) == "#price", f"URL {hash_now(page)!r}, writes {calls}"
+        # one push per jump that landed: Price's, after Invoices' own if its dip cut landed before the second native jump
+        got = [(c[0], c[1]) for c in calls]
+        assert got in ([("pushState", "/#price")], [("pushState", "/#invoices"), ("pushState", "/#price")]), (
+            f"ICX-HIST.2: one push per landed jump, the last for Price; saw {calls}")
+        assert page.evaluate("() => history.length") == length0 + len(got)
+    finally:
+        ctx.close()
+
+
+def test_focus_after_jump_keeps_one_push(story: Story):
+    """Main's ruling on Sol C4-engine HIGH 2 (documents the contract, not a fix): a focus landing that EXTENDS a run started
+    by an explicit jump keeps that run's single pushState (ICX-HIST.2: gestures that extend the run after the jump still
+    write one entry, with pushState, at its final landing, so Back undoes the whole run). Focus never STARTS a push
+    (test_focus_landing_replaces)."""
+    page = story.page
+    length0 = page.evaluate("() => history.length")
+    mark = story.hist_mark()
+    seen = page.evaluate("""() => { FEStory.goTo(2, {source: 'jump'});
+      const c = document.querySelector('.captions .beat-copy[data-copy="grow"]');
+      if (!c || c.classList.contains('is-on')) return false;
+      c.tabIndex = -1; c.focus(); return document.activeElement === c; }""")
+    assert seen, "harness: the Dashboard caption could not take focus during the jump"
+    step_ok(story.wait_rest(allowance(3)), 3, "ICX-HIST.2 jump + focus")
+    story.idle(500)                 # past story-url.js's QUIET window
+    calls = story.hist()[0][mark[0]:]
+    assert [c[0] for c in calls] == ["pushState"] and calls[0][1].endswith("#" + SLUGS[3]), (
+        f"ICX-HIST.2: a jump extended by focus writes one pushState '#{SLUGS[3]}', saw {calls}")
+    assert page.evaluate("() => history.length") == length0 + 1
