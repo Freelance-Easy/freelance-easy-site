@@ -37,6 +37,9 @@
    and the anchors' scroll padding share; html:root outranks site.css's :root, which loads after this sheet. */
 html:root {
   --header-h: 56px;
+  /* the bar's motion (the site has no duration tokens yet, as rail.css says; this is the bar's, used by the Classic
+     switch below; 150 ms is the theme toggle's hover in site.css) */
+  --shell-t-micro: 150ms;             /* token-lint: allow (bar motion token) */
 }
 /* the bar's slots ([data-classic-slot] for K1, [data-menu-slot] for B6) take no room, not even a flex gap, until
    their piece puts a control in them */
@@ -126,13 +129,44 @@ html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
     display: flex;
   }
 }
-/* 640-699 px on the story page, desktop browsers: the menu button's 40 px leaves the brand short of room beside the
-   platform note ("Freelance Easy" overflowed into How it works by up to 28 px, measured at 640-672). The note steps
-   aside there; the Download button stays, and the platform is named by the status line after the click */
-@media (min-width: 640px) and (max-width: 699px) {
-  html.js[data-dl-os] body[data-page="home"] .dl-note:not([hidden]),
-  html.js[data-dl-os] body[data-page="home"] .dl-note[hidden]:not([data-dl-skip]) {
-    display: none;
+/* (GATEFIX) the button is the nav's last item and its 44 px hit area reaches past it (::after above: 4 px past the 40 px
+   button, 10-12 px past the phone's 34/32 px one), which made the nav's content wider than its box (scrollWidth >
+   clientWidth, 4 px at 640-1023). The nav takes 12 px as padding and gives them back as a negative margin (into the
+   page margin, >= 16 px): its box covers the hit area, and nothing on screen moves. Only where the button shows (the
+   rules above), so the nav's box edge, which the rail's gutter test reads, is unchanged from 1024 */
+@media (max-width: 639px) {
+  .js .site-header .nav:has(> [data-menu-slot] > .fe-menu-btn) {
+    padding-right: 12px;
+    margin-right: -12px;
+  }
+}
+@media (max-width: 1023px) {
+  .js body[data-page="home"] .site-header .nav:has(> [data-menu-slot] > .fe-menu-btn) {
+    padding-right: 12px;
+    margin-right: -12px;
+  }
+}
+/* (GATEFIX) the platform note stays beside Download at every desktop width >= 640 (PLAN.md A9 fix round: "requirement
+   visible at every desktop width >= 640"). B6 hid it at 640-699 on the story page for want of room; the room now comes
+   from the Classic switch, which lives in the menu sheet wherever the story page's bar shows the menu button (below),
+   and, at 640-679, from the bar taking the phone bar's sizes: the theme and menu buttons 34 px, 2 px between the nav's
+   items, 12 px between the brand and the nav, the two text links 6 px padding each side (measured 2026-10-17: with the
+   switch gone the brand still ran 24 px into How it works at 640, 0 px by 664) */
+@media (min-width: 640px) and (max-width: 679px) {
+  html.js body[data-page="home"] .site-header .shell {
+    gap: 12px;
+  }
+  body[data-page="home"] .site-header .nav {
+    gap: 2px;
+  }
+  body[data-page="home"] .site-header .nav a:not(.nav-cta) {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  body[data-page="home"] .site-header .theme-toggle,
+  .js body[data-page="home"] .fe-menu-btn {
+    width: 34px;
+    height: 34px;
   }
 }
 /* the narrowest phones (measured at 360 with "Get it on Mac"): the button's 34 px + gap left the brand 9 px short, so
@@ -176,7 +210,7 @@ body:has(> main.doc) .fe-menu-btn {
   white-space: nowrap;
   cursor: pointer;
   position: relative;
-  transition: color 0.15s, background 0.15s;
+  transition: color var(--shell-t-micro), background var(--shell-t-micro);
 }
 .classic-toggle[hidden] {
   display: none;
@@ -227,9 +261,17 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
   display: none;
 }
 /* the phone bar (< 640 px) has no room for a fifth control (measured 2026-10-16: the brand clipped by 4-19 px at
-   360-390), so there the switch is a row in the menu sheet, above Close (classic.js adds it) */
+   360-390), so there the switch is a row in the menu sheet, above Close (classic.js adds it). (GATEFIX) the same below
+   1024 px on the story page, where the bar has the menu button (the rail is hidden): beside the platform note the
+   switch's 44 px left the bar 47 px short at 640 and short up to ~727 (measured 2026-10-17), so the switch is the
+   sheet's row wherever there is a sheet, and the bar's, with its "Classic" label, from 1024 */
 @media (max-width: 639px) {
   .site-header [data-classic-slot]:has(> .classic-toggle) {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  body[data-page="home"] .site-header [data-classic-slot]:has(> .classic-toggle) {
     display: none;
   }
 }
@@ -238,6 +280,11 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
 }
 @media (max-width: 639px) {
   .fe-menu-classic:not([hidden]) {
+    display: block;
+  }
+}
+@media (max-width: 1023px) {
+  body[data-page="home"] .fe-menu-classic:not([hidden]) {
     display: block;
   }
 }
@@ -275,7 +322,7 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
   border-radius: var(--r-pill);
   background: var(--line-2);
   position: relative;
-  transition: background 0.15s;
+  transition: background var(--shell-t-micro);
 }
 .fe-menu-panel .classic-toggle .classic-state::before {
   content: "";
@@ -286,7 +333,7 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
   height: 14px;
   border-radius: 50%;
   background: var(--bg-1);
-  transition: transform 0.15s;
+  transition: transform var(--shell-t-micro);
 }
 .fe-menu-panel .classic-toggle[aria-pressed="true"] .classic-state {
   background: var(--text-0);
@@ -297,15 +344,6 @@ html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
 .fe-menu-panel .classic-toggle:focus-visible {
   outline: 2px solid var(--text-0);
   outline-offset: -2px;
-}
-/* 700-719 px on the story page: the Classic button's 44 px leaves the brand short beside the platform note (it clipped
-   by up to 15 px at 704-712, measured 2026-10-16). The note steps aside there too, as B6's rule does at 640-699; the
-   Download button stays, and the status line names the platform after the click */
-@media (min-width: 700px) and (max-width: 719px) {
-  html.js[data-dl-os] body[data-page="home"]:has(.site-header .classic-toggle:not([hidden])) .dl-note:not([hidden]),
-  html.js[data-dl-os] body[data-page="home"]:has(.site-header .classic-toggle:not([hidden])) .dl-note[hidden]:not([data-dl-skip]) {
-    display: none;
-  }
 }
 .no-js .classic-toggle {
   display: none;

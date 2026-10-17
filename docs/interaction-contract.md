@@ -274,11 +274,14 @@ moves nothing and writes no history.
   rest-entry to its rest, and `rendered` is the target from the first frame. A reload (navigation type `reload`) lands
   on that chapter's finished rest frame: no content plays, no dip. Neither writes history (ICX-HIST.3). A deep link or
   reload whose row is `native` in the current mode (or in classic) is the browser's own anchor scroll to its `id`.
+  (added 2026-10-17, INT5-fix) A reload or history visit of the same entry the reader left below the story (the footer)
+  returns to that distance below it, even when the URL names a pinned chapter.
 - **ICX-JUMP.4** popstate: the same visuals as .0/.1/.2, and no `pushState`/`replaceState` call (ICX-HIST.3).
 - **ICX-JUMP.5** A rail/menu jump to a row that is `native` in the current mode (e.g. tablet "Price", phone "A note")
   is a smooth native anchor scroll to its anchor (`behavior: "smooth"`); instant under reduced motion and in classic
   (ICX-CLASSIC.3). It pushes one history entry like any jump, written when the scroll arrives (ICX-HIST.2). Decisions
-  §C (was OPEN-9).
+  §C (was OPEN-9). (added 2026-10-17, INT5-fix) A theme switch while a native jump is still scrolling carries the jump
+  through to its target; the arrival writes its one push there.
 
 ### ICX-REST — Never rest mid-transition
 
@@ -329,7 +332,9 @@ for explicit jumps. A checkpoint passed through is never written.
 
 - **ICX-HIST.1** A run of steps writes once, at its final landing, the landed checkpoint's URL (`rendered == dest`)
   with `replaceState` (`history.length` unchanged). Pass-through landings write nothing; while the run is under way the
-  URL still shows the checkpoint the run started from.
+  URL still shows the checkpoint the run started from. (added 2026-10-17, INT5-fix) A mode change (Classic on/off, a
+  layout change) ends any jump in flight without a write: its pending push and a native jump's arrival write are void;
+  a landing already made but not yet written is written first.
 - **ICX-HIST.2** A rail, menu, Home/End or logo jump that moves (`target ≠ rendered`, ICX-JUMP.1/.2/.5) adds exactly
   one history entry with `pushState` at its final landing (the seam's end, the dip's cut, or the native scroll's
   arrival), carrying the landed checkpoint's URL. If gestures extend the run after the jump, the run still writes one
@@ -350,9 +355,13 @@ for explicit jumps. A checkpoint passed through is never written.
 - **ICX-HIST.10** (added 2026-10-16, C4-engine) A landing caused by keyboard focus moving onto a chapter (source `focus`)
   writes like a step: `replaceState` at its final landing, never `pushState`, so Tab-ing through the page never fills
   Back. Focus never STARTS a push; a focus landing that extends a run started by an explicit jump keeps that run's single
-  `pushState` (ICX-HIST.2). In calm/classic the entry a jump leaves records its scroll offset, and Back restores it.
+  `pushState` (ICX-HIST.2). In calm/classic the entry a jump leaves records its scroll offset with the mode and width;
+  Back restores it only when the chapter, mode and width match the current ones, otherwise it lands on the chapter's
+  anchor (amended 2026-10-17, INT5-fix).
 - **ICX-HIST.8** A FREE settle writes its final landing with `replaceState`; a distance-0 re-alignment writes nothing
-  (ICX-SETTLE-4).
+  (ICX-SETTLE-4). (added 2026-10-17, INT5-fix) A re-entry from below (the reader scrolls back into the pinned story,
+  also after arriving on a native row by Back) is a final landing on the last pinned chapter: it writes that chapter's
+  URL with `replaceState`, unless the URL already names it (then nothing).
 - **ICX-HIST.9** Scroll-spy history (main's ruling, 2026-10-15; owner amended 2026-10-16). In native sections
   (classic/calm, or the native rows of a pinned mode) the scroll-spy runs in the nav module (`rail.js`), in every mode
   that has native sections and whether or not the rail itself is visible; on every change of the current section it
@@ -500,7 +509,9 @@ landings are not announced, main's ruling 2026-10-15).
 - **ICX-KEY.6** Home and End always jump (vault Keyboard row; C0a S8 / ICX-SETTLE-8), from the pinned story and from
   below it (RELEASED): Home → the first checkpoint, End → the last pinned. End at `REST(last pinned)` is a jump to the
   checkpoint already landed (`distance == 0`): nothing moves, and End is not passed to the page. R1 §3.4's "End at the
-  last beat passes through to the page end" is superseded (vault §3 supersedes R1–R3).
+  last beat passes through to the page end" is superseded (vault §3 supersedes R1–R3). (added 2026-10-17, INT5-fix)
+  Home and End go through the same jump path as the rail (`FEStoryURL.jump`), so the departing offset is saved before
+  the page moves.
 - **ICX-KEY.7** Ignored (never intercepted, never step; R1 §3.4): `e.defaultPrevented` (the rail's own arrow and
   Home/End roving); Alt, Ctrl or Meta held; focus in `input`, `textarea`, `select` or `[contenteditable]`; Space while
   focus is on `a`, `button`, `summary` or `[role=button]`; an open dialog.
