@@ -163,7 +163,7 @@ def test_config_version_one_place_and_matches_docs():
     d = cfg["DEFAULTS"]
     for const in ("MIN_DELTA", "START_PX", "START_WIN", "QUIET_SMOOTH", "QUIET_NOTCH", "W_NOW", "W_PREV", "CONT_GAP",
                   "TAIL_GATE", "RISE_RATIO", "V_RISE_MIN", "MIN_STEP_MS", "REPEAT_MS", "SUSTAIN_K", "REVERSE_PX",
-                  "KEY_REPEAT_MS", "TOUCH_SLOP", "DIR_RATIO", "LINE_PX", "TAIL_LIVE", "JOIN_MAX", "SPREAD_MIN", "BUNCH_MS"):
+                  "KEY_REPEAT_MS", "TOUCH_SLOP", "DIR_RATIO", "LINE_PX", "TAIL_LIVE", "TAIL_DECAY", "JOIN_MAX", "SPREAD_MIN", "BUNCH_MS"):
         m = re.search(rf"^\| `{const}` \| ([0-9.]+)", text, re.M)
         assert m, f"{const} not in docs/checkpoint-config.md"
         assert float(m.group(1)) == d[const], f"{const}: module {d[const]} != docs {m.group(1)}"

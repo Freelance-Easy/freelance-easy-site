@@ -115,6 +115,72 @@ def test_pixel_mode_notches_unchanged():
     assert [x[0] for x in replay([ev])[0]] == [1, 1]
 
 
+def test_gentle_second_flick_within_a_moving_tail_is_the_known_trade_off():
+    """KNOWN TRADE-OFF (Sol FLICKER-2 #1, main's ruling 2026-10-17): tp-flick-60hz to 200 ms, then a gentle deliberate
+    second flick (4/6/8/10/12 px at 16 ms from 500 ms, then decay) stepped twice on ca70450 and steps ONCE here: the
+    tail was still moving when it stopped, so ICX-CLASS.4 joins the second flick to it, and at under V_RISE_MIN it is
+    no rise. A gentle second flick within JOIN_MAX of a moving tail needs a firmer swipe (the firm one steps:
+    test_second_flick_after_a_stall_still_steps). A missed step is gentler than the double step + dip Daniel saw; a
+    re-acceleration step was tried and read partly coalesced tail deliveries as a flick (Sol FLICKER-3 #2,
+    test_partly_coalesced_tail_delivery_is_one_step). Daniel tunes JOIN_MAX on devices. If this goes to [1, 1], check
+    that test still passes before calling it fixed."""
+    first = [e for e in wheel("tp-flick-60hz") if e["t"] <= 200]
+    finger = [4, 6, 8, 10, 12] + [round(12 * 0.9 ** k) for k in range(1, 20)]
+    second = [{"t": 500 + 16 * i, "deltaY": d, "deltaMode": 0, "wheelDeltaY": -round(d * 1.2)} for i, d in enumerate(finger) if d]
+    assert [x[0] for x in replay([first + second])[0]] == [1]
+
+
+def test_partly_coalesced_tail_delivery_is_one_step():
+    """Sol FLICKER-3 #2: tp-flick-60hz to 800 ms, its held 800-1100 ms tail delivered as 3/7/9/24 px at 1100/1108/1116/
+    1124 ms, then the rest of the tail: one flick, one step (growing batch sizes are not a new finger)."""
+    ev = wheel("tp-flick-60hz")
+    held = [(1100, 3), (1108, 7), (1116, 9), (1124, 24)]
+    s = ([e for e in ev if e["t"] <= 800] + [{"t": t, "deltaY": d, "deltaMode": 0, "wheelDeltaY": -round(d * 1.2)} for t, d in held]
+         + [e for e in ev if e["t"] > 1124])
+    assert [x[0] for x in replay([s])[0]] == [1]
+
+
+@pytest.mark.parametrize("fx", ["tp-flick-60hz", "tp-flick-120hz", "tp-long-tail"])
+@pytest.mark.parametrize("model", ["C", "B"])
+def test_stall_just_after_the_peak_is_one_step(fx, model):
+    """Sol FLICKER-3 #1: a stall that begins just after the peak (s0 96-144 ms, 200 ms), while the 50 ms rate still
+    equals its peak but the deltas already fall (38/36/34), joins: one step (the TAIL_DECAY share alone lags there)."""
+    ev = wheel(fx)
+    out = replay([stalled(ev, s0, 200, model) for s0 in range(96, 145, 8)])
+    bad = {s0: st for s0, st in zip(range(96, 145, 8), out) if len(st) != 1}
+    assert not bad, f"{fx} model {model}: {bad}"
+
+
+def test_drag_still_speeding_up_then_quiet_is_not_a_tail():
+    """ICX-CLASS.4 joins only a decaying stream: a frame-paced drag still speeding up (20 -> 40 px) when it went quiet
+    is the hand stopping, not a tail; the hand moving again 300 ms later, gently (under V_RISE_MIN, so only a new
+    gesture's start can step it), steps again, as on ca70450."""
+    d1 = [{"t": 16 * i, "deltaY": 20 + 2 * i, "deltaMode": 0, "wheelDeltaY": -round((20 + 2 * i) * 1.2)} for i in range(11)]
+    d2 = [{"t": 460 + 16 * i, "deltaY": 5, "deltaMode": 0, "wheelDeltaY": -6} for i in range(8)]
+    assert [x[0] for x in replay([d1 + d2])[0]] == [1, 1]
+
+
+H2_STREAMS = {
+    # Sol FLICKER-2 #2 verbatim: a fast-spun wheel's notches are frame-paced but repeat one delta (and hold the rate)
+    "spun-100": [(t, 100) for t in (0, 16, 32, 48, 400, 700)],
+    # the same spin with two notches coalesced (100/200/100/100): the deltas vary and fall, but are multiples of one notch
+    "spun-coalesced": [(0, 100), (16, 200), (32, 100), (48, 100), (400, 100), (700, 100)],
+    # a spin that slows down (the rate decays like a tail), but every notch is the same 100 px
+    "spun-slowing": [(t, 100) for t in (0, 16, 32, 60, 100, 150, 400, 700)],
+}
+H2_BASE = {"spun-100": 3, "spun-coalesced": 3, "spun-slowing": 3}   # steps on ca70450
+
+
+@pytest.mark.parametrize("name", list(H2_STREAMS))
+def test_spun_mouse_wheel_steps_as_before(name):
+    """Sol FLICKER-2 #2: ICX-CLASS.4 joins only an inertia tail, never a run of mouse notches (deltas >= NOTCH_HINT_PX,
+    multiples of one size). A mouse wheel's later clicks (pixel mode, wheelDeltaY -120 per notch) step exactly as on
+    ca70450."""
+    ev = [{"t": t, "deltaY": d, "deltaMode": 0, "wheelDeltaY": -round(d * 1.2)} for t, d in H2_STREAMS[name]]
+    st = replay([ev])[0]
+    assert len(st) == H2_BASE[name] and all(x[0] == 1 for x in st), f"{name}: steps {st}, want {H2_BASE[name]} x +1"
+
+
 def test_mouse_notches_unchanged():
     """Notch sequences keep their labels. Known cost of ICX-CLASS.4 (Sol FLICKER-1 #1: a coalesced trackpad burst can
     carry a notch-like wheelDeltaY, so only deltaMode 1 is excluded): a pixel-mode mouse notch within JOIN_MAX of a

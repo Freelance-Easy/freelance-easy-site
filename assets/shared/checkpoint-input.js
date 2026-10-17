@@ -57,6 +57,7 @@
     SUSTAIN_K: 0.7, // repeat only while vNow >= SUSTAIN_K * peakSinceStep (smooth AND notch: ICX-SETTLE-D1)
     JOIN_MAX: 600, // ms: the longest gap inside a still-moving inertia tail that keeps the gesture (ICX-CLASS.4)
     TAIL_LIVE: 20, // px/s: a tail at least this fast emits every frame, so a gap in it is not the hand (ICX-CLASS.4)
+    TAIL_DECAY: 0.98, // join only a tail already down to this share of its peak when the gap began (ICX-CLASS.4)
     SPREAD_MIN: 24, // ms: a smooth event later than this after the last one counts as spread over its gap (ICX-CLASS.5)
     BUNCH_MS: 4, // ms: events closer than this after a spread one are the same held-back delivery (ICX-CLASS.5)
     REVERSE_PX: 12, // px summed against the gesture's direction ...
@@ -173,7 +174,8 @@
       var dir = sign(dy);
       var ng = {
         id: ++gid, notch: notch, cls: notch ? "notch" : "smooth", decision: "intercept", lastT: t, winT0: t, acc: 0,
-        dir: 0, dirT: -Infinity, samples: [], peakV: 0, peakSince: 0, lastStepT: -Infinity, vLast: 0, paced: 0
+        dir: 0, dirT: -Infinity, samples: [], peakV: 0, peakSince: 0, lastStepT: -Infinity, vLast: 0, paced: 0,
+        mags: [], peakA: 0
       };
       if (targetBypassed(ev, dir)) ng.decision = "pass";
       else if (consumerPasses(ev, { source: "wheel", dir: dir, phase: "start", gesture: ng.id })) ng.decision = "pass-consumer";
@@ -185,13 +187,26 @@
     // ICX-CLASS.4 (FLICKER): a gap inside a flick's still-moving inertia tail is the page or the browser not hearing
     // input (a busy main thread; Chrome holds and coalesces wheel events), never the hand going quiet: an inertia tail
     // has an event every frame while it moves. The gesture carries on (no new "start" step). Only a smooth flick
-    // (peak >= V_RISE_MIN, frame-paced: >= 3 event gaps under SPREAD_MIN, which mouse notches never are) whose tail
-    // still ran at >= TAIL_LIVE when the gap began, same direction, a gap <= JOIN_MAX, not a line-mode (deltaMode 1)
-    // event. A new flick in the joined gesture still steps by the rise test
-    // (ICX-CLASS.5 keeps the held-back burst itself from reading as one).
+    // (peak >= V_RISE_MIN, frame-paced: >= 3 event gaps under SPREAD_MIN, which separate mouse clicks are not)
+    // whose tail still ran at >= TAIL_LIVE when the gap began, same direction, a gap <= JOIN_MAX, not a line-mode
+    // (deltaMode 1) event. And only a tail (Sol FLICKER-2 #2: a fast-spun wheel is frame-paced too): it was decaying
+    // when the gap began (its rate <= TAIL_DECAY x peak, or its last delta below its biggest: the 50 ms rate lags a
+    // tail's first frames, Sol FLICKER-3 #1), and its last 3 deltas were not mouse notches (all >= NOTCH_HINT_PX and
+    // multiples of one size: 100/100/100, 100/200/100). A new flick in the joined gesture still steps by the rise test
+    // (ICX-CLASS.5 keeps the held-back burst itself from reading as one); a gentle one (under V_RISE_MIN) within
+    // JOIN_MAX of a moving tail does not: a known trade-off (FLICKER-2 #1), a missed step is gentler than the double
+    // step + dip, and a re-acceleration step read partly coalesced tail deliveries as a flick (Sol FLICKER-3 #2).
     function joinsTail(ev, t, dy) {
       if (!g.dir || g.decision !== "intercept" || sign(dy) !== g.dir) return false;
       if (t - g.lastT > C.JOIN_MAX || g.peakV < C.V_RISE_MIN || g.vLast < C.TAIL_LIVE || g.paced < 3) return false;
+      var m = g.mags;
+      var past = m.length && m[m.length - 1] < g.peakA; // the last delta is below the gesture's biggest one
+      if (g.vLast > C.TAIL_DECAY * g.peakV && !past) return false; // a held or rising rate: not an inertia tail
+      if (m.length === 3) { // a spun mouse wheel: notch-sized deltas, each a multiple of the smallest
+        var lo = Math.min(m[0], m[1], m[2]), q = lo >= C.NOTCH_HINT_PX, i, r;
+        for (i = 0; q && i < 3; i++) { r = m[i] / lo; q = Math.abs(r - Math.round(r)) < 0.01; }
+        if (q) return false;
+      }
       return ev.deltaMode !== 1;
     }
 
@@ -255,6 +270,8 @@
       g.vLast = vNow;
       g.peakV = Math.max(g.peakV, vNow);
       g.peakSince = Math.max(g.peakSince, vNow);
+      g.mags.push(a); if (g.mags.length > 3) g.mags.shift();
+      g.peakA = Math.max(g.peakA, a);
       var continuous = n > 2 && maxGap <= C.CONT_GAP;
       if (!g.notch && continuous && vPrev < C.TAIL_GATE * g.peakV && vNow > C.RISE_RATIO * vPrev &&
           vNow > C.V_RISE_MIN && t - g.lastStepT >= C.MIN_STEP_MS) {
