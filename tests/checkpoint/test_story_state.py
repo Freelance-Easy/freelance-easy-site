@@ -270,6 +270,37 @@ def test_back_gesture_during_forward_seam_reverses_it(story: Story, cell: Cell):
     check_engine(res.snap, 0, "ICX-SIGNED.2")
 
 
+DESKTOP_CELLS = [c for c in CELLS if c.name == "desktop"]
+
+
+# Chase (24.16), Yours (25.36) and Price (26.44) rest within 0.12 s of the next caption-less switch (24.24, 25.42,
+# 26.50): a seam played back from past that switch landed on the rest frame with the caption hysteresis still holding
+# the empty caption (the fuzz's "[desktop-dark sequence 10]" stall). Tablets pin Make..Chase only (Chase is last).
+@pytest.mark.parametrize("cell", DESKTOP_CELLS, ids=[c.id for c in DESKTOP_CELLS])
+@pytest.mark.parametrize("idx", [4, 5, 6], ids=lambda i: BEATS[i])
+def test_reversed_seam_rests_with_its_caption(story: Story, cell: Cell, idx: int):
+    """ICX-CHECKPOINT.2 / ICX-REST.1: a back gesture inside a forward seam plays it back to the origin's rest frame,
+    and that rest shows the origin's caption, even when the seam had passed a caption switch next to the rest frame."""
+    story.page.evaluate("(b) => window.FEStory.goTo(b)", BEATS[idx])
+    res = story.wait_rest(allowance(idx))
+    assert res.status == "rest" and res.snap.index == idx, f"harness precondition: no REST({BEATS[idx]}): {res.snap.describe()}"
+    story.rec_start()
+    story.wheel(100)
+    past = story.info.rest[idx] + 0.25                 # beyond the switch + its 0.12 s hysteresis
+    story.page.wait_for_function("(p) => window.FEStory.state().T > p", arg=past, timeout=3000, polling="raf")
+    story.wheel(-100)
+    res = story.wait_rest(allowance(1))
+    frames = story.rec_stop()
+    assert not dip_spans(frames), f"harness: the back gesture came after the reversal window (a dip back): {dip_spans(frames)}"
+    cap = story.page.evaluate("() => window.FEStory.state().beat")
+    assert res.snap.phase != "rest" or cap == BEATS[idx], (
+        f"ICX-CHECKPOINT.2: at rest on {BEATS[idx]}'s rest frame the active caption is {cap!r}, not {BEATS[idx]!r} "
+        f"({res.snap.describe()})")
+    expect_rest(res, idx, f"ICX-CHECKPOINT.2/ICX-SIGNED.2 (reversed seam back to {BEATS[idx]})",
+                "the caption hysteresis keeps the empty caption of the switch the seam passed, at rest")
+    check_engine(res.snap, idx, "ICX-CHECKPOINT.2")
+
+
 @CELL
 def test_signed_arithmetic_is_plus_minus_one_per_gesture(story: Story, cell: Cell):
     """Three forward gestures and one back, all inside the first transition: net dest = origin + 2."""

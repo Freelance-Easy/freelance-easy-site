@@ -914,7 +914,9 @@
   let capIdx = -1, capTimer = 0;
   function updateCaptions(T, instant) {
     let i = beatAt(T);
-    if (!instant && capIdx >= 0 && Math.abs(i - capIdx) === 1) {
+    // hysteresis only while the playhead moves: at rest the caption is the rest frame's own (ICX-CHECKPOINT.2). Chase,
+    // Yours and Price rest within 0.12 s of a caption-less switch, so a seam played back past it rested with no caption.
+    if (!instant && phase !== "rest" && capIdx >= 0 && Math.abs(i - capIdx) === 1) {
       // hysteresis: 0.12 s of story either side of a switch, or the switch's own width (the price copy rides its card,
       // so it uses 0.02: with 0.12 the card showed empty going forwards and the copy hung over it going back, ~0.3 s)
       const [, boundary, width = 0.12] = TL.switches[Math.max(i, capIdx) - 1];
