@@ -62,7 +62,10 @@ def main() -> int:
             try:
                 page.mouse.move(700, 450)
                 page.keyboard.press("ArrowDown")
-                page.wait_for_function("() => FEStory.state().dest === 1", timeout=5000)
+                # wait for the LANDING (rendered === dest === 1), not the step's start: dest flips at the seam's start, and a
+                # second step during the seam extends the run instead of skipping content (main, 2026-10-17)
+                page.wait_for_function("() => { const s = FEStory.state(); return s.dest === 1 && s.rendered === 1; }",
+                                       timeout=8000)
                 page.wait_for_timeout(1200)                      # into Templates' content (it runs ~5 s), then skip it
                 page.evaluate("""() => { window.__held = 0; new MutationObserver(() => { window.__held = Math.max(window.__held,
                   document.querySelectorAll('.stage-wrap').length - 1); }).observe(document.body, { childList: true, subtree: true }); }""")
