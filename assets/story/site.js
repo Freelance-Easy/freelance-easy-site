@@ -1578,6 +1578,22 @@
   function savedPlace() {
     try { const p = JSON.parse(sessionStorage.getItem(PLACE_KEY) || "null"); sessionStorage.removeItem(PLACE_KEY); return p; } catch (e) { return null; }
   }
+  // RELOAD: story-url.js keeps the reader's place inside a native section ({story, y, w, m}) in the entry's history.state and,
+  // when the page is left, in sessionStorage "fe-story-held" (+ path and the entry's state key k). A reload or history visit
+  // to that same chapter, in the same mode at the same width, comes back to that pixel, not the chapter's anchor (the
+  // shipped site, with no chapter hashes, kept the pixel). A fresh deep link lands on the anchor. Same rule as story-url.js
+  // heldY (calm / classic restore there); kept in both because this runs before the engine's first frame.
+  function heldY(slug) {
+    const nt = navType();
+    if (nt !== "reload" && nt !== "back_forward") return null;
+    const fits = (p) => !!p && p.story === slug && typeof p.y === "number" && p.w === window.innerWidth && p.m === mode();
+    const s = history.state, k = s && typeof s === "object" && s.k ? s.k : null;
+    let p = null;
+    try { p = JSON.parse(sessionStorage.getItem("fe-story-held") || "null"); } catch (e) { p = null; }
+    if (fits(p) && p.path === location.pathname && (p.k || null) === k) return Math.max(0, Math.round(p.y));
+    if (s && typeof s === "object" && fits(s)) return Math.max(0, Math.round(s.y));
+    return null;
+  }
   function init() {
     // the engine owns the reading place: the browser's own scroll restoration on a reload or a history visit would land
     // after this one, read as a foreign scroll and settle elsewhere (not a history write: no entry, no URL change)
@@ -1599,7 +1615,9 @@
     }
     if (b) {                                           // a native row in this layout: the anchor's own section
       const sec = document.getElementById(SLUG[b]);
-      if (sec) window.scrollTo(0, Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - (L ? L.hh : 0))));
+      const held = heldY(SLUG[b]);                     // a reload / history visit inside it: the reader's pixel (RELOAD)
+      if (held != null) window.scrollTo(0, held);
+      else if (sec) window.scrollTo(0, Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - (L ? L.hh : 0))));
       initial = { index: BEATS.indexOf(b), source: "native" };
       return;
     }
@@ -1897,7 +1915,8 @@
   // mode: desktop | tablet | phone | calm | classic | static. rendered / dest: BEATS indexes. phase: rest | transition |
   // dip | free | released. state(): {phase, dest, rendered, T, trackY, beat, dip, step, settles, mode, scrollend}.
   // goTo(target, {source}): target = a BEATS index, beat id, slug or legacy hash; source step | jump | init | popstate
-  // (a native row is a smooth anchor scroll, instant in calm, ICX-JUMP.5).
+  // (a native row is a smooth anchor scroll, instant in calm, ICX-JUMP.5; opts.y, native rows only: scroll to that offset
+  // instead of the anchor, story-url.js's Back to a held native place).
   // onDest(fn): fn({index, beat, slug, source, preview?}) whenever dest changes (the highlight, ICX-HL.1; source "free"
   //   with preview: true is FREE's nearest, ICX-HL.3).
   // onLand(fn): fn({index, beat, slug, source: step | jump | settle | init | popstate | focus, final}) at every landing; final =
@@ -1919,7 +1938,9 @@
       // announce, no history from the cancelled move; the dip's fade is cleared (clearDip) and the settle plans afresh.
       if (TL && motion() && CP.length && !held && (run || dip || wait) && phase !== "free" && phase !== "released") foreign(window.scrollY);
       nativeSeq++;                                      // a new native scroll: a cancelled one's residue guard no longer applies
-      window.scrollTo({ top: Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)), behavior: smooth ? "smooth" : "instant" });
+      // opts.y (RELOAD): Back to a native entry lands on the pixel the reader left (story-url.js), not the anchor
+      const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
+      window.scrollTo({ top: Math.max(0, Math.round(to)), behavior: smooth ? "smooth" : "instant" });
       if (smooth && TL && motion() && CP.length && !held) startNative();
       return true;
     }
