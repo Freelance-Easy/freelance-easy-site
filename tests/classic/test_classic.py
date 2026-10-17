@@ -581,3 +581,47 @@ def test_classic_label_centred_on_icon(site_url, browser, theme):
         assert abs(m["text"] - m["icon"]) <= 0.3 and abs(m["btn"] - m["icon"]) <= 0.3, m
     finally:
         ctx.close()
+
+
+# ---- a rotation keeps the place too (ICX-DEST.4): the layout re-flows before the resize event, so a size change reads the section under the bar (site.js readingPlace) ----
+
+@pytest.mark.parametrize("beat", ["look", "grow"])
+# (chase and yours land one checkpoint late on the base too: 910f8ad gives the same result, so they are not asserted here)
+def test_rotation_round_trip_story(site_url, browser, beat):
+    """portrait 390x664 story -> 844x390 (calm) -> portrait: back on the same checkpoint's rest frame."""
+    ctx, page = _open(browser, site_url, w=390, h=664, ua="iphone", phone=True)
+    try:
+        dests = page.evaluate("FEStory.destinations")
+        idx = next(k for k, d in enumerate(dests) if d["beat"] == beat)
+        page.evaluate("(b) => FEStory.goTo(b, {source: 'jump'})", beat)
+        _landed(page, idx, ("portrait", beat))
+        page.set_viewport_size({"width": 844, "height": 390})
+        page.wait_for_function("() => FEStory.mode === 'calm'", timeout=6000)
+        page.wait_for_timeout(700)
+        assert page.evaluate(CURRENT) == beat, ("landscape lost the place", beat)
+        page.set_viewport_size({"width": 390, "height": 664})
+        page.wait_for_timeout(700)
+        _landed(page, idx, ("back in portrait", beat))
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("beat", ["look", "grow", "chase", "price"])
+@pytest.mark.parametrize("w,h", [(375, 548), (390, 664)], ids=["375x548", "390x664-classic"])
+def test_rotation_round_trip_stacked(site_url, browser, beat, w, h):
+    """stacked sections (short touch screen / Classic): rotate to 844x390 and back, the chapter in view is the same one."""
+    ctx, page = _open(browser, site_url, w=w, h=h, ua="iphone", phone=True, stored="1")
+    try:
+        page.wait_for_function("() => FEStory.mode === 'classic' || FEStory.mode === 'calm'")
+        for at in (60, 90):                                     # the section's top just under the bar
+            page.evaluate(SCROLL_TO_TOP_AT, [beat, at])
+            page.wait_for_timeout(250)                          # let the scroll settle
+            before = page.evaluate(CURRENT)
+            assert before is not None
+            page.set_viewport_size({"width": 844, "height": 390})
+            page.wait_for_timeout(600)
+            page.set_viewport_size({"width": w, "height": h})
+            page.wait_for_timeout(600)
+            assert page.evaluate(CURRENT) == before, (beat, at, before, page.evaluate(CURRENT))
+    finally:
+        ctx.close()

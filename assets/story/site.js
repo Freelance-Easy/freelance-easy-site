@@ -1720,6 +1720,7 @@
     resizeT = setTimeout(() => {
       // a mode change (a rotation across the short-touch line, 640 or 1024 px) keeps the reader's place (ICX-DEST.4)
       const pl = readingPlace();
+      noteView();
       if (syncMode() || key() !== layoutKey) { refresh(); restorePlace(pl); return; }
       if (!TL) return;
       // phones (Sol mobile P2): the browser's bars showing or hiding change the height only, by less than ~150 px. The
@@ -1771,18 +1772,34 @@
   // they are reading" is the one the rail shows as current: the last whose top is at or above 40 % of the viewport
   // (rail.js SPY_LINE, ICX-HL.4; phones have no rail, so the rule is repeated here, not imported). The section under the
   // bar was one chapter behind whenever the next section's top sat between the bar and that line.
+  // (K1-fix2) Only on a SAME-SIZE mode change (the Classic switch, a motion-preference flip). A size change (a rotation,
+  // a resize) keeps the section under the bar: the browser re-lays the sections before the resize event while scrollY
+  // still holds the old number, so a line farther down reads the wrong section then. viewW/viewH: the size at the last
+  // resize the debounced handler saw (or at load).
   const READ_LINE = 0.4;
+  let viewW = window.innerWidth, viewH = window.innerHeight;
+  const noteView = () => { viewW = window.innerWidth; viewH = window.innerHeight; };
   function readingPlace() {
     if (TL && motion() && CP.length && phase !== "released" && window.scrollY <= storyEnd() + 1) {
       return { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR], inStory: true };
     }
+    const beatOf = (el) => (el.classList.contains("beat") ? el.dataset.beat : null);
+    const els = document.querySelectorAll(".beat:not(.is-moved), .site-footer");
+    if (window.innerWidth !== viewW || window.innerHeight !== viewH) {
+      const hb = header ? header.getBoundingClientRect().bottom : 0;
+      for (const el of els) {
+        const r = el.getBoundingClientRect();
+        if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) return { el, off: r.top, beat: beatOf(el) };
+      }
+      return null;
+    }
     const line = window.innerHeight * READ_LINE;
     let cur = null, top = 0;
-    for (const el of document.querySelectorAll(".beat:not(.is-moved), .site-footer")) {
+    for (const el of els) {
       const r = el.getBoundingClientRect();
       if (r.height > 0 && r.top <= line) { cur = el; top = r.top; }
     }
-    return cur ? { el: cur, off: top, beat: cur.classList.contains("beat") ? cur.dataset.beat : null } : null;
+    return cur ? { el: cur, off: top, beat: beatOf(cur) } : null;
   }
   function restorePlace(pl) {
     if (!pl) return;
