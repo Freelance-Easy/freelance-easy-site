@@ -195,6 +195,33 @@ def test_release_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
     assert n1 == 1, f"{n1} stage-wraps two frames after a release inside the crossfade"
 
 
+_REENTER = r"""() => { const end = document.querySelector('.track').getBoundingClientRect().bottom + scrollY - innerHeight;
+  window.scrollTo({ top: Math.round(end + 400), behavior: 'instant' });          // below the pin, its scroll event not yet seen
+  const x = innerWidth / 2, y = innerHeight / 2;
+  const w = new WheelEvent('wheel', { deltaY: -600, deltaMode: 0, clientX: x, clientY: y, bubbles: true, cancelable: true });
+  Object.defineProperty(w, 'wheelDeltaY', { value: 720 }); document.elementFromPoint(x, y).dispatchEvent(w);
+  return [Math.round(end), scrollY]; }"""
+
+
+@pytest.mark.skip(reason="FADEDEF: harness does not yet reach reenter() with the held frame up (removing reenter's "
+                         "dropXf left it green); Sol FADEDEF-2 re-entry finding still open")
+def test_reentry_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
+    """(Sol FADEDEF-2) a scroll below the pin and a back wheel crossing into it in the same task (isBypassed sees y past
+    the end before the scroll event released the pin) re-enters on REST(last): the held frame goes at once."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(40)
+        n0 = page.evaluate(_HELD)
+        where = page.evaluate(_REENTER)
+        n1, _ = page.evaluate(_TWO_FRAMES)
+        st = page.evaluate("() => [FEStory.state().rendered, FEStory.state().phase]")
+    finally:
+        ctx.close()
+    assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
+    assert n1 == 1, f"{n1} stage-wraps two frames after a re-entry inside the crossfade (end/scrollY {where}, state {st})"
+
+
 def test_content_skip_resyncs_the_scroll(browser, site_url):
     """(judge FLICKER2 LOW) the skip re-syncs scrollY to the chapter's track position, as the dip's cut does: a 1 px
     drift inside the landing's acknowledged window (ICX-SETTLE-1) is put right by the skip."""
