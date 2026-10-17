@@ -158,8 +158,9 @@ def _lint_tree(root: pathlib.Path) -> list:
 
 
 def test_F1_assets_shared_and_site_clean_vacuous_while_dirs_missing():
-    """assets/shared/** and assets/site/** must be token-clean. VACUOUS today: those dirs do not
-    exist yet (M3 creates them); the test goes live the moment they do."""
+    """assets/shared/** and assets/site/** must be token-clean. LIVE: both dirs exist (M3 made them;
+    the name keeps its old "vacuous" wording so the test id stays stable). A raw duration, colour or
+    easing there fails it; a declared motion token is marked `token-lint: allow`, as rail.css does."""
     assert _lint_tree(ROOT) == []
 
 

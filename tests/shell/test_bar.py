@@ -100,8 +100,9 @@ def test_item_order(site_url, browser, width):
         assert by["download"]["href"].startswith("/dl/mac/"), by["download"]  # A9 on a Mac
         shown = [i["key"] for i in items if i["shown"]]
         # (B6) below the rail's 1024 px the menu button (its slot) shows at the bar's end; at 1024+ the slot takes no room.
-        # (K1) the Classic switch fills its slot beside the theme toggle from 640 px (below, it is a row in B6's sheet)
-        want = ["logo", "How it works", "Pricing", "download", "theme", "classic-slot"] + (["menu-slot"] if width < 1024 else [])
+        # (K1, GATEFIX) the Classic switch fills its slot beside the theme toggle from 1024 px; wherever the bar shows the
+        # menu button (< 1024) it is a row in B6's sheet, so the platform note keeps its place beside Download from 640
+        want = ["logo", "How it works", "Pricing", "download", "theme"] + (["classic-slot"] if width >= 1024 else ["menu-slot"])
         assert shown == want, shown
         # "How it works" is a plain link to the full tour now (DEC-3), not the dialog's trigger
         assert page.locator(".site-header [data-tour-quick]").count() == 0

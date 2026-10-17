@@ -3,8 +3,10 @@
 A visible, persistent switch from the animated story to the calm, static layout and back, keeping the reader's place;
 the site's global stop for autoplay (WCAG 2.2.2). Remembered per visitor in localStorage "fe-classic" ("1" Classic,
 "0" the story); a reduced-motion visitor starts in Classic and may switch the story on. Where it lives:
-  - "/" >= 640 px: the bar's [data-classic-slot] beside the theme toggle (icon + "Classic" from 1024, icon only below);
-  - "/" < 640 px: a row in B6's menu sheet (the phone bar has no room: the brand clipped by 4-19 px at 360-390);
+  - "/" >= 1024 px: the bar's [data-classic-slot] beside the theme toggle (icon + "Classic");
+  - "/" < 1024 px, wherever the bar shows B6's menu button: a row in the menu sheet (the phone bar has no room: the brand
+    clipped by 4-19 px at 360-390; at 640-~727 the switch's 44 px pushed out the platform note, which stays beside
+    Download at every width >= 640: GATEFIX, main's ruling 2026-10-17, PLAN.md Decision log);
   - not shown where calm is automatic (a short touch screen); the stored choice is kept;
   - /tour/: the tour header beside the theme toggle; Classic stops playback and shows each chapter's end state.
 src/partials/head.html reads the same key before the first paint.
@@ -94,6 +96,18 @@ def _under_header(page):
     return page.evaluate("""() => { const hb = document.querySelector('.site-header').getBoundingClientRect().bottom;
       for (const el of document.querySelectorAll('.beat:not(.is-moved)')) { const r = el.getBoundingClientRect();
         if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) return el.dataset.beat; } return null; }""")
+
+
+def _toggle(page):
+    """Press the Classic switch where the reader finds it: the bar's (>= 1024 px) or the menu sheet's row (< 1024 px;
+    the sheet is opened for the press and closed after it, as a reader would)."""
+    if page.is_visible(BAR_BTN):
+        page.click(BAR_BTN)
+        return
+    page.click("[data-menu-open]")
+    page.click(SHEET_BTN)
+    page.click("[data-menu-open]")
+    page.wait_for_function("() => !document.querySelector('#fe-menu').open")
 
 
 def _stored(page):
@@ -341,7 +355,7 @@ def _problems(m):
 @pytest.mark.parametrize("theme", ["dark", "light"])
 @pytest.mark.parametrize("ua", ["mac", "win", "iphone"])
 def test_bar_fits_with_classic(site_url, browser, ua, theme):
-    widths = [360, 375, 390] if ua == "iphone" else [360, 375, 390, 640, 700, 1024, 1440]
+    widths = [360, 375, 390] if ua == "iphone" else [360, 375, 390, 640, 700, 800, 1024, 1440]
     for w in widths:
         ctx, page = _open(browser, site_url, w=w, h=740 if w < 640 else 900, ua=ua, phone=ua == "iphone", theme=theme)
         try:
@@ -349,15 +363,22 @@ def test_bar_fits_with_classic(site_url, browser, ua, theme):
             where = f"{ua} {theme} @{w}: {m}"
             assert not _problems(m), (_problems(m), where)
             keys = [i["k"] for i in m["items"]]
-            if w < 640:
-                # the phone bar is B6's, unchanged; the switch is the sheet's row
-                assert keys == ["brand", "download", "theme", "menu"], where
+            if w < 1024:
+                # below 1024 the bar has the menu button and the switch is the sheet's row (the phone bar is B6's,
+                # unchanged; at 640-1023 the platform note keeps its place beside Download)
+                if w < 640:
+                    assert keys == ["brand", "download", "theme", "menu"], where
+                else:
+                    assert "classic" not in keys and keys[-1] == "menu" and "note" in keys, where
+                assert not page.is_visible(BAR_BTN), where
                 page.click("[data-menu-open]")
                 assert page.is_visible(SHEET_BTN), where
                 assert page.inner_text(SHEET_BTN).strip() == "Classic view"
                 page.click(SHEET_BTN)
                 page.wait_for_function("() => FEStory.mode === 'classic'")
                 assert page.get_attribute(SHEET_BTN, "aria-pressed") == "true"
+                assert page.evaluate("() => document.documentElement.classList.contains('calm')"), where
+                assert _stored(page) == "1", where
                 assert page.evaluate("() => document.querySelector('#fe-menu').open"), "the sheet closed under the switch"
             else:
                 assert keys[keys.index("theme") + 1] == "classic", where
@@ -370,17 +391,23 @@ def test_bar_fits_with_classic(site_url, browser, ua, theme):
             ctx.close()
     if ua == "iphone":
         return
-    # every 8 px from 600 to 1023, every px from 696 to 724 (the platform note's edge), on a Mac and a Windows desktop
+    # every 8 px from 600 to 1023, every px from 640 to 680 and 696 to 732 (the old edges), on a Mac and a Windows desktop:
+    # one row, nothing overlaps, the platform note beside Download from 640, the switch in the sheet (not the bar) < 1024
     ctx, page = _open(browser, site_url, w=1100, h=800, ua=ua, theme=theme)
     try:
         bad = {}
-        for w in sorted(set(list(range(600, 1024, 8)) + list(range(696, 725)) + [1023])):
+        for w in sorted(set(list(range(600, 1024, 8)) + list(range(640, 681)) + list(range(696, 733)) + [1023, 1024, 1440])):
             page.set_viewport_size({"width": w, "height": 800})
             page.wait_for_timeout(40)
             m = page.evaluate(SWEEP)
             probs = _problems(m)
-            if "classic" not in [i["k"] for i in m["items"]] and w >= 640:
+            keys = [i["k"] for i in m["items"]]
+            if "classic" not in keys and w >= 1024:
                 probs.append("no classic switch in the bar")
+            if "classic" in keys and w < 1024:
+                probs.append("the classic switch is in the bar beside the menu button")
+            if "note" not in keys and w >= 640:
+                probs.append("no platform note beside Download")
             if probs:
                 bad[w] = probs
         assert not bad, f"{ua} {theme}: {bad}"
@@ -500,7 +527,7 @@ def _edge_positions(page):
 def test_place_kept_at_section_edges(site_url, browser, w, h):
     ctx, page = _open(browser, site_url, w=w, h=h)
     try:
-        page.click(BAR_BTN)
+        _toggle(page)
         page.wait_for_function("() => FEStory.mode === 'classic'")
         page.wait_for_timeout(150)
         dests = page.evaluate("FEStory.destinations")
@@ -510,7 +537,7 @@ def test_place_kept_at_section_edges(site_url, browser, w, h):
         checked = 0
         for beat in beats:
             for at in _edge_positions(page):
-                page.click(BAR_BTN) if page.evaluate("FEStory.mode") != "classic" else None
+                _toggle(page) if page.evaluate("FEStory.mode") != "classic" else None
                 page.wait_for_function("() => FEStory.mode === 'classic'")
                 page.evaluate(SCROLL_TO_TOP_AT, [beat, at])
                 page.wait_for_timeout(120)
@@ -520,7 +547,7 @@ def test_place_kept_at_section_edges(site_url, browser, w, h):
                 if w >= 1024:
                     assert page.evaluate(RAIL_CURRENT) == cur, ("the rail disagrees with the 40 % line", beat, at)
                 # Classic -> story: lands on the chapter the reader was on (its rest frame)
-                page.click(BAR_BTN)
+                _toggle(page)
                 page.wait_for_function("() => FEStory.mode !== 'classic'")
                 page.wait_for_function("() => ['rest', 'released'].includes(FEStory.state().phase) && !FEStory.state().step",
                                        timeout=20000)
@@ -552,7 +579,7 @@ def test_story_to_classic_lands_on_chapter(site_url, browser, w, h):
             before = None if pinned else page.evaluate(CURRENT)
             if pinned:
                 _landed(page, idx, ("story", d["slug"]))
-            page.click(BAR_BTN)
+            _toggle(page)
             page.wait_for_function("() => FEStory.mode === 'classic'")
             page.wait_for_timeout(150)
             cur = page.evaluate(CURRENT)
@@ -561,7 +588,7 @@ def test_story_to_classic_lands_on_chapter(site_url, browser, w, h):
             assert at_end or cur == (d["beat"] if pinned else before), (d["slug"], d["beat"], cur, before)
             if w >= 1024:
                 assert page.evaluate(RAIL_CURRENT) == cur
-            page.click(BAR_BTN)
+            _toggle(page)
             page.wait_for_function("() => FEStory.mode !== 'classic'")
             if pinned and not at_end:
                 _landed(page, idx, ('back to the story', d['slug']))
