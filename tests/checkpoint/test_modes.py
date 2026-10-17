@@ -344,6 +344,31 @@ def _ready_any(page):
     page.wait_for_function("() => window.FEStory && document.documentElement.classList.contains('fx-ready') && (window.__site.TL || ['calm', 'classic'].includes(FEStory.mode))", timeout=10000)
 
 
+def test_reload_keeps_pixel_from_state_when_storage_is_off(browser, site_url):
+    """RELOAD: with sessionStorage unavailable (the leave-time record cannot be kept), the y that story-url.js writes into the
+    entry's history.state with the spy's chapter URL still brings a reload 300 px inside Price (tablet) back to that pixel."""
+    ctx = browser.new_context(viewport={"width": 820, "height": 1180})
+    ctx.add_init_script("Object.defineProperty(window, 'sessionStorage', { configurable: true, get() { throw new DOMException('blocked', 'SecurityError'); } });")
+    page = ctx.new_page()
+    try:
+        page.goto(site_url + "/", wait_until="load")
+        _ready_any(page)
+        assert page.evaluate("() => { try { sessionStorage; return false; } catch (e) { return true; } }"), "harness: storage should throw"
+        page.wait_for_timeout(400)
+        page.evaluate("() => window.scrollTo(0, document.querySelector('#price').getBoundingClientRect().top + scrollY - 64 + 300)")
+        page.wait_for_timeout(900)
+        top0 = page.locator("#price").bounding_box()["y"]
+        assert page.evaluate("() => location.hash") == "#price", "harness: the spy should have written /#price"
+        page.reload(wait_until="load")
+        _ready_any(page)
+        page.wait_for_timeout(700)
+        top1 = page.locator("#price").bounding_box()["y"]
+        st = page.evaluate("() => history.state")
+        assert abs(top1 - top0) <= 2, f"RELOAD (no storage): reload moved #price from {top0:.0f} to {top1:.0f} (state {st})"
+    finally:
+        ctx.close()
+
+
 @pytest.mark.parametrize("off", [0, 300, 800])
 @pytest.mark.parametrize("mode", list(RELOAD_MODES))
 def test_reload_mid_section_keeps_pixel(browser, site_url, mode, off):
