@@ -397,7 +397,30 @@ It resets for each new gesture.
 
 - **ICX-CLASS.1** The detector's class for every event of a gesture equals the class of its first event.
 - **ICX-CLASS.2** The gesture ends after a quiet gap longer than `QUIET_NOTCH` (notch) or `QUIET_SMOOTH` (smooth);
-  the next event starts a new gesture and is classified afresh.
+  the next event starts a new gesture and is classified afresh, except a gap inside a still-moving inertia tail
+  (ICX-CLASS.4).
+- **ICX-CLASS.4** (FLICKER, 2026-10-16, main-approved) A gap is the hand going quiet only if the hand could have been
+  heard: an inertia tail emits an event every frame while it moves, so a gap in one is the page or browser holding input
+  back (a busy main thread; Chrome coalesces held wheel events). A gap > `QUIET_SMOOTH` does not end a smooth flick
+  (peak ≥ `V_RISE_MIN`, frame-paced: at least 3 event gaps under `SPREAD_MIN`, which separate mouse clicks are not) whose rate
+  when the gap began was ≥ `TAIL_LIVE`, when the next event is in the same direction, comes ≤ `JOIN_MAX` after the last
+  one and is not a line-mode (`deltaMode` 1) event: the gesture carries on, with no new start step. Only a tail joins:
+  it was decaying when the gap began (its rate ≤ `TAIL_DECAY` × its peak, or its last delta below its biggest delta)
+  and its last 3 deltas were not mouse notches (all ≥ `NOTCH_HINT_PX` and multiples of one size: 100/100/100,
+  100/200/100). A fast-spun mouse wheel is frame-paced too, but its notches hold the rate and repeat one size, so its
+  later clicks step exactly as before this rule (Sol FLICKER-2 #2); a stream still speeding up when it went quiet is
+  the hand stopping, not a tail. (A `wheelDeltaY` multiple of 120 is NOT a notch signature here: Chrome's coalesced
+  trackpad events can carry ±240 — Sol FLICKER-1 #1.) A deliberate new flick in a joined gesture still steps by the
+  rise test. Known trade-off (Sol FLICKER-2 #1, main's ruling 2026-10-17): a gentle second flick (under `V_RISE_MIN`)
+  within `JOIN_MAX` of a still-moving tail joins it and does not step; it needs a firmer swipe. A missed step is
+  gentler than the double step + dip, and a re-acceleration step read partly coalesced tail deliveries as a new flick
+  (Sol FLICKER-3 #2). Daniel tunes `JOIN_MAX` / `TAIL_LIVE` on devices. Measured: one flick read as two gestures at
+  22–26 of 26 stall positions before (tests/checkpoint/test_flicker.py), the second step dipping mid-Ride (Daniel:
+  "flicker for a second before it moves again").
+- **ICX-CLASS.5** (FLICKER) Rates are measured over the time the input covers: a smooth event more than `SPREAD_MIN`
+  after the previous one counts its delta spread evenly over that gap (a coalesced event carries the frames the page
+  did not hear), and events under `BUNCH_MS` after such an event are the same held-back delivery. A held-back burst is
+  therefore never a rise (a 40–45 ms stall at 120 Hz stepped twice before).
 - **ICX-CLASS.3** A smooth flick whose first delta is ≥ 50 px (so it gets the notch hint) still steps once
   (ICX-SETTLE-D1).
 

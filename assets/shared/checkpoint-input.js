@@ -55,6 +55,11 @@
     MIN_STEP_MS: 250, // ms between a step and a rise
     REPEAT_MS: 850, // ms between sustained repeats
     SUSTAIN_K: 0.7, // repeat only while vNow >= SUSTAIN_K * peakSinceStep (smooth AND notch: ICX-SETTLE-D1)
+    JOIN_MAX: 600, // ms: the longest gap inside a still-moving inertia tail that keeps the gesture (ICX-CLASS.4)
+    TAIL_LIVE: 20, // px/s: a tail at least this fast emits every frame, so a gap in it is not the hand (ICX-CLASS.4)
+    TAIL_DECAY: 0.98, // join only a tail already down to this share of its peak when the gap began (ICX-CLASS.4)
+    SPREAD_MIN: 24, // ms: a smooth event later than this after the last one counts as spread over its gap (ICX-CLASS.5)
+    BUNCH_MS: 4, // ms: events closer than this after a spread one are the same held-back delivery (ICX-CLASS.5)
     REVERSE_PX: 12, // px summed against the gesture's direction ...
     REVERSE_WIN: 80, // ... within this many ms -> a reverse step
     NOTCH_HINT_PX: 50, // notch hint: first delta >= this ...
@@ -169,7 +174,8 @@
       var dir = sign(dy);
       var ng = {
         id: ++gid, notch: notch, cls: notch ? "notch" : "smooth", decision: "intercept", lastT: t, winT0: t, acc: 0,
-        dir: 0, dirT: -Infinity, samples: [], peakV: 0, peakSince: 0, lastStepT: -Infinity
+        dir: 0, dirT: -Infinity, samples: [], peakV: 0, peakSince: 0, lastStepT: -Infinity, vLast: 0, paced: 0,
+        mags: [], peakA: 0
       };
       if (targetBypassed(ev, dir)) ng.decision = "pass";
       else if (consumerPasses(ev, { source: "wheel", dir: dir, phase: "start", gesture: ng.id })) ng.decision = "pass-consumer";
@@ -178,11 +184,45 @@
 
     function step(s, src, info) { onStep(s, src, info); }
 
+    // ICX-CLASS.4 (FLICKER): a gap inside a flick's still-moving inertia tail is the page or the browser not hearing
+    // input (a busy main thread; Chrome holds and coalesces wheel events), never the hand going quiet: an inertia tail
+    // has an event every frame while it moves. The gesture carries on (no new "start" step). Only a smooth flick
+    // (peak >= V_RISE_MIN, frame-paced: >= 3 event gaps under SPREAD_MIN, which separate mouse clicks are not)
+    // whose tail still ran at >= TAIL_LIVE when the gap began, same direction, a gap <= JOIN_MAX, not a line-mode
+    // (deltaMode 1) event. And only a tail (Sol FLICKER-2 #2: a fast-spun wheel is frame-paced too): it was decaying
+    // when the gap began (its rate <= TAIL_DECAY x peak, or its last delta below its biggest: the 50 ms rate lags a
+    // tail's first frames, Sol FLICKER-3 #1), and its last 3 deltas were not mouse notches (all >= NOTCH_HINT_PX and
+    // multiples of one size: 100/100/100, 100/200/100). A new flick in the joined gesture still steps by the rise test
+    // (ICX-CLASS.5 keeps the held-back burst itself from reading as one); a gentle one (under V_RISE_MIN) within
+    // JOIN_MAX of a moving tail does not: a known trade-off (FLICKER-2 #1), a missed step is gentler than the double
+    // step + dip, and a re-acceleration step read partly coalesced tail deliveries as a flick (Sol FLICKER-3 #2).
+    function joinsTail(ev, t, dy) {
+      if (!g.dir || g.decision !== "intercept" || sign(dy) !== g.dir) return false;
+      if (t - g.lastT > C.JOIN_MAX || g.peakV < C.V_RISE_MIN || g.vLast < C.TAIL_LIVE || g.paced < 3) return false;
+      var m = g.mags;
+      var past = m.length && m[m.length - 1] < g.peakA; // the last delta is below the gesture's biggest one
+      if (g.vLast > C.TAIL_DECAY * g.peakV && !past) return false; // a held or rising rate: not an inertia tail
+      if (m.length === 3) { // a spun mouse wheel: notch-sized deltas, each a multiple of the smallest
+        var lo = Math.min(m[0], m[1], m[2]), q = lo >= C.NOTCH_HINT_PX, i, r;
+        for (i = 0; q && i < 3; i++) { r = m[i] / lo; q = Math.abs(r - Math.round(r)) < 0.01; }
+        if (q) return false;
+      }
+      return ev.deltaMode !== 1;
+    }
+
     // R1 §3.4 core + C0a D1. Returns 0 or the step's sign (and sets g.trigger).
     function detect(t, dy) {
       var a = Math.abs(dy), s = sign(dy), i;
-      if (a < C.MIN_DELTA) return 0;
-      g.samples.push({ t: t, a: a, s: s });
+      if (t - g.prevT < C.SPREAD_MIN) g.paced++;
+      // (a sub-MIN_DELTA tail event still says how slow the tail has become: Sol FLICKER-1 #3)
+      if (a < C.MIN_DELTA) { if (s === g.dir) g.vLast = Math.min(g.vLast, a * 1000 / Math.max(1, t - g.prevT)); return 0; }
+      // ICX-CLASS.5 (FLICKER): a smooth event that comes more than SPREAD_MIN after the last one may carry the summed
+      // deltas of frames the page did not hear (Chrome coalesces wheel events while the main thread is busy); its delta
+      // counts as spread evenly over that gap, so a held-back burst is not read as a new flick's rise
+      // (held-back events delivered in a bunch, under BUNCH_MS apart, are one such delivery: they join that spread)
+      var lq = g.samples.length ? g.samples[g.samples.length - 1] : null, last = lq ? lq.t : t;
+      if (lq && lq.d && lq.s === s && t - last < C.BUNCH_MS) { lq.a += a; lq.d += t - last; lq.t = t; }
+      else g.samples.push({ t: t, a: a, s: s, d: !g.notch && t - last > C.SPREAD_MIN ? t - last : 0 });
       var keep = t - C.W_NOW - C.W_PREV - C.REVERSE_WIN;
       while (g.samples.length && g.samples[0].t < keep) g.samples.shift();
 
@@ -195,7 +235,10 @@
           lastIn = q.t; n++;
         }
         if (q.s !== s) continue;
-        if (q.t > lo && q.t <= t) now += q.a;
+        if (q.d) {
+          now += q.a * Math.max(0, Math.min(q.t, t) - Math.max(q.t - q.d, lo)) / q.d;
+          prev += q.a * Math.max(0, Math.min(q.t, lo) - Math.max(q.t - q.d, lo2)) / q.d;
+        } else if (q.t > lo && q.t <= t) now += q.a;
         else if (q.t > lo2 && q.t <= lo) prev += q.a;
       }
       var vNow = now / C.W_NOW * 1000, vPrev = prev / C.W_PREV * 1000;
@@ -224,8 +267,11 @@
         }
         return 0;
       }
+      g.vLast = vNow;
       g.peakV = Math.max(g.peakV, vNow);
       g.peakSince = Math.max(g.peakSince, vNow);
+      g.mags.push(a); if (g.mags.length > 3) g.mags.shift();
+      g.peakA = Math.max(g.peakA, a);
       var continuous = n > 2 && maxGap <= C.CONT_GAP;
       if (!g.notch && continuous && vPrev < C.TAIL_GATE * g.peakV && vNow > C.RISE_RATIO * vPrev &&
           vNow > C.V_RISE_MIN && t - g.lastStepT >= C.MIN_STEP_MS) {
@@ -250,12 +296,13 @@
       if (ev.ctrlKey || ev.metaKey) return; // ICX-BYPASS.1 (pinch arrives as ctrl+wheel)
       if (Math.abs(dx) > Math.abs(dy)) return; // ICX-BYPASS.4 (horizontal, macOS back/forward)
       var live = g && t - g.lastT <= (g.notch ? C.QUIET_NOTCH : C.QUIET_SMOOTH);
+      if (!live && g && joinsTail(ev, t, dy)) live = true;
       if (!live) {
         g = null;
         if (Math.abs(dy) < C.MIN_DELTA) return; // nothing to start
         g = newGesture(ev, t, dy, prevWheelT);
       }
-      g.lastT = t;
+      g.prevT = g.lastT; g.lastT = t;
       if (g.decision === "pass-consumer" &&
           !consumerPasses(ev, { source: "wheel", dir: sign(dy), phase: "continue", gesture: g.id })) {
         g.decision = "swallow"; // taken over mid-gesture (ICX-SETTLE-8): prevent the rest, step nothing
