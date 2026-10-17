@@ -116,6 +116,42 @@ def test_jump_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
     assert n1 == 1, f"{n1} stage-wraps two frames after a jump inside the crossfade (the held frame faded on)"
 
 
+def test_foreign_scroll_mid_crossfade_drops_the_held_frame_at_once(browser, site_url):
+    """A foreign scroll (a scrollbar drag, an anchor) inside the crossfade goes FREE: the held frame goes with it at once."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(40)
+        n0 = page.evaluate(_HELD)
+        page.evaluate("() => window.scrollTo({ top: window.scrollY + 1500, behavior: 'instant' })")
+        n1, _ = page.evaluate(_TWO_FRAMES)
+        phase = page.evaluate("() => FEStory.state().phase")
+    finally:
+        ctx.close()
+    assert n0 == 2, f"harness: the crossfade's held frame was not up 40 ms in ({n0} stage-wraps)"
+    assert n1 == 1, f"{n1} stage-wraps two frames after a foreign scroll inside the crossfade (phase {phase})"
+
+
+def test_content_skip_counts_for_the_dip_cooldown(browser, site_url):
+    """(judge FLICKER2 LOW; ICX-DIP.4) the content skip counts as a dip for the cooldown: a back jump inside the crossfade
+    fades back only once 0.6 s have passed since the skip, never two fades back to back."""
+    ctx, page = _to_content(browser, site_url)
+    try:
+        page.evaluate(_COUNT)
+        page.evaluate(_WHEEL)
+        page.wait_for_timeout(60)
+        page.evaluate("() => FEStory.goTo(0, {source: 'jump'})")
+        page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.rendered === 0; }", timeout=20000)
+        rec = page.evaluate("() => { const r = window.__hf; window.__hf = null; return r; }")
+    finally:
+        ctx.close()
+    held = [r[0] for r in rec if r[2] > 1]
+    dips = [r[0] for r in rec if r[1] == "dip"]
+    assert held and dips, "harness: the case needs a crossfade and then a dip"
+    gap = dips[0] - held[0]
+    assert gap >= 560, f"the back dip started {gap:.0f} ms after the content skip (cooldown 600 ms)"
+
+
 _HIDE = r"""() => { window.__rafQ = []; window.__raf0 = window.requestAnimationFrame;
   window.requestAnimationFrame = (f) => { window.__rafQ.push(f); return 1; };   // a hidden tab runs no frames
   Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
