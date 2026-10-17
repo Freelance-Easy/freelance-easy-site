@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 import re
 import sys
 import urllib.parse
@@ -218,8 +219,19 @@ def describe(p: dict) -> str:
             f"click), centre ({p['vtX']:.1f}, {p['vtY']:.1f}), end r {p['rEnd']:.1f} px")
 
 
-GPU_LAUNCH = {"channel": "chromium",
-              "args": ["--use-angle=metal", "--enable-gpu-rasterization", "--ignore-gpu-blocklist", "--enable-gpu"]}
+# the hardware backend per platform (ANGLE: Metal on macOS, D3D11 on Windows, Vulkan elsewhere); FE_REVEAL_GPU_ARGS adds
+# launch flags (space-separated), e.g. "--disable-gpu" to prove the software path prints WARN
+ANGLE = {"darwin": "metal", "win32": "d3d11"}.get(sys.platform, "vulkan")
+
+
+def gpu_launch() -> dict:
+    extra = os.environ.get("FE_REVEAL_GPU_ARGS", "").split()
+    return {"channel": "chromium", "args": [f"--use-angle={ANGLE}", "--enable-gpu-rasterization",
+                                            "--ignore-gpu-blocklist", "--enable-gpu", *extra]}
+
+
+# renderers that are not a hardware GPU: Chromium's SwiftShader, Mesa's llvmpipe, Windows' Basic Render Driver
+SOFTWARE_RENDERER = re.compile(r"swiftshader|llvmpipe|softpipe|software|basic render driver|no webgl", re.I)
 RENDERER_JS = """() => { const c = document.createElement('canvas').getContext('webgl');
   if (!c) return 'no webgl'; const e = c.getExtension('WEBGL_debug_renderer_info');
   return e ? c.getParameter(e.UNMASKED_RENDERER_WEBGL) : c.getParameter(c.RENDERER); }"""
@@ -245,13 +257,13 @@ def run(url: str, toggle: str, widths: list[int], browser_name: str, max_start_m
             print(f"PASS {name}: {describe(p)}")
 
     with sync_playwright() as pw:
-        browser = getattr(pw, browser_name).launch(**(GPU_LAUNCH if gpu and browser_name == "chromium" else {}))
+        browser = getattr(pw, browser_name).launch(**(gpu_launch() if gpu and browser_name == "chromium" else {}))
         try:
             if gpu:
                 pg = browser.new_page()
                 renderer = pg.evaluate(RENDERER_JS)
                 pg.close()
-                soft = re.search(r"swiftshader|llvmpipe|software|no webgl", renderer, re.I)
+                soft = SOFTWARE_RENDERER.search(renderer)
                 print(f"{'WARN' if soft else 'GPU'}: WebGL renderer {renderer}"
                       + (" (software: start times include software compositing)" if soft else ""))
             for w in widths:
