@@ -4,7 +4,9 @@ gesture comes with > CONTENT_FINISH_MAX of the content left (Look 0-4.35 s after
 ?ci-dip=fade | seam are the prototypes for his A/B: the content's frame is held over the stage and crossfades away.
 
 Requirement (main, 2026-10-17): no frame darker than the darker of the two pictures it blends between (stage luminance
-per frame), exactly one step, rests on the next chapter, no FREE. Today's dip (no flag) fails the luminance check.
+per frame), exactly one step, rests on the next chapter, no FREE. Today's dip (no flag) fails the luminance check
+only on dark Look (judge 2026-10-17: at base, dark Email and light Email stay within TOL because the dip fades onto the
+band/page colour); those cases are regression cover for one step / rest / no FREE, not proof of the dark frame.
 Run: uv run --with pytest --with playwright --with pillow python3 -m pytest tests/checkpoint/test_flicker2.py -q
 """
 from __future__ import annotations
@@ -28,7 +30,8 @@ def browser():
 
 # (theme, k, wait): Look 2 s after landing (2.9 s of content left); Email 3 s (2.2 s left; the Ride's exit seam
 # follows). Light Look is not a case: today's dip there fades the white paper onto the light page, so luminance cannot
-# tell it (measured: no frame darker); light Email can (the blue band).
+# tell it (measured: no frame darker). Only dark Look is red at base f6481e2; dark/light Email pass at base (light Email
+# 0.471 vs floor 0.484, inside TOL — judge 2026-10-17), so they guard the modes' step/rest behaviour only.
 CASES = [("dark", 1, 2.0), ("dark", 4, 3.0), ("light", 4, 3.0)]
 
 
