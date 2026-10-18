@@ -1560,6 +1560,8 @@
     foreign(y);                                         // BT-1: FREE is entered here, synchronously in the scroll event
   }
   window.addEventListener("scroll", onScroll, { passive: true });
+  // (SCRUB) the reader's own touch or wheel takes over from a native jump's smooth scroll: a rebuild no longer resumes it
+  for (const ev of ["touchstart", "wheel"]) window.addEventListener(ev, () => { sNat = null; }, { passive: true });
   window.addEventListener("scrollend", () => { endNative(); if (HAS_SCROLLEND && free) armSettle("scrollend"); });
 
   /* -- a native row's smooth anchor scroll in flight (goTo, ICX-JUMP.5), and its cancel by a later explicit jump -- */
@@ -1674,6 +1676,14 @@
   }
   let sTarget = 0, sVel = 0, sIntro = null, sDip = null, sJump = null, sPrev = -1;
   let dirSign = 1, dirAnchor = 0, sMoved = 0, navJumpAt = -1;
+  // (Sol SCRUB-1 HIGH 1) a landing needs the SCROLL to have stopped, not only the stage to have caught up: a slow drag
+  // through a hold (its story time all but flat) lets the follower catch up between scroll events. sScrollAt: the last
+  // frame the scroll position moved; S_QUIET: how long it must stay still before a hold lands (the timer re-checks).
+  // (Sol SCRUB-1 HIGH 2) sOut: the page went below the story since the last landing (a release lands nothing), so coming
+  // back into the last hold is a landing of its own (a re-entry, ICX-HIST.8). (Sol SCRUB-1 MEDIUM) sNat: a native row's
+  // smooth scroll in flight (the menu's Price), carried through a rebuild (ICX-JUMP.5, as the checkpoint path's `native`).
+  const S_QUIET = 0.15;
+  let sScrollAt = -1e9, sLastY = -1, sQuietTimer = 0, sOut = false, sNat = null;
   // where the target is, as its segment and local time (a rebuild or a resize changes the map, not the story)
   function targetPlace() { const sg = TL.segs[segAt(clamp(sTarget, 0, TL.T1))]; return { id: sg.id, u: sTarget - sg.T0 }; }
   // put the scroll position where the map gives that same segment-local time (the map is monotonic: bisection)
@@ -1710,34 +1720,38 @@
   function scrubJump(k, source) {
     const y = trackY(k);
     if (phase === "rest" && kR === k && kD === k && Math.abs(window.scrollY - y) <= 1) return;   // ICX-JUMP.0
-    sJump = { k, source };
+    sJump = { k, source }; sNat = null;               // the latest explicit jump wins (an instant scroll ends a smooth one)
     if (kD !== k) { kD = k; srcD = source; emit("dest", payload(k, source)); }
     navScrollTo(y);
   }
   // the landing glue (ICX-SCRUB): a final landing is the stage caught up with a still scroll inside checkpoint k's hold,
   // k not the one last landed (or an explicit jump's target): dest + one final onLand (story-url.js: one replaceState, a
   // jump's one pushState), one announcement. Holds the stage crosses while moving are previews only (ICX-HL.3).
-  function scrubLand(y, moving) {
+  function scrubLand(y, moving, now) {
     if (y > storyEnd() + 1) {
       if (phase !== "released") { phase = "released"; sJump = null; kR = kD = last(); }
+      sOut = true;
       return;
     }
     const k = holdAtT(shown);
-    if (moving) {
+    const still = now - sScrollAt;
+    if (moving || still < S_QUIET) {
       phase = "transition";
       if (k >= 0 && k !== sPrev) { sPrev = k; emit("dest", payload(k, "free", { preview: true })); }
+      if (!moving) { clearTimeout(sQuietTimer); sQuietTimer = setTimeout(() => wake(), Math.ceil((S_QUIET - still) * 1000) + 8); }
       return;
     }
     phase = "rest";
     if (k < 0) return;                                  // still mid-ramp: rendered stays the last landed checkpoint
     const j = sJump && sJump.k === k ? sJump : null;
-    if (k === kR && kD === k && !j) return;
-    sJump = null; sPrev = k;
+    if (k === kR && kD === k && !j && !sOut) return;
+    const re = sOut && !j;
+    sJump = null; sPrev = k; sOut = false;
     const src = j ? j.source : "settle";
     if (kD !== k) { kD = k; srcD = src; emit("dest", payload(k, src)); }
     kR = k;
     announce(k);
-    emit("land", payload(k, src, { final: true }));
+    emit("land", payload(k, src, re ? { final: true, reentry: true } : { final: true }));
   }
   function scrubTick() {
     const now = clock();
@@ -1746,6 +1760,8 @@
     const y = window.scrollY;
     const tNew = mapScroll(y), step = Math.abs(tNew - sTarget);
     if (step > 1e-4) sMoved = now;
+    if (Math.abs(y - sLastY) >= 1) { sLastY = y; sScrollAt = now; }
+    if (sNat && (Math.abs(y - sNat.aim) <= 1 || now > sNat.until)) sNat = null;
     // (a PageDown is a one-frame step of ~2.7 s: forwards that plays; a jump dips going back, or when asked for one)
     const jumped = step > S_JUMP && (tNew < sTarget || now - navJumpAt < 0.5);
     sTarget = tNew;
@@ -1787,7 +1803,7 @@
     FX.gate.press = gTo;
     const g0 = FX.gate.cursor;
     if (g0 !== gTo) { FX.gate.cursor = gTo > g0 ? Math.min(1, g0 + dt / 0.15) : Math.max(0, g0 - dt / 0.15); busy = true; }
-    scrubLand(y, busy);
+    scrubLand(y, busy, now);
     if (window.__fxTrace) window.__fxTrace.push([now, shown, sTarget, phase, FX.gate.cursor]);   // test hook (off unless set)
     const key = `${shown.toFixed(5)}|${FX.gate.cursor.toFixed(3)}|${FX.gate.press}`;
     if (key !== lastDrawn) { lastDrawn = key; render(shown); }
@@ -1876,7 +1892,7 @@
     clearDip();
     run = null; dip = null; wait = 0; passK = -1; ack = null; swallow = -1;
     kR = kD = 0; phase = "rest";
-    sDip = null; sIntro = null; sJump = null; sVel = 0; sPrev = -1;
+    sDip = null; sIntro = null; sJump = null; sVel = 0; sPrev = -1; sOut = false; clearTimeout(sQuietTimer);
   }
   function teardown() {
     // everything the story put on the page goes: the mounts, the page-level layers' styles, the global classes, the
@@ -2031,16 +2047,23 @@
     dirSign = 1; dirAnchor = sTarget;
     const rel = readerY > storyEnd() + 1;
     kR = kD = rel ? last() : k != null && k >= 0 ? k : holdK(readerY);
-    sPrev = kR;
+    sPrev = kR; sOut = rel; sLastY = readerY;
     phase = rel ? "released" : sIntro ? "transition" : "rest";
   }
-  function scrubStart(firstLoad, keep) {
+  function scrubStart(firstLoad, keep, sn) {
     if (keep && keep.scrub && keep.cp === CP.join()) {
       // the same story time under the new map (a theme switch, late fonts, a refit): nothing moves; below the story, the
-      // same distance past it
-      if (keep.past != null) keepPast(keep.past); else if (!keep.intro) anchorScroll(keep.tp);
+      // same distance past it. (Sol SCRUB-1 MEDIUM) A native row's smooth scroll still in flight: the reader asked to go
+      // there, so it is asked again for the same target (smooth: it carries on from wherever it is now).
+      if (sn) {
+        const sec = document.getElementById(sn.id), hh = header ? header.getBoundingClientRect().height : 0;
+        const aim = sn.y != null ? sn.y : sec ? Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)) : sn.aim;
+        sNat = { ...sn, aim };
+        window.scrollTo({ top: aim, behavior: "smooth" });
+      } else if (keep.past != null) keepPast(keep.past); else if (!keep.intro) anchorScroll(keep.tp);
       sIntro = keep.intro;
       scrubSync(keep.kR);
+      if (keep.out) sOut = true;
       const pl = placeIn(keep.id, keep.u);
       if (pl) { shown = clamp(pl.sg.T0 + pl.u, pl.sg.T0, pl.sg.T1); sVel = keep.vel; }
       FX.gate.cursor = keep.cursor; dirSign = keep.dirSign;
@@ -2063,6 +2086,8 @@
     // the scroll's mid-way FREE / release, and restoring it (an instant scroll) ended the smooth one at the pinned origin
     // while story-url.js's arrival still pushed the target's URL.
     const nat = native && typeof native.aim === "number" ? native : null;
+    const sn = sNat && clock() <= sNat.until ? sNat : null;   // (SCRUB) the same, for a scrub build's native jump
+    sNat = null;
     try {
       resetEngine();
       layoutKey = key();
@@ -2082,7 +2107,7 @@
       railMeasure();
       held = false;
       FX.gate.cursor = 1; FX.gate.press = 1;
-      if (MAP) scrubStart(firstLoad, keep);
+      if (MAP) scrubStart(firstLoad, keep, sn);
       else if (keep && keep.cp === CP.join()) {
         kR = Math.max(0, CP.indexOf(keep.beat)); kD = Math.max(0, CP.indexOf(keep.dest));
         const pl = placeIn(keep.id, keep.u);
@@ -2130,7 +2155,7 @@
       const sc = TL.segs[segAt(clamp(shown, 0, TL.T1))];
       return { cp: CP.join(), scrub: true, beat: CP[kR], dest: CP[kD], phase: phase === "released" ? "released" : "rest",
         id: sc.id, u: shown - sc.T0, vel: sVel, intro: sIntro ? { ...sIntro } : null, cursor: FX.gate.cursor, dirSign,
-        tp: sIntro ? null : targetPlace(), past: pastStory(), kR, jump: sJump };
+        tp: sIntro ? null : targetPlace(), past: pastStory(), kR, jump: sJump, out: sOut };
     }
     const sg = TL.segs[segAt(shown)];
     return { cp: CP.join(), beat: CP[kR], dest: CP[kD], phase, id: sg.id, u: shown - sg.T0, intro: !!(run && run.intro),
@@ -2388,6 +2413,7 @@
       const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
       window.scrollTo({ top: Math.max(0, Math.round(to)), behavior: smooth ? "smooth" : "instant" });
       if (smooth && TL && motion() && CP.length && !held && !MAP) startNative(Math.max(0, Math.round(to)));
+      if (MAP) sNat = smooth ? { id: sec.id, y: opts && typeof opts.y === "number" ? opts.y : null, aim: Math.max(0, Math.round(to)), until: clock() + 2.5 } : null;
       return true;
     }
     jump(CP.indexOf(b), source);

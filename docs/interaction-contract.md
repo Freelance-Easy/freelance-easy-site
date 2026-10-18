@@ -120,11 +120,18 @@ builds only; ICX-DEST, ICX-HL, ICX-KEY.2/.3, ICX-HIDDEN, ICX-CLASSIC, ICX-NOPROG
 - **ICX-SCRUB.4** A phone's map equals the live site's (652d12a) within 1 px per piece and 0.001 s per time, both
   themes (`tests/checkpoint/scrub_live_map.json`).
 - **ICX-SCRUB.5** History and landings: a **final landing** is the stage caught up with a still scroll inside checkpoint
-  `k`'s hold, `k` not the last landed (or an explicit jump's target). It sets `dest`/`rendered`, announces through
+  `k`'s hold, `k` not the last landed (or an explicit jump's target). "Still" means the scroll position has not moved
+  for 150 ms: a slow continuous drag through a hold (where the stage catches up between scroll events) is still moving,
+  so it lands nothing until it stops. It sets `dest`/`rendered`, announces through
   `aria-live` (ICX-KEY.2) and fires `onLand(final)`: story-url.js writes one `replaceState` (ICX-HIST.8). Holds crossed
   while the stage moves are `onDest` previews only (no write, no announcement); a stop between holds writes nothing.
+  Coming back up from below the story (Price, A note) into a hold is a landing of its own even when that hold was the
+  last landed (a re-entry, `onLand({final, reentry})`, ICX-HIST.8): its URL by one `replaceState` unless the URL already
+  names it, and one announcement.
   A menu / logo / Home jump scrolls to the hold (`dest` at once, the landing on arrival): one `pushState`
-  (ICX-HIST.2); popstate lands the same way with no write (ICX-HIST.3).
+  (ICX-HIST.2); popstate lands the same way with no write (ICX-HIST.3). A menu jump to a native row (Price) is the
+  page's own smooth scroll; a rebuild while it runs (a theme switch) asks for the same target again, so it arrives
+  (ICX-JUMP.5); the reader's own touch or wheel ends that carry-through.
 - **ICX-SCRUB.6** Deep link, reload: a fresh `/#<slug>` to a pinned row lands on its hold (no replay of its content); a
   reload or history visit of the same entry at the same width keeps the reader's pixel; a fresh arrival at the top
   plays Make's arrival to its hold, and the first scroll takes over.

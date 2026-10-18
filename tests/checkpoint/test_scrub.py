@@ -32,7 +32,11 @@ _LOG = """() => {
     const f = history[m].bind(history);
     history[m] = (s, t, u) => { if (u != null) H.push([m, String(u)]); return f(s, t, u); };
   }
+  const A = window.__ann = [], live = document.querySelector('[data-story-live]');
+  new MutationObserver(() => { if (live.textContent) A.push(live.textContent); })
+    .observe(live, { childList: true, characterData: true, subtree: true });
 }"""
+PRICE_TOP = "() => document.getElementById('price').getBoundingClientRect().top"
 ST = "() => ({...FEStory.state(), ...__site.state(), y: Math.round(scrollY)})"
 
 
@@ -56,7 +60,9 @@ def _open(browser, site_url, w, h, touch=True, path="/"):
 
 
 def _still(pg, timeout=12000):
-    """Wait until the stage has caught up with the scroll (phase rest) and return the state."""
+    """Wait until the stage has caught up with the scroll (phase rest) and return the state. Two frames first: a scroll
+    just made is read by the next frame's tick (before it, the phase is still the old rest)."""
+    pg.evaluate("() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))")
     pg.wait_for_function("() => FEStory.state().phase === 'rest' && !__site.state().intro", timeout=timeout)
     return pg.evaluate(ST)
 
@@ -160,6 +166,104 @@ def test_history_one_replace_per_settled_hold(browser, site_url):
         H = pg.evaluate("() => window.__h")
         assert s["rendered"] == 3 and abs(s["y"] - pg.evaluate("() => __site.scrollFor('grow')")) <= 1, f"jump: {s}"
         assert H == [["pushState", "/#dashboard"]], f"a menu jump: expected one pushState, got {H}"
+    finally:
+        ctx.close()
+
+
+# a slow continuous scroll from `from` to `to`: `slow` px/s inside the holds (and 10 px around them), `fast` px/s on the
+# ramps, one scrollTo per frame, never a pause; resolves with performance.now() at its last scroll
+_DRIVE = """(a) => new Promise((res) => {
+  const m = __site.map(), holds = m.pieces.filter((p) => p.kind === 'hold').map((p) => [m.storyTop + p.s0 - 10, m.storyTop + p.s1 + 10]);
+  let y = a.from, t = performance.now();
+  const step = (now) => {
+    const dt = Math.min(0.05, (now - t) / 1000); t = now;
+    y = Math.min(a.to, y + (holds.some(([s0, s1]) => y >= s0 && y <= s1) ? a.slow : a.fast) * dt);
+    scrollTo(0, Math.round(y));
+    if (y >= a.to) return res(performance.now());
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+})"""
+_LANDS = """() => { window.__lands = []; FEStory.onLand((p) => { if (p.final) __lands.push([performance.now(), p.slug]); }); }"""
+
+
+def test_slow_continuous_drag_lands_only_when_it_stops(browser, site_url):
+    """Sol SCRUB-1 HIGH 1 (ICX-SCRUB.5): a slow, continuous scroll across two holds (Templates, Invoices) lets the stage
+    catch up with the scroll inside each hold, but the scroll never stopped: no landing, no announcement, no history write
+    while it moves; once it stops inside the Dashboard hold, exactly one landing, one announcement and one replaceState."""
+    ctx, pg = _open(browser, site_url, 390, 664)
+    try:
+        hold = pg.evaluate("() => { const m = __site.map(); const f = (b) => m.pieces.find((p) => p.kind === 'hold' && p.beat === b);"
+                           " return { look: m.storyTop + f('look').s0, grow: m.storyTop + (f('grow').s0 + f('grow').s1) / 2 }; }")
+        y0 = int(hold["look"]) - 130                  # on the ramp before Templates' hold
+        pg.evaluate(f"() => scrollTo(0, {y0})")
+        _still(pg, 20000)
+        pg.wait_for_timeout(700)
+        pg.evaluate(_LANDS)
+        pg.evaluate("() => { window.__h.length = 0; window.__ann.length = 0; }")
+        t_end = pg.evaluate(_DRIVE, {"from": y0, "to": round(hold["grow"]), "slow": 60, "fast": 700})
+        early = [x for x in pg.evaluate("() => window.__lands") if x[0] < t_end]
+        assert not early, f"a hold crossed while the scroll was still moving landed: {early}"
+        assert pg.evaluate("() => window.__h") == [], f"the moving scroll wrote history: {pg.evaluate('() => window.__h')}"
+        assert pg.evaluate("() => window.__ann") == [], f"the moving scroll announced: {pg.evaluate('() => window.__ann')}"
+        s = _still(pg)
+        pg.wait_for_timeout(800)                      # the landing's quiet window + story-url.js's QUIET window
+        lands, H, ann = pg.evaluate("() => window.__lands"), pg.evaluate("() => window.__h"), pg.evaluate("() => window.__ann")
+        assert s["rendered"] == 3 and s["dest"] == 3, f"did not land on Dashboard after it stopped: {s}"
+        assert [x[1] for x in lands] == ["dashboard"], f"expected one landing once it stopped, got {lands}"
+        assert H == [["replaceState", "/#dashboard"]], f"expected one replaceState once it stopped, got {H}"
+        assert len(ann) == 1, f"expected one announcement once it stopped, got {ann}"
+    finally:
+        ctx.close()
+
+
+def test_reentry_from_price_lands_the_last_hold(browser, site_url):
+    """Sol SCRUB-1 HIGH 2 (ICX-HIST.8 for scrub): Price (native, URL /#price), then back up into the last pinned chapter's
+    hold: one landing there, one replaceState with its URL, one announcement."""
+    ctx, pg = _open(browser, site_url, 390, 664)
+    try:
+        _still(pg)
+        pinned = [d["slug"] for d in pg.evaluate("() => FEStory.destinations") if d["kind"] == "pinned"]
+        pg.evaluate("() => scrollTo(0, document.getElementById('price').getBoundingClientRect().top + scrollY - 64)")
+        pg.wait_for_timeout(1200)
+        assert pg.evaluate("() => location.hash") == "#price", "harness: the spy should have written /#price"
+        assert pg.evaluate("() => FEStory.state().phase") == "released"
+        pg.evaluate("() => { window.__h.length = 0; window.__ann.length = 0; }")
+        pg.evaluate("() => scrollTo(0, __site.scrollFor('end'))")
+        s = _still(pg)
+        pg.wait_for_timeout(800)
+        H, ann = pg.evaluate("() => window.__h"), pg.evaluate("() => window.__ann")
+        assert s["rendered"] == 8 and s["beat"] == "end", f"the re-entry did not land on the last pinned: {s}"
+        assert H == [["replaceState", "/#" + pinned[-1]]], f"the re-entry from Price: expected one replaceState, got {H}"
+        assert pg.evaluate("() => location.hash") == "#" + pinned[-1]
+        assert len(ann) == 1, f"the re-entry from Price: expected one announcement, got {ann}"
+    finally:
+        ctx.close()
+
+
+def test_theme_switch_carries_a_menu_jump_to_price_through(browser, site_url):
+    """Sol SCRUB-1 MEDIUM (ICX-JUMP.5, INT5-fix 3 for scrub): a theme switch while the menu's smooth jump to Price is under
+    way rebuilds the story; the scroll still arrives at Price and the jump writes one pushState."""
+    ctx, pg = _open(browser, site_url, 390, 664, path="/#dark")
+    try:
+        pg.evaluate("() => FEStory.goTo('look', {source: 'jump'})")
+        _still(pg, 20000)
+        pg.wait_for_timeout(800)
+        theme0 = pg.evaluate("() => document.documentElement.getAttribute('data-theme')")
+        pg.evaluate("() => { window.__h.length = 0; }")
+        y0 = pg.evaluate("() => scrollY")
+        pg.evaluate("() => FEStoryURL.jump('price')")
+        pg.wait_for_timeout(250)                      # the smooth scroll is under way
+        mid = pg.evaluate("() => scrollY")
+        assert pg.evaluate(PRICE_TOP) > 300, "harness: the smooth scroll had already arrived"
+        pg.evaluate("() => document.querySelector('[data-theme-toggle]').click()")
+        pg.wait_for_timeout(4000)
+        top = pg.evaluate(PRICE_TOP)
+        H = pg.evaluate("() => window.__h")
+        assert pg.evaluate("() => document.documentElement.getAttribute('data-theme')") != theme0, "harness: the toggle never switched"
+        assert mid > y0, "harness: the native scroll had not started"
+        assert -4 <= top <= 200, f"the menu jump stopped mid-way after the theme switch (Price at {top:.0f}px); writes {H}"
+        assert H == [["pushState", "/#price"]], f"one push for the jump, at its arrival; saw {H}"
     finally:
         ctx.close()
 
