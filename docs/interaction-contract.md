@@ -100,6 +100,40 @@ Assertions:
   the reading place (`readingPlace`/`restorePlace`): the destination in view before the flip is the one in view after,
   and `document.activeElement` is unchanged.
 
+## ICX-SCRUB — phones and touch tablets scrub (DECIDED by Daniel 2026-10-18, PHONE-options option 1)
+
+Rule: a **scrub build** — layout "tall" (< 640 px, any pointer, as the live site) or a touch tablet (640–1023 px with
+a coarse pointer; site.js `SCRUB_TABLET`) — runs the live site's scroll scrub (main 652d12a), not the checkpoint
+engine. The page scrolls natively; the story time follows the scroll through a map of holds (one per pinned row, at
+its `rest`) and eased ramps. Desktop (≥ 1024) and a fine-pointer window 640–1023 keep the checkpoint engine.
+ICX-STEP, ICX-BACK, ICX-SIGNED, ICX-DIP, ICX-REST, ICX-RELEASE, ICX-SETTLE and ICX-CLASS apply to the checkpoint
+builds only; ICX-DEST, ICX-HL, ICX-KEY.2/.3, ICX-HIDDEN, ICX-CLASSIC, ICX-NOPROG and the 3× ceiling apply to both.
+
+- **ICX-SCRUB.1** No input is intercepted: no `touchmove`, `wheel` or key event is ever prevented (the gesture
+  detector is disabled). The pull at the top, iOS momentum and the release into Price / A note are the browser's own.
+- **ICX-SCRUB.2** The map: 1.4× the scroll per story-second on phones (48 × 1.4 vh of the stable 100svh), 48 vh on
+  tablets; holds (vh, × 1.4 on phones) make 10, look 28, know 26, grow 14, chase 26, yours 26, end 40; each hold
+  drifts 0.03 s past its `rest`; ramps ease at both ends.
+- **ICX-SCRUB.3** The stage follows the scroll's story time: it eases in and out, never faster than 3× (a seam's own
+  CAP is eased into) and never skips forward. Only a one-frame jump (an explicit jump, or a jump back by > 2.5 s) or a
+  long rewind (> 8 s back, after the scroll paused 0.12 s) is one 220 ms dip. Scrolling back plays the story backwards.
+- **ICX-SCRUB.4** A phone's map equals the live site's (652d12a) within 1 px per piece and 0.001 s per time, both
+  themes (`tests/checkpoint/scrub_live_map.json`).
+- **ICX-SCRUB.5** History and landings: a **final landing** is the stage caught up with a still scroll inside checkpoint
+  `k`'s hold, `k` not the last landed (or an explicit jump's target). It sets `dest`/`rendered`, announces through
+  `aria-live` (ICX-KEY.2) and fires `onLand(final)`: story-url.js writes one `replaceState` (ICX-HIST.8). Holds crossed
+  while the stage moves are `onDest` previews only (no write, no announcement); a stop between holds writes nothing.
+  A menu / logo / Home jump scrolls to the hold (`dest` at once, the landing on arrival): one `pushState`
+  (ICX-HIST.2); popstate lands the same way with no write (ICX-HIST.3).
+- **ICX-SCRUB.6** Deep link, reload: a fresh `/#<slug>` to a pinned row lands on its hold (no replay of its content); a
+  reload or history visit of the same entry at the same width keeps the reader's pixel; a fresh arrival at the top
+  plays Make's arrival to its hold, and the first scroll takes over.
+- **ICX-SCRUB.7** `phase`: `rest` when the stage has caught up with the scroll (in a hold or between holds),
+  `transition` while it chases, `released` below the story. A rebuild (theme, late fonts, a refit) keeps the same story
+  time under the new map; a mode flip keeps the reading place (ICX-DEST.4).
+- **ICX-SCRUB.8** The ☰ menu lists the chapters in page order: the pinned story's rows, then the native sections after
+  it (phone: … Your data, Get the app, Price, A note).
+
 ## The ICX rows
 
 Each row: the rule (from the vault table), then the assertions a test makes.
