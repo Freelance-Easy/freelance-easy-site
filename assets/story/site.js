@@ -391,6 +391,10 @@
   function capCheck() {
     capRaf = 0;
     if (!TL || TL.p !== "tall" || fitCapH < 0) return;
+    // (SCRUB stage 3) a caption resized by a layout change (a rotation, a resize across 640 / 1024, a mode flip) is the
+    // debounced resize handler's: it rebuilds AND restores the reading place. Rebuilding here first carried a scrub
+    // build's scroll pixel into the new layout (600 px Dashboard -> 1440 released below the pin).
+    if (key() !== layoutKey) return;
     // (F2: the offer card is measured on the End copy's own box, so a change in its height re-lays the card too)
     if (capBudget(CAP_EXCL) === fitCapH && endCopyH() === fitEndH) return;
     relayoutChecked();
@@ -500,7 +504,10 @@
       seam("yoursOffer", S.yoursOffer, M.yours, null);
       hold("end", END_HOLD, { ...GBASE, stage: 0, card: { from: "yours", to: "offer", k: 1 } });
     }
-    TL = { segs, T1: T, HOLD: M.make.inst.HOLD, isDesk, p, W, H, dark };
+    // SCRUB (Daniel 2026-10-18, PHONE-options option 1): phones (and touch tablets) run the live site's scroll scrub, the
+    // stage following the finger; desktop (and a fine-pointer tablet window) keeps the checkpoints. Decided per build.
+    const scrubOn = p === "tall" || (SCRUB_TABLET && !isDesk && coarse.matches);
+    TL = { segs, T1: T, HOLD: M.make.inst.HOLD, isDesk, p, W, H, dark, scrub: scrubOn };
     const seg = (id) => segs.find((s) => s.id === id);
     TL.seg = seg;
     // captions: the beat that starts at each switch time (the outgoing caption leaves, then the incoming arrives)
@@ -756,6 +763,8 @@
     CP = !TL ? [] : TL.isDesk ? BEATS.slice() : TL.p === "tall" ? TALL_BEATS.slice() : PHONE_BEATS.slice();
     RE = CP.map(restEntry);
     beatPx = Math.max(1, Math.round(pin.clientHeight));
+    if (TL && TL.scrub) { buildMap(); TRACK = { L: MAP.L }; return; }   // SCRUB: the live scroll map is the track
+    MAP = null;
     TRACK = { L: Math.max(0, CP.length - 1) * beatPx };
     css(track, "height", `${TRACK.L}px`);
     if (TL && TL.p === "tall" && TL.seg("end")) {
@@ -763,9 +772,98 @@
       window.dispatchEvent(new Event("fx:layout"));
     }
   }
-  const trackY = (k) => Math.round(storyTop) + k * beatPx;
-  const storyEnd = () => Math.round(storyTop) + (TRACK ? TRACK.L : 0);
-  const nearestK = (y) => clamp(Math.round((y - storyTop) / beatPx), 0, Math.max(0, CP.length - 1));
+  // (SCRUB) a checkpoint's place is the middle of its hold on the map (the first: the story's top, as the live site's #top)
+  const trackY = (k) => (MAP ? (k === 0 ? Math.max(0, Math.round(storyTop)) : scrollForBeat(CP[k])) : Math.round(storyTop) + k * beatPx);
+  const storyEnd = () => (MAP ? storyTop + MAP.L : Math.round(storyTop) + (TRACK ? TRACK.L : 0));
+  const nearestK = (y) => (MAP ? holdK(y) : clamp(Math.round((y - storyTop) / beatPx), 0, Math.max(0, CP.length - 1)));
+
+  /* ---------------- SCRUB: the scroll map (ported from the live site, main 652d12a): plateaus at each checkpoint's rest
+     frame, eased ramps between them; scroll drives the story, never the other way round ---------------- */
+  // Touch tablets join the phones (SCRUB step 1: their holds are their checkpoints' rests on the current timeline, so the
+  // map is the same mechanical one); false puts them back on the checkpoints in one line.
+  const SCRUB_TABLET = true;
+  let MAP = null;
+  function buildMap() {
+    // (phones, Daniel 10-10: "on phone id like you to have to scroll like 40% more … to slow down the animations") every
+    // hold and ramp on the phone story is 1.4x the scroll; tablets keep their tuned 48 vh per second
+    const vh = (TL.p === "tall" && svhPx > 0 ? svhPx : window.innerHeight) / 100 * (TL.p === "tall" ? 1.4 : 1);
+    const seg = TL.seg;
+    // the holds are the checkpoints' rest frames (restEntry: the same T as the live map's), one per CP row
+    const LEN = { make: 10, look: 28, know: 26, grow: 14, chase: TL.isDesk ? 32 : 26, yours: 26, end: 40 };
+    const holds = CP.map((b, k) => ({ beat: b, T: RE[k][1], len: LEN[b] }));
+    const DRIFT = 0.03;
+    // (v2.3b, Daniel: "each scroll makes the animation move less so it feels more natural and weighted": 48 vh per s)
+    const rate = () => 48 * vh;
+    const pieces = [];
+    let s = 0;
+    holds.forEach((h, i) => {
+      pieces.push({ kind: "hold", beat: h.beat, s0: s, s1: s + h.len * vh, T0: h.T, T1: h.T + DRIFT });
+      s += h.len * vh;
+      if (i === holds.length - 1) return;
+      const Ta = h.T + DRIFT, Tb = holds[i + 1].T;
+      const parts = [];
+      for (const sg of TL.segs) {
+        const a = Math.max(Ta, sg.T0), b = Math.min(Tb, sg.T1);
+        if (b > a + 1e-6) parts.push({ Ta: a, Tb: b, len: (b - a) * rate(sg) });
+      }
+      const Lp = parts.reduce((x, q) => x + q.len, 0);
+      const Lr = Math.max(8 * vh, Lp);
+      pieces.push({ kind: "ramp", beat: holds[i + 1].beat, s0: s, s1: s + Lr, T0: Ta, T1: Tb, parts, Lp, ease: Math.min(0.3, (10 * vh) / Lr) });
+      s += Lr;
+    });
+    MAP = { pieces, L: s, vh };
+    css(track, "height", `${Math.round(s)}px`);
+    if (TL.p === "tall" && seg("end")) {
+      endKv = -1;
+      window.dispatchEvent(new Event("fx:layout"));
+    }
+  }
+  // a ramp's progress with soft ends: zero slope at both ends, linear in the middle
+  function easeEnds(q, a) {
+    if (a <= 0) return q;
+    if (q < a) return (q * q) / (2 * a) / (1 - a);
+    if (q > 1 - a) return 1 - ((1 - q) * (1 - q)) / (2 * a) / (1 - a);
+    return (q - a / 2) / (1 - a);
+  }
+  function mapScroll(y) {
+    const s = y - storyTop;
+    const PC = MAP.pieces;
+    if (s <= 0) return PC[0].T0;
+    for (const pc of PC) {
+      if (s > pc.s1) continue;
+      const q = clamp((s - pc.s0) / (pc.s1 - pc.s0));
+      if (pc.kind === "hold") return pc.T0 + (pc.T1 - pc.T0) * FX.smooth(0, 1, q);
+      let x = easeEnds(q, pc.ease) * pc.Lp;
+      for (const part of pc.parts) {
+        if (x <= part.len) return part.Ta + (part.Tb - part.Ta) * (part.len > 0 ? x / part.len : 1);
+        x -= part.len;
+      }
+      return pc.T1;
+    }
+    return PC[PC.length - 1].T1;
+  }
+  function scrollForBeat(beat) {
+    const hs = MAP.pieces.filter((p) => p.kind === "hold" && p.beat === beat);
+    if (!hs.length) return null;
+    const h = hs[hs.length - 1];
+    return Math.round(storyTop + (h.s0 + h.s1) / 2);
+  }
+  // the checkpoint whose hold is nearest the scroll position y
+  function holdK(y) {
+    const s = y - storyTop;
+    let best = 0, bd = Infinity;
+    for (const pc of MAP.pieces) {
+      if (pc.kind !== "hold") continue;
+      const d = s < pc.s0 ? pc.s0 - s : s > pc.s1 ? s - pc.s1 : 0;
+      if (d < bd) { bd = d; best = Math.max(0, CP.indexOf(pc.beat)); }
+    }
+    return best;
+  }
+  // the hold the story time T sits in (its checkpoint index), or -1 on a ramp
+  function holdAtT(T) {
+    for (const pc of MAP.pieces) if (pc.kind === "hold" && T >= pc.T0 - 1e-4 && T <= pc.T1 + 1e-4) return Math.max(0, CP.indexOf(pc.beat));
+    return -1;
+  }
   function destinations() {
     return BEATS.map((b) => {
       const k = CP.indexOf(b);
@@ -848,7 +946,7 @@
     applyGlobals(G, T);
     // (the shown time itself; on the phone's last checkpoint at rest or released the story has arrived: the base's
     // scroll drifted it through its end hold to T1, so the section after the pin shows as the pin lets go)
-    if (OV && OV.offer) setEndK(CP[kR] === "end" && kR === CP.length - 1 && (phase === "rest" || phase === "released") ? TL.T1 : Tin);
+    if (OV && OV.offer) setEndK(!MAP && CP[kR] === "end" && kR === CP.length - 1 && (phase === "rest" || phase === "released") ? TL.T1 : Tin);
   }
   function applyGlobals(G, T) {
     const f = G.field || 0;
@@ -1127,6 +1225,7 @@
     wake();
   }
   function landAt(k) {                                  // instant (a mode flip keeps the place: restorePlace)
+    if (MAP) { scrubPlace(trackY(k)); kR = kD = k; sPrev = k; return; }
     run = null; wait = 0; passK = -1; endFree();
     if (dip) { dip = null; clearDip(); }
     dropXf();                                           // (FADEDEF, judge FLICKER2 LOW) a jump never lets the held frame fade on
@@ -1287,7 +1386,7 @@
 
   /* -- input (C1's detector) -- */
   function onStep(dir, src, info) {
-    if (!TL || !CP.length || held) return;
+    if (!TL || !CP.length || held || MAP) return;      // (SCRUB: the detector is off; never reached)
     if (info && info.gesture != null && info.gesture === swallow) return;   // ICX-SETTLE-8: the rest of a crossing gesture
     // (the run's clock starts when the input is handled: an event's timeStamp can be older than its dispatch, and
     // counting that gap made the first frames of a 1x step run fast)
@@ -1305,8 +1404,10 @@
   }
   // an explicit target (Home/End, the rail, a settle, C4's deep links and popstate): ICX-JUMP
   function jump(k, source, t0) {
+    if (MAP) return scrubJump(k, source);
     if (native && source !== "settle" && source !== "step") stopNative();   // the latest explicit jump wins (C4-engine)
-    if (phase === "released") reenter();
+    const below = phase === "released";
+    if (below) reenter();
     if (phase === "free") { endFree(); syncScroll(trackY(kR)); }
     // (FADEDEF, judge FLICKER2 LOW) an explicit jump inside the content skip's crossfade removes the held frame at once
     // and ends the crossfade's wait: the stage is already on kR's rest frame, so the jump is planned from there now.
@@ -1315,13 +1416,16 @@
     if (xf) { lastDipAt = xf.dipAt0; dropXf(); wait = 0; }
     if (!dip && k === kR && kD === kR && (phase === "rest" || (run && run.purpose === "content"))) {
       if (phase === "rest") syncScroll(trackY(kR));   // ICX-JUMP.0: nothing moves, nothing replays
+      // (SCRUB-fix 1; Astra RELEASE-1 HIGH) from below the story the page DID move: reenter() landed the last pinned (its
+      // announcement); the jump emits its destination and its final landing, so story-url.js writes its one push (ICX-HIST.2)
+      if (below) { srcD = source; emit("dest", payload(k, source)); emit("land", payload(k, source, { final: true })); }
       return;
     }
     setDest(k, source);
     decide(t0);
   }
   function onJump(target, src, info) {
-    if (!TL || !CP.length || held) return;
+    if (!TL || !CP.length || held || MAP) return;
     const k = target === "first" ? 0 : last();
     // (INT5-fix 4; Sol INT-5) through story-url.js's jump path when it is there (as the rail and the menu): it saves the
     // departing offset BEFORE a re-entry from a native section moves the page, so Back returns to the reader's pixel
@@ -1359,7 +1463,8 @@
   }
   const seq = window.FECheckpoint ? FECheckpoint.createSequence({ onStep, onJump, isBypassed, pinHeight: () => pin.clientHeight }) : null;
   if (seq) seq.attach(window);
-  const seqEnable = () => { if (seq) seq.setEnabled(!!(TL && motion() && CP.length)); };
+  // SCRUB: the detector is off on a scrub build, so no wheel, touch or key is ever intercepted (native scroll drives it)
+  const seqEnable = () => { if (seq) seq.setEnabled(!!(TL && motion() && CP.length && !MAP)); };
 
   /* -- FREE, RELEASED, settle (ICX-SETTLE-2…8) -- */
   function reenter() {
@@ -1452,6 +1557,7 @@
   function reentered() { emit("land", payload(kR, "settle", { final: true, reentry: true })); }
   function onScroll() {
     if (!TL || !CP.length || held || !motion()) return;
+    if (MAP) { wake(); return; }                        // SCRUB: the scroll is the input; no FREE, no settle
     const y = window.scrollY, t = performance.now();
     if (ack && t <= ack.until && Math.abs(y - ack.y) <= CFG.ACK_TOL) return;
     if (ack && t > ack.until) ack = null;
@@ -1462,6 +1568,9 @@
     foreign(y);                                         // BT-1: FREE is entered here, synchronously in the scroll event
   }
   window.addEventListener("scroll", onScroll, { passive: true });
+  // (SCRUB) the reader's own drag or wheel takes over from a native jump's smooth scroll: a rebuild no longer resumes it.
+  // Not touchstart: a tap (the theme toggle itself, Sol SCRUB-2) does not scroll, and must not cancel the carry-through.
+  for (const ev of ["touchmove", "wheel"]) window.addEventListener(ev, () => { sNat = null; }, { passive: true });
   window.addEventListener("scrollend", () => { endNative(); if (HAS_SCROLLEND && free) armSettle("scrollend"); });
 
   /* -- a native row's smooth anchor scroll in flight (goTo, ICX-JUMP.5), and its cancel by a later explicit jump -- */
@@ -1527,11 +1636,198 @@
     hiddenAt = -1;
     if (dip) dip.t0 += gone;                            // (Sol C3-1 #2) a dip resumes where it paused
     if (xf) xf.t0 += gone;                              // (Sol FLICKER2-1 #2) so does the content skip's crossfade
+    if (sDip) sDip.t0 += gone;                          // (SCRUB) the scrub's dip and the arrival too
+    if (sIntro) sIntro.t0 += gone;
     if (wait) wait += gone;
     lastDipAt += gone;
     lastNow = clock();
     wake();
   });
+
+  /* ---------------- SCRUB: the follower (ported from the live site, main 652d12a): shown time chases the scroll's ---------------- */
+  // v2.2/v2.3 (Daniel: "something smooth but responsive so u still feel like ur scrolling a website"; "id rather it smooth
+  // and a bit draggy than super rushed"): the stage's speed aims at the gap (63 % of it every TAU), never faster than it
+  // could still stop in, eased in and out (TV, ACC), never above 3x (VMAX; a seam's own CAP is eased into). Forward never
+  // skips; only a one-frame JUMP (an explicit jump) or a long way back (REWIND, once the scroll paused) dips and lands.
+  const TAU = 0.25, TV = 0.08, ACC = 9, VMAX = 3, A0 = 0.02, S_JUMP = 2.5, REWIND = 8, DIR_EPS = 0.015;
+  function sCapAt(s, v, t) {
+    let cap = VMAX;
+    if (!TL) return cap;
+    const d = v > 0.02 ? 1 : v < -0.02 ? -1 : Math.sign(t - s);
+    for (const sg of TL.segs) {
+      const c = sg.seam && sg.seam.CAP;
+      if (!c) continue;
+      if (s >= sg.T0 && s <= sg.T1) cap = Math.min(cap, c);
+      else if (d > 0 && sg.T0 > s) cap = Math.min(cap, Math.sqrt(c * c + 0.6 * ACC * (sg.T0 - s)));
+      else if (d < 0 && sg.T1 < s) cap = Math.min(cap, Math.sqrt(c * c + 0.6 * ACC * (s - sg.T1)));
+    }
+    return cap;
+  }
+  function follow(e, v, dt, capOf = null) {
+    for (let t = dt; t > 1e-9; ) {
+      const h = Math.min(t, 1 / 240);
+      t -= h;
+      const a = Math.abs(e), dir = e > 0 ? -1 : 1;
+      if (a < 1e-9) return [0, 0];
+      const cap = capOf ? capOf(e, v) : VMAX;
+      const sp = v * dir;
+      if (sp > 0 && sp * sp >= 1.8 * ACC * a) v -= dir * Math.min(sp, ((sp * sp) / (2 * a)) * h);   // brakes onto the target
+      else {
+        const vg = dir * Math.min(cap, (a + A0) / TAU, Math.sqrt(2 * ACC * a));
+        v += clamp((vg - v) / TV, -ACC, ACC) * h;
+      }
+      if (Math.abs(v) > cap) v = Math.sign(v) * Math.max(cap, Math.abs(v) - 3 * ACC * h);
+      const e1 = e + v * h;
+      if (Math.sign(e1) !== Math.sign(e)) return [0, 0];       // it never passes a still target
+      e = e1;
+    }
+    return [e, v];
+  }
+  let sTarget = 0, sVel = 0, sIntro = null, sDip = null, sJump = null, sPrev = -1;
+  let dirSign = 1, dirAnchor = 0, sMoved = 0, navJumpAt = -1;
+  // (Sol SCRUB-1 HIGH 1) a landing needs the SCROLL to have stopped, not only the stage to have caught up: a slow drag
+  // through a hold (its story time all but flat) lets the follower catch up between scroll events. sScrollAt: the last
+  // frame the scroll position moved; S_QUIET: how long it must stay still before a hold lands (the timer re-checks).
+  // (Sol SCRUB-1 HIGH 2) sOut: the page went below the story since the last landing (a release lands nothing), so coming
+  // back into the last hold is a landing of its own (a re-entry, ICX-HIST.8). (Sol SCRUB-1 MEDIUM) sNat: a native row's
+  // smooth scroll in flight (the menu's Price), carried through a rebuild (ICX-JUMP.5, as the checkpoint path's `native`).
+  const S_QUIET = 0.15;
+  let sScrollAt = -1e9, sLastY = -1, sQuietTimer = 0, sOut = false, sNat = null;
+  // where the target is, as its segment and local time (a rebuild or a resize changes the map, not the story)
+  function targetPlace() { const sg = TL.segs[segAt(clamp(sTarget, 0, TL.T1))]; return { id: sg.id, u: sTarget - sg.T0 }; }
+  // put the scroll position where the map gives that same segment-local time (the map is monotonic: bisection)
+  function anchorScroll(tp) {
+    const pl = tp && placeIn(tp.id, tp.u);
+    if (!pl) return;
+    // (SCRUB-fix 3; Astra RELEASE-1) clamped to the MAP's last time, not TL.T1: the last hold drifts past TL.T1 (its rest
+    // TL.T1 - END_REST, plus DRIFT), and a clamp to TL.T1 put the reader up to ~140 px back up that hold
+    const T = clamp(pl.sg.T0 + pl.u, 0, MAP.pieces[MAP.pieces.length - 1].T1);
+    if (T <= mapScroll(0) + 1e-6) {
+      if (pl.moved && Math.abs(window.scrollY - Math.round(storyTop)) >= 1) window.scrollTo(0, Math.max(0, Math.round(storyTop)));
+      return;
+    }
+    let lo = 0, hi = storyTop + MAP.L;
+    for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (mapScroll(mid) < T) lo = mid; else hi = mid; }
+    if (Math.abs(window.scrollY - hi) >= 1) window.scrollTo(0, Math.round(hi));
+    readerY = window.scrollY;
+  }
+  const pastStory = () => (MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null);
+  // an explicit jump may dip forwards too; scrolling never does
+  function navScrollTo(y) { navJumpAt = clock(); window.scrollTo(0, y); readerY = window.scrollY; wake(); }
+  // the stage at scroll y at once (a mode flip, a restore): no move, no replay
+  function scrubPlace(y) {
+    if (Math.abs(window.scrollY - y) >= 1) window.scrollTo(0, Math.max(0, Math.round(y)));
+    readerY = window.scrollY;
+    sTarget = shown = mapScroll(window.scrollY); sVel = 0; sIntro = null; sJump = null;
+    if (sDip) { sDip = null; clearDip(); }
+    dirSign = 1; dirAnchor = sTarget;
+    phase = window.scrollY > storyEnd() + 1 ? "released" : "rest";
+    lastDrawn = null; capIdx = -1;
+    render(shown); updateCaptions(shown, true);
+    wake();
+  }
+  // an explicit jump to checkpoint k (the menu, the logo, a deep link's popstate, focus): dest now, the scroll to its hold,
+  // the landing (one history write by story-url.js) once the stage has caught up there
+  function scrubJump(k, source) {
+    const y = trackY(k);
+    if (phase === "rest" && kR === k && kD === k && Math.abs(window.scrollY - y) <= 1) return;   // ICX-JUMP.0
+    sJump = { k, source }; sNat = null;               // the latest explicit jump wins (an instant scroll ends a smooth one)
+    // (SCRUB-fix 1; Astra RELEASE-1 HIGH) a jump that moves always emits its destination, even the one already set (below
+    // the story, released set kR = kD = last): story-url.js raises its one push on it (ICX-HIST.2), over a stale `pop`
+    kD = k; srcD = source; emit("dest", payload(k, source));
+    navScrollTo(y);
+  }
+  // the landing glue (ICX-SCRUB): a final landing is the stage caught up with a still scroll inside checkpoint k's hold,
+  // k not the one last landed (or an explicit jump's target): dest + one final onLand (story-url.js: one replaceState, a
+  // jump's one pushState), one announcement. Holds the stage crosses while moving are previews only (ICX-HL.3).
+  function scrubLand(y, moving, now) {
+    if (y > storyEnd() + 1) {
+      if (phase !== "released") { phase = "released"; sJump = null; kR = kD = last(); }
+      sOut = true;
+      return;
+    }
+    const k = holdAtT(shown);
+    const still = now - sScrollAt;
+    if (moving || still < S_QUIET) {
+      phase = "transition";
+      if (k >= 0 && k !== sPrev) { sPrev = k; emit("dest", payload(k, "free", { preview: true })); }
+      if (!moving) { clearTimeout(sQuietTimer); sQuietTimer = setTimeout(() => wake(), Math.ceil((S_QUIET - still) * 1000) + 8); }
+      return;
+    }
+    phase = "rest";
+    if (k < 0) return;                                  // still mid-ramp: rendered stays the last landed checkpoint
+    const j = sJump && sJump.k === k ? sJump : null;
+    if (k === kR && kD === k && !j && !sOut) return;
+    const re = sOut && !j;
+    sJump = null; sPrev = k; sOut = false;
+    const src = j ? j.source : "settle";
+    if (kD !== k) { kD = k; srcD = src; emit("dest", payload(k, src)); }
+    kR = k;
+    announce(k);
+    emit("land", payload(k, src, re ? { final: true, reentry: true } : { final: true }));
+  }
+  function scrubTick() {
+    const now = clock();
+    const dt = clamp(now - lastNow, 0.0005, 0.05);
+    lastNow = now;
+    const y = window.scrollY;
+    const tNew = mapScroll(y), step = Math.abs(tNew - sTarget);
+    if (step > 1e-4) sMoved = now;
+    if (Math.abs(y - sLastY) >= 1) { sLastY = y; sScrollAt = now; }
+    if (sNat && (Math.abs(y - sNat.aim) <= 1 || now > sNat.until)) sNat = null;
+    // (a PageDown is a one-frame step of ~2.7 s: forwards that plays; a jump dips going back, or when asked for one)
+    const jumped = step > S_JUMP && (tNew < sTarget || now - navJumpAt < 0.5);
+    sTarget = tNew;
+    let busy = false;
+    if (sIntro) {
+      // the arrival plays at natural speed to the hold frame; the first genuine scroll ends it
+      const it = Math.min(TL.HOLD, (now - sIntro.t0) * sIntro.rate);
+      shown = it;
+      sVel = it < TL.HOLD ? sIntro.rate : 0;
+      if (Math.abs(y - sIntro.y0) > 1) sIntro = null;
+      else { busy = it < TL.HOLD; if (!busy) sIntro = null; }
+    }
+    if (!sIntro) {
+      if (sDip) {
+        const u = now - sDip.t0;
+        if (u < CFG.DIP_OUT) { setDip(1 - u / CFG.DIP_OUT); scrubDipBand(1 - u / CFG.DIP_OUT); }
+        else {
+          if (!sDip.jumped) { shown = sTarget; sVel = 0; sDip.jumped = true; }
+          const a = Math.min(1, (u - CFG.DIP_OUT) / CFG.DIP_IN);
+          setDip(a); scrubDipBand(a);
+          if (a >= 1) { sDip = null; clearDip(); }
+        }
+        busy = true;
+      } else if (Math.abs(sTarget - shown) > S_JUMP && !(shown < TL.HOLD && sTarget <= TL.HOLD + 0.1) &&
+          (jumped || (sTarget < shown && now - sMoved > 0.12 && shown - sTarget > REWIND))) {
+        sDip = { t0: now, jumped: false, band0: bandOnAt(shown) };
+        busy = true;
+      } else {
+        const [e, v] = follow(shown - sTarget, sVel, dt, (e1, v1) => sCapAt(sTarget + e1, v1, sTarget));
+        shown = sTarget + e; sVel = v;
+        if (Math.abs(e) < 0.0006 && Math.abs(v) < 0.006) { shown = sTarget; sVel = 0; } else busy = true;
+      }
+    }
+    // the direction gate: hysteresis (DIR_EPS) on the target's movement; forwards restores the hand and the presses
+    if (sIntro) { dirSign = 1; dirAnchor = sTarget; }
+    else if (dirSign > 0) { if (sTarget < dirAnchor - DIR_EPS) { dirSign = -1; dirAnchor = sTarget; } else if (sTarget > dirAnchor) dirAnchor = sTarget; }
+    else if (sTarget > dirAnchor + DIR_EPS) { dirSign = 1; dirAnchor = sTarget; } else if (sTarget < dirAnchor) dirAnchor = sTarget;
+    const gTo = dirSign > 0 ? 1 : 0;
+    FX.gate.press = gTo;
+    const g0 = FX.gate.cursor;
+    if (g0 !== gTo) { FX.gate.cursor = gTo > g0 ? Math.min(1, g0 + dt / 0.15) : Math.max(0, g0 - dt / 0.15); busy = true; }
+    scrubLand(y, busy, now);
+    if (window.__fxTrace) window.__fxTrace.push([now, shown, sTarget, phase, FX.gate.cursor]);   // test hook (off unless set)
+    const key = `${shown.toFixed(5)}|${FX.gate.cursor.toFixed(3)}|${FX.gate.press}`;
+    if (key !== lastDrawn) { lastDrawn = key; render(shown); }
+    updateCaptions(shown, false);
+    if (busy) raf = requestAnimationFrame(tick);
+  }
+  // C5's band rule for the scrub's dip: a cut that turns the Ride's band on or off fades the band with the stage
+  function scrubDipBand(a) {
+    const to = bandOnAt(sDip && sDip.jumped ? shown : sTarget);
+    if (sDip && sDip.band0 !== to && a < 0.999) band.style.opacity = a.toFixed(3); else band.style.removeProperty("opacity");
+  }
 
   /* ---------------- the loop: one rAF; sleeps when there is nothing to do ---------------- */
   function wake(t0) {
@@ -1540,6 +1836,7 @@
   function tick() {
     raf = 0;
     if (!TL || held) return;
+    if (MAP) return scrubTick();
     const now = clock();
     const dt = clamp(now - lastNow, 0, 0.1);
     lastNow = now;
@@ -1608,6 +1905,7 @@
     clearDip();
     run = null; dip = null; wait = 0; passK = -1; ack = null; swallow = -1;
     kR = kD = 0; phase = "rest";
+    sDip = null; sIntro = null; sJump = null; sVel = 0; sPrev = -1; sOut = false; clearTimeout(sQuietTimer);
   }
   function teardown() {
     // everything the story put on the page goes: the mounts, the page-level layers' styles, the global classes, the
@@ -1616,7 +1914,7 @@
     clearTimeout(capTimer);
     held = false;
     clearStage();
-    TL = null; OV = null; L = null; TRACK = null; CP = []; RE = [];
+    TL = null; OV = null; L = null; TRACK = null; MAP = null; CP = []; RE = [];
     lastG = {}; curSeg = -1; lastDrawn = null; capIdx = -1;
     doc.classList.remove("on-band", "past-band");
     pin.setAttribute("class", "pin");
@@ -1645,6 +1943,11 @@
   window.addEventListener("pagehide", () => {
     try {
       if (!TL || !CP.length || !motion()) { sessionStorage.removeItem(PLACE_KEY); return; }
+      if (MAP) {                                        // (SCRUB) a reload keeps the pixel, as the live site did
+        sessionStorage.setItem(PLACE_KEY, JSON.stringify({ y: Math.round(window.scrollY), w: window.innerWidth,
+          path: location.pathname, cp: CP.join(), h: location.hash, k: entryK() }));
+        return;
+      }
       const below = phase === "released" || window.scrollY > storyEnd() + 1;
       const p = below ? { past: Math.round(window.scrollY - storyEnd()) } : { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR] };
       p.path = location.pathname; p.cp = CP.join();
@@ -1681,6 +1984,7 @@
     const nt = navType();
     kR = kD = 0; shown = RE[0][1]; phase = "rest";
     const saved = savedPlace();                        // read once: savedPlace() removes the record
+    if (MAP && (!b || CP.includes(b))) return scrubInit(b, nt, saved);
     if (b && CP.includes(b)) {
       const k = CP.indexOf(b);
       // (INT5-fix 5; Sol + Astra INT-5) a reload / history visit of the SAME entry the reader left below the story (scrolled
@@ -1730,6 +2034,64 @@
     syncScroll(trackY(kR));
     initial = { index: bi(kR), source: "restored" };
   }
+  // (SCRUB) the first place: the reader's own pixel on a reload / history visit of the same entry at the same width (the
+  // live site kept it); a deep link to a pinned row: its hold (ICX-SCRUB.6); a fresh arrival at the top: Make's arrival
+  function scrubInit(b, nt, saved) {
+    const k = b ? CP.indexOf(b) : -1;
+    const same = !!saved && nt !== "navigate" && saved.path === location.pathname && saved.cp === CP.join() &&
+      typeof saved.y === "number" && saved.w === window.innerWidth && saved.h === location.hash && (saved.k || null) === entryK();
+    if (same) { window.scrollTo(0, Math.max(0, saved.y)); kR = holdK(window.scrollY); initial = { index: bi(kR), source: "restored" }; return; }
+    if (k >= 0) {
+      window.scrollTo(0, trackY(k));
+      kR = kD = k;
+      initial = { index: BEATS.indexOf(b), source: nt === "navigate" ? "init" : nt };
+      emit("land", payload(k, "init", { final: true }));
+      return;
+    }
+    if (window.scrollY < 4 && nt === "navigate") { sIntro = { t0: clock(), rate: 1, y0: window.scrollY }; shown = 0; kR = 0; initial = { index: 0, source: "arrival" }; return; }
+    kR = holdK(window.scrollY);
+    initial = { index: bi(kR), source: "restored" };
+  }
+  // the engine's state from the scroll position as it is now (k: the checkpoint already landed, else the nearest hold)
+  function scrubSync(k) {
+    readerY = window.scrollY;
+    sTarget = mapScroll(readerY);
+    if (!sIntro) { shown = sTarget; sVel = 0; } else sVel = sIntro.rate;
+    dirSign = 1; dirAnchor = sTarget;
+    const rel = readerY > storyEnd() + 1;
+    kR = kD = rel ? last() : k != null && k >= 0 ? k : holdK(readerY);
+    sPrev = kR; sOut = rel; sLastY = readerY;
+    phase = rel ? "released" : sIntro ? "transition" : "rest";
+  }
+  // a native row's smooth scroll asked again for the same target under the new layout (smooth: it carries on from here)
+  function natResume(sn) {
+    const sec = document.getElementById(sn.id), hh = header ? header.getBoundingClientRect().height : 0;
+    const aim = sn.y != null ? sn.y : sec ? Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)) : sn.aim;
+    sNat = { ...sn, aim };
+    window.scrollTo({ top: aim, behavior: "smooth" });
+  }
+  function scrubStart(firstLoad, keep, sn) {
+    if (keep && keep.scrub && keep.cp === CP.join()) {
+      // the same story time under the new map (a theme switch, late fonts, a refit): nothing moves; below the story, the
+      // same distance past it. (Sol SCRUB-1 MEDIUM) A native row's smooth scroll still in flight: the reader asked to go
+      // there, so it is asked again for the same target (smooth: it carries on from wherever it is now).
+      if (sn) natResume(sn);
+      else if (keep.past != null) keepPast(keep.past); else if (!keep.intro) anchorScroll(keep.tp);
+      sIntro = keep.intro;
+      scrubSync(keep.kR);
+      if (keep.out) sOut = true;
+      const pl = placeIn(keep.id, keep.u);
+      if (pl) { shown = clamp(pl.sg.T0 + pl.u, pl.sg.T0, pl.sg.T1); sVel = keep.vel; }
+      FX.gate.cursor = keep.cursor; dirSign = keep.dirSign;
+      sJump = keep.jump;
+      if (sJump) kD = sJump.k;
+      if (phase !== "released" && Math.abs(shown - sTarget) > 1e-6) phase = "transition";
+    } else {
+      if (firstLoad) init();
+      scrubSync(firstLoad ? kR : null);
+    }
+    FX.gate.press = dirSign > 0 ? 1 : 0;
+  }
   // keep: a snapshot of where the story is (refresh), restored onto the rebuilt timeline when the checkpoints are the
   // same (a theme change, late fonts, a phone's caption refit). Across a layout change (a new destination table) the
   // reading place is restorePlace's job.
@@ -1740,6 +2102,8 @@
     // the scroll's mid-way FREE / release, and restoring it (an instant scroll) ended the smooth one at the pinned origin
     // while story-url.js's arrival still pushed the target's URL.
     const nat = native && typeof native.aim === "number" ? native : null;
+    const sn = sNat && clock() <= sNat.until ? sNat : null;   // (SCRUB) the same, for a scrub build's native jump
+    sNat = null;
     try {
       resetEngine();
       layoutKey = key();
@@ -1759,7 +2123,8 @@
       railMeasure();
       held = false;
       FX.gate.cursor = 1; FX.gate.press = 1;
-      if (keep && keep.cp === CP.join()) {
+      if (MAP) scrubStart(firstLoad, keep, sn);
+      else if (keep && keep.cp === CP.join()) {
         kR = Math.max(0, CP.indexOf(keep.beat)); kD = Math.max(0, CP.indexOf(keep.dest));
         const pl = placeIn(keep.id, keep.u);
         if (nat) {
@@ -1802,6 +2167,12 @@
   }
   function snapshot() {
     if (!TL || !CP.length) return null;
+    if (MAP) {
+      const sc = TL.segs[segAt(clamp(shown, 0, TL.T1))];
+      return { cp: CP.join(), scrub: true, beat: CP[kR], dest: CP[kD], phase: phase === "released" ? "released" : "rest",
+        id: sc.id, u: shown - sc.T0, vel: sVel, intro: sIntro ? { ...sIntro } : null, cursor: FX.gate.cursor, dirSign,
+        tp: sIntro ? null : targetPlace(), past: pastStory(), kR, jump: sJump, out: sOut };
+    }
     const sg = TL.segs[segAt(shown)];
     return { cp: CP.join(), beat: CP[kR], dest: CP[kD], phase, id: sg.id, u: shown - sg.T0, intro: !!(run && run.intro),
       past: phase === "released" ? readerY - storyEnd() : null };
@@ -1881,7 +2252,7 @@
   }
   // ICX-SETTLE-7: every resize re-measures at once (no debounce for the re-snap); the layout itself follows, debounced
   function onGeometry() {
-    if (!TL || !CP.length || !motion()) return;
+    if (!TL || !CP.length || !motion() || MAP) return;  // (SCRUB: the debounced relayout re-anchors the map)
     const bp = Math.max(1, Math.round(pin.clientHeight));
     if (bp === beatPx) return;                          // 100svh did not move (a phone's bars): nothing to re-snap
     const past = phase === "released" ? readerY - storyEnd() : null;
@@ -1893,6 +2264,9 @@
   let resizeT = 0;
   window.addEventListener("resize", () => {
     onGeometry();
+    // (SCRUB-fix 2) a resize stops the page's smooth scroll at once, and a still page reads as the native jump's arrival
+    // (story-url.js: 160 ms idle) before the debounced refit below: the jump is asked again now; the refit re-aims it
+    if (MAP && sNat && clock() <= sNat.until) natResume(sNat);
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
       // a mode change (a rotation across the short-touch line, 640 or 1024 px) keeps the reader's place (ICX-DEST.4)
@@ -1915,6 +2289,22 @@
     relayout();
   }
   function relayout() {
+    if (MAP) {                                          // (SCRUB) the same story time under the new map, or past it
+      const tp = sIntro ? null : targetPlace(), pst = pastStory();
+      // (SCRUB-fix 2; Astra RELEASE-1) a same-mode refit while the menu's native jump (Price) still scrolls carries the
+      // jump to its target, as a theme rebuild does (ICX-JUMP.5): an instant re-anchor stopped it mid-story while its
+      // arrival still wrote the target's URL
+      const sn = sNat && clock() <= sNat.until ? sNat : null;
+      layout();
+      if (MAP) {
+        if (sn) natResume(sn); else if (pst != null) keepPast(pst); else anchorScroll(tp);
+        sTarget = mapScroll(window.scrollY);
+      }
+      lastDrawn = null;
+      render(shown);
+      wake();
+      return;
+    }
     const past = phase === "released" ? readerY - storyEnd() : null;
     layout();
     geomAt = clock();
@@ -1958,6 +2348,11 @@
   const noteView = () => { viewW = window.innerWidth; viewH = window.innerHeight; };
   function readingPlace() {
     if (TL && motion() && CP.length && phase !== "released" && window.scrollY <= storyEnd() + 1) {
+      if (MAP) {                                        // (SCRUB) the beat whose caption is up (the last one that had one)
+        let b = TL.beats[capIdx];
+        for (let j = capIdx; !b && j >= 0; j--) b = TL.beats[j];
+        return { beat: CP.includes(b) ? b : CP[holdK(window.scrollY)], inStory: true };
+      }
       return { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR], inStory: true };
     }
     const beatOf = (el) => (el.classList.contains("beat") ? el.dataset.beat : null);
@@ -2034,12 +2429,14 @@
       // cancelled now, before its cut or arrival can land and pin the page back (an instant scroll ends the smooth one).
       // The engine goes FREE here, exactly as the native scroll's first event would make it: no cut, no landing, no
       // announce, no history from the cancelled move; the dip's fade is cleared (clearDip) and the settle plans afresh.
-      if (TL && motion() && CP.length && !held && (run || dip || wait) && phase !== "free" && phase !== "released") foreign(window.scrollY);
+      if (TL && motion() && CP.length && !held && !MAP && (run || dip || wait) && phase !== "free" && phase !== "released") foreign(window.scrollY);
+      if (MAP) { sJump = null; navJumpAt = -1; }        // (SCRUB) a native row: the page's own scroll, the stage follows
       nativeSeq++;                                      // a new native scroll: a cancelled one's residue guard no longer applies
       // opts.y (RELOAD): Back to a native entry lands on the pixel the reader left (story-url.js), not the anchor
       const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
       window.scrollTo({ top: Math.max(0, Math.round(to)), behavior: smooth ? "smooth" : "instant" });
-      if (smooth && TL && motion() && CP.length && !held) startNative(Math.max(0, Math.round(to)));
+      if (smooth && TL && motion() && CP.length && !held && !MAP) startNative(Math.max(0, Math.round(to)));
+      if (MAP) sNat = smooth ? { id: sec.id, y: opts && typeof opts.y === "number" ? opts.y : null, aim: Math.max(0, Math.round(to)), until: clock() + 2.5 } : null;
       return true;
     }
     jump(CP.indexOf(b), source);
@@ -2049,7 +2446,7 @@
   function state() {
     const has = CP.length > 0;
     return { phase, dest: has ? bi(kD) : null, rendered: has ? bi(kR) : null, T: +liveT().toFixed(4), trackY: has ? trackY(kD) : null,
-      beat: TL ? TL.beats[capIdx] ?? null : null, dip: !!dip, step: run ? run.purpose : null, settles, mode: mode(), scrollend: HAS_SCROLLEND };
+      beat: TL ? TL.beats[capIdx] ?? null : null, dip: !!(dip || sDip), step: run ? run.purpose : null, settles, mode: mode(), scrollend: HAS_SCROLLEND };
   }
   window.FEStory = Object.freeze({
     get destinations() { return destinations(); },
@@ -2069,7 +2466,7 @@
     mounts,
     get TL() { return TL; },
     seekMaster(T) {
-      held = true; run = null; wait = 0; dip = null; clearDip();
+      held = true; run = null; wait = 0; dip = null; sDip = null; sIntro = null; clearDip();
       shown = T;
       render(T);
       updateCaptions(T, true);
@@ -2082,9 +2479,15 @@
         T0: 0, T1: TL.T1, H: TL.HOLD, desktop: TL.isDesk, preset: TL.p, scrollLen: TRACK ? TRACK.L : 0, storyTop: Math.round(storyTop), beatPx,
         segs: TL.segs.map((s) => ({ id: s.id, kind: s.kind, T0: +s.T0.toFixed(3), T1: +s.T1.toFixed(3) })),
         beats: TL.beats, switches: TL.switches.map(([b, t, w]) => (w == null ? [b, +t.toFixed(3)] : [b, +t.toFixed(3), w])), dests: destinations(),
+        // (SCRUB) the scroll map's pieces, in the live site's own format (652d12a __site.map)
+        scrub: !!MAP, pieces: MAP ? MAP.pieces.map((p) => ({ kind: p.kind, beat: p.beat, s0: Math.round(p.s0), s1: Math.round(p.s1), T0: +p.T0.toFixed(3), T1: +p.T1.toFixed(3) })) : null,
       };
     },
-    state() { return { shown: liveT(), target: run ? run.to : shown, vel: run ? run.dir * run.rate : 0, beat: TL ? TL.beats[capIdx] : null, intro: !!(run && run.intro), dip: !!dip, gate: { ...FX.gate }, phase }; },
+    scrollFor(beat) { return MAP ? scrollForBeat(beat) : null; },
+    state() {
+      if (MAP) return { shown, target: sTarget, vel: sVel, beat: TL ? TL.beats[capIdx] : null, intro: !!sIntro, dip: !!sDip, gate: { ...FX.gate }, phase };
+      return { shown: liveT(), target: run ? run.to : shown, vel: run ? run.dir * run.rate : 0, beat: TL ? TL.beats[capIdx] : null, intro: !!(run && run.intro), dip: !!dip, gate: { ...FX.gate }, phase };
+    },
     pinEl() { return pin; },
     setGate(c, p) { FX.gate.cursor = c; FX.gate.press = p; lastDrawn = null; },
     refresh() { refresh(); },

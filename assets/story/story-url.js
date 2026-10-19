@@ -318,8 +318,14 @@
     if (cancelArrival) { cancelArrival(); cancelArrival = null; }   // a native arrival write in flight is void
     jumping = false;
     restoring = true;
+    // (SCRUB-fix 1; Astra RELEASE-1 HIGH) Back onto a row that is not pinned (Price, A note, an unknown hash) has no
+    // landing to consume its `pop`: it ends with the popstate's own arrival, so a later jump's push is never silenced
+    var popRow = slug ? rowOf(slug) : null, popPinned = !!(popRow && popRow.kind === "pinned");
     if (cancelRestore) cancelRestore();
-    cancelRestore = settled(function () { restoring = false; cancelRestore = null; setRestoration(siteRestoration()); });
+    cancelRestore = settled(function () {
+      restoring = false; cancelRestore = null; setRestoration(siteRestoration());
+      if (!popPinned && pending === "pop") pending = null;
+    });
     departY0 = null;
     if (!slug) return;
     var st = history.state, row = rowOf(slug);

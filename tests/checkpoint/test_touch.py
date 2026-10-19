@@ -19,21 +19,51 @@ feedback-audit-real-viewports): iPhone 14 Safari ~390x664, SE ~375x548, Android 
   landings are not announced) and focus never moves.
 - test_landscape_844x390: the shipped mode (a short touch screen: calm) behaves natively; a rotation keeps the place.
 - test_swipe_no_long_task: no long task > 50 ms on a swipe at 4x CPU throttle.
+
+SCRUB (stage 3, 2026-10-18; docs/interaction-contract.md ICX-SCRUB): phones (< 640) and touch tablets (640-1023, coarse)
+are scrub builds now: the page scrolls natively under the finger and the story follows the scroll. The checkpoint-touch
+claims (one swipe = one step, the clamp, the slop, a pinch's settle) moved to an iPad held sideways (1180x820, touch:
+a checkpoint build, the one real touch device that still steps); the phone and 820-touch cells assert the scrub
+contract instead (test_swipe_scrolls_and_the_story_follows, test_scrub_*, and the rewritten release / aria-live tests).
 """
 from __future__ import annotations
 
 import pytest
 from playwright.sync_api import sync_playwright
+from test_scrub import _still
 
 BEATS = ["make", "look", "know", "grow", "chase", "yours", "price", "note", "end"]
 STATE = "() => ({...FEStory.state(), y: Math.round(scrollY), end: __site.map().storyTop + __site.map().scrollLen, bp: __site.map().beatPx})"
+ST = "() => ({...FEStory.state(), ...__site.state(), y: Math.round(scrollY), end: __site.map().storyTop + __site.map().scrollLen})"
 
 VIEWPORTS = {
     "390x664": (390, 664, "phone"),
     "375x548": (375, 548, "calm"),
     "360x640": (360, 640, "phone"),
     "820x1180": (820, 1180, "tablet"),
+    "1180x820": (1180, 820, "desktop"),     # an iPad held sideways: touch, >= 1024, a checkpoint build
 }
+SCRUB_VPS = ["390x664", "360x640", "820x1180"]
+
+# every frame: [now, shown story time, scrollY, phase, dip] (ICX-SCRUB.3: the stage's speed, a dip)
+_TRACE = """() => { const R = window.__tr = []; const rec = () => { if (window.__tr !== R) return; const s = __site.state();
+  R.push([performance.now(), s.shown, Math.round(scrollY), FEStory.state().phase, !!s.dip]); requestAnimationFrame(rec); };
+  requestAnimationFrame(rec); }"""
+_TRACE_END = "() => { const r = window.__tr || []; window.__tr = null; return r; }"
+
+
+def _no_skip(tr, what):
+    """ICX-SCRUB.3: the stage never runs faster than 3x the wall clock (no skip forward or back) and never dips. The
+    allowance (x1.5 + 10 ms of story) covers the recorder's frame timing against the engine's own."""
+    fast = [(round(b[1] - a[1], 3), round(b[0] - a[0])) for a, b in zip(tr, tr[1:])
+            if abs(b[1] - a[1]) > 3.0 * 1.5 * max(b[0] - a[0], 1.0) / 1000 + 0.01]
+    assert not fast, f"{what}: the stage skipped (story s, ms) faster than 3x: {fast[:6]}"
+    assert not any(r[4] for r in tr), f"{what}: the stage dipped"
+
+
+def _hold_mid(page, beat):
+    return page.evaluate("(b) => { const m = __site.map(); const h = m.pieces.find((p) => p.kind === 'hold' && p.beat === b);"
+                         " return Math.round(m.storyTop + (h.s0 + h.s1) / 2); }", beat)
 
 # logs: every dest change, landing and phase seen (rAF), and the touchmove events' defaultPrevented (a listener that
 # runs after the story's own, on window, bubble phase)
@@ -149,7 +179,9 @@ def _one_step(p: Phone, frm: int, to: int, what: str):
 
 
 # ------------------------------------------------------------------------------------------------- one swipe, one step
-@pytest.mark.parametrize("vp", list(VIEWPORTS))
+# (SCRUB stage 3) the checkpoint cells only: a short touch screen (calm) and an iPad held sideways (a checkpoint build);
+# the phones and the 820 touch tablet scrub (test_swipe_scrolls_and_the_story_follows)
+@pytest.mark.parametrize("vp", ["375x548", "1180x820"])
 def test_one_swipe_one_checkpoint(browser, site_url, vp):
     w, h, want = VIEWPORTS[vp]
     p = Phone(browser, site_url, w, h)
@@ -178,11 +210,56 @@ def test_one_swipe_one_checkpoint(browser, site_url, vp):
         p.close()
 
 
-# ------------------------------------------------------------------------------------------------- momentum
-def test_flick_momentum_never_double_steps(browser, site_url):
-    p = Phone(browser, site_url, 390, 664)
+@pytest.mark.parametrize("vp", SCRUB_VPS)
+def test_swipe_scrolls_and_the_story_follows(browser, site_url, vp):
+    """(SCRUB stage 3: replaces test_one_swipe_one_checkpoint and the phone half of the momentum test on the scrub builds,
+    ICX-SCRUB.1/.3) a flick and a slow drag, forward and back, from Templates' hold: no touchmove is prevented, the page
+    moves the finger's way (a flick's fling carries it well past the finger: the browser's own momentum), the story
+    time moves the same way without a skip or a dip, and once the scroll stops nothing moves on (no momentum leak)."""
+    w, h, want = VIEWPORTS[vp]
+    p = Phone(browser, site_url, w, h)
     try:
-        assert p.mode == "phone"
+        assert p.mode == want and p.page.evaluate("() => __site.map().scrub") is True, f"{vp}: not a scrub build"
+        p.goto_beat("look")
+        p.log()
+        # each gesture starts mid-way down the ramp from Templates to Invoices (inside a hold the story time is all but
+        # flat by design, ICX-SCRUB.2): a flick's fling and a drag both stay on that ramp
+        ramp = p.page.evaluate("() => { const m = __site.map(); const r = m.pieces.find((p) => p.kind === 'ramp' && p.beat === 'know');"
+                               " return Math.round(m.storyTop + (r.s0 + r.s1) / 2); }")
+        cases = [("flick forward", 1, lambda: p.flick(1)), ("slow drag forward", 1, lambda: p.drag(1)),
+                 ("flick back", -1, lambda: p.flick(-1)), ("slow drag back", -1, lambda: p.drag(-1))]
+        for what, d, fn in cases:
+            p.page.evaluate("(y) => scrollTo(0, y)", ramp)
+            p.page.wait_for_timeout(300)
+            s0 = _still(p.page, 15000)
+            p.mark()
+            p.page.evaluate(_TRACE)
+            fn()
+            s1 = _still(p.page, 15000)
+            p.page.wait_for_timeout(900)              # a fling or a late touch event would move it again here
+            s2, tr, L = p.page.evaluate(ST), p.page.evaluate(_TRACE_END), p.read()
+            where = f"{vp} {what}"
+            assert L["moves"], f"{where}: no touchmove reached the page"
+            assert not any(m[1] for m in L["moves"]), f"{where}: touchmoves prevented {sum(1 for m in L['moves'] if m[1])}/{len(L['moves'])}"
+            dy, dT = s1["y"] - s0["y"], s1["shown"] - s0["shown"]
+            assert d * dy > 100, f"{where}: the page moved {dy} px"
+            if "flick" in what:
+                assert d * dy > 160 * 1.5, f"{where}: a 160 px flick moved the page only {dy} px (no fling: the momentum was cut)"
+            assert d * dT > 0.1, f"{where}: the story did not follow the scroll ({s0['shown']:.3f} -> {s1['shown']:.3f})"
+            assert s2["y"] == s1["y"] and abs(s2["shown"] - s1["shown"]) < 1e-3, f"{where}: moved on after it stopped: {s1} -> {s2}"
+            assert "free" not in L["phases"] and not L["steps"], f"{where}: the checkpoint engine ran: {L['phases']} {L['steps']}"
+            _no_skip(tr, where)
+    finally:
+        p.close()
+
+
+# ------------------------------------------------------------------------------------------------- momentum
+# (SCRUB stage 3) a checkpoint build with touch: an iPad held sideways. The phones' momentum is the browser's own
+# (test_swipe_scrolls_and_the_story_follows: the fling carries the page, the stage follows without a skip).
+def test_flick_momentum_never_double_steps(browser, site_url):
+    p = Phone(browser, site_url, 1180, 820)
+    try:
+        assert p.mode == "desktop" and p.page.evaluate("() => __site.map().scrub") is False
         p.rest_on(0)
         p.log()
         # a finger's flick (slow start, fast lift) and a hard synthetic flick with its fling: each one step, forward
@@ -195,12 +272,17 @@ def test_flick_momentum_never_double_steps(browser, site_url):
             p.mark()
             fn()
             _one_step(p, frm, to, f"flick {BEATS[frm]} -> {BEATS[to]}")
-        # at Your data (the checkpoint before the last pinned) a flick lands on Get the app and never releases
-        p.goto_beat("yours")
+        # at the checkpoint before the last pinned (A note here; Your data on the old phone) a flick lands on Get the app
+        # and never releases
+        pins = p.pinned()
+        assert pins[-1] == 8, pins
+        p.goto_beat(BEATS[pins[-2]])
         p.mark()
         p.finger_flick(1)
-        p.page.wait_for_timeout(250)
-        p.finger_flick(1)                        # more flicks during the move are clamped (ICX-RELEASE.4)
+        # more flicks during the move are clamped (ICX-RELEASE.4); (SCRUB stage 3) at once, not 250 ms later: the
+        # sideways iPad's step onto Get the app is shorter than the phone's was, and a flick after it has landed is a
+        # release from REST(last), ICX-RELEASE.1
+        p.finger_flick(1)
         p.swipe(420, 5000, fling=True)
         p.rest_on(8)
         p.page.wait_for_timeout(1500)
@@ -213,9 +295,42 @@ def test_flick_momentum_never_double_steps(browser, site_url):
 
 
 # ------------------------------------------------------------------------------------------------- first chapter
-def test_first_chapter_scrolls_natively(browser, site_url):
+def test_first_chapter_scrolls_natively_scrub(browser, site_url):
+    """(SCRUB stage 3, ICX-SCRUB.1; the phone half of test_first_chapter_scrolls_natively) at the top a back swipe is never
+    prevented (pull-to-refresh) and moves nothing; one chapter later (Templates) a back swipe is not prevented either:
+    the page scrolls back and the story plays backwards, no dip."""
     p = Phone(browser, site_url, 390, 664)
     try:
+        s0 = _still(p.page, 15000)
+        assert s0["y"] == 0, s0
+        p.log()
+        p.mark()
+        p.drag(-1, 160)
+        p.page.wait_for_timeout(400)
+        L = p.read()
+        assert L["moves"], "no touchmove reached the page"
+        assert not any(prevented for _, prevented in L["moves"]), (
+            f"ICX-SCRUB.1: a back swipe at the first chapter was prevented (pull-to-refresh blocked): {L['moves'][:6]}")
+        assert L["dest"] == [] and L["land"] == [] and p.page.evaluate(ST)["rendered"] == 0, f"a back swipe at the top moved the story: {L}"
+        p.goto_beat("look")
+        s0 = _still(p.page)
+        p.mark()
+        p.page.evaluate(_TRACE)
+        p.drag(-1, 400)                           # out of Templates' (flat) hold onto the ramp from New invoice
+        s1 = _still(p.page)
+        tr, L = p.page.evaluate(_TRACE_END), p.read()
+        assert L["moves"] and not any(prevented for _, prevented in L["moves"]), f"a back swipe at Templates was prevented: {L['moves'][:6]}"
+        assert s1["y"] < s0["y"] - 100 and s1["shown"] < s0["shown"] - 0.1, f"the back swipe did not play back: {s0} -> {s1}"
+        _no_skip(tr, "back swipe at Templates")
+    finally:
+        p.close()
+
+
+# (SCRUB stage 3) the checkpoint half: an iPad held sideways
+def test_first_chapter_scrolls_natively(browser, site_url):
+    p = Phone(browser, site_url, 1180, 820)
+    try:
+        assert p.page.evaluate("() => __site.map().scrub") is False
         p.rest_on(0)
         p.log()
         p.mark()
@@ -240,99 +355,149 @@ def test_first_chapter_scrolls_natively(browser, site_url):
 # ------------------------------------------------------------------------------------------------- release / re-entry
 @pytest.mark.parametrize("vp", ["390x664", "360x640"])
 def test_phone_release_reentry(browser, site_url, vp):
+    """(SCRUB stage 3: the scrub form of ICX-RELEASE.1-.4 / ICX-HIST.8, ICX-SCRUB.1/.5) at Get the app's hold a forward
+    flick is the browser's own release into Price (never prevented, nothing landed below the pin); native swipes carry
+    the reader on to Price; dragging back up from below the pin into Get the app's hold is one landing there, announced,
+    and never on an earlier chapter, no dip, from just below the pin and from further down; the next back flick plays the
+    story backwards."""
     w, h, _ = VIEWPORTS[vp]
     p = Phone(browser, site_url, w, h)
     try:
-        p.rest_on(0)
+        _still(p.page, 15000)
         assert p.pinned()[-1] == 8, "phone: the last pinned is Get the app (decisions #21)"
         p.log()
-        p.goto_beat("yours")
-        p.mark()
-        p.flick(1)                               # Your data -> Get the app
-        p.page.wait_for_timeout(200)
-        p.flick(1)                               # during the move: dropped (clamp, ICX-RELEASE.4)
-        st = p.rest_on(8)
-        p.page.wait_for_timeout(600)
-        L = p.read()
-        assert "released" not in L["phases"] and max(L["ys"]) <= st["end"] + 1, f"the clamp let the page past the pin: {L['phases']}"
-        # the next swipe from REST(last pinned) releases into Price / A note (ICX-RELEASE.1)
+        p.goto_beat("end")
+        p.page.wait_for_timeout(800)
+        # a forward flick at the last pinned releases into Price / A note: the page's own scroll (ICX-SCRUB.1)
         p.mark()
         p.flick(1, 300)
         st = p.wait("s.phase === 'released'", 4000)
         p.page.wait_for_timeout(800)
-        st = p.st()
+        st, L = p.st(), p.read()
         assert st["y"] > st["end"] + 1, st
-        # below the pin it is the page: the phone's after-pin "Your data" copy (as shipped 10-10), then Price and A
-        # note. Native swipes carry the reader on into Price; nothing steps, the story stays released.
+        assert L["moves"] and not any(m[1] for m in L["moves"]), f"the release flick was prevented: {L['moves'][:6]}"
+        # below the pin it is the page: native swipes carry the reader on into Price; nothing lands
         vis = "(id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }"
         for _ in range(6):
             if p.page.evaluate(vis, "price"):
                 break
             p.flick(1, 300)
             p.page.wait_for_timeout(700)
-        st = p.st()
+        st, L = p.st(), p.read()
         assert p.page.evaluate(vis, "price"), f"native swipes below the pin did not reach Price: {st}"
-        assert st["phase"] == "released" and not p.read()["steps"], f"a swipe below the pin stepped the story: {st}"
-        # back up from Price: one drag that crosses into the pin, then (from further down) one hard flick whose fling
-        # runs up into the pin. Each re-entry lands on REST(end) and stays there: never an earlier checkpoint, no dip,
-        # and the fling's tail does not walk it back after REENTRY_STICKY_MS.
-        for what, down, fn in [("drag", 0.5, lambda: p.swipe(-450, 300, y0=120)),
-                               ("fling", 1.6, lambda: p.swipe(-500, 5000, fling=True, y0=100))]:
-            if down:
-                p.page.evaluate(f"() => window.scrollTo(0, __site.map().storyTop + __site.map().scrollLen + Math.round(innerHeight * {down}))")
-                p.wait("s.phase === 'released'", 3000)
-                p.page.wait_for_timeout(300)
+        assert st["phase"] == "released" and L["dest"] == [] and L["land"] == [] and not L["steps"], (
+            f"a swipe below the pin moved the story: {st} {L['dest']} {L['land']}")
+        # back up into the pin by the finger (drags, no fling), ending inside Get the app's hold: one landing there
+        for what, down in [("drag from just below the pin", 0.5), ("drags from further down", 1.6)]:
+            p.page.evaluate(f"() => window.scrollTo(0, __site.map().storyTop + __site.map().scrollLen + Math.round(innerHeight * {down}))")
+            p.wait("s.phase === 'released'", 3000)
+            p.page.wait_for_timeout(300)
             p.mark()
             p.page.evaluate("() => { document.querySelector('[data-story-live]').textContent = ''; }")
-            fn()
-            p.rest_on(8, 8000)
-            p.page.wait_for_timeout(1800)
+            p.page.evaluate(_TRACE)
+            left = p.page.evaluate("() => scrollY") - _hold_mid(p.page, "end")
+            while left > 8:
+                chunk = min(left, int(h * 0.6))
+                p.swipe(-chunk, 300, y0=int(h * 0.2))
+                left = p.page.evaluate("() => scrollY") - _hold_mid(p.page, "end")
+            st = _still(p.page, 8000)
+            p.page.wait_for_timeout(1000)
             said = p.page.evaluate("() => document.querySelector('[data-story-live]').textContent")
+            tr, L, st = p.page.evaluate(_TRACE_END), p.read(), p.page.evaluate(ST)
             assert said == "Get the app", f"ICX-KEY.2: the re-entry by {what} was not announced (live region {said!r})"
-            st, L = p.st(), p.read()
-            assert st["phase"] == "rest" and st["rendered"] == 8, f"re-entry by {what} did not stay on Get the app: {st}"
-            landed = sorted({d for d, _, _ in L["land"]} | {d for d, _ in L["dest"]})
-            assert set(landed) <= {8}, f"re-entry by {what} touched {[BEATS[i] for i in landed]}; only Get the app is allowed"
-            assert "dip" not in L["phases"], f"re-entry by {what} played a dip: {L['phases']}"
+            assert st["phase"] == "rest" and st["rendered"] == 8 and st["beat"] == "end", f"re-entry by {what} did not land on Get the app: {st}"
+            finals = [d for d, final, _ in L["land"] if final]
+            assert finals == [8], f"re-entry by {what}: final landings {finals}; one, on Get the app, expected"
+            touched = sorted({d for d, _, _ in L["land"]} | {d for d, _ in L["dest"]})
+            assert set(touched) <= {8}, f"re-entry by {what} touched {[BEATS[i] for i in touched]}; only Get the app is allowed"
+            assert not any(m[1] for m in L["moves"]), f"re-entry by {what}: a touchmove was prevented"
+            _no_skip(tr, f"re-entry by {what}")
+        # the next back flick plays the story backwards (ICX-SCRUB.3)
+        s0 = _still(p.page)
+        p.flick(-1)
+        s1 = _still(p.page, 8000)
+        assert s1["y"] < s0["y"] - 100 and s1["shown"] < s0["shown"] - 0.1, f"the back flick after the re-entry: {s0} -> {s1}"
+    finally:
+        p.close()
+
+
+@pytest.mark.parametrize("vp", ["1180x820"])
+def test_fling_reentry_checkpoint(browser, site_url, vp):
+    """(SCRUB stage 3, Sol SCRUB-3 HIGH: the hard-fling half of the old phone re-entry test, ICX-RELEASE.2 / ICX-SETTLE-8,
+    on a checkpoint build with touch, an iPad held sideways) from as far below the pin as the page goes, one hard flick
+    whose fling runs up into the pin lands on REST(last pinned) and stays there: never an earlier checkpoint, announced,
+    no dip, and the fling's tail does not walk it back after REENTRY_STICKY_MS; the next back swipe is an ordinary step
+    back. (On a phone the fling is the browser's own and the stage follows it: test_phone_release_reentry.)"""
+    w, h, want = VIEWPORTS[vp]
+    p = Phone(browser, site_url, w, h)
+    try:
+        assert p.mode == want and p.page.evaluate("() => __site.map().scrub") is False
+        p.rest_on(0)
+        pins = p.pinned()
+        last = pins[-1]
+        name = p.page.evaluate(f"() => FEStory.destinations[{last}].name")
+        p.log()
+        p.goto_beat(BEATS[last])
+        p.page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+        p.wait("s.phase === 'released'", 3000)
+        p.page.wait_for_timeout(300)
+        p.mark()
+        p.page.evaluate("() => { document.querySelector('[data-story-live]').textContent = ''; }")
+        p.swipe(-500, 5000, fling=True, y0=100)
+        p.rest_on(last, 8000)
+        p.page.wait_for_timeout(1800)
+        said = p.page.evaluate("() => document.querySelector('[data-story-live]').textContent")
+        assert said == name, f"ICX-KEY.2: the re-entry by fling was not announced (live region {said!r})"
+        st, L = p.st(), p.read()
+        assert st["phase"] == "rest" and st["rendered"] == last, f"re-entry by fling did not stay on {name}: {st}"
+        landed = sorted({d for d, _, _ in L["land"]} | {d for d, _ in L["dest"]})
+        assert set(landed) <= {last}, f"re-entry by fling touched {[BEATS[i] for i in landed]}; only {name} is allowed"
+        assert "dip" not in L["phases"], f"re-entry by fling played a dip: {L['phases']}"
         # the next back swipe is an ordinary step back (ICX-BACK)
         p.mark()
         p.flick(-1)
-        p.rest_on(5)
+        p.rest_on(pins[-2])
     finally:
         p.close()
 
 
 # ------------------------------------------------------------------------------------------------- aria-live
 def test_aria_live_no_focus_move(browser, site_url):
+    """(SCRUB stage 3: the scrub form, ICX-KEY.2/.3 + ICX-SCRUB.5) one polite live region; the scroll stopping in
+    Templates' hold announces it once; one scroll on to Dashboard's hold carries the stage through Invoices' hold while it
+    moves (not announced) and announces Dashboard once when it lands; nothing is announced while the stage moves; focus
+    never moves."""
     p = Phone(browser, site_url, 390, 664)
     try:
-        p.rest_on(0)
+        _still(p.page, 15000)
         regions = p.page.evaluate("() => [...document.querySelectorAll('[data-story-live]')].map(e => [e.getAttribute('aria-live'), e.getAttribute('role')])")
         assert len(regions) == 1 and regions[0][0] == "polite", f"ICX-KEY.2: one polite story live region expected, got {regions}"
         names = p.page.evaluate("() => Object.fromEntries(FEStory.destinations.map(d => [d.beat, d.name]))")
         p.page.evaluate("""() => {
             window.__c6said = [];
             const el = document.querySelector('[data-story-live]');
-            new MutationObserver(() => { const t = el.textContent.trim(); if (t) window.__c6said.push([t, FEStory.state().phase]); })
+            new MutationObserver(() => { const t = el.textContent.trim(); if (t) window.__c6said.push([t, FEStory.state().phase, Math.round(scrollY)]); })
               .observe(el, { childList: true, characterData: true, subtree: true });
             const f = document.querySelector('[data-theme-toggle]') || document.querySelector('header a');
             f.focus(); window.__c6focus = f;
         }""")
-        p.flick(1)
-        p.rest_on(1)
-        p.page.wait_for_timeout(300)
-        p.flick(1)                               # two quick swipes: look -> know (passed through) -> grow
-        p.page.wait_for_timeout(120)
-        p.flick(1)
-        p.rest_on(3, 15000)
-        p.page.wait_for_timeout(300)
+        p.page.evaluate("(y) => scrollTo(0, y)", _hold_mid(p.page, "look"))
+        s = _still(p.page, 15000)
+        p.page.wait_for_timeout(500)
+        assert s["rendered"] == 1, s
+        p.page.evaluate(_TRACE)
+        p.page.evaluate("(y) => scrollTo(0, y)", _hold_mid(p.page, "grow"))
+        s = _still(p.page, 15000)
+        p.page.wait_for_timeout(500)
+        tr = p.page.evaluate(_TRACE_END)
+        assert s["rendered"] == 3, s
+        crossed = [r for r in tr if r[3] == "transition" and abs(r[1] - p.page.evaluate("() => FEStory.destinations[2].rest")) < 0.3]
+        assert crossed, "harness: the stage never crossed Invoices' hold while moving"
         said = p.page.evaluate("() => window.__c6said")
-        texts = [t for t, _ in said]
-        assert texts and texts[0] == names["look"], f"ICX-KEY.2: the landing on Templates was not announced: {said}"
-        assert texts[-1] == names["grow"], f"ICX-KEY.2: the final landing (Dashboard) was not announced: {said}"
-        assert names["know"] not in texts, f"ICX-KEY.2: a pass-through landing (Invoices) was announced: {said}"
-        assert all(ph not in ("dip",) for _, ph in said), f"announced mid-transition: {said}"
-        assert p.page.evaluate("() => document.activeElement === window.__c6focus"), "ICX-KEY.3: focus moved on a touch step"
+        texts = [t for t, _, _ in said]
+        assert texts == [names["look"], names["grow"]], f"ICX-KEY.2: expected Templates then Dashboard, each once; got {said}"
+        assert all(ph == "rest" for _, ph, _ in said), f"announced while the stage moved: {said}"
+        assert p.page.evaluate("() => document.activeElement === window.__c6focus"), "ICX-KEY.3: focus moved on a landing"
     finally:
         p.close()
 
@@ -399,9 +564,8 @@ def test_pinch_never_prevented(browser, site_url):
     prevented, whether the first finger moved first (its in-slop move may be held) or not; a real pinch zooms."""
     p = Phone(browser, site_url, 390, 664)
     try:
-        p.rest_on(0)
-        p.flick(1)
-        p.rest_on(1)
+        _still(p.page, 15000)
+        p.goto_beat("look")                       # (SCRUB stage 3: a phone does not step; the menu's jump lands it)
         p.page.evaluate(_TOUCHLOG)
         t = lambda kind, pts: p.cdp.send("Input.dispatchTouchEvent", {"type": kind, "touchPoints": pts})  # noqa: E731
         for lead in (0, 4):                       # no lead-in, and a 4 px in-slop first-finger move before the pinch
@@ -475,9 +639,12 @@ def test_pinch_keeps_the_landed_chapter(browser, site_url):
     """Judge C6 ruling (b): a pinch at Templates that also scrolls the layout viewport must not settle while zoomed
     (a settle scroll yanks the zoomed view, and the nearest beat is wherever the zoom panned to). On zoom-out the story
     re-aligns ONCE on the chapter it was landed on (ICX-SETTLE-4 distance 0: no dip, no content replay, no dest
-    change). A pure zoom with no layout scroll leaves the story alone (no settle at all)."""
-    p = Phone(browser, site_url, 390, 664)
+    change). A pure zoom with no layout scroll leaves the story alone (no settle at all).
+    (SCRUB stage 3) The settle is the checkpoint engine's: an iPad held sideways (touch, a checkpoint build). A phone has
+    no settle; its pinch is the browser's own and never prevented (test_pinch_never_prevented)."""
+    p = Phone(browser, site_url, 1180, 820)
     try:
+        assert p.page.evaluate("() => __site.map().scrub") is False
         p.rest_on(0)
         p.flick(1)
         p.rest_on(1)
@@ -566,10 +733,10 @@ def test_sheet_scrolls_natively(browser, site_url):
     the sheet scrolls, and the story does not move."""
     p = Phone(browser, site_url, 390, 664)
     try:
-        p.rest_on(0)
-        p.flick(1)
-        p.rest_on(1)
+        _still(p.page, 15000)
+        p.goto_beat("look")                       # (SCRUB stage 3: a phone does not step; the menu's jump lands it)
         p.page.wait_for_timeout(400)
+        y0 = p.page.evaluate("() => scrollY")
         p.page.click("[data-menu-open]")
         p.page.wait_for_function("() => document.querySelector('#fe-menu').open")
         p.page.wait_for_timeout(300)
@@ -588,6 +755,7 @@ def test_sheet_scrolls_natively(browser, site_url):
         assert after >= geo["top"] + want, f"the sheet did not scroll ({geo['top']} -> {after}, range {geo['sh'] - geo['ch']})"
         st = p.st()
         assert L["dest"] == [] and not L["steps"] and st["rendered"] == 1, f"the story moved under the sheet: {st} {L['dest']}"
+        assert st["y"] == y0, f"the page scrolled under the sheet ({y0} -> {st['y']})"
     finally:
         p.close()
 
@@ -596,9 +764,9 @@ def test_horizontal_swipe_not_intercepted(browser, site_url):
     """A sideways swipe (fast or slow-starting) inside the story never steps and is never prevented."""
     p = Phone(browser, site_url, 390, 664)
     try:
-        p.rest_on(0)
-        p.flick(1)
-        p.rest_on(1)
+        _still(p.page, 15000)
+        p.goto_beat("look")                       # (SCRUB stage 3: a phone does not step; the menu's jump lands it)
+        y0 = p.page.evaluate("() => scrollY")
         p.page.evaluate(_TOUCHLOG)
         for offs in ((12, 24, 36, 48, 60, 72), (2, 4, 7, 14, 30, 60, 100)):
             p.cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": 60, "y": 330}]})
@@ -610,6 +778,6 @@ def test_horizontal_swipe_not_intercepted(browser, site_url):
         log = p.page.evaluate("() => window.__c6t")
         assert log and not any(prev for _, prev, _ in log), f"a horizontal swipe was prevented: {log}"
         st = p.st()
-        assert st["phase"] == "rest" and st["rendered"] == 1, f"a horizontal swipe moved the story: {st}"
+        assert st["phase"] == "rest" and st["rendered"] == 1 and abs(st["y"] - y0) <= 30, f"a horizontal swipe moved the story: {st} (from y {y0})"
     finally:
         p.close()

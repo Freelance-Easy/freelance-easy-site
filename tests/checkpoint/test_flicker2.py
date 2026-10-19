@@ -30,11 +30,14 @@ def browser():
 
 
 # (theme, k, wait, width, height): Look 2 s after landing (2.9 s of content left); Email 3 s (2.2 s left; the Ride's exit
-# seam follows); a phone (390 x 664, the real Safari viewport) on Look, and on Email (judge FADEDEF-1 LOW #3: the
-# closest luminance margin of the sweep, 0.013 under the floor, inside TOL).
+# seam follows); a narrow window on Look, and on Email (judge FADEDEF-1 LOW #3: the closest luminance margin of the
+# sweep, 0.013 under the floor, inside TOL). (SCRUB stage 3) The narrow cells were a phone (390 x 664); a phone scrubs
+# now and never skips content (ICX-SCRUB.3), so they moved to the narrowest checkpoint build: a fine-pointer window
+# 820 x 1180 (the tablet layout) for Look and 1024 x 768 for Email (on the tablet layout Email is the last pinned: no
+# content skip, the next gesture releases).
 CASES = [("dark", 1, 2.0, 1440, 900), ("light", 1, 2.0, 1440, 900), ("dark", 4, 3.0, 1440, 900),
-         ("light", 4, 3.0, 1440, 900), ("dark", 1, 2.0, 390, 664), ("dark", 4, 3.0, 390, 664)]
-IDS = ["dark-look", "light-look", "dark-email", "light-email", "phone-dark-look", "phone-dark-email"]
+         ("light", 4, 3.0, 1440, 900), ("dark", 1, 2.0, 820, 1180), ("dark", 4, 3.0, 1024, 768)]
+IDS = ["dark-look", "light-look", "dark-email", "light-email", "820-dark-look", "1024-dark-email"]
 
 
 @pytest.mark.parametrize("theme,k,wait,width,height", CASES, ids=IDS)
@@ -270,10 +273,13 @@ def test_rebuild_mid_blend_drops_the_held_frame(browser, site_url):
 # still-frame skips (after FREE or a cooldown stopped the move) use the same crossfade as the mid-content skip.
 # (theme, k, gap s, width, height): Look from Make (the 2.58 s step ends in the PDF -> Look reveal, CAP 1.4x, so it rushes
 # only near its end: the second notch comes 2.0 s in; earlier it is the designed entry dip to Invoices; the phone's step
-# is 1.7 s, so 1.3 s in); Email from Dashboard (the Ride, 1.45 s, rushes at once).
-DOUBLE = [("dark", 1, 2.0, 1440, 900), ("light", 1, 1.3, 390, 664), ("dark", 4, 0.25, 1440, 900),
-          ("light", 4, 0.25, 390, 664)]
-DOUBLE_IDS = ["look-1440-dark", "look-390-light", "email-1440-dark", "email-390-light"]
+# is 1.7 s, so 1.3 s in); Email from Dashboard (the Ride, 1.45 s, rushes at once). (SCRUB stage 3) the light narrow
+# cells were a phone (390 x 664), which scrubs now (no steps, no skips): they moved to a fine-pointer 820 x 1180 window,
+# the narrowest checkpoint build (its step from Make is the phone's 1.7 s, so 1.3 s in); Email at 1024 x 768, the
+# narrowest build where Your data is pinned (on the tablet layout Email is the last pinned).
+DOUBLE = [("dark", 1, 2.0, 1440, 900), ("light", 1, 1.3, 820, 1180), ("dark", 4, 0.25, 1440, 900),
+          ("light", 4, 0.25, 1024, 768)]
+DOUBLE_IDS = ["look-1440-dark", "look-820-light", "email-1440-dark", "email-1024-light"]
 
 
 def _middle_never_plays(rec, k, entry_T, rest_T):

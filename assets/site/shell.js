@@ -66,6 +66,9 @@
       var rows = [];
       if (F) { try { rows = F.destinations || []; } catch (e) { rows = []; } }
       if (!list || !rows.length) { if (chapters) chapters.hidden = true; return; }
+      // (SCRUB, PHONE judge LOW) in page order: the pinned story's chapters first, then the sections after it (a phone
+      // reader meets … Your data, Get the app, Price, A note); every other mode already lists them in page order
+      rows = rows.filter(function (r) { return r.kind === "pinned"; }).concat(rows.filter(function (r) { return r.kind !== "pinned"; }));
       while (list.firstChild) list.removeChild(list.firstChild);
       for (var i = 0; i < rows.length; i++) {
         var li = document.createElement("li"), a = document.createElement("a");
