@@ -261,7 +261,14 @@ def _swipe(cdp, x, y0, dy, steps=6, ms=100):
     cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
 
 
+_HOLD_MID = """(b) => { const m = __site.map(); const h = m.pieces.find((p) => p.kind === 'hold' && p.beat === b);
+  return Math.round(m.storyTop + (h.s0 + h.s1) / 2); }"""
+
+
 def test_phone_story_steps_and_releases(browser, site_url):
+    """(SCRUB stage 3: phones scrub, ICX-SCRUB) the phone's pinned rows are unchanged; the reader's own touch scrolling
+    (drags, never prevented) reaches every pinned chapter in turn and lands it once the scroll stops in its hold; at the
+    offer card (the last pinned) a swipe up is native: the page scrolls on into Price and A note."""
     ctx = _ctx(browser, 390, 664, has_touch=True, is_mobile=True)
     page = ctx.new_page()
     try:
@@ -270,11 +277,20 @@ def test_phone_story_steps_and_releases(browser, site_url):
         assert page.evaluate("() => FEStory.mode") == "phone"
         pinned = page.evaluate("() => FEStory.destinations.filter(d => d.kind === 'pinned').map(d => d.beat)")
         assert pinned == ["make", "look", "know", "grow", "chase", "yours", "end"], pinned
-        _rest_on(page, 0)
+        page.wait_for_function("() => FEStory.state().phase === 'rest' && !__site.state().intro", timeout=12000)
+        page.evaluate("() => { window.__mv = []; addEventListener('touchmove', (e) => __mv.push(e.defaultPrevented), { passive: true }); }")
         cdp = ctx.new_cdp_session(page)
         for b in pinned[1:]:
-            _swipe(cdp, 195, 500, 220)
-            _rest_on(page, BEATS.index(b), 12000)
+            mid = page.evaluate(_HOLD_MID, b)
+            for _ in range(12):                          # finger drags (no fling) of at most 300 px to the hold's middle
+                left = mid - page.evaluate("() => scrollY")
+                if left <= 8:
+                    break
+                cdp.send("Input.synthesizeScrollGesture", {"x": 195, "y": 560, "xDistance": 0, "yDistance": -min(left, 300),
+                                                           "speed": 800, "gestureSourceType": "touch", "preventFling": True})
+            assert abs(page.evaluate("() => scrollY") - mid) <= 40, f"the drags did not reach {b}'s hold"
+            _wait(page, f"s.phase === 'rest' && s.rendered === {BEATS.index(b)} && s.dest === {BEATS.index(b)} && s.beat === '{b}'", 12000)
+        assert page.evaluate("() => __mv.length") > 0 and not any(page.evaluate("() => __mv")), "a touchmove was prevented"
         # at the offer card (the last pinned) a swipe up is native: the page scrolls on into Price and A note
         _swipe(cdp, 195, 500, 300)
         st = _wait(page, "s.phase === 'released'", 4000)

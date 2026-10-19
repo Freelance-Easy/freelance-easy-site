@@ -389,6 +389,8 @@ def test_tap_closes_and_lands(site_url, browser, width, height, kind):
 
 LISTS = """(s) => ({
   dests: FEStory.destinations.map(d => [d.beat, d.name, '#' + d.anchor]),
+  page: [...FEStory.destinations.filter(d => d.kind === 'pinned'), ...FEStory.destinations.filter(d => d.kind !== 'pinned')]
+          .map(d => [d.beat, d.name, '#' + d.anchor]),
   rail: [...document.querySelectorAll('.story-nav a[data-go]')].map(a => [a.dataset.go, a.dataset.name, a.getAttribute('href')]),
   menu: [...document.querySelectorAll(s + ' .fe-menu-chapters a[data-go]')].map(a => [a.dataset.go,
           a.cloneNode(true).childNodes[0].textContent, a.getAttribute('href')]),
@@ -396,6 +398,18 @@ LISTS = """(s) => ({
   railCur: (document.querySelector('.story-nav a[aria-current="location"]') || {}).dataset?.go || null,
   ariaInMenu: document.querySelectorAll(s + ' [aria-current]').length,
 })"""
+
+
+def _same_rows(got, width):
+    """(SCRUB stage 1 / ICX-SCRUB.8) the sheet lists the chapters in PAGE order: the pinned story's rows, then the native
+    sections after it. Where every native row already follows the pinned ones (the desktop, the 800 px tablet layout)
+    that is the rail's own order, row for row; on a phone (< 640) Get the app (pinned) comes before Price and A note."""
+    assert got["menu"] == got["page"], got
+    assert sorted(got["menu"]) == sorted(got["dests"]) == sorted(got["rail"]), got
+    if width >= 640:
+        assert got["menu"] == got["dests"] == got["rail"], got
+    else:
+        assert [r[0] for r in got["menu"]][-3:] == ["end", "price", "note"], got
 
 
 @pytest.mark.parametrize("width", [390, 800])
@@ -407,7 +421,7 @@ def test_same_list_as_rail(site_url, browser, width):
         page.click(BTN)
         got = page.evaluate(LISTS, DLG)
         assert len(got["dests"]) == 9
-        assert got["menu"] == got["dests"] == got["rail"], got
+        _same_rows(got, width)
         assert got["cur"] == [got["railCur"]] == [got["dests"][3][0]], got
         assert got["ariaInMenu"] == 0, "the sheet wrote aria-current (rail.js is its only writer, ICX-HL.5)"
         page.keyboard.press("Escape")
@@ -423,7 +437,7 @@ def test_same_list_as_rail(site_url, browser, width):
         page.wait_for_timeout(900)
         page.click(BTN)
         got = page.evaluate(LISTS, DLG)
-        assert got["menu"] == got["dests"] == got["rail"], got
+        _same_rows(got, 800 if width == 390 else 390)
     finally:
         ctx.close()
     src = (ROOT / "assets" / "site" / "shell.js").read_text()

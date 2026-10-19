@@ -132,10 +132,18 @@ def test_deep_link_each_destination(browser, site_url, cell: Cell):
                     page.wait_for_function("() => FEStory.state().phase === 'rest'", timeout=int(allowance(1) * 1000))
                     st0.wheel(100)
                 else:
+                    # (SCRUB stage 3) a phone scrubs: the reader scrolls on to Invoices' hold and stops there; the
+                    # landing writes one replaceState once the scroll has been still (ICX-SCRUB.5)
                     page.wait_for_function("() => FEStory.state().phase === 'rest'", timeout=int(allowance(1) * 1000))
-                    page.evaluate("() => FEStory.goTo(2, {source: 'step'})")
+                    page.evaluate("() => { const m = __site.map(); const h = m.pieces.find((p) => p.kind === 'hold' && p.beat === 'know');"
+                                  " scrollTo(0, Math.round(m.storyTop + (h.s0 + h.s1) / 2)); }")
                 page.wait_for_function("() => FEStory.state().phase === 'rest' && FEStory.state().rendered === 2",
                                        timeout=int(allowance(2) * 1000))
+                if cell.width < 640:                    # the quiet windows (site.js 150 ms, story-url.js) first
+                    try:
+                        page.wait_for_function(f"() => location.hash === '#{SLUGS[2]}'", timeout=3000)
+                    except Exception:  # noqa: BLE001 - the assertion below names what was written instead
+                        pass
                 assert hash_now(page) == f"#{SLUGS[2]}" and slug_state(page) == SLUGS[2], (
                     f"ICX-HIST.1 ({cell.name}): a step after a deep link writes the next slug, got {hash_now(page)!r} / {slug_state(page)!r}")
                 assert page.evaluate("() => history.length") == length, f"ICX-HIST.1 ({cell.name}): replaceState must not add an entry"

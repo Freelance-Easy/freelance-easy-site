@@ -391,6 +391,10 @@
   function capCheck() {
     capRaf = 0;
     if (!TL || TL.p !== "tall" || fitCapH < 0) return;
+    // (SCRUB stage 3) a caption resized by a layout change (a rotation, a resize across 640 / 1024, a mode flip) is the
+    // debounced resize handler's: it rebuilds AND restores the reading place. Rebuilding here first carried a scrub
+    // build's scroll pixel into the new layout (600 px Dashboard -> 1440 released below the pin).
+    if (key() !== layoutKey) return;
     // (F2: the offer card is measured on the End copy's own box, so a change in its height re-lays the card too)
     if (capBudget(CAP_EXCL) === fitCapH && endCopyH() === fitEndH) return;
     relayoutChecked();
