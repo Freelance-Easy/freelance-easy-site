@@ -63,9 +63,21 @@ def to_band(page):
     vw = page.viewport_size
     page.mouse.move(vw["width"] / 2, vw["height"] * 0.6)
     page.wait_for_function("() => window.FEStory && FEStory.phase === 'rest'", timeout=15000)
-    for _ in range(4):
-        page.mouse.wheel(0, 100)
-        page.wait_for_timeout(300)
+    if page.evaluate("() => __site.map().scrub"):
+        # (SCRUB stage 3) a phone scrubs (ICX-SCRUB): the wheel scrolls the page natively, so wheel on until the scroll
+        # stands in Email's hold (the last notch sized to stop there)
+        mid = page.evaluate("() => { const m = __site.map(); const h = m.pieces.find((p) => p.kind === 'hold' && p.beat === 'chase');"
+                            " return Math.round(m.storyTop + (h.s0 + h.s1) / 2); }")
+        for _ in range(80):
+            left = mid - page.evaluate("() => scrollY")
+            if left <= 20:
+                break
+            page.mouse.wheel(0, min(400, left))
+            page.wait_for_timeout(150)
+    else:
+        for _ in range(4):
+            page.mouse.wheel(0, 100)
+            page.wait_for_timeout(300)
     page.wait_for_function("() => { const s = FEStory.state(); return s.phase === 'rest' && s.beat === 'chase'; }", timeout=30000)
     page.wait_for_timeout(300)
     assert page.evaluate("() => scrollY") > 1000, "the wheel steps never scrolled the page"

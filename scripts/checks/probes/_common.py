@@ -113,17 +113,35 @@ def step(page, key: str, dest: int, timeout: int = 20000) -> None:
 BEATS = ["make", "look", "know", "grow", "chase", "yours", "price", "note", "end"]
 
 
+def scrub_step(page, beat: str, dest: int, timeout: int = 20000) -> None:
+    """(SCRUB stage 3) a scrub build (a phone, a touch tablet) has no key steps: a key scrolls the page natively
+    (ICX-SCRUB.1). The reader's scroll stops on the checkpoint's hold (its landing pixel, __site.scrollFor); wait until it
+    has landed there (ICX-SCRUB.5)."""
+    # (the engine's own jump pixel, site.js trackY: the first checkpoint's is the story's top)
+    page.evaluate("(b) => window.scrollTo(0, b === 'make' ? Math.max(0, Math.round(__site.map().storyTop)) : __site.scrollFor(b))", beat)
+    page.wait_for_function("(d) => window.FEStory.state().dest === d", arg=dest, timeout=8000, polling=25)
+    wait_rest(page, timeout)
+
+
 def walk(page, mode: str, on_rest) -> list[str]:
-    """Step forward through every pinned checkpoint of `mode` with ArrowDown, then back with ArrowUp. After each rest
-    calls on_rest(direction, beat, state) with FEStory.state(). Returns the beats walked, in order."""
+    """Step forward through every pinned checkpoint of `mode` with ArrowDown, then back with ArrowUp (a scrub build:
+    scroll_step, the scroll stopping on each hold). After each rest calls on_rest(direction, beat, state) with
+    FEStory.state(). Returns the beats walked, in order."""
     seq = PINNED[mode]
+    scrub = page.evaluate("() => !!(window.__site && __site.map().scrub)")
     walked: list[str] = []
     for i in range(1, len(seq)):
-        step(page, "ArrowDown", BEATS.index(seq[i]))
+        if scrub:
+            scrub_step(page, seq[i], BEATS.index(seq[i]))
+        else:
+            step(page, "ArrowDown", BEATS.index(seq[i]))
         walked.append(seq[i])
         on_rest("fwd", seq[i], page.evaluate("() => FEStory.state()"))
     for i in range(len(seq) - 2, -1, -1):
-        step(page, "ArrowUp", BEATS.index(seq[i]))
+        if scrub:
+            scrub_step(page, seq[i], BEATS.index(seq[i]))
+        else:
+            step(page, "ArrowUp", BEATS.index(seq[i]))
         walked.append(seq[i])
         on_rest("back", seq[i], page.evaluate("() => FEStory.state()"))
     return walked

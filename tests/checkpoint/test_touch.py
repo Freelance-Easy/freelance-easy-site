@@ -421,6 +421,46 @@ def test_phone_release_reentry(browser, site_url, vp):
         p.close()
 
 
+@pytest.mark.parametrize("vp", ["1180x820"])
+def test_fling_reentry_checkpoint(browser, site_url, vp):
+    """(SCRUB stage 3, Sol SCRUB-3 HIGH: the hard-fling half of the old phone re-entry test, ICX-RELEASE.2 / ICX-SETTLE-8,
+    on a checkpoint build with touch, an iPad held sideways) from as far below the pin as the page goes, one hard flick
+    whose fling runs up into the pin lands on REST(last pinned) and stays there: never an earlier checkpoint, announced,
+    no dip, and the fling's tail does not walk it back after REENTRY_STICKY_MS; the next back swipe is an ordinary step
+    back. (On a phone the fling is the browser's own and the stage follows it: test_phone_release_reentry.)"""
+    w, h, want = VIEWPORTS[vp]
+    p = Phone(browser, site_url, w, h)
+    try:
+        assert p.mode == want and p.page.evaluate("() => __site.map().scrub") is False
+        p.rest_on(0)
+        pins = p.pinned()
+        last = pins[-1]
+        name = p.page.evaluate(f"() => FEStory.destinations[{last}].name")
+        p.log()
+        p.goto_beat(BEATS[last])
+        p.page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+        p.wait("s.phase === 'released'", 3000)
+        p.page.wait_for_timeout(300)
+        p.mark()
+        p.page.evaluate("() => { document.querySelector('[data-story-live]').textContent = ''; }")
+        p.swipe(-500, 5000, fling=True, y0=100)
+        p.rest_on(last, 8000)
+        p.page.wait_for_timeout(1800)
+        said = p.page.evaluate("() => document.querySelector('[data-story-live]').textContent")
+        assert said == name, f"ICX-KEY.2: the re-entry by fling was not announced (live region {said!r})"
+        st, L = p.st(), p.read()
+        assert st["phase"] == "rest" and st["rendered"] == last, f"re-entry by fling did not stay on {name}: {st}"
+        landed = sorted({d for d, _, _ in L["land"]} | {d for d, _ in L["dest"]})
+        assert set(landed) <= {last}, f"re-entry by fling touched {[BEATS[i] for i in landed]}; only {name} is allowed"
+        assert "dip" not in L["phases"], f"re-entry by fling played a dip: {L['phases']}"
+        # the next back swipe is an ordinary step back (ICX-BACK)
+        p.mark()
+        p.flick(-1)
+        p.rest_on(pins[-2])
+    finally:
+        p.close()
+
+
 # ------------------------------------------------------------------------------------------------- aria-live
 def test_aria_live_no_focus_move(browser, site_url):
     """(SCRUB stage 3: the scrub form, ICX-KEY.2/.3 + ICX-SCRUB.5) one polite live region; the scroll stopping in
