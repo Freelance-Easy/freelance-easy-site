@@ -1406,7 +1406,8 @@
   function jump(k, source, t0) {
     if (MAP) return scrubJump(k, source);
     if (native && source !== "settle" && source !== "step") stopNative();   // the latest explicit jump wins (C4-engine)
-    if (phase === "released") reenter();
+    const below = phase === "released";
+    if (below) reenter();
     if (phase === "free") { endFree(); syncScroll(trackY(kR)); }
     // (FADEDEF, judge FLICKER2 LOW) an explicit jump inside the content skip's crossfade removes the held frame at once
     // and ends the crossfade's wait: the stage is already on kR's rest frame, so the jump is planned from there now.
@@ -1415,6 +1416,9 @@
     if (xf) { lastDipAt = xf.dipAt0; dropXf(); wait = 0; }
     if (!dip && k === kR && kD === kR && (phase === "rest" || (run && run.purpose === "content"))) {
       if (phase === "rest") syncScroll(trackY(kR));   // ICX-JUMP.0: nothing moves, nothing replays
+      // (SCRUB-fix 1; Astra RELEASE-1 HIGH) from below the story the page DID move: reenter() landed the last pinned (its
+      // announcement); the jump emits its destination and its final landing, so story-url.js writes its one push (ICX-HIST.2)
+      if (below) { srcD = source; emit("dest", payload(k, source)); emit("land", payload(k, source, { final: true })); }
       return;
     }
     setDest(k, source);
@@ -1695,7 +1699,9 @@
   function anchorScroll(tp) {
     const pl = tp && placeIn(tp.id, tp.u);
     if (!pl) return;
-    const T = clamp(pl.sg.T0 + pl.u, 0, TL.T1);
+    // (SCRUB-fix 3; Astra RELEASE-1) clamped to the MAP's last time, not TL.T1: the last hold drifts past TL.T1 (its rest
+    // TL.T1 - END_REST, plus DRIFT), and a clamp to TL.T1 put the reader up to ~140 px back up that hold
+    const T = clamp(pl.sg.T0 + pl.u, 0, MAP.pieces[MAP.pieces.length - 1].T1);
     if (T <= mapScroll(0) + 1e-6) {
       if (pl.moved && Math.abs(window.scrollY - Math.round(storyTop)) >= 1) window.scrollTo(0, Math.max(0, Math.round(storyTop)));
       return;
@@ -1726,7 +1732,9 @@
     const y = trackY(k);
     if (phase === "rest" && kR === k && kD === k && Math.abs(window.scrollY - y) <= 1) return;   // ICX-JUMP.0
     sJump = { k, source }; sNat = null;               // the latest explicit jump wins (an instant scroll ends a smooth one)
-    if (kD !== k) { kD = k; srcD = source; emit("dest", payload(k, source)); }
+    // (SCRUB-fix 1; Astra RELEASE-1 HIGH) a jump that moves always emits its destination, even the one already set (below
+    // the story, released set kR = kD = last): story-url.js raises its one push on it (ICX-HIST.2), over a stale `pop`
+    kD = k; srcD = source; emit("dest", payload(k, source));
     navScrollTo(y);
   }
   // the landing glue (ICX-SCRUB): a final landing is the stage caught up with a still scroll inside checkpoint k's hold,
@@ -2055,17 +2063,20 @@
     sPrev = kR; sOut = rel; sLastY = readerY;
     phase = rel ? "released" : sIntro ? "transition" : "rest";
   }
+  // a native row's smooth scroll asked again for the same target under the new layout (smooth: it carries on from here)
+  function natResume(sn) {
+    const sec = document.getElementById(sn.id), hh = header ? header.getBoundingClientRect().height : 0;
+    const aim = sn.y != null ? sn.y : sec ? Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)) : sn.aim;
+    sNat = { ...sn, aim };
+    window.scrollTo({ top: aim, behavior: "smooth" });
+  }
   function scrubStart(firstLoad, keep, sn) {
     if (keep && keep.scrub && keep.cp === CP.join()) {
       // the same story time under the new map (a theme switch, late fonts, a refit): nothing moves; below the story, the
       // same distance past it. (Sol SCRUB-1 MEDIUM) A native row's smooth scroll still in flight: the reader asked to go
       // there, so it is asked again for the same target (smooth: it carries on from wherever it is now).
-      if (sn) {
-        const sec = document.getElementById(sn.id), hh = header ? header.getBoundingClientRect().height : 0;
-        const aim = sn.y != null ? sn.y : sec ? Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)) : sn.aim;
-        sNat = { ...sn, aim };
-        window.scrollTo({ top: aim, behavior: "smooth" });
-      } else if (keep.past != null) keepPast(keep.past); else if (!keep.intro) anchorScroll(keep.tp);
+      if (sn) natResume(sn);
+      else if (keep.past != null) keepPast(keep.past); else if (!keep.intro) anchorScroll(keep.tp);
       sIntro = keep.intro;
       scrubSync(keep.kR);
       if (keep.out) sOut = true;
@@ -2253,6 +2264,9 @@
   let resizeT = 0;
   window.addEventListener("resize", () => {
     onGeometry();
+    // (SCRUB-fix 2) a resize stops the page's smooth scroll at once, and a still page reads as the native jump's arrival
+    // (story-url.js: 160 ms idle) before the debounced refit below: the jump is asked again now; the refit re-aims it
+    if (MAP && sNat && clock() <= sNat.until) natResume(sNat);
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
       // a mode change (a rotation across the short-touch line, 640 or 1024 px) keeps the reader's place (ICX-DEST.4)
@@ -2277,9 +2291,13 @@
   function relayout() {
     if (MAP) {                                          // (SCRUB) the same story time under the new map, or past it
       const tp = sIntro ? null : targetPlace(), pst = pastStory();
+      // (SCRUB-fix 2; Astra RELEASE-1) a same-mode refit while the menu's native jump (Price) still scrolls carries the
+      // jump to its target, as a theme rebuild does (ICX-JUMP.5): an instant re-anchor stopped it mid-story while its
+      // arrival still wrote the target's URL
+      const sn = sNat && clock() <= sNat.until ? sNat : null;
       layout();
       if (MAP) {
-        if (pst != null) keepPast(pst); else anchorScroll(tp);
+        if (sn) natResume(sn); else if (pst != null) keepPast(pst); else anchorScroll(tp);
         sTarget = mapScroll(window.scrollY);
       }
       lastDrawn = null;
