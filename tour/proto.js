@@ -8,7 +8,12 @@
   const root = document.documentElement, frame = $('#app-frame');
   const { clamp, tween, smooth, glide } = window.FM;
   const media = matchMedia('(prefers-reduced-motion: reduce)');
-  let reduced = media.matches || location.hash === '#reduced';
+  // hash flags (any order, joined by & or ,), read like quick.js: #reduced alone or #light&reduced&email
+  const hashReduced = () => location.hash.slice(1).split(/[&,]/).includes('reduced');
+  // K1: the Classic switch (assets/shared/classic.js) is the tour's stop: Classic pauses and shows each chapter's end
+  // state, as reduced motion does; it follows the motion preference unless the visitor chose (#reduced still forces it)
+  const classicOn = () => (window.FEClassic ? window.FEClassic.isOn() : media.matches);
+  let reduced = classicOn() || hashReduced();
   // (a template's content has no #caption-copy inside it: select its paragraphs directly)
   const captions = $$('p', $('#caption-copy').content).map(p => p.textContent);
   const STEPS = [
@@ -80,32 +85,60 @@
   const setValue = (el, value) => { if (el && el.value !== value) el.value = value; };
   const typed = (field, t) => (field.prefix || '') + field.value.slice(0, Math.floor(field.value.length * tween(t, field.at, field.duration)));
   function fitFrame() { frame.style.transform = `scale(${$('#pframe-box').clientWidth / 1440})`; }
+  // The theme is FETheme's (A5): one circle from the toggle reveals the new page. The app frame follows inside that
+  // same reveal: fe:themechange fires in the view-transition update, so its data-theme is set there, synchronously,
+  // and no colour transition (the page's 240 ms, the app's) may run for that one change, or the circle would open on
+  // a frame that is still fading.
+  const NO_FADE = 'html.fe-theme-instant, html.fe-theme-instant *, html.fe-theme-instant *::before, html.fe-theme-instant *::after { transition: none !important; }';
+  const NO_FADE_STYLE = `<style id="fe-theme-instant">${NO_FADE}</style>`;   // in both documents from the start
+  document.head.insertAdjacentHTML('beforeend', NO_FADE_STYLE);
   function setTheme(theme) {
-    root.dataset.theme = theme;
-    if (!doc) return;
-    // Main's standalone auth pages change theme immediately; its app shell crossfades for 240ms.
-    if ($('.app', screen) && !reduced) {
-      doc.documentElement.classList.add('theme-transitioning');
-      setTimeout(() => doc.documentElement.classList.remove('theme-transitioning'), 300);
-    }
-    doc.documentElement.dataset.theme = theme;
+    const docs = doc ? [document, doc] : [document];
+    docs.forEach(d => d.documentElement.classList.add('fe-theme-instant'));
+    if (doc) doc.documentElement.dataset.theme = theme;
+    docs.forEach(d => { void d.documentElement.offsetWidth; d.documentElement.classList.remove('fe-theme-instant'); });
+  }
+  // (TOUR) the poster: the play button over the tour's last screen until the first play or chapter pick (never in the
+  // reduced / Classic mode, which shows each chapter's end state instead); a press before the frame is ready plays on ready
+  let poster = true, playOnReady = false, shownChapter = -1, posterPaint = false;
+  function keepChapterInView() {
+    // under the player the chapter row scrolls sideways on a phone: bring the current name into view (the row only)
+    const row = $('#chapters'), b = $(`[data-chapter="${TOUR.chapter}"]`);
+    if (!row || !b || row.scrollWidth <= row.clientWidth) return;
+    const rr = row.getBoundingClientRect(), br = b.getBoundingClientRect();
+    if (br.left >= rr.left && br.right <= rr.right - 32) return;
+    row.scrollTo({ left: row.scrollLeft + br.left - rr.left - (rr.width - br.width) / 2, behavior: reduced ? 'auto' : 'smooth' });
   }
   function ui() {
     TOUR.chapter = chapterAt(TOUR.t);
-    $('#play').innerHTML = TOUR.playing ? 'Ⅱ <span>Pause</span>' : '▶ <span>Play</span>';
-    $('#play').setAttribute('aria-label', TOUR.playing ? 'Pause tour' : 'Play tour');
-    $('#play').hidden = reduced || TOUR.t >= TOUR.total;
-    $('#replay').hidden = reduced || TOUR.t < TOUR.total;
+    const playBtn = $('#play');
+    playBtn.dataset.state = TOUR.playing ? 'playing' : 'paused';
+    playBtn.setAttribute('aria-label', TOUR.playing ? 'Pause' : 'Play');   // (TOUR r2) the poster's is "Play the tour"
+    playBtn.hidden = reduced;
+    // (TOUR r2) at the end the button gives up its look, not its room: the track beside it stays where it was
+    playBtn.classList.toggle('is-done', TOUR.t >= TOUR.total);
+    $('#end-card').hidden = reduced || TOUR.t < TOUR.total;
+    const posterUp = !reduced && poster;
+    $('#poster').classList.toggle('is-gone', !posterUp);
     $('#progress-fill').style.transform = `scaleX(${TOUR.t / TOUR.total})`;
     $('#progress').setAttribute('aria-valuenow', TOUR.t.toFixed(1));
     $('#time').textContent = `${fmt(TOUR.t)} / ${fmt(TOUR.total)}`;
-    $('#caption-number').textContent = `0${TOUR.chapter + 1} / 07`;
-    if ($('#caption').textContent !== captions[TOUR.chapter]) $('#caption').textContent = captions[TOUR.chapter];
+    // the chapter's name heads its caption (no "01 / 07" counter: names only, as the rail). (TOUR r2, judge) while the
+    // poster shows (a still of the last screen) no chapter is current and no caption shows: they start on the first play
+    // or chapter pick
+    const title = posterUp ? '' : STEPS[TOUR.chapter].title, words = posterUp ? '' : captions[TOUR.chapter];
+    if ($('#caption-title').textContent !== title) $('#caption-title').textContent = title;
+    if ($('#caption').textContent !== words) $('#caption').textContent = words;
     $$('[data-chapter]').forEach(b => {
-      if (+b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
+      if (!posterUp && +b.dataset.chapter === TOUR.chapter) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
-    $('#player-note').textContent = reduced ? 'Reduced motion · Choose a chapter to view its final screen.' : 'Watch only · 1 min 20 sec · Space to play or pause';
+    // (TOUR r2) no Play in the reduced / Classic mode: the lead says what there is to do
+    const act = reduced ? 'Pick any step.' : 'Play it through, or pick any step.';   // NEW COPY (both sentences)
+    if ($('#tour-lead-act').textContent !== act) $('#tour-lead-act').textContent = act;
+    if (shownChapter !== TOUR.chapter && !posterPaint && !posterUp) { shownChapter = TOUR.chapter; keepChapterInView(); }
+    const why = window.FEClassic && window.FEClassic.chosen() && !hashReduced() ? 'Classic view' : 'Reduced motion';   // NEW COPY (K1: "Classic view")
+    $('#player-note').textContent = reduced ? `${why} · Choose a chapter to view its final screen.` : '1 min 20 sec · Space to play or pause';
   }
   function positionInk() {
     $$('.tabs, .invoice-tab-bar', screen).forEach(container => {
@@ -285,6 +318,7 @@
   }
   function play() {
     if (!TOUR.ready || reduced || TOUR.t >= TOUR.total || TOUR.playing) return;
+    poster = false;
     staticPreview = false;
     TOUR.playing = true; last = performance.now(); ui(); raf = requestAnimationFrame(tick);
   }
@@ -294,6 +328,7 @@
     if (typeof k === 'string') k = STEPS.findIndex(s => s.title.toLowerCase() === k.toLowerCase());
     if (!Number.isInteger(k) || k < 0 || k >= STEPS.length) throw new RangeError('Chapter must be 0–6 or its label.');
     const wasPlaying = TOUR.playing; pause();
+    poster = false;
     TOUR.t = reduced ? STEPS[k].end - .001 : STEPS[k].start;
     delete screen.dataset.paperPaid;
     render(true, !wasPlaying);
@@ -306,43 +341,57 @@
   };
   $('#play').addEventListener('click', () => TOUR.playing ? pause() : play());
   $('#replay').addEventListener('click', replay);
+  $('#poster').addEventListener('click', () => { if (TOUR.ready) play(); else playOnReady = true; });
   $$('[data-chapter]').forEach(b => b.addEventListener('click', () => jump(+b.dataset.chapter)));
-  // the theme toggle: flips, remembers (fe-theme, shared with the site) and keeps a #light / #dark in the URL in step
-  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
-    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
-    try { localStorage.setItem('fe-theme', next); } catch (e) { /* storage blocked: this visit still flips */ }
-    const f = location.hash.slice(1).split(/[&,]/).filter(Boolean);   // the head script reads a theme among any flags
-    if (f.includes('light') || f.includes('dark')) try { history.replaceState(null, '', '#' + f.map(x => (x === 'light' || x === 'dark' ? next : x)).join('&')); } catch (e) { /* file:// */ }
-    setTheme(next);
+  // the theme toggle is FETheme's ("tour": it remembers fe-theme and rewrites only a #light / #dark flag among the others)
+  document.addEventListener('fe:themechange', e => setTheme(e.detail.theme));
+  // in the tour's reduced mode (#reduced as well as the OS setting) the switch is instant, as it was: no circle
+  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', e => {
+    if (!reduced) return;
+    e.stopPropagation();
+    window.FETheme.set(window.FETheme.get() === 'light' ? 'dark' : 'light');
   }));
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    // K1: Space presses the Classic switch itself; (TOUR) and any focused control (the bar's menu, a chapter, Play), and
+    // nothing plays under the open menu sheet: Space is the page's play key only when no control has it
+    if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || document.querySelector('dialog[open]') ||
+        e.target.closest?.('input, textarea, select, [contenteditable], button, a[href], summary, [role="button"], [data-classic-toggle]')) return;
     e.preventDefault();
     if (reduced) return;
     if (TOUR.t >= TOUR.total) replay(); else TOUR.playing ? pause() : play();
   });
   window.addEventListener('resize', fitFrame);
   document.addEventListener('visibilitychange', () => { if (document.hidden && TOUR.playing) pause(); });
-  media.addEventListener('change', e => {
-    reduced = e.matches || location.hash === '#reduced';
+  function applyReduced() {
+    reduced = classicOn() || hashReduced();
     if (!TOUR.ready) return;
     doc.documentElement.dataset.motion = reduced ? 'reduced' : 'full';
     pause(); jump(TOUR.chapter);
-  });
-  root.dataset.theme = root.dataset.theme === 'light' ? 'light' : 'dark';   // the head script's pick (#light, fe-theme, ...)
+  }
+  media.addEventListener('change', applyReduced);
+  document.addEventListener('fe:classicchange', applyReduced);   // K1: the switch stops (or frees) the tour at once
+  window.FETheme.init({ hashPolicy: 'tour' });   // keeps the head script's pick (#light, fe-theme, ...), always explicit
   frame.addEventListener('load', async () => {
     doc = frame.contentDocument;
     screen = $('#screen', doc); cursor = $('#fe-cursor', doc); ghost = $('#page-ghost', doc);
     modal = $('#modal-root', doc); toast = $('#tour-flash', doc);
     doc.documentElement.dataset.motion = reduced ? 'reduced' : 'full';
-    setTheme(root.dataset.theme); fitFrame();
+    setTheme(window.FETheme.get()); fitFrame();
     install(PAGES[0], true);
     await doc.fonts.load('400 14px Inter');
     await doc.fonts.load('600 14px Inter');
     await doc.fonts.ready;
     TOUR.ready = true;
     if (reduced) TOUR.t = STEPS[0].end - .001;
+    else if (poster) {
+      // the poster's picture: the tour's last screen (the updated dashboard), still; the clock stays at 0:00 and Play
+      // starts from Sign in (the first render after it installs the login screen)
+      // (the chapter row does not follow this paint: it stays on Sign in)
+      posterPaint = true; TOUR.t = STEPS.at(-1).end - .001; render(true, true); posterPaint = false; TOUR.t = 0; ui();
+      if (playOnReady) play();
+      return;
+    }
     render(true, true);
   }, { once: true });
-  frame.srcdoc = `<!doctype html><html lang="en" data-theme="${root.dataset.theme}"><head><meta charset="utf-8"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="frame.css"></head><body inert><div id="screen"></div><div id="page-ghost" aria-hidden="true"></div><div id="modal-root"></div><div id="tour-flash" class="flash-container"></div><svg id="fe-cursor" class="fe-cursor" viewBox="0 0 28 40" aria-hidden="true"><path d="M3 3 L3 31.5 L10 25 L14.6 35.6 L19.3 33.6 L14.8 23.2 L24.2 23.2 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg></body></html>`;
+  frame.srcdoc = `<!doctype html><html lang="en" data-theme="${window.FETheme.get()}"><head><meta charset="utf-8"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="frame.css">${NO_FADE_STYLE}</head><body inert><div id="screen"></div><div id="page-ghost" aria-hidden="true"></div><div id="modal-root"></div><div id="tour-flash" class="flash-container"></div><svg id="fe-cursor" class="fe-cursor" viewBox="0 0 28 40" aria-hidden="true"><path d="M3 3 L3 31.5 L10 25 L14.6 35.6 L19.3 33.6 L14.8 23.2 L24.2 23.2 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg></body></html>`;
 })();

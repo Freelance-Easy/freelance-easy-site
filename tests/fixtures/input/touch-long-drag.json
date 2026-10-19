@@ -1,0 +1,317 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "t": 0,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 600
+    }
+   ],
+   "type": "touchstart"
+  },
+  {
+   "t": 16,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 584
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 32,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 568
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 48,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 552
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 64,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 536
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 80,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 520
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 96,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 504
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 112,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 488
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 128,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 472
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 144,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 456
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 160,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 440
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 176,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 424
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 192,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 408
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 208,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 392
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 224,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 376
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 240,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 360
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 256,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 344
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 272,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 328
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 288,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 312
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 304,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 296
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 320,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 280
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 336,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 264
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 352,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 248
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 368,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 232
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 384,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 216
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 400,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 200
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 408,
+   "target": "body",
+   "touches": [],
+   "type": "touchend"
+  }
+ ],
+ "name": "touch-long-drag",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

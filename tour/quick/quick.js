@@ -111,14 +111,18 @@
     }
     frame.style.transform = `scale(${box.clientWidth / 1440})`;
   }
+  // The theme is FETheme's (A5): one circle from the toggle reveals the new page. The app frame follows inside that
+  // same reveal: fe:themechange fires in the view-transition update, so its data-theme is set there, synchronously,
+  // and no colour transition (the page's 240 ms, the app's) may run for that one change, or the circle would open on
+  // a frame that is still fading.
+  const NO_FADE = 'html.fe-theme-instant, html.fe-theme-instant *, html.fe-theme-instant *::before, html.fe-theme-instant *::after { transition: none !important; }';
+  const NO_FADE_STYLE = `<style id="fe-theme-instant">${NO_FADE}</style>`;   // in both documents from the start
+  document.head.insertAdjacentHTML('beforeend', NO_FADE_STYLE);
   function setTheme(theme) {
-    root.dataset.theme = theme;
-    if (!doc) return;
-    if ($('.app', screen) && !reduced) {             // main's app shell crossfades its theme for 240 ms
-      doc.documentElement.classList.add('theme-transitioning');
-      setTimeout(() => doc.documentElement.classList.remove('theme-transitioning'), 300);
-    }
-    doc.documentElement.dataset.theme = theme;
+    const docs = doc ? [document, doc] : [document];
+    docs.forEach(d => d.documentElement.classList.add('fe-theme-instant'));
+    if (doc) doc.documentElement.dataset.theme = theme;
+    docs.forEach(d => { void d.documentElement.offsetWidth; d.documentElement.classList.remove('fe-theme-instant'); });
   }
   function ui() {
     Q.chapter = chapterAt(Q.t);
@@ -318,12 +322,13 @@
   };
   $('#play').addEventListener('click', () => Q.playing ? pause() : play());
   $('#replay').addEventListener('click', replay);
-  // the theme toggle: flips, remembers (fe-theme, shared with the site) and keeps a #light / #dark in the URL in step
-  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
-    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
-    try { localStorage.setItem('fe-theme', next); } catch (e) { /* storage blocked: this visit still flips */ }
-    if (flags.has('light') || flags.has('dark')) { flags.delete('light'); flags.delete('dark'); flags.add(next); try { history.replaceState(null, '', '#' + [...flags].join('&')); } catch (e) { /* file:// */ } }
-    setTheme(next);
+  // the theme toggle is FETheme's ("tour": it remembers fe-theme and rewrites only a #light / #dark flag among the others)
+  document.addEventListener('fe:themechange', e => setTheme(e.detail.theme));
+  // in the tour's reduced mode (#reduced as well as the OS setting) the switch is instant, as it was: no circle
+  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', e => {
+    if (!reduced) return;
+    e.stopPropagation();
+    window.FETheme.set(window.FETheme.get() === 'light' ? 'dark' : 'light');
   }));
   document.addEventListener('keydown', e => {
     if (e.code !== 'Space' || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('button, a, input, textarea, select, [contenteditable]')) return;
@@ -353,7 +358,7 @@
     if (reduced) Q.t = Q.total;
     render(true);
   });
-  root.dataset.theme = root.dataset.theme === 'light' ? 'light' : 'dark';   // the head script's pick (#light, fe-theme, ...)
+  window.FETheme.init({ hashPolicy: 'tour' });   // keeps the head script's pick (#light, fe-theme, ...), always explicit
   root.classList.toggle('embed', embed);
   $('#progress').setAttribute('aria-valuemax', String(TOTAL));
   if (embed) $$('a[data-full-tour]').forEach(a => { a.target = '_top'; });   // in the dialog: leave the homepage for it
@@ -362,7 +367,7 @@
     screen = $('#screen', doc); cursor = $('#fe-cursor', doc); ghost = $('#page-ghost', doc);
     modal = $('#modal-root', doc); toast = $('#tour-flash', doc);
     doc.documentElement.dataset.motion = reduced ? 'reduced' : 'full';
-    setTheme(root.dataset.theme); fitFrame();
+    setTheme(window.FETheme.get()); fitFrame();
     install(PAGES[0], true);
     await doc.fonts.load('400 14px Inter');
     await doc.fonts.load('600 14px Inter');
@@ -373,5 +378,5 @@
     render(true);
     if (!document.hidden) play();
   }, { once: true });
-  frame.srcdoc = `<!doctype html><html lang="en" data-theme="${root.dataset.theme}"><head><meta charset="utf-8"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="frame.css"></head><body inert><div id="screen"></div><div id="page-ghost" aria-hidden="true"></div><div id="modal-root"></div><div id="tour-flash" class="flash-container"></div><svg id="fe-cursor" class="fe-cursor" viewBox="0 0 28 40" aria-hidden="true"><path d="M3 3 L3 31.5 L10 25 L14.6 35.6 L19.3 33.6 L14.8 23.2 L24.2 23.2 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg></body></html>`;
+  frame.srcdoc = `<!doctype html><html lang="en" data-theme="${window.FETheme.get()}"><head><meta charset="utf-8"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="frame.css">${NO_FADE_STYLE}</head><body inert><div id="screen"></div><div id="page-ghost" aria-hidden="true"></div><div id="modal-root"></div><div id="tour-flash" class="flash-container"></div><svg id="fe-cursor" class="fe-cursor" viewBox="0 0 28 40" aria-hidden="true"><path d="M3 3 L3 31.5 L10 25 L14.6 35.6 L19.3 33.6 L14.8 23.2 L24.2 23.2 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg></body></html>`;
 })();

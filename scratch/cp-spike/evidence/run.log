@@ -1,0 +1,139 @@
+chromium       1440x900   R1 -        PASS       
+chromium       1440x900   R2 -        PASS       
+chromium       1440x900   R3 -        PASS       
+chromium       1440x900   R4 -        WORKAROUND 1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)
+chromium       1440x900   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+chromium       1440x900   R5 classicbar PASS       
+chromium       1440x900   R6 -        WORKAROUND scrollend fired 58x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+chromium       1440x900   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+chromium       1440x900   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+chromium       1440x900   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+chromium       1440x900   R9 -        PASS       
+chromium       1440x900   R9 zoom125  PASS       
+chromium       1440x900   R9 zoom175  PASS       
+chromium       1440x900   S1 -        PASS       
+chromium       1440x900   S1 r1notch  PASS       
+chromium       1280x720   R1 -        PASS       
+chromium       1280x720   R2 -        PASS       
+chromium       1280x720   R3 -        PASS       
+chromium       1280x720   R4 -        PASS       
+chromium       1280x720   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+chromium       1280x720   R5 classicbar PASS       
+chromium       1280x720   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+chromium       1280x720   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+chromium       1280x720   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+chromium       1280x720   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+chromium       1280x720   R9 -        PASS       
+chromium       1280x720   R9 zoom125  PASS       
+chromium       1280x720   R9 zoom175  PASS       
+chromium       1280x720   S1 -        PASS       
+chromium       1280x720   S1 r1notch  PASS       
+chromium       360x640   R1 -        PASS       
+chromium       360x640   R2 -        PASS       
+chromium       360x640   R3 -        PASS       
+chromium       360x640   R4 -        FAIL       a released reader keeps their distance below the story
+chromium       360x640   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+chromium       360x640   R5 classicbar WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+chromium       360x640   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+chromium       360x640   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+chromium       360x640   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+chromium       360x640   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+chromium       360x640   R9 -        PASS       
+chromium       360x640   R9 zoom125  PASS       
+chromium       360x640   R9 zoom175  PASS       
+chromium       360x640   S1 -        PASS       
+chromium       360x640   S1 r1notch  PASS       
+webkit         1440x900   R1 -        PASS       
+webkit         1440x900   R2 -        PASS       
+webkit         1440x900   R3 -        PASS       
+webkit         1440x900   R4 -        WORKAROUND 1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)
+webkit         1440x900   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit         1440x900   R5 classicbar PASS       
+webkit         1440x900   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+webkit         1440x900   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+webkit         1440x900   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+webkit         1440x900   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+webkit         1440x900   R9 -        PASS       
+webkit         1440x900   R9 zoom125  PASS       
+webkit         1440x900   R9 zoom175  PASS       
+webkit         1440x900   S1 -        PASS       
+webkit         1440x900   S1 r1notch  FAIL       a flick opening >= 50 px with a long decaying tail = 1 step
+webkit         1280x720   R1 -        PASS       
+webkit         1280x720   R2 -        PASS       
+webkit         1280x720   R3 -        PASS       
+webkit         1280x720   R4 -        PASS       
+webkit         1280x720   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit         1280x720   R5 classicbar PASS       
+webkit         1280x720   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+webkit         1280x720   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+webkit         1280x720   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+webkit         1280x720   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+webkit         1280x720   R9 -        PASS       
+webkit         1280x720   R9 zoom125  PASS       
+webkit         1280x720   R9 zoom175  PASS       
+webkit         1280x720   S1 -        PASS       
+webkit         1280x720   S1 r1notch  FAIL       a flick opening >= 50 px with a long decaying tail = 1 step
+webkit-iphone  390x664   R1 -        PASS       
+webkit-iphone  390x664   R2 -        PASS       
+webkit-iphone  390x664   R3 -        PASS       
+webkit-iphone  390x664   R4 -        WORKAROUND 2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)
+webkit-iphone  390x664   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  390x664   R5 classicbar WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  390x664   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+webkit-iphone  390x664   R6 nograce  FAIL       exactly one settle, after the stream
+webkit-iphone  390x664   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+webkit-iphone  390x664   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+webkit-iphone  390x664   R9 -        PASS       
+webkit-iphone  390x664   R9 zoom125  PASS       
+webkit-iphone  390x664   R9 zoom175  PASS       
+webkit-iphone  375x548   R1 -        PASS       
+webkit-iphone  375x548   R2 -        PASS       
+webkit-iphone  375x548   R3 -        PASS       
+webkit-iphone  375x548   R4 -        WORKAROUND 1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)
+webkit-iphone  375x548   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  375x548   R5 classicbar WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  375x548   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+webkit-iphone  375x548   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+webkit-iphone  375x548   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+webkit-iphone  375x548   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+webkit-iphone  375x548   R9 -        PASS       
+webkit-iphone  375x548   R9 zoom125  PASS       
+webkit-iphone  375x548   R9 zoom175  PASS       
+webkit-iphone  360x640   R1 -        PASS       
+webkit-iphone  360x640   R2 -        PASS       
+webkit-iphone  360x640   R3 -        PASS       
+webkit-iphone  360x640   R4 -        WORKAROUND 1 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)
+webkit-iphone  360x640   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  360x640   R5 classicbar WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  360x640   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+webkit-iphone  360x640   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+webkit-iphone  360x640   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+webkit-iphone  360x640   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+webkit-iphone  360x640   R9 -        PASS       
+webkit-iphone  360x640   R9 zoom125  PASS       
+webkit-iphone  360x640   R9 zoom175  PASS       
+webkit-iphone  844x390   R1 -        PASS       
+webkit-iphone  844x390   R2 -        PASS       
+webkit-iphone  844x390   R3 -        PASS       
+webkit-iphone  844x390   R4 -        WORKAROUND 2 resize(s) moved scrollY before the resize event; the re-snap used the last position seen at the old size (S7)
+webkit-iphone  844x390   R5 -        WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  844x390   R5 classicbar WORKAROUND overlay scrollbar (0 px): hold detection (clientX >= clientWidth) cannot see the thumb; the settle must rely on scrollend-after-release or the idle fallback
+webkit-iphone  844x390   R6 -        WORKAROUND scrollend fired 59x during one foreign stream: a plain scrollend settle fails (see the -nograce file); needs SCROLLEND_GRACE (S3)
+webkit-iphone  844x390   R6 nograce  FAIL       the stage holds its frame during the stream (FREE, beat 1); exactly one settle, after the stream
+webkit-iphone  844x390   R7 -        WORKAROUND scrollend forced off (?noscrollend) to exercise the Safari path
+webkit-iphone  844x390   R8 -        WORKAROUND momentum from below cannot be clamped mid-fling: FREE settles it onto the last beat (S4)
+webkit-iphone  844x390   R9 -        PASS       
+webkit-iphone  844x390   R9 zoom125  PASS       
+webkit-iphone  844x390   R9 zoom175  PASS       
+| row | chromium | webkit | webkit-iphone |
+|---|---|---|---|
+| R1 programmatic-scroll acknowledgement | PASS | PASS | PASS |
+| R2 FREE/RELEASED boundaries | PASS | PASS | PASS |
+| R3 settle cancellation | PASS | PASS | PASS |
+| R4 resize/rotation | FAIL | WORKAROUND | WORKAROUND |
+| R5 scrollbar hold | WORKAROUND | WORKAROUND | WORKAROUND |
+| R6 autoscroll | WORKAROUND | WORKAROUND | WORKAROUND |
+| R7 Safari without scrollend | WORKAROUND | WORKAROUND | WORKAROUND |
+| R8 iOS momentum + address bar | WORKAROUND | WORKAROUND | WORKAROUND |
+| R9 zoom | PASS | PASS | PASS |
+| S1 wheel grouping (supplementary, R1 §3.4 detector) | PASS | PASS | - |

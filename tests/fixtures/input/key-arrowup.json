@@ -1,0 +1,37 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": "ArrowUp",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 0,
+   "target": "body",
+   "type": "keydown"
+  }
+ ],
+ "name": "key-arrowup",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

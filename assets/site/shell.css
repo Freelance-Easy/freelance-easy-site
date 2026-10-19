@@ -1,0 +1,636 @@
+/* The shared shell (B2): the footer's footnotes block and the data-flag guard, for every page that includes
+   src/partials/head.html. Class prefix fe-shell-. Design tokens only (scripts/checks/token_lint.py): the colours
+   come from the page's own token sheet (assets/story/site.css on the homepage, styles.css on the doc pages); both
+   name --text-2 and --line-1 the same way.
+   Loaded before the page's own sheets, so on an equal selector the page wins; the footer's existing classes
+   (site-footer, shell, brand, foot-links, foot-meta) stay styled by the page. */
+
+/* Flagged UI (data-flag="web-signup" | "web-billing") ships with the hidden attribute and stays hidden unless
+   shell.js's site switch turns its flag on. This rule keeps hidden meaning hidden even where the page gives the
+   element its own display (a button styled inline-flex, a list item styled flex). */
+[data-flag][hidden] {
+  display: none !important;
+}
+
+/* Footnotes: the site's fine print, collected at the top of the footer (Apple's footnote block), above the
+   brand and link row, with a hairline under it. A full-width row inside the footer's flex .shell, in the row
+   (desktop) and column (phone) layouts alike. */
+.fe-shell-footnotes {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--line-1);
+}
+.fe-shell-footnote {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.fe-shell-footnote + .fe-shell-footnote {
+  margin-top: 8px;
+}
+
+/* ---------- The slim bar (B4, DEC-1) ----------
+   56 px at every width (site.css used 64 px from 640 px up). --header-h is the one number the bar, the story's pin
+   and the anchors' scroll padding share; html:root outranks site.css's :root, which loads after this sheet. */
+html:root {
+  --header-h: 56px;
+  /* the bar's motion (the site has no duration tokens yet, as rail.css says; this is the bar's, used by the Classic
+     switch below; 150 ms is the theme toggle's hover in site.css) */
+  --shell-t-micro: 150ms;             /* token-lint: allow (bar motion token) */
+}
+/* the bar's slots ([data-classic-slot] for K1, [data-menu-slot] for B6) take no room, not even a flex gap, until
+   their piece puts a control in them */
+.fe-shell-slot:empty {
+  display: none;
+}
+.fe-shell-slot {
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- The menu sheet (B6, src/partials/menu.html; shell.js opens it) ----------
+   The button: the theme toggle's round icon button, beside it at the bar's end. Shown, with JS only, where the bar
+   has dropped How it works and Pricing (< 640 px, the phone bar) and, on the story page, wherever the chapter rail is
+   hidden (< 1024 px, rail.css). The sheet: a calm solid panel under the bar (no glass), the page dimmed behind it. */
+.fe-menu-btn {
+  display: none;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  position: relative;
+}
+.fe-menu-btn:hover,
+.fe-menu-btn[aria-expanded="true"] {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+/* a 44 px hit area, as the bar's other controls on a phone. It grows to the right only (into the page margin), so it
+   never reaches over the theme toggle beside it */
+.fe-menu-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translateY(-50%);
+}
+.fe-menu-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.fe-menu-btn .fe-menu-x,
+.fe-menu-btn[aria-expanded="true"] .fe-menu-bars {
+  display: none;
+}
+.fe-menu-btn[aria-expanded="true"] .fe-menu-x {
+  display: inline;
+}
+html.on-band:where(:not(.past-band)) .fe-menu-btn {
+  color: var(--ride-text-2);
+}
+html.on-band:where(:not(.past-band)) .fe-menu-btn:hover,
+html.on-band:where(:not(.past-band)) .fe-menu-btn[aria-expanded="true"] {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride-text) 14%, transparent);
+}
+/* the slot itself takes no room (no flex gap) wherever its button is hidden: the desktop bar is unchanged */
+[data-menu-slot]:has(> .fe-menu-btn) {
+  display: none;
+}
+@media (max-width: 639px) {
+  .js .fe-menu-btn {
+    display: grid;
+    width: 34px;
+    height: 34px;
+  }
+  .js [data-menu-slot]:has(> .fe-menu-btn) {
+    display: flex;
+  }
+}
+/* the story page by its body attribute, not body:has(.story-nav): the rail sits after the bar in the source, so a first
+   paint before the parser reaches it would show the bar without the button, then shift it in (test_bar_polish F7).
+   (TOUR r2) /tour/ has the same bar items, so every story-page bar rule below names it too: same width, same place */
+@media (max-width: 1023px) {
+  .js body:is([data-page="home"], [data-page="tour"]) .fe-menu-btn {
+    display: grid;
+  }
+  .js body:is([data-page="home"], [data-page="tour"]) [data-menu-slot]:has(> .fe-menu-btn) {
+    display: flex;
+  }
+}
+/* (GATEFIX) the button is the nav's last item and its 44 px hit area reaches past it (::after above: 4 px past the 40 px
+   button, 10-12 px past the phone's 34/32 px one), which made the nav's content wider than its box (scrollWidth >
+   clientWidth, 4 px at 640-1023). The nav takes 12 px as padding and gives them back as a negative margin (into the
+   page margin, >= 16 px): its box covers the hit area, and nothing on screen moves. Only where the button shows (the
+   rules above), so the nav's box edge, which the rail's gutter test reads, is unchanged from 1024 */
+@media (max-width: 639px) {
+  .js .site-header .nav:has(> [data-menu-slot] > .fe-menu-btn) {
+    padding-right: 12px;
+    margin-right: -12px;
+  }
+}
+@media (max-width: 1023px) {
+  .js body:is([data-page="home"], [data-page="tour"]) .site-header .nav:has(> [data-menu-slot] > .fe-menu-btn) {
+    padding-right: 12px;
+    margin-right: -12px;
+  }
+}
+/* (GATEFIX) the platform note stays beside Download at every desktop width >= 640 (PLAN.md A9 fix round: "requirement
+   visible at every desktop width >= 640"). B6 hid it at 640-699 on the story page for want of room; the room now comes
+   from the Classic switch, which lives in the menu sheet wherever the story page's bar shows the menu button (below),
+   and, at 640-679, from the bar taking the phone bar's sizes: the theme and menu buttons 34 px, 2 px between the nav's
+   items, 12 px between the brand and the nav, the two text links 6 px padding each side (measured 2026-10-17: with the
+   switch gone the brand still ran 24 px into How it works at 640, 0 px by 664) */
+@media (min-width: 640px) and (max-width: 679px) {
+  html.js body:is([data-page="home"], [data-page="tour"]) .site-header .shell {
+    gap: 12px;
+  }
+  body:is([data-page="home"], [data-page="tour"]) .site-header .nav {
+    gap: 2px;
+  }
+  body:is([data-page="home"], [data-page="tour"]) .site-header .nav a:not(.nav-cta) {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  body:is([data-page="home"], [data-page="tour"]) .site-header .theme-toggle,
+  .js body:is([data-page="home"], [data-page="tour"]) .fe-menu-btn {
+    width: 34px;
+    height: 34px;
+  }
+}
+/* (TOUR r2) /tour/ wears the doc pages' bar (styles.css: the links at --fs-sm, 15 px; the menu button 2 px off the
+   toggle, below), 8-9 px wider than "/"'s: with the rule above its brand still ran into How it works at 640-647 and
+   680 (measured 2026-10-17). Where its bar has "/"'s items and the menu button, it takes "/"'s sizes too */
+@media (min-width: 640px) and (max-width: 1023px) {
+  body[data-page="tour"] .site-header .nav a {
+    font-size: 14.5px;
+  }
+  .js body[data-page="tour"] .site-header .fe-menu-btn {
+    margin-left: 0;
+  }
+}
+/* the narrowest phones (measured at 360 with "Get it on Mac"): the button's 34 px + gap left the brand 9 px short, so
+   the bar's brand-to-nav gap closes to 8 px and the button sits a little tighter to the theme toggle (44 px hit areas
+   kept by ::after) */
+@media (max-width: 380px) {
+  html.js .site-header .shell:has(.fe-menu-btn) {
+    gap: 8px;
+  }
+  .js body:is([data-page="home"], [data-page="tour"]) .fe-menu-btn {
+    width: 32px;
+    height: 32px;
+    margin-left: 3px;
+  }
+}
+/* the doc pages' nav has no flex gap (styles.css): the button keeps the toggle's 2 px spacing there */
+body:has(> main.doc) .fe-menu-btn {
+  margin-left: 2px;
+}
+/* ---------- The Classic view switch (K1, assets/shared/classic.js fills [data-classic-slot]) ----------
+   Beside the theme toggle: the same round icon button below 1024 px (its name in aria-label and the tooltip), the icon
+   plus "Classic" from 1024 px. Pressed (Classic on) it holds the hover fill, so its state shows without a hover. */
+.classic-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  transition: color var(--shell-t-micro), background var(--shell-t-micro);
+}
+.classic-toggle[hidden] {
+  display: none;
+}
+.classic-toggle:hover,
+.classic-toggle[aria-pressed="true"] {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+.classic-toggle svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.classic-toggle .classic-label {
+  display: none;
+}
+/* a 44 px hit area, centred (the theme toggle's own ::after reaches no further than its 40 px box's 2 px past) */
+.classic-toggle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+html.on-band:where(:not(.past-band)) .classic-toggle {
+  color: var(--ride-text-2);
+}
+html.on-band:where(:not(.past-band)) .classic-toggle:hover,
+html.on-band:where(:not(.past-band)) .classic-toggle[aria-pressed="true"] {
+  color: var(--ride-text);
+  background: color-mix(in srgb, var(--ride-text) 14%, transparent);
+}
+@media (min-width: 1024px) {
+  .classic-toggle {
+    width: auto;
+    padding: 0 14px 0 12px;
+  }
+  .classic-toggle .classic-label {
+    display: inline;
+    transform: translateY(0.75px);                 /* the word's centre sat 0.75 px above the icon's (K1 judge, 1440) */
+  }
+}
+/* the slot takes no room (no flex gap) where its button is hidden: a short touch screen (calm is automatic there) */
+.site-header [data-classic-slot]:has(> .classic-toggle[hidden]) {
+  display: none;
+}
+/* the phone bar (< 640 px) has no room for a fifth control (measured 2026-10-16: the brand clipped by 4-19 px at
+   360-390), so there the switch is a row in the menu sheet, above Close (classic.js adds it). (GATEFIX) the same below
+   1024 px on the story page, where the bar has the menu button (the rail is hidden): beside the platform note the
+   switch's 44 px left the bar 47 px short at 640 and short up to ~727 (measured 2026-10-17), so the switch is the
+   sheet's row wherever there is a sheet, and the bar's, with its "Classic" label, from 1024 */
+@media (max-width: 639px) {
+  .site-header [data-classic-slot]:has(> .classic-toggle) {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  body:is([data-page="home"], [data-page="tour"]) .site-header [data-classic-slot]:has(> .classic-toggle) {
+    display: none;
+  }
+}
+.fe-menu-classic {
+  display: none;
+}
+@media (max-width: 639px) {
+  .fe-menu-classic:not([hidden]) {
+    display: block;
+  }
+}
+@media (max-width: 1023px) {
+  body:is([data-page="home"], [data-page="tour"]) .fe-menu-classic:not([hidden]) {
+    display: block;
+  }
+}
+.fe-menu-panel .classic-toggle {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 0 4px;
+  border-top: 1px solid var(--line-1);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 17px;
+}
+.fe-menu-panel .classic-toggle .classic-label {
+  display: inline;
+}
+.fe-menu-panel .classic-toggle:hover,
+.fe-menu-panel .classic-toggle[aria-pressed="true"] {
+  color: var(--text-0);
+  background: transparent;
+}
+/* the sheet's switch states itself: a switch track after the words (its knob slides right when Classic is on) */
+.fe-menu-panel .classic-toggle::after {
+  content: none;
+}
+.fe-menu-panel .classic-toggle .classic-state {
+  margin-left: auto;
+  width: 34px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--line-2);
+  position: relative;
+  transition: background var(--shell-t-micro);
+}
+.fe-menu-panel .classic-toggle .classic-state::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-1);
+  transition: transform var(--shell-t-micro);
+}
+.fe-menu-panel .classic-toggle[aria-pressed="true"] .classic-state {
+  background: var(--text-0);
+}
+.fe-menu-panel .classic-toggle[aria-pressed="true"] .classic-state::before {
+  transform: translateX(14px);
+}
+.fe-menu-panel .classic-toggle:focus-visible {
+  outline: 2px solid var(--text-0);
+  outline-offset: -2px;
+}
+.no-js .classic-toggle {
+  display: none;
+}
+
+/* the page holds still under the open sheet */
+html.fe-menu-open {
+  overflow: hidden;
+}
+.fe-menu {
+  position: fixed;
+  inset: var(--header-h) 0 0 0;
+  z-index: 40;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--text-0);
+  background: color-mix(in srgb, var(--bg-0) 72%, transparent);
+  overscroll-behavior: contain;
+  overflow: hidden;
+}
+.fe-menu:not([open]) {
+  display: none;
+}
+/* (PHONE) the sheet fits the visible viewport with the bars showing (100svh, never the taller layout viewport) and
+   ends at least --fe-menu-out above the bottom: that strip is the dim area, a tap there closes the sheet and can never
+   land on a control. The list scrolls inside the sheet (.fe-menu-scroll); Close sits below it, always in view. */
+.fe-menu-panel {
+  --fe-menu-out: 64px;
+  display: flex;
+  flex-direction: column;
+  max-height: min(calc(100% - var(--fe-menu-out)), calc(100svh - var(--header-h) - var(--fe-menu-out)));
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line-2);
+  border-radius: 0 0 20px 20px;
+  box-shadow: var(--shadow-card, none);
+  padding: 8px var(--pad, 16px) 16px;
+}
+.fe-menu-scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* a cut list says it goes on: a sticky fade at the scroller's foot over the rows that continue below it; at the end of
+   the list it sits in its own empty strip under the last row */
+.fe-menu-scroll::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 28px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-1) 0%, transparent), var(--bg-1));
+  pointer-events: none;
+}
+.fe-menu-panel > .fe-menu-close {
+  flex: none;
+}
+/* the Classic row under the site links: a separated row of its own, its switch track saying on or off */
+.fe-menu-scroll > .fe-menu-classic {
+  margin: 6px 0 4px;
+  border-bottom: 1px solid var(--line-1);
+}
+.fe-menu-panel ul,
+.fe-menu-panel ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fe-menu-panel a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 4px;
+  color: var(--text-1);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border-radius: 10px;
+}
+.fe-menu-panel a:hover {
+  color: var(--text-0);
+}
+.fe-menu-panel li + li a {
+  border-top: 1px solid var(--line-1);
+  border-radius: 0;
+}
+.fe-menu-site a {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-0);
+}
+/* where the bar shows How it works and Pricing itself (>= 640 px), the sheet holds only the chapters */
+@media (min-width: 640px) {
+  .fe-menu-site {
+    display: none;
+  }
+}
+.fe-menu-label {
+  margin: 14px 4px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-2);
+}
+@media (min-width: 640px) {
+  .fe-menu-label {
+    margin-top: 6px;
+  }
+}
+.fe-menu-panel a.is-current {
+  color: var(--text-0);
+  font-weight: 640;
+}
+.fe-menu-panel a.is-current::before {
+  content: "";
+  width: 3px;
+  height: 18px;
+  margin-right: 10px;
+  margin-left: -4px;
+  border-radius: var(--r-pill);
+  background: var(--text-0);
+}
+.fe-menu-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.fe-menu-close {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--text-0) 6%, var(--bg-1));
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.fe-menu-close:hover {
+  color: var(--text-0);
+  background: color-mix(in srgb, var(--text-0) 11%, var(--bg-1));
+}
+.fe-menu a:focus-visible,
+.fe-menu-close:focus-visible {
+  outline: 2px solid var(--text-0);
+  outline-offset: -2px;
+}
+
+/* ---------- The bar on the doc pages (B7, CF-14) ----------
+   privacy, terms, install and 404 load styles.css, whose older .site-header rules (14 px padding, a "#download"
+   pill) are not the homepage bar's. These rules, scoped to a page whose <main> is a .doc, give the bar site.css's
+   shape: 56 px, the outlined Download pill (its href is /install here, so styles.css's [href="#download"] pill
+   cannot match), the round theme button, the hairline (no scroll observer runs here), and the phone bar. */
+/* dl-status.css places the Download status line with site.css's --shell and --pad, which a doc page does not load */
+body:has(> main.doc) {
+  --shell: 1240px;
+  --pad: clamp(16px, 3vw, 40px);
+}
+body:has(> main.doc) .site-header {
+  height: var(--header-h);
+  border-bottom-color: var(--line-1);
+}
+body:has(> main.doc) .site-header .shell {
+  height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  gap: 16px;
+}
+body:has(> main.doc) .site-header .brand {
+  white-space: nowrap;
+}
+body:has(> main.doc) .site-header .nav a.nav-cta {
+  color: var(--text-0);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  margin-left: 4px;
+}
+body:has(> main.doc) .site-header .nav a.nav-cta:hover {
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+body:has(> main.doc) .site-header .theme-toggle {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+body:has(> main.doc) .site-header .theme-toggle:hover {
+  background: var(--bg-3);
+}
+@media (max-width: 639px) {
+  body:has(> main.doc) .site-header .nav a:not(.nav-cta) {
+    display: none;
+  }
+  body:has(> main.doc) .site-header .theme-toggle {
+    width: 34px;
+    height: 34px;
+    margin-left: 2px;
+  }
+}
+@media (max-width: 380px) {
+  body:has(> main.doc) .site-header .brand span {
+    font-size: 13px;
+  }
+  body:has(> main.doc) .site-header .nav a.nav-cta {
+    padding: 7px 11px;
+  }
+}
+
+/* ---------- The footer on the doc pages (B7, CF-14) ----------
+   The footer's brand, link row and meta line are styled by site.css on the homepage; styles.css has an older
+   .site-footer (a .links row) that does not know .foot-links. The same rules, scoped to a .doc page. */
+body:has(> main.doc) .site-footer {
+  margin-top: 40px;
+  border-top: 1px solid var(--line-1);
+  padding: 34px 0 44px;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+body:has(> main.doc) .site-footer .shell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 32px;
+}
+body:has(> main.doc) .site-footer .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-1);
+}
+body:has(> main.doc) .site-footer .brand img {
+  width: 22px;
+  height: 22px;
+}
+body:has(> main.doc) .foot-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+body:has(> main.doc) .foot-links a {
+  color: var(--text-2);
+  padding: 4px 0;
+  display: inline-block;
+  text-decoration: none;
+}
+body:has(> main.doc) .foot-links a:hover {
+  color: var(--text-0);
+}
+body:has(> main.doc) .foot-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+@media (max-width: 639px) {
+  body:has(> main.doc) .site-footer .shell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

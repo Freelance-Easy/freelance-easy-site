@@ -1,0 +1,218 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "t": 0,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 600
+    }
+   ],
+   "type": "touchstart"
+  },
+  {
+   "t": 16,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 594
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 24,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 594
+    },
+    {
+     "x": 240,
+     "y": 594
+    }
+   ],
+   "type": "touchstart"
+  },
+  {
+   "t": 40,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 582
+    },
+    {
+     "x": 240,
+     "y": 582
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 56,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 570
+    },
+    {
+     "x": 240,
+     "y": 570
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 72,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 558
+    },
+    {
+     "x": 240,
+     "y": 558
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 88,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 546
+    },
+    {
+     "x": 240,
+     "y": 546
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 104,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 534
+    },
+    {
+     "x": 240,
+     "y": 534
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 120,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 522
+    },
+    {
+     "x": 240,
+     "y": 522
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 136,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 510
+    },
+    {
+     "x": 240,
+     "y": 510
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 152,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 498
+    },
+    {
+     "x": 240,
+     "y": 498
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 168,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 486
+    },
+    {
+     "x": 240,
+     "y": 486
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 184,
+   "target": "body",
+   "touches": [
+    {
+     "x": 200,
+     "y": 474
+    },
+    {
+     "x": 240,
+     "y": 474
+    }
+   ],
+   "type": "touchmove"
+  },
+  {
+   "t": 192,
+   "target": "body",
+   "touches": [],
+   "type": "touchend"
+  }
+ ],
+ "name": "touch-second-finger",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

@@ -32,7 +32,13 @@
 # Pretty URLs (Cloudflare serves /privacy.html for /privacy automatically;
 # these catch the trailing-slash variants).
 /privacy/     /privacy     301
+/pricing/     /pricing     301
 /terms/       /terms       301
 /mac/         /mac         301
 /mac-audio/   /mac-audio   301
 /audio/       /audio       301
+
+# The homepage dialog is retired (B12, DEC-2): /tour/ is the one tour. The old 25-second embed
+# (tour/quick/**) stays on disk until child F's T6 deletes it, but is never served.
+/tour/quick     /tour/   301
+/tour/quick/*   /tour/   301

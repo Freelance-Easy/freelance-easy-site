@@ -3,11 +3,11 @@
    - One master timeline: Make -> [seam] -> Look -> [seam] -> Know -> [seam] -> Grow -> the Ride -> Chase -> [seam] ->
      Yours -> [seam] -> Price -> [seam] -> Brand. Every piece and seam is a pure function of its time, so scrolling back
      plays the story backwards (scrub, never replay).
-   - Native scroll only. A tall track under a sticky pin; a piecewise map turns scroll into a target time, with soft
-     holds (short plateaus, 10–40 vh, where scroll barely moves time) at each beat's readable frame.
-   - The shown time chases the target like a smooth-scrolling page (v2.2): it eases in, speeds up with the gap (up to
-     3x the designed pace; v2.3) and eases out, in ONE rAF loop that sleeps when there is nothing to do. Forward never skips;
-     a one-frame jump (an anchor, a scrollbar grab) or a long way back dips the stage and lands.
+   - Checkpoints (C3, docs/interaction-contract.md): one gesture = one page. A wheel gesture, swipe or step key plays the
+     seam into the next checkpoint at its designed speed, then that chapter's content, and the story rests on its key
+     frame; back is a 220 ms fade; far moves are one 220 ms dip. Scroll never scrubs the timeline. A tall track under a
+     sticky pin holds one viewport per checkpoint; a foreign scroll (a scrollbar drag, an anchor) settles on the nearest.
+     ONE rAF loop that sleeps when there is nothing to do.
    - Text never scrubs: each beat's copy is a caption that switches, with hysteresis, when its beat becomes active.
      Every caption stays in the accessibility tree, in order (the inactive ones are transparent and out of the tab
      order); the stage itself is decorative (aria-hidden, inert) and its description travels with each caption.
@@ -31,51 +31,23 @@
   /* ---------------- theme: dark by default (Daniel, 2026-10-05); #dark / #light; remembered (try/catch) ---------------- */
   // (2026-10-12, Daniel: "one button, not a slider pill") one toggle, [data-theme-toggle], the audio pages' button; the
   // head script picks the first theme (#dark / #light, then fe-theme, then fe-theme-visit, else dark)
-  const KEY = "fe-theme";
   const theme = () => (doc.getAttribute("data-theme") === "light" ? "light" : "dark");
+  // BOTH theme-color metas (the dark- and light-scheme ones) follow the page theme, whatever the OS scheme is
   function syncSwitch() {
-    const m = $('meta[name="theme-color"]');
-    if (m) m.setAttribute("content", theme() === "dark" ? "#080a0f" : "#f3f3f0");
+    const c = theme() === "dark" ? "#080a0f" : "#f3f3f0";
+    for (const m of $$('meta[name="theme-color"]')) m.setAttribute("content", c);
   }
-  function setTheme(th, persist) {
-    if (th !== "dark" && th !== "light") return;
-    if (persist) { try { localStorage.setItem(KEY, th); } catch (e) { /* storage blocked: the hash still works */ } }
-    if (th === theme()) { syncSwitch(); return; }
-    doc.setAttribute("data-theme", th);
-    syncSwitch();
-    refresh();
-  }
-  // v2.1 (Daniel: "id like the same light and dark mode circle effect to be on the website and the app"): the switch
-  // reveals the other theme through an expanding, soft-edged circle from the button, with the app's numbers: 420 ms,
-  // cubic-bezier(.55,0,.25,1) (it eases in), a feather of ~22% of the radius (48–220 px). The old theme stays opaque
-  // underneath (no dip, no grey). start() rebuilds the story synchronously, so the new snapshot is a finished frame.
-  let themeVT = null;
-  function themeReveal(btn, th) {
-    if (th === theme() || themeVT || !document.startViewTransition || !motion() ||
-        matchMedia("(prefers-reduced-motion: reduce)").matches) { setTheme(th, true); return; }
-    const r = btn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
-    const far = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-    const end = far + Math.min(220, Math.max(48, far * 0.22)) + 4;
-    doc.style.setProperty("--vt-x", `${x.toFixed(1)}px`);
-    doc.style.setProperty("--vt-y", `${y.toFixed(1)}px`);
-    doc.classList.add("vt-theme");
-    const vt = (themeVT = document.startViewTransition(() => setTheme(th, true)));
-    vt.ready.then(() => doc.animate({ "--vt-r": ["0px", `${end.toFixed(1)}px`] },
-      { duration: 420, easing: "cubic-bezier(.55,0,.25,1)", fill: "forwards", pseudoElement: "::view-transition-new(root)" }))
-      .catch(() => { /* skipped or unsupported: the theme has still changed */ });
-    vt.finished.catch(() => {}).then(() => {
-      doc.classList.remove("vt-theme"); doc.style.removeProperty("--vt-x"); doc.style.removeProperty("--vt-y");
-      if (themeVT === vt) themeVT = null;
-    });
-  }
-  for (const b of $$("[data-theme-toggle]")) b.addEventListener("click", () => {
-    const next = theme() === "light" ? "dark" : "light";
-    themeReveal(b, next);
-    try { history.replaceState(null, "", "#" + next); } catch (e) { /* file:// may refuse */ }
-  });
-  window.addEventListener("hashchange", () => {
-    const h = location.hash.slice(1);
-    if (h === "dark" || h === "light") setTheme(h, true);
+  // FETheme (assets/shared/theme.js, A5) owns the switch: data-theme, fe-theme, the #dark/#light read (home never writes
+  // a hash) and the circle reveal. "fe:themechange" fires INSIDE the view-transition update; an instant switch (no
+  // circle) rebuilds the scenes there, a circle reveal rebuilds them just after the circle starts (themeRebuild, C5b)
+  document.addEventListener("fe:themechange", () => { syncSwitch(); themeRebuild(); });
+  // the circle plays only where the story is in motion (not on short touch phones): to give those the circle too,
+  // flip this one line to `{ from: b }` (A8 html.motion gate)
+  const revealOpts = (b) => (motion() ? { from: b } : undefined);
+  FETheme.init({ hashPolicy: "home", toggle: "[data-fe-no-auto-toggle]" });   // we bind the toggle ourselves, below
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-theme-toggle]");
+    if (b) FETheme.set(FETheme.target() === "light" ? "dark" : "light", revealOpts(b));
   });
   syncSwitch();
 
@@ -115,8 +87,49 @@
     c.style.removeProperty("filter");
     if (c.getAttribute("style") === "") c.removeAttribute("style");
   }
-  function clearDip() { for (const el of [stageWrap, over]) if (el) el.style.removeProperty("opacity"); unDipCopy(); }
-  const nav = $(".story-nav"), navBtns = nav ? $$("button[data-go]", nav) : [], navTip = nav ? $(".nav-tip", nav) : null;
+  function clearDip() { for (const el of [stageWrap, over, band]) if (el) el.style.removeProperty("opacity"); unDipCopy(); dropXf(); }
+  // FLICKER2 / FADEDEF (Daniel 2026-10-17: "when on a page then pausing for a few seconds then scrolling again" it
+  // flickered; he picked the crossfade: "fade feels smoothest"): a gesture during a chapter's content with more than
+  // CONTENT_FINISH_MAX left (decision #13) holds the content's frame as a still copy over the stage and crossfades it
+  // onto the chapter's rest frame underneath, never through dark (no frame darker than the two pictures it blends);
+  // the seam starts when the crossfade ends.
+  const XF_DUR = 0.22;
+  let xf = null;                                        // the held content frame: {t0, dur, el}
+  function dropXf() { if (xf) { xf.el.remove(); xf = null; } }
+  function holdFrame(t) {
+    dropXf();
+    const el = stageWrap.cloneNode(true);
+    // ids stay (Sol FLICKER2-1 #1: id rules style the stage, e.g. Make's #invoice-form): the copy comes after the stage
+    // in document order, so every id lookup still finds the live one, and it is inert and gone within XF_DUR
+    for (const n of [el, ...el.querySelectorAll("[data-stage]")]) n.removeAttribute("data-stage");
+    el.setAttribute("aria-hidden", "true");
+    el.inert = true;
+    Object.assign(el.style, { position: "absolute", left: `${stageWrap.offsetLeft}px`, top: `${stageWrap.offsetTop}px`,
+      width: `${stageWrap.offsetWidth}px`, height: `${stageWrap.offsetHeight}px`, margin: "0", pointerEvents: "none" });
+    stageWrap.after(el);
+    xf = { t0: t, dur: XF_DUR, el };
+  }
+  function xfStep(now) {
+    const a = 1 - (now - xf.t0) / xf.dur;
+    if (a <= 0) dropXf(); else xf.el.style.opacity = a.toFixed(3);
+  }
+  // C5 (test_dip_fades_band) a dip whose cut turns the Ride's band on or off (a jump into or out of Email) fades the band
+  // with the stage: left alone it flipped the whole pin's colour in one frame at the dark frame. A dip that stays inside
+  // the band (or outside it) leaves the band put, as v2.1 asked. The band's state is the timeline's, at a story time.
+  function bandOnAt(T) {
+    if (!TL) return false;
+    const sg = TL.segs[segAt(clamp(T, 0, TL.T1))];
+    const G = sg.kind === "seam" && sg.seam.globals ? sg.seam.globals(T - sg.T0) : sg.G;
+    return (G.band || 0) > 0;
+  }
+  function dipBand(a) {
+    // (Sol C5-1 #3) the cut's own target, as cut() will take it: a skip stays on its origin's rest unless dest is >= 2 away
+    const entry = dip.mode === "entry" || (dip.mode === "skip" && Math.abs(kD - kR) >= 2);
+    const k = entry ? kD : dip.k;
+    const to = bandOnAt(dip.cut ? shown : RE[k] ? RE[k][entry ? 0 : 1] : shown);
+    if (dip.band0 !== to && a < 0.999) band.style.opacity = a.toFixed(3); else band.style.removeProperty("opacity");
+  }
+  const nav = $(".story-nav");
   const BEATS = ["make", "look", "know", "grow", "chase", "yours", "price", "note", "end"];
   const PHONE_BEATS = ["make", "look", "know", "grow", "chase"];
   const copy = {}, home = {};
@@ -174,7 +187,7 @@
   // halfway into the hold: it is exactly 1 well before the pin lets go, so a follower still settling by a hair never
   // leaves the section after the pin part-faded
   const END_HOLD = 0.06, END_REST = 0.02, END_K = 0.015;
-  // the phone story's Make caption: the hero's own h1 with an aria-hidden "01" in front (removed whenever the phone
+  // the phone story's Make caption: the hero's own h1 with an aria-hidden chapter name ("New invoice") in front (removed whenever the phone
   // story is not running)
   let stepEl = null;
   function heroSplit(on) {
@@ -185,15 +198,15 @@
         stepEl = document.createElement("span");
         stepEl.className = "step";
         stepEl.setAttribute("aria-hidden", "true");
-        stepEl.textContent = "01";
+        stepEl.textContent = "New invoice";
       }
       if (stepEl.parentNode !== hc) hc.insertBefore(stepEl, hc.firstChild);
     } else if (stepEl && stepEl.parentNode) stepEl.remove();
   }
   // (F1c, Daniel 2026-10-10: the CTA "at the very end") on a phone (the phone story, and the stacked page on a phone:
   // < 640 px, or a short touch screen such as a phone in landscape) the hero is the headline alone and everything that
-  // asks for action is in the End copy, the offer card: the hero's sub line goes in under its headline, and the 25-second
-  // tour after its fine print, so the End's own CTA row, its trial line and its mobile note stay one adjacent block. The
+  // asks for action is in the End copy, the offer card: the hero's sub line goes in under its headline, and the tour link
+  // after its fine print, so the End's own CTA row, its trial line and its mobile note stay one adjacent block. The
   // hero's own CTA row, trial line and fine print leave the page (one Share/Copy button on the phone page). Real DOM,
   // moved, never cloned; everything goes back to its exact original place whenever this is off (laptops, tablets, no JS).
   let ctaParts = null;
@@ -202,7 +215,7 @@
     const hc = copy.make, ec = copy.end;
     if (!hc || !ec) return;
     if (on && !ctaParts) {
-      const row = $(":scope > .cta-row", hc), tour = row && $(":scope > [data-tour-quick]", row);
+      const row = $(":scope > .cta-row", hc), tour = row && $(":scope > [data-tour-link]", row);
       const sub = $(":scope > .sub", hc), dis = $(":scope > .disclose.strong", hc), fine = $(":scope > .fine", hc);
       if (!row || !tour || !sub || !dis || !fine || !$(":scope > .cta-row", ec) || !$(":scope > .fine", ec)) return;
       // (in the order they leave; they come back in reverse, each before the node that followed it)
@@ -378,6 +391,10 @@
   function capCheck() {
     capRaf = 0;
     if (!TL || TL.p !== "tall" || fitCapH < 0) return;
+    // (SCRUB stage 3) a caption resized by a layout change (a rotation, a resize across 640 / 1024, a mode flip) is the
+    // debounced resize handler's: it rebuilds AND restores the reading place. Rebuilding here first carried a scrub
+    // build's scroll pixel into the new layout (600 px Dashboard -> 1440 released below the pin).
+    if (key() !== layoutKey) return;
     // (F2: the offer card is measured on the End copy's own box, so a change in its height re-lays the card too)
     if (capBudget(CAP_EXCL) === fitCapH && endCopyH() === fitEndH) return;
     relayoutChecked();
@@ -404,7 +421,7 @@
 
   /* ---------------- the master timeline ---------------- */
   const GBASE = { field: 0, band: 0, stage: 1, card: null, mark: 0 };
-  let TL = null, MAP = null, OV = null, L = null;
+  let TL = null, OV = null, L = null;
   let ovCard = null, ovInk = null, ovMark = null;
   function clearStage() {
     for (const m of Object.values(mounts)) m.rootEl.remove();
@@ -413,7 +430,10 @@
     over.innerHTML = "";
     ovCard = ovInk = ovMark = null;
   }
-  function build() {
+  const mountNames = (isDesk, p) => (isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : p === "tall" ? [...PHONE_BEATS, "yours"] : PHONE_BEATS);
+  // pre: the scenes a theme rebuild already mounted in the new theme (themeRebuild), adopted when they were built for
+  // this same stage (preset and scale); otherwise they go and the scenes mount here, as always
+  function build(pre) {
     clearStage();
     const p = preset(), [W, H] = SIZE[p];
     const isDesk = desktop();
@@ -426,8 +446,11 @@
     else if (label.parentNode !== stage) stage.appendChild(label);
     fitPhone();
     const s0 = stage.clientWidth / W;
-    const names = isDesk ? ["make", "look", "know", "grow", "chase", "yours"] : p === "tall" ? [...PHONE_BEATS, "yours"] : PHONE_BEATS;
-    for (const n of names) mounts[n] = mount(n, p, s0);
+    const names = mountNames(isDesk, p);
+    // (Sol C5b-1 MEDIUM) the very same scenes, no more: a spare one would stay on the stage unregistered
+    const fits = pre && pre.p === p && pre.s0 === s0 && pre.dark === dark && names.length === Object.keys(pre.m).length && names.every((n) => pre.m[n]);
+    if (pre && !fits) for (const m of Object.values(pre.m)) m.rootEl.remove();
+    for (const n of names) mounts[n] = fits ? pre.m[n] : mount(n, p, s0);
     for (const m of Object.values(mounts)) m.show(false);
     const layer = () => {
       const l = div("fx-root stage-world fx-seam" + (p === "tall" ? " tall" : ""));
@@ -465,9 +488,11 @@
     scene("chase", M.chase, 0, M.chase.inst.END, { ...GBASE, field: 1, band: 1 });
     if (isDesk) {
       seam("chaseYours", S.chaseYours, M.chase, M.yours);
-      scene("yours", M.yours, M.yours.inst.START, M.yours.inst.END, GBASE);
+      // C5 (DEC-8: cut dead time, never motion speed) Yours is still after its rest (START + 0.28) and Price after its
+      // rest (T0 + 0.3): each now ends 0.02 s after its rest, so the next move starts on the gesture
+      scene("yours", M.yours, M.yours.inst.START, FX.trim(false) ? M.yours.inst.START + 0.3 : M.yours.inst.END, GBASE);
       seam("yoursPrice", S.yoursPrice, M.yours, null);
-      hold("price", 0.6, { ...GBASE, stage: 0, card: { from: "price", k: 1 } });
+      hold("price", FX.trim(false) ? 0.32 : 0.6, { ...GBASE, stage: 0, card: { from: "price", k: 1 } });
       seam("priceBrand", S.priceBrand, null, null);
       hold("brand", 1.0, { ...GBASE, stage: 0, mark: 1 });
     } else if (p === "tall") {
@@ -479,14 +504,22 @@
       seam("yoursOffer", S.yoursOffer, M.yours, null);
       hold("end", END_HOLD, { ...GBASE, stage: 0, card: { from: "yours", to: "offer", k: 1 } });
     }
-    TL = { segs, T1: T, HOLD: M.make.inst.HOLD, isDesk, p, W, H, dark };
+    // SCRUB (Daniel 2026-10-18, PHONE-options option 1): phones (and touch tablets) run the live site's scroll scrub, the
+    // stage following the finger; desktop (and a fine-pointer tablet window) keeps the checkpoints. Decided per build.
+    const scrubOn = p === "tall" || (SCRUB_TABLET && !isDesk && coarse.matches);
+    TL = { segs, T1: T, HOLD: M.make.inst.HOLD, isDesk, p, W, H, dark, scrub: scrubOn };
     const seg = (id) => segs.find((s) => s.id === id);
     TL.seg = seg;
     // captions: the beat that starts at each switch time (the outgoing caption leaves, then the incoming arrives)
     // (the Ride: "Watch it add up." stays through the dive, leaves as the colour floods out, and "Follow up in two
     // clicks." arrives once the band is the whole page: one clean colour move, no text caught in it)
     const ride = seg("ride");
-    TL.switches = [["look", seg("makeLook").T0 + 0.3], ["know", seg("lookKnow").T0 + 0.22],
+    // C5 (ICX-STEP.3, main 2026-10-16) wider stages: Look's caption arrives as Create's press lands (0.60 s after the
+    // gesture at Make's hold), not 0.3 s into the hand-off (1.62 s dark): only the caption moves, no motion
+    // (Sol C5-1 #1: a caption is ACTIVE 0.18 s after its switch, the 0.12 s hysteresis + the 0.06 s outgoing fade, so the
+    // switch sits 0.04 s before the press: the caption is active 0.60 s after the gesture)
+    const lookAt = p !== "tall" && FX.trim(false) ? seg("make").T0 + M.make.inst.B.pressCreate - 0.04 : seg("makeLook").T0 + 0.3;
+    TL.switches = [["look", lookAt], ["know", seg("lookKnow").T0 + 0.22],
       ["grow", seg("knowGrow").T0 + 0.22], [null, ride.T0 + ride.seam.DIVE + 0.04], ["chase", ride.T1 - 0.08]];
     if (isDesk) {
       // (Chase -> Yours: the Chase caption leaves before the band draws back over it; Yours arrives once it's gone)
@@ -505,11 +538,16 @@
       TL.switches.push([null, cy.T0 + 0.06], ["yours", cy.T0 + 0.5], [null, yo.T0 + yo.seam.LIFT, 0.02], TL.offerSw);
     }
     TL.beats = ["make", ...TL.switches.map((s) => s[0])];
-    TL.labelData = seg("lookKnow").T0 + 0.14;          // "Fictional data" as the list (and its year total) arrives
+    // (A10, R5 A.2: G12 needs it where money adds up, not on Make's or Look's single invoice) "Fictional data" from the
+    // START of Look -> Know (the first Know row is up 0.08 s into it, so the label is already there)...
+    TL.labelData = seg("lookKnow").T0;
     // ...until the last money has left the stage (desktop, and the phone's own Chase -> Yours since F2)
     // (phones, F2d, Astra F2: the label retires WITH the dashboard it describes) the phone's Recent rows are gone at
     // chaseYours u 0.21 (SEAMS.chaseYours), so the label leaves at 0.24 instead of hanging under the card to 0.36
-    TL.labelOff = isDesk ? seg("chaseYours").T0 + 0.36 : p === "tall" ? seg("chaseYours").T0 + 0.24 : Infinity;
+    // (A10: tablets have no Chase -> Yours; their pinned story ENDS on Chase's money, so their window ends on their own
+    // timeline, at Chase's end, inclusive: the pin carries the labelled stage away; never an open-ended Infinity)
+    const cyL = seg("chaseYours");
+    TL.labelOff = cyL ? cyL.T0 + (p === "tall" ? 0.24 : 0.36) : seg("chase").T1;
     // (phones, F2d) from Chase -> Yours on, the stage's own box (its skin, its shade, the field in it) is gone: the band
     // and then the folder card are the one container on screen (site.css .pin.own)
     TL.ownAt = p === "tall" ? seg("chaseYours").T0 : Infinity;
@@ -617,8 +655,8 @@
     } else if (TL.p === "tall" && ovCard && mounts.yours && copy.end && copy.end.parentNode === capsEl) OV = offerLayout(pr, wr);
     else OV = null;
     if (!OV || TL.isDesk) clearOfferVars();
-    buildMap();
-    navMeasure();
+    buildTrack();
+    railMeasure();
     lastG = {};
     curSeg = -1;
   }
@@ -693,38 +731,68 @@
     return ov;
   }
 
-  /* ---------------- the scroll map: plateaus at each beat's readable frame, eased ramps between them ---------------- */
+  /* ---------------- the destination table (ICX-DEST, docs/interaction-contract.md) and the pinned track ---------------- */
+  // One row per beat, in BEATS order. A pinned row is a checkpoint: the story rests on its `rest` frame (story s) and a
+  // move into it lands at its `entry` (its content start: the end of the seam into it). The track under the pin is one
+  // BEAT_PX per checkpoint: checkpoint k sits at storyTop + k * BEAT_PX (ICX-SETTLE-7: BEAT_PX = round(100svh - header),
+  // the pin's own height), and the pin lets go below the last one (storyEnd).
+  const NAME = { make: "New invoice", look: "Templates", know: "Invoices", grow: "Dashboard", chase: "Email",
+    yours: "Your data", price: "Price", note: "A note", end: "Get the app" };
+  const SLUG = { make: "new-invoice", look: "templates", know: "invoices", grow: "dashboard", chase: "email",
+    yours: "your-data", price: "price", note: "a-note", end: "get-the-app" };
+  // legacy hashes (decisions #19): each keeps a tiny anchor of its own in index.html; C4 (story-url.js) owns the URL
+  const LEGACY = { top: "make", how: "look", pricing: "price", download: "end" };
+  // CP: the checkpoints of the current layout, in order (desktop all nine; tablets make…chase; phones make…chase, yours
+  // and end, as shipped 10-10, decisions #21; calm / static: none). RE[k] = [entry, rest] of CP[k].
+  let CP = [], RE = [], beatPx = 1, TRACK = null;
+  function restEntry(b) {
+    const seg = TL.seg;
+    if (b === "make") return [0, TL.HOLD];
+    if (b === "yours") return [seg("yours").T0, seg("yours").T0 + 0.28];
+    if (b === "price") return [seg("price").T0, seg("price").T0 + 0.3];
+    if (b === "note") return [seg("brand").T0, seg("brand").T0 + 0.2];
+    if (b === "end") {
+      if (TL.p === "tall") return [seg("end").T0, TL.T1 - END_REST];
+      // (desktop: the note and the ending share the brand hold; the ending lands as its caption arrives)
+      const sw = TL.switches.find((s) => s[0] === "end");
+      return [sw[1], seg("brand").T1 - 0.05];
+    }
+    return [seg(b).T0, seg(b).T1 - 0.02];
+  }
+  function buildTrack() {
+    CP = !TL ? [] : TL.isDesk ? BEATS.slice() : TL.p === "tall" ? TALL_BEATS.slice() : PHONE_BEATS.slice();
+    RE = CP.map(restEntry);
+    beatPx = Math.max(1, Math.round(pin.clientHeight));
+    if (TL && TL.scrub) { buildMap(); TRACK = { L: MAP.L }; return; }   // SCRUB: the live scroll map is the track
+    MAP = null;
+    TRACK = { L: Math.max(0, CP.length - 1) * beatPx };
+    css(track, "height", `${TRACK.L}px`);
+    if (TL && TL.p === "tall" && TL.seg("end")) {
+      endKv = -1;
+      window.dispatchEvent(new Event("fx:layout"));
+    }
+  }
+  // (SCRUB) a checkpoint's place is the middle of its hold on the map (the first: the story's top, as the live site's #top)
+  const trackY = (k) => (MAP ? (k === 0 ? Math.max(0, Math.round(storyTop)) : scrollForBeat(CP[k])) : Math.round(storyTop) + k * beatPx);
+  const storyEnd = () => (MAP ? storyTop + MAP.L : Math.round(storyTop) + (TRACK ? TRACK.L : 0));
+  const nearestK = (y) => (MAP ? holdK(y) : clamp(Math.round((y - storyTop) / beatPx), 0, Math.max(0, CP.length - 1)));
+
+  /* ---------------- SCRUB: the scroll map (ported from the live site, main 652d12a): plateaus at each checkpoint's rest
+     frame, eased ramps between them; scroll drives the story, never the other way round ---------------- */
+  // Touch tablets join the phones (SCRUB step 1: their holds are their checkpoints' rests on the current timeline, so the
+  // map is the same mechanical one); false puts them back on the checkpoints in one line.
+  const SCRUB_TABLET = true;
+  let MAP = null;
   function buildMap() {
-    // (phones, Daniel 10-10: "on phone id like you to have to scroll like 40% more … to slow down the animations, kinda
-    // like how we had to hone that in for the laptop") every hold and ramp on the phone story is 1.4x the scroll; laptops
-    // and tablets keep their tuned 48 vh per second
+    // (phones, Daniel 10-10: "on phone id like you to have to scroll like 40% more … to slow down the animations") every
+    // hold and ramp on the phone story is 1.4x the scroll; tablets keep their tuned 48 vh per second
     const vh = (TL.p === "tall" && svhPx > 0 ? svhPx : window.innerHeight) / 100 * (TL.p === "tall" ? 1.4 : 1);
     const seg = TL.seg;
-    // v2.1 (Daniel: "a bit more responsive"; less scroll between the finished graph and the Ride): shorter holds (the
-    // captions are on screen through each ramp too, so a hold only needs to read as a pause), a near-immediate first
-    // scroll at the top, and a little less scroll per second of story
-    // (v2.2, Daniel: "the pdf button can go straight to the template selecting part": no hold on a finished page;
-    // Make hands straight into Look)
-    const holds = [
-      { beat: "make", T: TL.HOLD, len: 10 },
-      { beat: "look", T: seg("look").T1 - 0.02, len: 28 },
-      { beat: "know", T: seg("know").T1 - 0.02, len: 26 },
-      { beat: "grow", T: seg("grow").T1 - 0.02, len: 14 },
-      { beat: "chase", T: seg("chase").T1 - 0.02, len: TL.isDesk ? 32 : 26 },
-    ];
-    // (phones, F2) the folder card's readable frame, then the offer card: a 40 vh rest at the very end of the timeline
-    // (T1 - 0.02 to T1 + 0.01; FX.story.endK rises 0 -> 1 over its first half), and the pin lets go on it
-    if (TL.p === "tall" && seg("end")) holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "end", T: TL.T1 - END_REST, len: 40 });
-    if (TL.isDesk) {
-      holds.push({ beat: "yours", T: seg("yours").T0 + 0.28, len: 26 }, { beat: "price", T: seg("price").T0 + 0.3, len: 40 },
-        { beat: "note", T: seg("brand").T0 + 0.2, len: 32 }, { beat: "end", T: seg("brand").T1 - 0.05, len: 40 });
-    }
+    // the holds are the checkpoints' rest frames (restEntry: the same T as the live map's), one per CP row
+    const LEN = { make: 10, look: 28, know: 26, grow: 14, chase: TL.isDesk ? 32 : 26, yours: 26, end: 40 };
+    const holds = CP.map((b, k) => ({ beat: b, T: RE[k][1], len: LEN[b] }));
     const DRIFT = 0.03;
-    // px of scroll per second of story time. v2.3 (Daniel: "have the page scroll like less sensitive so ppl have to
-    // scroll more to activate more of the animation … rn its super fkn spazzy"): 32 vh for every second (was scenes 18,
-    // seams 27), so an ordinary scroll plays the story near its designed pace instead of asking for 6x
-    // (v2.3b, Daniel: "i also just want the page to be longer … each scroll makes the animation move less so it feels
-    // more natural and weighted": 48 vh)
+    // (v2.3b, Daniel: "each scroll makes the animation move less so it feels more natural and weighted": 48 vh per s)
     const rate = () => 48 * vh;
     const pieces = [];
     let s = 0;
@@ -750,24 +818,7 @@
       window.dispatchEvent(new Event("fx:layout"));
     }
   }
-  // (phones, F2; the contract F3 builds on) FX.story.endK(): how far the SHOWN time (the stage, never the scroll) has come
-  // through the first half of the end hold, 0..1 (0 until T1 - 0.02, 1 from T1 - 0.005): the section after the
-  // pin keys on it (its --end-k), so a scroll that outruns the stage never shows it early. endY(): the scroll position
-  // where the story ends and the pin starts to leave (untransformed px). Events on window: fx:shown when endK changes,
-  // fx:layout after each layout. Off phones (or with no phone ending) endK is 1.
-  let endKv = -1;
-  function setEndK(T) {
-    const k = clamp((T - (TL.T1 - END_REST)) / END_K);
-    if (k === endKv) return;
-    endKv = k;
-    if (home.yours) home.yours.sec.style.setProperty("--end-k", k >= 1 ? "1" : k.toFixed(3));
-    window.dispatchEvent(new Event("fx:shown"));
-  }
-  FX.story = {
-    endK: () => (TL && TL.p === "tall" && TL.seg("end") && endKv >= 0 ? endKv : 1),
-    endY: () => (TL && MAP ? storyTop + MAP.L : 0),
-  };
-  // a ramp's progress with soft ends: zero slope at both ends, linear in the middle (C1)
+  // a ramp's progress with soft ends: zero slope at both ends, linear in the middle
   function easeEnds(q, a) {
     if (a <= 0) return q;
     if (q < a) return (q * q) / (2 * a) / (1 - a);
@@ -797,16 +848,48 @@
     const h = hs[hs.length - 1];
     return Math.round(storyTop + (h.s0 + h.s1) / 2);
   }
-  // where the target is, as its segment and local time (a rebuild or a resize changes the map, not the story)
-  function targetPlace() { const sg = TL.segs[segAt(target)]; return { id: sg.id, u: target - sg.T0 }; }
-  // put the scroll position where the new map gives that same segment-local time (the map is monotonic: bisection)
-  // phones: how far below the pinned story the reader is (px past its end), or null while they are in it or above it.
-  // readerY is the position as of the last scroll event, so a layout change above (a caption refit) has not moved it.
+  // the checkpoint whose hold is nearest the scroll position y
+  function holdK(y) {
+    const s = y - storyTop;
+    let best = 0, bd = Infinity;
+    for (const pc of MAP.pieces) {
+      if (pc.kind !== "hold") continue;
+      const d = s < pc.s0 ? pc.s0 - s : s > pc.s1 ? s - pc.s1 : 0;
+      if (d < bd) { bd = d; best = Math.max(0, CP.indexOf(pc.beat)); }
+    }
+    return best;
+  }
+  // the hold the story time T sits in (its checkpoint index), or -1 on a ramp
+  function holdAtT(T) {
+    for (const pc of MAP.pieces) if (pc.kind === "hold" && T >= pc.T0 - 1e-4 && T <= pc.T1 + 1e-4) return Math.max(0, CP.indexOf(pc.beat));
+    return -1;
+  }
+  function destinations() {
+    return BEATS.map((b) => {
+      const k = CP.indexOf(b);
+      return { beat: b, name: NAME[b], slug: SLUG[b], anchor: SLUG[b], kind: k >= 0 ? "pinned" : "native",
+        rest: k >= 0 ? +RE[k][1].toFixed(3) : null, entry: k >= 0 ? +RE[k][0].toFixed(3) : null };
+    });
+  }
+  // (phones, F2; the contract F3 builds on) FX.story.endK(): how far the SHOWN time (the stage, never the scroll) has come
+  // through the first half of the end hold, 0..1 (0 until T1 - 0.02, 1 from T1 - 0.005): the section after the
+  // pin keys on it (its --end-k), so a scroll that outruns the stage never shows it early. endY(): the scroll position
+  // where the story ends and the pin starts to leave (untransformed px). Events on window: fx:shown when endK changes,
+  // fx:layout after each layout. Off phones (or with no phone ending) endK is 1.
+  let endKv = -1;
+  function setEndK(T) {
+    const k = clamp((T - (TL.T1 - END_REST)) / END_K);
+    if (k === endKv) return;
+    endKv = k;
+    if (home.yours) home.yours.sec.style.setProperty("--end-k", k >= 1 ? "1" : k.toFixed(3));
+    window.dispatchEvent(new Event("fx:shown"));
+  }
+  FX.story = {
+    endK: () => (TL && TL.p === "tall" && TL.seg("end") && endKv >= 0 ? endKv : 1),
+    endY: () => (TL && TRACK ? storyEnd() : 0),
+  };
+  // readerY: the position as of the last scroll event, so a layout change above (a caption refit) has not moved it
   let readerY = 0;
-  const storyEnd = () => storyTop + MAP.L;
-  // (F2b: and touch tablets; a >= 640 px fine-pointer window keeps the story-time anchoring)
-  const pastMode = () => !!TL && (TL.p === "tall" || (!TL.isDesk && coarse.matches));
-  function pastStory() { return TL && pastMode() && MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null; }
   function keepPast(d) { const y = Math.round(storyEnd() + d); if (Math.abs(window.scrollY - y) >= 1) window.scrollTo(0, y); readerY = y; }
   // the header takes the band's colour while the band is the page; (phones, Astra pA #8) the phone story ends on Chase's
   // band, so once the reader is past the pinned story the header is back on its own surface (scrolling back restores it)
@@ -814,18 +897,18 @@
   function syncOnBand() {
     const onBand = bandK >= 0.6;
     if (lastG.onBand !== onBand) { lastG.onBand = onBand; doc.classList.toggle("on-band", onBand); }
-    const past = !!(TL && TL.p === "tall" && MAP && window.scrollY > storyEnd() + 1);
+    const past = !!(TL && TL.p === "tall" && TRACK && window.scrollY > storyEnd() + 1);
     if (lastG.past !== past) { lastG.past = past; doc.classList.toggle("past-band", past); }
     // (phones, F2d, Astra F2: the offer passed under the translucent header) as the pin lets go, everything in it is cut
     // at the header's lower edge: the pin's top has risen (scrollY - storyEnd) px above it, so that much is clipped
     // (measured: the pin's own top, read only from a few px before the release on, outside the pinned frames; the
     // computed storyEnd can differ from the sticky release by a px or two, which left a sliver under the header)
-    const near = TL && TL.p === "tall" && MAP && TL.seg("end") && window.scrollY > storyEnd() - 8;
+    const near = TL && TL.p === "tall" && TRACK && TL.seg("end") && window.scrollY > storyEnd() - 8;
     const cut = near ? (L.hh || 0) - pin.getBoundingClientRect().top : 0;
     const clip = cut > 0.5 ? `inset(${cut.toFixed(1)}px 0px 0px 0px)` : "";
     if (lastG.pinCut !== clip && (clip || pin.style.clipPath)) { lastG.pinCut = clip; if (clip) pin.style.clipPath = clip; else pin.style.removeProperty("clip-path"); }
   }
-  window.addEventListener("scroll", () => { readerY = window.scrollY; if (TL && MAP) syncOnBand(); }, { passive: true });
+  window.addEventListener("scroll", () => { readerY = window.scrollY; if (TL && TRACK) syncOnBand(); }, { passive: true });
   // a saved place (segment id + local time) on the current timeline. (Sol F1 #3) Make is one scene on wider stages and
   // two segments on phones (make to HOLD, makeEnd): across 640 px, Make's own time carries over.
   function placeIn(id, u) {
@@ -834,19 +917,6 @@
     if (!sg && id === "makeEnd") { u = TL.HOLD + u; sg = TL.seg("make"); moved = true; }
     if (sg && sg.id === "make" && TL.p === "tall" && u > sg.T1 - sg.T0 + 1e-9) { u -= sg.T1 - sg.T0; sg = TL.seg("makeEnd"); moved = true; }
     return sg ? { sg, u, moved } : null;
-  }
-  function anchorScroll(tp) {
-    const pl = tp && placeIn(tp.id, tp.u);
-    if (!pl) return;
-    const T = clamp(pl.sg.T0 + pl.u, 0, TL.T1);
-    if (T <= mapScroll(0) + 1e-6) {
-      // (Sol F1 re-check: the phone's start still lands on a wider stage's arrival hold, which is the top of the map)
-      if (pl.moved && Math.abs(window.scrollY - Math.round(storyTop)) >= 1) window.scrollTo(0, Math.max(0, Math.round(storyTop)));
-      return;
-    }
-    let lo = 0, hi = storyTop + MAP.L;
-    for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (mapScroll(mid) < T) lo = mid; else hi = mid; }
-    if (Math.abs(window.scrollY - hi) >= 1) window.scrollTo(0, Math.round(hi));
   }
 
   /* ---------------- rendering one frame of the story at time T ---------------- */
@@ -874,7 +944,9 @@
       if (sg.seam.globals) G = { ...GBASE, ...sg.seam.globals(u) };
     }
     applyGlobals(G, T);
-    if (OV && OV.offer) setEndK(Tin);                  // (the map's last frame is past T1: the shown time itself)
+    // (the shown time itself; on the phone's last checkpoint at rest or released the story has arrived: the base's
+    // scroll drifted it through its end hold to T1, so the section after the pin shows as the pin lets go)
+    if (OV && OV.offer) setEndK(!MAP && CP[kR] === "end" && kR === CP.length - 1 && (phase === "rest" || phase === "released") ? TL.T1 : Tin);
   }
   function applyGlobals(G, T) {
     const f = G.field || 0;
@@ -925,14 +997,16 @@
     // the header joins the band while the band is the page (syncOnBand)
     bandK = bk;
     syncOnBand();
-    // the chapter rail takes the band's colours once the band's opening clip has passed it
-    if (navOn && R0) {
-      const nb = bk >= 1 || (bk > 0 && R0.l * kb < navCx && R0.t * kb < navCy);
+    // the chapter rail takes the band's colours once the band's opening clip has covered its whole box (names included)
+    if (railOn && R0) {
+      if (!railBox && bk > 0 && bk < 1) railMeasure(true);
+      const rb = railBox;
+      const nb = bk >= 1 || (bk > 0 && !!rb && R0.l * kb <= rb.l && R0.t * kb <= rb.t && R0.r * kb <= rb.r && R0.b * kb <= rb.b);
       if (lastG.navBand !== nb) { lastG.navBand = nb; nav.classList.toggle("on-band", nb); }
     }
-    // legal v-story (2026-10-08): "Fictional data", continuously, from the first frame until the last money has left
-    // the stage (both directions); the old "The client is fictional." variant (and the switch at TL.labelData) is gone
-    const mode = T >= TL.labelOff ? "" : "data";
+    // legal v-story (2026-10-08), narrowed by A10 (R5 A.2): "Fictional data", continuously, on [labelData, labelOff]
+    // (both ends inclusive; the same frames in both directions, never faded or timed)
+    const mode = T >= TL.labelData && T <= TL.labelOff ? "data" : "";
     if (lastG.label !== mode) { lastG.label = mode; label.setAttribute("data-mode", mode); }
     if (OV && ovCard) drawOverlay(G);
   }
@@ -963,7 +1037,9 @@
   let capIdx = -1, capTimer = 0;
   function updateCaptions(T, instant) {
     let i = beatAt(T);
-    if (!instant && capIdx >= 0 && Math.abs(i - capIdx) === 1) {
+    // hysteresis only while the playhead moves: at rest the caption is the rest frame's own (ICX-CHECKPOINT.2). Chase,
+    // Yours and Price rest within 0.12 s of a caption-less switch, so a seam played back past it rested with no caption.
+    if (!instant && phase !== "rest" && capIdx >= 0 && Math.abs(i - capIdx) === 1) {
       // hysteresis: 0.12 s of story either side of a switch, or the switch's own width (the price copy rides its card,
       // so it uses 0.02: with 0.12 the card showed empty going forwards and the copy hung over it going back, ~0.3 s)
       const [, boundary, width = 0.12] = TL.switches[Math.max(i, capIdx) - 1];
@@ -1021,207 +1097,560 @@
         if (next) { next.classList.add("is-on"); capActive(next, true); }
       }, CAP_OUT_MS);
     }
-    // the chapter rail follows the last beat that had a caption (through the Ride's flood, 04 stays current)
-    let named = b;
-    for (let j = i; !named && j >= 0; j--) named = TL.beats[j];
-    navSetActive(named, instant);
   }
 
-  /* ---------------- the chapter rail (desktop): checkpoints to see, follow and click ---------------- */
-  // v2.2 (Daniel: "checkpoints that they could maybe like click on the left side of the screen … some kind of dynamic
-  // animated scroller or animated bars … [Codex's] when you hover on it it expands into the more angled bars"). One tick
-  // per checkpoint. At rest the current one is longest and fills as its scene plays (full on its readable frame), and
-  // the long tick rolls on to the next as the next caption arrives. Hover (or keyboard focus) opens the rail like a
-  // dock: the ticks swell around the pointer into an angled fan and the nearest one's name shows beside it. A click
-  // lands on that checkpoint's readable frame through the anchor path (far away, the stage dips and lands). Lengths are
-  // px, positions are in ticks; every move is a critically damped spring (closed form: the same at any frame rate).
-  const NAV = { gap: 24, rest: [10, 20], open: [12, 44], fan: 3.4, doneA: 0.4,
-    wP: 2 * Math.PI * 2.4, wH: 2 * Math.PI * 3.2, wY: 2 * Math.PI * 6, wTip: 2 * Math.PI * 7 };
-  let navOn = false, navIn = false, navCP = [], navIdx = {}, navA = 0, navCx = 0, navCy = 0, navRoom = 44;
-  let navP = 0, navPV = 0, navH = 0, navHV = 0, navY = 0, navYV = 0, navTipY = 0, navTipYV = 0;
-  let navPtr = null, navFocus = -1, navTipK = -1, navTipO = "", navTipT = "";
-  function spr(x, v, goal, w, dt) {
-    const e = x - goal, k = Math.exp(-w * dt), c = v + w * e;
-    return [goal + (e + c * dt) * k, (v - w * c * dt) * k];
+  /* ---------------- the chapter rail (desktop): assets/story/rail.js owns it (B5, rail v3) ---------------- */
+  // rail.js renders the rail from FEStory.destinations, shows or hides it, turns a click into FEStory.goTo and is the one
+  // writer of its highlight and aria-current (ICX-HL.5). The engine keeps the two visual cues only it knows: .is-in (the
+  // rail draws in once the arrival has handed over) and .on-band (the Ride's band has covered the rail's whole box).
+  let railOn = false, railIn = false, railBox = null;
+  // the rail's box inside the band's box (the band's clip insets are in that box: applyGlobals); measured lazily, since
+  // rail.js may show the rail after this layout ran
+  function railMeasure(now) {
+    railOn = !!(nav && TL && TL.isDesk);
+    railBox = null;
+    if (!now || !railOn || nav.hidden) return;
+    const r = nav.getBoundingClientRect(), br = band.getBoundingClientRect();
+    if (!r.width || !br.width) return;
+    railBox = { l: r.left - br.left, t: r.top - br.top, r: br.right - r.right, b: br.bottom - r.bottom };
   }
-  // each checkpoint fills from the moment its caption arrives to its readable frame (its last hold in the map); Make
-  // fills to its own end (the PDF press), since its only hold is the arrival's, mid-scene
-  function navBuild() {
-    if (!nav || !TL || !TL.isDesk) { navTeardown(); return; }
-    navCP = []; navIdx = {};
-    for (const btn of navBtns) {
-      const b = btn.dataset.go;
-      const sw = TL.switches.find((s) => s[0] === b);
-      if (b !== "make" && !sw) continue;
-      const hs = MAP.pieces.filter((p) => p.kind === "hold" && p.beat === b);
-      const start = b === "make" ? 0 : sw[1];
-      const end = b === "make" ? TL.seg("make").T1 - 0.02 : hs.length ? hs[hs.length - 1].T0 : start;
-      const anchor = Math.max(end, start + 0.05);
-      const tk = $(".tk", btn);
-      tk.style.setProperty("--i", String(navCP.length));
-      navIdx[b] = navCP.length;
-      navCP.push({ b, btn, tk, f: $("b", tk), start, anchor, w: "", fw: "", fa: "", cls: "" });
-    }
-    nav.hidden = false;
-    navOn = true;
-    navMeasure();
+  function railReveal() {
+    if (!railOn || railIn) return;
+    railIn = true;
+    nav.classList.add("is-in");                       // CSS draws the ticks and names in, top to bottom
   }
-  // where the rail sits in the band's box (the band reaches it as its clip opens: applyGlobals), and how far the open
-  // fan may reach before the captions (10 px clear: the narrow desktops get a shorter fan, never ticks over the text)
-  function navMeasure() {
-    if (!navOn) return;
-    const r = $("ol", nav).getBoundingClientRect(), pr = pin.getBoundingClientRect();
-    const hh = header ? header.getBoundingClientRect().height : 64;
-    navCx = r.left + 16 - pr.left;
-    navCy = r.top + r.height / 2 - (pr.top - hh);
-    navRoom = clamp(capsEl.getBoundingClientRect().left - r.left - 10, NAV.rest[1] + 6, NAV.open[1]);
-  }
-  function navReveal() {
-    if (!navOn || navIn) return;
-    navIn = true;
-    nav.classList.add("is-in");                       // CSS draws the ticks in, top to bottom
-  }
-  function navRove(k) { navCP.forEach((c, j) => c.btn.setAttribute("tabindex", j === k ? "0" : "-1")); }
-  function navSetActive(b, force) {
-    const k = navIdx[b];
-    if (k == null || (k === navA && !force)) return;
-    navA = k;
-    navCP.forEach((c, j) => { if (j === k) c.btn.setAttribute("aria-current", "step"); else c.btn.removeAttribute("aria-current"); });
-    if (!nav.contains(document.activeElement)) navRove(k);   // Tab lands on the current chapter
-  }
-  function navGo(b) {
-    if (!TL || !motion()) return;
-    const y = b === "make" ? 0 : scrollForBeat(b);
-    if (y == null) return;
-    navScrollTo(y);
-  }
-  // one frame of the rail at story time T; returns true while any of its springs is still moving
-  function navTick(T, dt, instant) {
-    if (!navOn || !navCP.length) return false;
-    const n = navCP.length;
-    const hGoal = navPtr != null || navFocus >= 0 ? 1 : 0;
-    const yGoal = navFocus >= 0 ? navFocus : navPtr != null ? navPtr : navY;
-    let busy = false;
-    if (instant) {
-      navP = navA; navPV = 0; navH = hGoal; navHV = 0; navY = yGoal; navYV = 0;
-    } else {
-      [navP, navPV] = spr(navP, navPV, navA, NAV.wP, dt);
-      [navH, navHV] = spr(navH, navHV, hGoal, NAV.wH, dt);
-      [navY, navYV] = spr(navY, navYV, yGoal, NAV.wY, dt);
-      if (Math.abs(navP - navA) < 1e-3 && Math.abs(navPV) < 1e-2) { navP = navA; navPV = 0; } else busy = true;
-      if (Math.abs(navH - hGoal) < 1e-3 && Math.abs(navHV) < 1e-2) { navH = hGoal; navHV = 0; } else busy = true;
-      if (Math.abs(navY - yGoal) < 1e-3 && Math.abs(navYV) < 1e-2) { navY = yGoal; navYV = 0; } else busy = true;
-    }
-    const h = clamp(navH);
-    const tipK = h > 0.02 ? Math.round(clamp(navY, 0, n - 1)) : -1;
-    const [r0, r1] = NAV.rest, o0 = NAV.open[0], o1 = navRoom;
-    let tipLen = 0;
-    for (let j = 0; j < n; j++) {
-      const c = navCP[j];
-      const gR = Math.max(0, 1 - Math.abs(j - navP));                  // rest: the current tick (shared as it rolls on)
-      const gO = Math.max(0, 1 - Math.abs(j - navY) / NAV.fan);        // open: the angled fan around the pointer
-      const len = mix(r0 + (r1 - r0) * gR, o0 + (o1 - o0) * gO, h);
-      const f = clamp((T - c.start) / (c.anchor - c.start));
-      const w = `${len.toFixed(2)}px`, fw = `${(f * len).toFixed(2)}px`, fa = mix(NAV.doneA, 1, gR).toFixed(3);
-      const cls = "tk" + (f > 0.002 && f < 0.998 ? " is-filling" : "") + (j === tipK ? " is-tip" : "");
-      if (c.w !== w) { c.w = w; c.tk.style.width = w; }
-      if (c.fw !== fw) { c.fw = fw; c.f.style.width = fw; }
-      if (c.fa !== fa) { c.fa = fa; c.f.style.opacity = fa; }
-      if (c.cls !== cls) { c.cls = cls; c.tk.className = cls; }
-      if (j === tipK) tipLen = len;
-    }
-    // the name: a pill beside the tick under the pointer, gliding from tick to tick (it appears where it is)
-    if (tipK < 0) navTipK = -1;
-    else {
-      if (tipK !== navTipK) {
-        const c = navCP[tipK];
-        $(".n", navTip).textContent = c.btn.dataset.n || "";
-        $(".t", navTip).textContent = c.btn.dataset.name || "";
-        if (navTipK < 0) { navTipY = tipK * NAV.gap; navTipYV = 0; }
-        navTipK = tipK;
-      }
-      const goal = tipK * NAV.gap;
-      if (instant) { navTipY = goal; navTipYV = 0; }
-      else {
-        [navTipY, navTipYV] = spr(navTipY, navTipYV, goal, NAV.wTip, dt);
-        if (Math.abs(navTipY - goal) < 0.05 && Math.abs(navTipYV) < 0.5) { navTipY = goal; navTipYV = 0; } else busy = true;
-      }
-      const t = `translate3d(${(tipLen + 14).toFixed(1)}px, ${(navTipY + NAV.gap / 2 - 13).toFixed(1)}px, 0)`;
-      if (navTipT !== t) { navTipT = t; navTip.style.transform = t; }
-    }
-    const o = (tipK < 0 ? 0 : h).toFixed(3);
-    if (navTipO !== o) { navTipO = o; navTip.style.opacity = o; }
-    return busy;
-  }
-  function navTeardown() {
-    navOn = false; navIn = false; navPtr = null; navFocus = -1; navTipK = -1; navTipO = navTipT = "";
-    if (!nav) return;
-    nav.hidden = true;
-    nav.classList.remove("is-in", "on-band");
-    for (const c of navCP) {
-      c.tk.removeAttribute("style"); c.tk.className = "tk"; c.f.removeAttribute("style");
-      c.btn.removeAttribute("aria-current"); c.btn.setAttribute("tabindex", "-1");
-    }
-    navTip.removeAttribute("style");
-    navCP = []; navIdx = {};
-  }
-  if (nav) {
-    const btnAt = (e) => { const b = e.target.closest && e.target.closest("button[data-go]"); return b && navIdx[b.dataset.go] != null ? b : null; };
-    nav.addEventListener("pointermove", (e) => {
-      if (e.pointerType === "touch") return;          // touch: a tap is a click, never a hover
-      const b = btnAt(e);
-      if (!b) return;
-      navPtr = clamp(navIdx[b.dataset.go] + (e.offsetY - NAV.gap / 2) / NAV.gap, 0, navCP.length - 1);
-      wake();
-    });
-    nav.addEventListener("pointerleave", () => { navPtr = null; wake(); });
-    nav.addEventListener("click", (e) => { const b = btnAt(e); if (b) navGo(b.dataset.go); });
-    nav.addEventListener("focusin", (e) => {
-      const b = btnAt(e);
-      if (!b) return;
-      navFocus = b.matches(":focus-visible") ? navIdx[b.dataset.go] : -1;
-      navRove(navIdx[b.dataset.go]);
-      wake();
-    });
-    nav.addEventListener("focusout", (e) => {
-      if (nav.contains(e.relatedTarget)) return;
-      navFocus = -1;
-      navRove(navA);
-      wake();
-    });
-    nav.addEventListener("keydown", (e) => {
-      const b = btnAt(e);
-      if (!b) return;
-      const k = navIdx[b.dataset.go];
-      const to = { ArrowDown: k + 1, ArrowRight: k + 1, ArrowUp: k - 1, ArrowLeft: k - 1, Home: 0, End: navCP.length - 1 }[e.key];
-      if (to == null) return;
-      e.preventDefault();
-      navCP[clamp(to, 0, navCP.length - 1)].btn.focus({ preventScroll: true });   // the rail is pinned: never scroll
-    });
+  function railTeardown() {
+    railOn = false; railIn = false; railBox = null;
+    if (nav) nav.classList.remove("is-in", "on-band");
   }
 
-  /* ---------------- the follower: shown time chases the target (eases in, speeds up with the gap, eases out) ---------------- */
-  // v2.2 (Daniel: "i can scroll faster than the animations so easily … more responsive to the scrolling, maybe like an
-  // ease in then speed to where the scroll is? something smooth but responsive so u still feel like ur scrolling a
-  // website"). v2.1b's stiff spring with a hard 1.8x cap let a quick scroll leave the stage crawling seconds behind.
-  // Now the stage's speed aims at the gap: it closes ~63% of it every TAU (like a smooth-scrolling page), never faster
-  // than it could still stop in (no overshoot), up to VMAX. The speed itself changes smoothly (over TV) and never by
-  // more than ACC per second, so every start eases in, even from a hard flick, and every stop eases out. (v2.1b's
-  // complaint, "wayyy too fast … spazzy", was v2's stiff spring starting at full speed on every wheel notch: the eased
-  // speed is what keeps it calm.) Forward never skips; only a one-frame JUMP or a long way back (REWIND) dips and lands.
-  // v2.3 (Daniel: "maybe we can try 3x … id rather it smooth and a bit draggy than super rushed … the 6x spazzyness"):
-  // the ceiling is 3x, the chase a touch softer (TAU 0.2 -> 0.25) and its speed changes gentler (ACC 16 -> 9), and the
-  // map asks for less speed in the first place (32 vh per story-second). Moving on to the next chapter eases up to the
-  // ceiling and back down to the scroll's own pace.
-  const TAU = 0.25, TV = 0.08, ACC = 9, VMAX = 3, A0 = 0.02, JUMP = 2.5, REWIND = 8, DIR_EPS = 0.015;
-  // e = shown - target (the target held still over the step), v = d(shown)/dt; sub-steps of <= 1/240 s keep it the same
-  // at any frame rate
-  // a seam may ask to be played no faster than its own CAP (the PDF -> Look reveal, Daniel: "smoother and slower so it
-  // feels more natural flow instead of speedy"): inside it the ceiling is CAP; ahead of it, in the direction the stage
-  // is actually moving (its momentum, or the target's side when at rest), the ceiling is the speed that can still be
-  // shed over the distance left (planned at 0.3 ACC, so the lagging speed still arrives at CAP), so it eases down into
-  // it rather than braking at its edge. Evaluated at every sub-step (Sol: once per frame let it enter at ~1.67x).
-  function capAt(s, v, t) {
+  /* ---------------- checkpoints (ICX v1, C3): one gesture = one page; seams and content play at their designed speed ---------------- */
+  // docs/interaction-contract.md + docs/checkpoint-config.md v1. Input (assets/shared/checkpoint-input.js, C1) gives
+  // ±1 steps and Home/End jumps; the engine keeps a signed dest. A step plays the seam into the next checkpoint at 1x,
+  // lands there (rendered), plays its content at 1x and rests on its key frame. Back = a 220 ms fade to the previous rest.
+  // Gestures during a move add ±1 (clamped to [first, last pinned]); a move whose rest cannot finish within 0.6 s
+  // (rate ramp, never above 3x or a seam's own CAP) becomes one 220 ms dip; two dips are >= 600 ms apart. Every scene and
+  // seam is the same pure function of story time as before: only the input model changed.
+  // A foreign scroll inside the track (a scrollbar drag, find-in-page, an anchor) is FREE: the stage keeps its frame and
+  // settles on the nearest checkpoint (ICX-SETTLE-1…9, from C0a's spike). History is C4's (story-url.js): this file
+  // writes none; onLand/onDest carry what it needs.
+  const CFG = Object.freeze({ DIP_OUT: 0.1, DIP_IN: 0.12, COOLDOWN: 0.6, RATE_MAX: 3, RUSH: 2.5, RUSH_MAX: 0.6,
+    ABORT_RATE: 1.5, RATE_ACCEL: 12, CONTENT_FINISH_MAX: 0.6,
+    ACK_TOL: 1.5, ACK_MS: 400, SCROLLEND_GRACE: 50, SETTLE_IDLE: 150, SETTLE_BACKSTOP: 700, REENTRY_STICKY_MS: 800,
+    RESIZE_GRACE: 250, HOLD_MAX: 10000, ZOOM_SCALE: 1.01 });
+  const EPS = 1e-4;
+  const clock = () => performance.now() / 1000;
+  // BT-2: feature-detect scrollend; ?noscrollend forces the idle path (Safari without scrollend)
+  const HAS_SCROLLEND = "onscrollend" in window && !new URLSearchParams(location.search).has("noscrollend");
+  let kR = 0, kD = 0, phase = "rest", run = null, dip = null, wait = 0, lastDipAt = -1e9, passK = -1;
+  let shown = 0, raf = 0, lastNow = 0, held = false, lastDrawn = null, srcD = "init", initial = null;
+  let free = null, ack = null, geomAt = -1e9, reentryUntil = -1e9, releasing = -1e9, swallow = -1, settles = 0;
+  let barHeld = false, holdTimer = 0, classicPref = null, lastMode = null;
+  let nativeSeq = 0, nativeStop = null;                // native anchor scrolls started (goTo) | the one stopNative cancelled: {seq, at}
+  let native = null;                                    // a native row's smooth scroll in flight: null | {phase0, k, timer}
+  const listeners = { dest: [], land: [], mode: [] };
+  function emit(kind, p) { for (const fn of listeners[kind].slice()) { try { fn(p); } catch (e) { console.warn(e); } } }
+  const bi = (k) => BEATS.indexOf(CP[k]);
+  const payload = (k, source, extra) => ({ index: bi(k), beat: CP[k], slug: SLUG[CP[k]], source, ...extra });
+  const last = () => CP.length - 1;
+
+  // a seam may ask to be played no faster than its own CAP (the PDF -> Look reveal): a rush or a reversal honours it
+  function capAt(T) {
+    for (const sg of TL.segs) if (sg.seam && sg.seam.CAP && T >= sg.T0 - EPS && T <= sg.T1 + EPS) return Math.min(CFG.RATE_MAX, sg.seam.CAP);
+    return CFG.RATE_MAX;
+  }
+  // ICX-SIGNED.5's T_c(R): the time the rest of a run takes from T to `to`, the rate ramping from r0 at RATE_ACCEL up to c
+  // (integrated, so a CAP seam on the way counts)
+  function runTime(T, to, r0, c) {
+    const dir = to >= T ? 1 : -1, h = 1 / 480;
+    let t = 0, r = r0, x = T;
+    while ((to - x) * dir > EPS && t < 5) { x += dir * Math.min(r, capAt(x)) * h; r = Math.min(c, r + CFG.RATE_ACCEL * h); t += h; }
+    return t;
+  }
+  // the rush cap c* = max(floor, the smallest c <= 3x that finishes within RUSH_MAX), or null (it dips instead)
+  function rushCap(T, to, r0, floor) {
+    if (runTime(T, to, r0, CFG.RATE_MAX) > CFG.RUSH_MAX) return null;
+    let c = Math.max(1, r0);
+    while (c < CFG.RATE_MAX && runTime(T, to, r0, c) > CFG.RUSH_MAX) c = Math.min(CFG.RATE_MAX, c + 0.05);
+    return Math.max(floor, c);
+  }
+
+  /* -- scroll: our own scrolls are acknowledged by position (ICX-SETTLE-1) -- */
+  function syncScroll(y) {
+    const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    y = clamp(Math.round(y), 0, max);
+    if (Math.abs(window.scrollY - y) <= 0.5) return;
+    ack = { y, until: performance.now() + CFG.ACK_MS };
+    window.scrollTo({ top: y, left: 0, behavior: "instant" });
+    readerY = window.scrollY;
+  }
+
+  /* -- dest and landings: the only writers of kD and kR -- */
+  function setDest(k, source) {
+    k = clamp(k, 0, last());
+    if (k === kD) return false;
+    kD = k; srcD = source;
+    emit("dest", payload(k, source));
+    return true;
+  }
+  // a landing (Terms): rendered moves; final when it reaches dest (only a final landing plays content and rests)
+  function land(k) {
+    kR = k; passK = -1;
+    syncScroll(trackY(k));
+    if (kD === kR) announce(k);
+    emit("land", payload(k, srcD, { final: kD === kR }));
+  }
+  // ICX-KEY.2 (C6): a polite live region says each FINAL landing's name (key, wheel, touch, rail, settle, popstate,
+  // re-entry); pass-through landings and mid-move frames say nothing, and focus never moves (ICX-KEY.3)
+  // (made at load, empty, so assistive tech knows the region before its first change)
+  const liveEl = document.createElement("p");
+  liveEl.className = "visually-hidden";
+  liveEl.setAttribute("aria-live", "polite");
+  liveEl.setAttribute("data-story-live", "");
+  document.body.appendChild(liveEl);
+  function announce(k) {
+    const name = NAME[CP[k]] || "";
+    if (liveEl.textContent === name) liveEl.textContent = "";   // the same name again is a new landing: say it again
+    liveEl.textContent = name;
+  }
+  // the one way into REST (ICX-CHECKPOINT.2, ICX-REST): rendered == dest == k, the story on k's rest frame, scrollY on
+  // k's track position. Everything that ends a move comes through here.
+  function enforceRest(k) {
+    run = null; wait = 0; passK = -1;
+    if (k !== kR) { kD = k; land(k); }
+    kD = kR = k;
+    shown = RE[k][1];
+    phase = "rest";
+    syncScroll(trackY(k));
+    wake();
+  }
+  function landAt(k) {                                  // instant (a mode flip keeps the place: restorePlace)
+    if (MAP) { scrubPlace(trackY(k)); kR = kD = k; sPrev = k; return; }
+    run = null; wait = 0; passK = -1; endFree();
+    if (dip) { dip = null; clearDip(); }
+    dropXf();                                           // (FADEDEF, judge FLICKER2 LOW) a jump never lets the held frame fade on
+    kD = kR = k; shown = RE[k][1]; phase = "rest";
+    syncScroll(trackY(k));
+    lastDrawn = null; capIdx = -1;
+    render(shown); updateCaptions(shown, true);
+    wake();
+  }
+
+  /* -- the playhead: runs (1x seams and content; ramped rushes and reversals) and dips -- */
+  function startRun(purpose, to, rate, cap, accel, t0) {
+    run = { purpose, to, dir: to >= shown ? 1 : -1, rate, cap, accel };
+    phase = "transition";
+    wake(t0);
+  }
+  const contentRun = (t0) => startRun("content", RE[kR][1], 1, 1, false, t0);
+  function cooling(t) {                                 // ICX-DIP.4: dest is kept; the decision is taken again at its end
+    if (t - lastDipAt >= CFG.COOLDOWN - 1e-3) return false;
+    wait = lastDipAt + CFG.COOLDOWN;
+    if (phase === "rest") phase = "transition";
+    wake();
+    return true;
+  }
+  function startDip(k, mode, t0) {
+    const t = t0 != null ? t0 : clock();
+    if (cooling(t)) return;
+    run = null; wait = 0; dropXf();
+    dip = { t0: t, mode, k, cut: false, band0: bandOnAt(shown) };
+    lastDipAt = t;
+    phase = "dip";
+    wake(t);
+  }
+  // The planner: from the running move (or a still frame) and the signed dest, what plays next. Called when dest changes,
+  // at every landing, when content ends off dest, after a dip and when the cooldown ends.
+  function decide(t0) {
+    if (!CP.length || dip || wait || phase === "free" || phase === "released") return;
+    const rs = RE[kR][1];
+    if (run && run.purpose === "seam") {               // a forward seam kR -> kR + 1
+      if (kD === kR + 1) return;
+      if (kD > kR + 1) {                                // dest moved on: rush to the landing, or dip (ICX-SIGNED.4/.5)
+        const c = rushCap(shown, run.to, run.rate, CFG.RUSH);
+        if (c != null) { run.accel = true; run.cap = Math.max(run.cap, c); return; }
+        return startDip(kD, "entry", t0);
+      }
+      if (kD === kR) {                                  // back to the origin: the seam plays backwards (ICX-SIGNED.2, ICX-BACK.3)
+        const c = rushCap(shown, rs, CFG.ABORT_RATE, CFG.ABORT_RATE);
+        if (c != null) { run = { purpose: "reverse", to: rs, dir: -1, rate: CFG.ABORT_RATE, cap: c, accel: true }; return; }
+        return startDip(kR, "rest", t0);
+      }
+      return startDip(kD, "entry", t0);
+    }
+    if (run && run.purpose === "reverse") {             // back to REST(kR); further input is judged on arrival
+      if (kD === kR + 1) { run = { purpose: "seam", to: RE[kR + 1][0], dir: 1, rate: 1, cap: 1, accel: false }; return; }
+      if (kD > kR + 1) return startDip(kD, "entry", t0);
+      return;
+    }
+    if (run && run.purpose === "content") {             // landed on kR, its content playing (ICX-STEP.7, ICX-BACK.2)
+      if (kD === kR) return;
+      if (kD > kR) {
+        if (rs - shown <= CFG.CONTENT_FINISH_MAX + EPS) return;     // it finishes at 1x; decided again at its end
+        return kD === kR + 1 ? skipContent(t0) : startDip(kD, "entry", t0);
+      }
+      return kD === kR - 1 ? startDip(kD, "rest", t0) : startDip(kD, "entry", t0);
+    }
+    // no run: on a still frame (at rest, after a dip or a cooldown, after FREE stopped a move)
+    const atRest = Math.abs(shown - rs) <= 0.002;
+    if (kD === kR) {
+      if (atRest) return enforceRest(kR);
+      if (shown < rs) return passK === kR ? skipContent(t0) : contentRun(t0);
+      const c = rushCap(shown, rs, CFG.ABORT_RATE, CFG.ABORT_RATE);   // part-way into the next seam: back to rest
+      if (c != null) return startRun("reverse", rs, CFG.ABORT_RATE, c, true, t0);
+      return startDip(kR, "rest", t0);
+    }
+    if (kD === kR + 1) {
+      if (atRest || shown > rs) return startRun("seam", RE[kR + 1][0], 1, 1, false, t0);   // ICX-STEP.1
+      if (passK === kR || rs - shown > CFG.CONTENT_FINISH_MAX + EPS) return skipContent(t0);
+      return contentRun(t0);                            // the rest of the content at 1x, then the seam (ICX-STEP.7)
+    }
+    if (kD === kR - 1) return startDip(kD, "rest", t0); // the back-fade (ICX-BACK.1/.2)
+    return startDip(kD, "entry", t0);                   // distance >= 2 (ICX-DIP.1)
+  }
+  // decision #13's content skip (FLICKER2 "fade", the default since FADEDEF): the content's frame is held over the
+  // stage, the stage cuts to kR's rest frame underneath (no landing: rendered stays, as the dip's cut) and the held
+  // frame crossfades away; the seam starts when the crossfade ends (decide, at `wait`). It counts as a dip for the
+  // cooldown (ICX-DIP.4) and re-syncs the scroll position the way the dip's cut does.
+  // (FADEDEF r3, main's ruling) EVERY content skip is this crossfade: mid-content (decide's content run), a pass-through
+  // landing in a multi-step run (arrive; ICX-SIGNED.6), and the still-frame skips (decide's no-run branch: passK, or
+  // > CONTENT_FINISH_MAX left after FREE or a cooldown stopped the move). Inside the cooldown it waits it out like a dip
+  // (cooling() sets `wait`; at its end decide() takes the no-run branch, where passK === kR routes back here), so a
+  // run never stalls and the passed chapter's content never plays: no content run starts while passK === kR.
+  function skipContent(t0) {
+    const t = t0 != null ? t0 : clock();
+    if (cooling(t)) return;
+    holdFrame(t);
+    xf.dipAt0 = lastDipAt;                              // an explicit jump inside the crossfade is not held by its cooldown
+    run = null; wait = 0;
+    lastDipAt = t;
+    shown = RE[kR][1];
+    passK = -1; syncScroll(trackY(kR));
+    FX.gate.cursor = 1; FX.gate.press = 1;
+    lastDrawn = null;
+    render(shown); updateCaptions(shown, true);
+    phase = "transition";
+    wait = t + xf.dur;
+    wake(t);
+  }
+  function arrive(r) {
+    if (r.purpose === "seam") {
+      land(kR + 1);
+      if (kD === kR) { if (RE[kR][1] - shown > EPS) contentRun(); else enforceRest(kR); return; }
+      passK = kR;                                       // a pass-through landing: its content never plays (ICX-SIGNED.6)
+      phase = "transition";
+      if (kD === kR + 1) return skipContent();         // FADEDEF r3: the pass-through's skip is the crossfade too
+      return decide();
+    }
+    if (r.purpose === "reverse") land(kR);            // a reversed seam lands on its origin's rest frame (Terms; Sol C3-1 #3)
+    if (kD === kR) return enforceRest(kR);
+    phase = "transition";
+    decide();
+  }
+  function runStep(dt) {
+    const r = run;
+    const x = shown + r.dir * Math.min(r.rate, capAt(shown)) * dt;
+    if (r.accel) r.rate = Math.min(r.cap, r.rate + CFG.RATE_ACCEL * dt);
+    if ((r.to - x) * r.dir <= EPS) { shown = r.to; run = null; arrive(r); }
+    else shown = x;
+  }
+  // a dip: 100 ms out, the cut at the dark frame (dest as it stands then, ICX-DIP.2), 120 ms in
+  function dipStep(now) {
+    const u = now - dip.t0;
+    if (u < CFG.DIP_OUT) { setDip(1 - u / CFG.DIP_OUT); dipBand(1 - u / CFG.DIP_OUT); return; }
+    if (!dip.cut) cut();
+    const a = Math.min(1, (u - CFG.DIP_OUT) / CFG.DIP_IN);
+    setDip(a); dipBand(a);
+    if (a >= 1) { const d = dip; dip = null; clearDip(); afterDip(d); }
+  }
+  function cut() {
+    const d = dip;
+    d.cut = true;
+    // (ICX-STEP.7: a skip whose dest is >= 2 away by its dark frame is the dip to dest instead; Sol C3-1 #1)
+    if (d.mode === "skip" && Math.abs(kD - kR) >= 2) d.mode = "entry";
+    let k = d.k;
+    if (d.mode === "entry") { k = kD; if (k === kR) d.mode = "rest"; }
+    shown = d.mode === "entry" ? RE[k][0] : RE[k][1];
+    // a cut is a landing (Terms), a skip excepted (no new landing: rendered stays); back on the origin counts too
+    if (k !== kR || d.mode === "rest") land(k); else { passK = -1; syncScroll(trackY(kR)); }
+    FX.gate.cursor = 1; FX.gate.press = 1;
+    lastDrawn = null;
+    render(shown); updateCaptions(shown, true);
+  }
+  function afterDip(d) {
+    phase = "transition";
+    if (d.mode === "entry") { contentRun(); if (kD !== kR) decide(); return; }
+    if (kD === kR) return enforceRest(kR);
+    decide();
+  }
+
+  /* -- input (C1's detector) -- */
+  function onStep(dir, src, info) {
+    if (!TL || !CP.length || held || MAP) return;      // (SCRUB: the detector is off; never reached)
+    if (info && info.gesture != null && info.gesture === swallow) return;   // ICX-SETTLE-8: the rest of a crossing gesture
+    // (the run's clock starts when the input is handled: an event's timeStamp can be older than its dispatch, and
+    // counting that gap made the first frames of a 1x step run fast)
+    const t0 = clock();
+    if (phase === "released") return;
+    if (phase === "free") {                            // ICX-SETTLE-5: counted from the beat the settle would have picked
+      const b = settleTarget();
+      endFree();
+      syncScroll(trackY(kR));
+      return jump(clamp(b + dir, 0, last()), "step", t0);
+    }
+    if (phase === "rest" && ((dir > 0 && kR === last()) || (dir < 0 && kR === 0))) return;
+    if (!setDest(kD + dir, "step")) return;            // past the last pinned or the first: dropped (ICX-SIGNED.1)
+    decide(t0);
+  }
+  // an explicit target (Home/End, the rail, a settle, C4's deep links and popstate): ICX-JUMP
+  function jump(k, source, t0) {
+    if (MAP) return scrubJump(k, source);
+    if (native && source !== "settle" && source !== "step") stopNative();   // the latest explicit jump wins (C4-engine)
+    const below = phase === "released";
+    if (below) reenter();
+    if (phase === "free") { endFree(); syncScroll(trackY(kR)); }
+    // (FADEDEF, judge FLICKER2 LOW) an explicit jump inside the content skip's crossfade removes the held frame at once
+    // and ends the crossfade's wait: the stage is already on kR's rest frame, so the jump is planned from there now.
+    // (main's ruling 2026-10-17, "feel instant") its own transition starts in this frame: the skip's cooldown holds
+    // gesture steps only (as after a dip's cut, where the skip's dip became the jump), so it is undone for a jump
+    if (xf) { lastDipAt = xf.dipAt0; dropXf(); wait = 0; }
+    if (!dip && k === kR && kD === kR && (phase === "rest" || (run && run.purpose === "content"))) {
+      if (phase === "rest") syncScroll(trackY(kR));   // ICX-JUMP.0: nothing moves, nothing replays
+      // (SCRUB-fix 1; Astra RELEASE-1 HIGH) from below the story the page DID move: reenter() landed the last pinned (its
+      // announcement); the jump emits its destination and its final landing, so story-url.js writes its one push (ICX-HIST.2)
+      if (below) { srcD = source; emit("dest", payload(k, source)); emit("land", payload(k, source, { final: true })); }
+      return;
+    }
+    setDest(k, source);
+    decide(t0);
+  }
+  function onJump(target, src, info) {
+    if (!TL || !CP.length || held || MAP) return;
+    const k = target === "first" ? 0 : last();
+    // (INT5-fix 4; Sol INT-5) through story-url.js's jump path when it is there (as the rail and the menu): it saves the
+    // departing offset BEFORE a re-entry from a native section moves the page, so Back returns to the reader's pixel
+    const U = window.FEStoryURL;
+    if (U && typeof U.jump === "function" && U.jump(SLUG[CP[k]])) return;
+    jump(k, "jump");
+  }
+  // let the gesture pass natively (true) or intercept it: the edges (ICX-RELEASE, ICX-BACK.5), FREE's clamp (ICX-SETTLE-5),
+  // the crossing from below (ICX-SETTLE-8), and overlays
+  function isBypassed(ev, info) {
+    if (!TL || !CP.length || !motion() || held) return true;
+    if (doc.classList.contains("tq-locked") || document.querySelector("dialog[open]")) return true;
+    if (info.jump) return false;                        // Home / End always jump (ICX-KEY.6)
+    const y = window.scrollY, end = storyEnd();
+    if (phase === "released" || y > end + 1) {
+      if (info.source === "wheel" && info.dir < 0) {
+        const dy = ev.deltaY * (ev.deltaMode === 1 ? 33.3 : ev.deltaMode === 2 ? window.innerHeight : 1);
+        if (y + dy >= end) return true;                 // still below the pin: native
+        reenter();                                      // the crossing event: prevented, REST(last), the rest swallowed
+        reentered();
+        swallow = info.gesture;
+        return false;
+      }
+      return true;                                      // keys, touch and forward: native (then FREE / settle)
+    }
+    if (phase === "free") {
+      const b = settleTarget();
+      return (info.dir > 0 && b === last()) || (info.dir < 0 && b === 0);
+    }
+    // ICX-RELEASE.1; a touch "probe" (an in-slop move asked in both directions: a tap, a back-swipe start) is a pure
+    // question and must not arm the release (judge C6 #1)
+    if (phase === "rest" && info.dir > 0 && kR === last()) { if (info.phase !== "probe") releasing = clock(); return true; }
+    if (phase === "rest" && info.dir < 0 && kR === 0) return true;                                // ICX-BACK.5
+    return false;
+  }
+  const seq = window.FECheckpoint ? FECheckpoint.createSequence({ onStep, onJump, isBypassed, pinHeight: () => pin.clientHeight }) : null;
+  if (seq) seq.attach(window);
+  // SCRUB: the detector is off on a scrub build, so no wheel, touch or key is ever intercepted (native scroll drives it)
+  const seqEnable = () => { if (seq) seq.setEnabled(!!(TL && motion() && CP.length && !MAP)); };
+
+  /* -- FREE, RELEASED, settle (ICX-SETTLE-2…8) -- */
+  function reenter() {
+    endFree();
+    run = null; wait = 0; passK = -1;
+    if (dip) { dip = null; clearDip(); }
+    dropXf();                                           // defensive, untested: only foreign() reaches here mid-crossfade, and it drops it first
+    kR = kD = last(); shown = RE[kR][1]; phase = "rest";
+    syncScroll(storyEnd());
+    announce(kR);                                       // re-entry is a final landing on the last pinned (ICX-KEY.2)
+    reentryUntil = clock() + CFG.REENTRY_STICKY_MS / 1000;
+    lastDrawn = null;
+    wake();
+  }
+  function setReleased() {
+    endFree();
+    run = null; wait = 0; passK = -1;
+    if (dip) { dip = null; clearDip(); }
+    dropXf();
+    if (kR !== last() || Math.abs(shown - RE[last()][1]) > EPS) { kR = last(); shown = RE[kR][1]; lastDrawn = null; }
+    kD = kR;
+    phase = "released";
+    wake();
+  }
+  function endFree() {
+    if (!free) return;
+    clearTimeout(free.timer); clearTimeout(free.backstop);
+    free = null;
+    if (phase === "free") phase = "transition";
+  }
+  // ICX-SETTLE-9 (C6-fix, judge C6 ruling b): a FREE episode that saw a pinch zoom (visualViewport.scale > ZOOM_SCALE)
+  // never settles while zoomed (a settle scroll yanks the zoomed view, and "nearest" is wherever the zoom panned the
+  // layout); on the zoom-out it settles once on the chapter it was landed on: a distance-0 re-alignment (ICX-SETTLE-4)
+  const zoomed = () => { const v = window.visualViewport; return !!(v && v.scale > CFG.ZOOM_SCALE); };
+  const settleTarget = () => (free && free.zoomed ? kR
+    : free && free.from === "released" && !free.sawHold ? last() : nearestK(window.scrollY));
+  function foreign(y) {
+    const t = clock(), end = storyEnd();
+    // a zoomed pan inside the pin may run past its end: still FREE (it re-aligns on kR at the zoom-out), never a release
+    const zin = phase !== "released" && (zoomed() || !!(free && free.zoomed));
+    if (!zin && (y > end + 1 || (t - releasing < 0.6 && kR === last() && y >= end - 1))) { if (phase !== "released") setReleased(); return; }
+    if (!free) {
+      free = { from: phase === "released" || t < reentryUntil ? "released" : "in", sawHold: barHeld, lastT: t, timer: 0, backstop: 0, preview: -1 };
+      if (phase === "released") { kR = kD = last(); free.back = true; }   // a re-entry from below begins here
+      run = null; wait = 0;                             // the stage keeps its frame; the settle plans afresh
+      if (dip) { dip = null; clearDip(); }
+      dropXf();                                         // (FADEDEF) a native scroll / goTo's native row drops the held frame at once
+      phase = "free";
+    }
+    if (zoomed()) free.zoomed = true;
+    free.lastT = t;
+    const n = free.zoomed ? kR : nearestK(y);           // a zoomed episode previews the beat it will re-align on
+    if (n !== free.preview) { free.preview = n; emit("dest", payload(n, "free", { preview: true })); }
+    armSettle("scroll");
+    wake();
+  }
+  function armSettle(trigger) {
+    if (!free) return;
+    clearTimeout(free.timer);
+    if (trigger === "scrollend") { free.timer = setTimeout(() => settle("scrollend"), CFG.SCROLLEND_GRACE); return; }
+    if (!HAS_SCROLLEND) free.timer = setTimeout(() => settle("idle"), CFG.SETTLE_IDLE);
+    clearTimeout(free.backstop);
+    free.backstop = setTimeout(() => settle("backstop"), CFG.SETTLE_BACKSTOP);
+  }
+  function settle(trigger) {
+    if (!free || barHeld) return;                      // a scrollbar hold settles when it ends (ICX-SETTLE-6)
+    const quiet = (clock() - free.lastT) * 1000;
+    const need = trigger === "scrollend" ? CFG.SCROLLEND_GRACE : CFG.SETTLE_IDLE;
+    if (zoomed()) { free.zoomed = true; return; }     // never while pinch-zoomed: the zoom-out settles (ICX-SETTLE-9)
+    if (quiet < need - 1) { armSettle("scroll"); return; }
+    const y = window.scrollY, from = free.from, sawHold = free.sawHold, back = !!free.back, zoom = !!free.zoomed, pv = free.preview;
+    endFree();
+    settles++;
+    if (zoom) {                                         // the landed chapter, never the nearest
+      if (pv !== kR) emit("dest", payload(kR, "free", { preview: true }));   // FREE's highlight back on it (ICX-HL.3)
+      syncScroll(trackY(kR)); jump(kR, "settle"); return;
+    }
+    if (y > storyEnd() + 1) { setReleased(); return; }
+    let b = nearestK(y);
+    if (from === "released" && !sawHold) { b = last(); reentryUntil = clock() + CFG.REENTRY_STICKY_MS / 1000; }   // re-entry
+    syncScroll(trackY(kR));
+    jump(b, "settle");
+    // a touch / momentum re-entry lands on REST(last) with no new landing (kR was already the last pinned): it is
+    // still a final landing for ICX-KEY.2 (Sol C6-sol-1 #3); a sticky continuation of it says nothing again
+    if (back && b === last() && kR === last() && kD === kR) { announce(kR); reentered(); }
+  }
+  // (INT5-fix 6; Astra INT-5) a re-entry from below is a final landing on the last pinned with no landing of its own (kR
+  // already was the last pinned): story-url.js writes its URL like any FREE settle's (ICX-HIST.8), or the address kept
+  // the native section's (#price) the reader came from. reentry: true marks it (a URL that already names it: no write)
+  function reentered() { emit("land", payload(kR, "settle", { final: true, reentry: true })); }
+  function onScroll() {
+    if (!TL || !CP.length || held || !motion()) return;
+    if (MAP) { wake(); return; }                        // SCRUB: the scroll is the input; no FREE, no settle
+    const y = window.scrollY, t = performance.now();
+    if (ack && t <= ack.until && Math.abs(y - ack.y) <= CFG.ACK_TOL) return;
+    if (ack && t > ack.until) ack = null;
+    if (t / 1000 - geomAt < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free" && y <= storyEnd() + 1) { syncScroll(trackY(kR)); return; }
+    // the last frames of a native smooth scroll a later jump cancelled (stopNative) are its residue, not the reader's; only
+    // while no NEWER native scroll has started (seq): a native jump issued inside the window is the latest target (Sol C4-engine 1)
+    if (nativeStop && nativeStop.seq === nativeSeq && t / 1000 - nativeStop.at < CFG.RESIZE_GRACE / 1000 && phase !== "released" && phase !== "free") { syncScroll(trackY(kR)); return; }
+    foreign(y);                                         // BT-1: FREE is entered here, synchronously in the scroll event
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  // (SCRUB) the reader's own drag or wheel takes over from a native jump's smooth scroll: a rebuild no longer resumes it.
+  // Not touchstart: a tap (the theme toggle itself, Sol SCRUB-2) does not scroll, and must not cancel the carry-through.
+  for (const ev of ["touchmove", "wheel"]) window.addEventListener(ev, () => { sNat = null; }, { passive: true });
+  window.addEventListener("scrollend", () => { endNative(); if (HAS_SCROLLEND && free) armSettle("scrollend"); });
+
+  /* -- a native row's smooth anchor scroll in flight (goTo, ICX-JUMP.5), and its cancel by a later explicit jump -- */
+  // Main's ruling (C4 gap 3a): the latest explicit jump wins. A pinned jump issued while a native jump's smooth scroll is
+  // still under way cancels that scroll (an instant scroll ends a smooth one), puts back the place the scroll left (its
+  // FREE episode, or the release it caused, never happened) and then jumps from there: no settle undoes the dip, no stray
+  // release at the native target.
+  function startNative(aim) {
+    if (native) clearTimeout(native.timer);
+    native = { phase0: native ? native.phase0 : phase, k: native ? native.k : kR, aim, timer: setTimeout(endNative, 2500) };
+  }
+  function endNative() { if (native) { clearTimeout(native.timer); native = null; } }
+  function stopNative() {
+    const n = native;
+    endNative();
+    if (n.phase0 !== "released" && (phase === "free" || phase === "released")) {
+      const pv = free ? free.preview : -1;
+      endFree();
+      run = null; wait = 0; passK = -1;
+      if (dip) { dip = null; clearDip(); }
+      if (kR !== n.k || Math.abs(shown - RE[n.k][1]) > EPS) lastDrawn = null;
+      kR = kD = n.k; shown = RE[kR][1]; phase = "rest";
+      if (pv >= 0 && pv !== kR) emit("dest", payload(kR, "free", { preview: true }));   // FREE's highlight back (ICX-HL.3)
+    }
+    const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const y = clamp(Math.round(phase === "released" ? window.scrollY : trackY(kR)), 0, max);
+    ack = { y, until: performance.now() + CFG.ACK_MS };
+    window.scrollTo({ top: y, left: 0, behavior: "instant" });   // forced, even at the same y: it ends the smooth scroll
+    readerY = window.scrollY;
+    nativeStop = { seq: nativeSeq, at: clock() };       // the guard acts on this scroll's residue only
+    wake();
+  }
+  // the zoom-out of a zoomed FREE episode: settle once, after the pinch's own last scrolls have gone quiet
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", () => {
+    if (!free) return;
+    if (zoomed()) { free.zoomed = true; return; }       // a pinch between FREE's scroll and its settle counts too
+    if (!free.zoomed) return;
+    free.lastT = clock();
+    clearTimeout(free.timer);
+    free.timer = setTimeout(() => settle("idle"), CFG.SETTLE_IDLE);
+  });
+  document.addEventListener("mousedown", (e) => {
+    if (!(e.clientX >= doc.clientWidth || e.clientY >= doc.clientHeight)) return;
+    barHeld = true;
+    if (free) free.sawHold = true;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => endHold(), CFG.HOLD_MAX);
+  }, true);
+  function endHold() {
+    if (!barHeld) return;
+    barHeld = false; clearTimeout(holdTimer);
+    if (free) { free.lastT = clock() - CFG.SETTLE_IDLE / 1000; settle("hold"); }
+  }
+  window.addEventListener("mouseup", endHold, true);
+  window.addEventListener("pointerup", endHold, true);
+  window.addEventListener("mousemove", (e) => { if (barHeld && e.buttons === 0) endHold(); }, true);
+  window.addEventListener("blur", endHold);
+  // hidden tab: time stops (rAF stops; the first visible frame continues from the paused time, ICX-HIDDEN)
+  let hiddenAt = -1;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { hiddenAt = clock(); return; }
+    const gone = hiddenAt >= 0 ? clock() - hiddenAt : 0;
+    hiddenAt = -1;
+    if (dip) dip.t0 += gone;                            // (Sol C3-1 #2) a dip resumes where it paused
+    if (xf) xf.t0 += gone;                              // (Sol FLICKER2-1 #2) so does the content skip's crossfade
+    if (sDip) sDip.t0 += gone;                          // (SCRUB) the scrub's dip and the arrival too
+    if (sIntro) sIntro.t0 += gone;
+    if (wait) wait += gone;
+    lastDipAt += gone;
+    lastNow = clock();
+    wake();
+  });
+
+  /* ---------------- SCRUB: the follower (ported from the live site, main 652d12a): shown time chases the scroll's ---------------- */
+  // v2.2/v2.3 (Daniel: "something smooth but responsive so u still feel like ur scrolling a website"; "id rather it smooth
+  // and a bit draggy than super rushed"): the stage's speed aims at the gap (63 % of it every TAU), never faster than it
+  // could still stop in, eased in and out (TV, ACC), never above 3x (VMAX; a seam's own CAP is eased into). Forward never
+  // skips; only a one-frame JUMP (an explicit jump) or a long way back (REWIND, once the scroll paused) dips and lands.
+  const TAU = 0.25, TV = 0.08, ACC = 9, VMAX = 3, A0 = 0.02, S_JUMP = 2.5, REWIND = 8, DIR_EPS = 0.015;
+  function sCapAt(s, v, t) {
     let cap = VMAX;
     if (!TL) return cap;
     const d = v > 0.02 ? 1 : v < -0.02 ? -1 : Math.sign(t - s);
@@ -1234,26 +1663,19 @@
     }
     return cap;
   }
-  // (capOf(e, v): the ceiling where the stage is now, e = shown - target; null = VMAX everywhere)
   function follow(e, v, dt, capOf = null) {
     for (let t = dt; t > 1e-9; ) {
       const h = Math.min(t, 1 / 240);
       t -= h;
       const a = Math.abs(e), dir = e > 0 ? -1 : 1;
-      if (a < 1e-9) return [0, 0];                    // on the target: stop there (never coast past a still target)
+      if (a < 1e-9) return [0, 0];
       const cap = capOf ? capOf(e, v) : VMAX;
-      const sp = v * dir;                             // speed toward the target
-      if (sp > 0 && sp * sp >= 1.8 * ACC * a) {
-        // inside the braking zone: a constant deceleration that stops exactly on the target (sp^2 / 2a stays constant
-        // as it brakes), so every arrival eases to rest rather than snapping its last bit of speed away
-        v -= dir * Math.min(sp, ((sp * sp) / (2 * a)) * h);
-      } else {
-        // the speed to be at: the gap over TAU (A0 makes the tail finish rather than creep), what it can still stop
-        // in, and the ceiling; reached smoothly (TV) and never faster than ACC
+      const sp = v * dir;
+      if (sp > 0 && sp * sp >= 1.8 * ACC * a) v -= dir * Math.min(sp, ((sp * sp) / (2 * a)) * h);   // brakes onto the target
+      else {
         const vg = dir * Math.min(cap, (a + A0) / TAU, Math.sqrt(2 * ACC * a));
         v += clamp((vg - v) / TV, -ACC, ACC) * h;
       }
-      // the ceiling holds on the actual speed too: anything over it is shed firmly (3 ACC), never in one snap
       if (Math.abs(v) > cap) v = Math.sign(v) * Math.max(cap, Math.abs(v) - 3 * ACC * h);
       const e1 = e + v * h;
       if (Math.sign(e1) !== Math.sign(e)) return [0, 0];       // it never passes a still target
@@ -1261,134 +1683,238 @@
     }
     return [e, v];
   }
+  let sTarget = 0, sVel = 0, sIntro = null, sDip = null, sJump = null, sPrev = -1;
+  let dirSign = 1, dirAnchor = 0, sMoved = 0, navJumpAt = -1;
+  // (Sol SCRUB-1 HIGH 1) a landing needs the SCROLL to have stopped, not only the stage to have caught up: a slow drag
+  // through a hold (its story time all but flat) lets the follower catch up between scroll events. sScrollAt: the last
+  // frame the scroll position moved; S_QUIET: how long it must stay still before a hold lands (the timer re-checks).
+  // (Sol SCRUB-1 HIGH 2) sOut: the page went below the story since the last landing (a release lands nothing), so coming
+  // back into the last hold is a landing of its own (a re-entry, ICX-HIST.8). (Sol SCRUB-1 MEDIUM) sNat: a native row's
+  // smooth scroll in flight (the menu's Price), carried through a rebuild (ICX-JUMP.5, as the checkpoint path's `native`).
+  const S_QUIET = 0.15;
+  let sScrollAt = -1e9, sLastY = -1, sQuietTimer = 0, sOut = false, sNat = null;
+  // where the target is, as its segment and local time (a rebuild or a resize changes the map, not the story)
+  function targetPlace() { const sg = TL.segs[segAt(clamp(sTarget, 0, TL.T1))]; return { id: sg.id, u: sTarget - sg.T0 }; }
+  // put the scroll position where the map gives that same segment-local time (the map is monotonic: bisection)
+  function anchorScroll(tp) {
+    const pl = tp && placeIn(tp.id, tp.u);
+    if (!pl) return;
+    // (SCRUB-fix 3; Astra RELEASE-1) clamped to the MAP's last time, not TL.T1: the last hold drifts past TL.T1 (its rest
+    // TL.T1 - END_REST, plus DRIFT), and a clamp to TL.T1 put the reader up to ~140 px back up that hold
+    const T = clamp(pl.sg.T0 + pl.u, 0, MAP.pieces[MAP.pieces.length - 1].T1);
+    if (T <= mapScroll(0) + 1e-6) {
+      if (pl.moved && Math.abs(window.scrollY - Math.round(storyTop)) >= 1) window.scrollTo(0, Math.max(0, Math.round(storyTop)));
+      return;
+    }
+    let lo = 0, hi = storyTop + MAP.L;
+    for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (mapScroll(mid) < T) lo = mid; else hi = mid; }
+    if (Math.abs(window.scrollY - hi) >= 1) window.scrollTo(0, Math.round(hi));
+    readerY = window.scrollY;
+  }
+  const pastStory = () => (MAP && readerY > storyEnd() + 1 ? readerY - storyEnd() : null);
+  // an explicit jump may dip forwards too; scrolling never does
+  function navScrollTo(y) { navJumpAt = clock(); window.scrollTo(0, y); readerY = window.scrollY; wake(); }
+  // the stage at scroll y at once (a mode flip, a restore): no move, no replay
+  function scrubPlace(y) {
+    if (Math.abs(window.scrollY - y) >= 1) window.scrollTo(0, Math.max(0, Math.round(y)));
+    readerY = window.scrollY;
+    sTarget = shown = mapScroll(window.scrollY); sVel = 0; sIntro = null; sJump = null;
+    if (sDip) { sDip = null; clearDip(); }
+    dirSign = 1; dirAnchor = sTarget;
+    phase = window.scrollY > storyEnd() + 1 ? "released" : "rest";
+    lastDrawn = null; capIdx = -1;
+    render(shown); updateCaptions(shown, true);
+    wake();
+  }
+  // an explicit jump to checkpoint k (the menu, the logo, a deep link's popstate, focus): dest now, the scroll to its hold,
+  // the landing (one history write by story-url.js) once the stage has caught up there
+  function scrubJump(k, source) {
+    const y = trackY(k);
+    if (phase === "rest" && kR === k && kD === k && Math.abs(window.scrollY - y) <= 1) return;   // ICX-JUMP.0
+    sJump = { k, source }; sNat = null;               // the latest explicit jump wins (an instant scroll ends a smooth one)
+    // (SCRUB-fix 1; Astra RELEASE-1 HIGH) a jump that moves always emits its destination, even the one already set (below
+    // the story, released set kR = kD = last): story-url.js raises its one push on it (ICX-HIST.2), over a stale `pop`
+    kD = k; srcD = source; emit("dest", payload(k, source));
+    navScrollTo(y);
+  }
+  // the landing glue (ICX-SCRUB): a final landing is the stage caught up with a still scroll inside checkpoint k's hold,
+  // k not the one last landed (or an explicit jump's target): dest + one final onLand (story-url.js: one replaceState, a
+  // jump's one pushState), one announcement. Holds the stage crosses while moving are previews only (ICX-HL.3).
+  function scrubLand(y, moving, now) {
+    if (y > storyEnd() + 1) {
+      if (phase !== "released") { phase = "released"; sJump = null; kR = kD = last(); }
+      sOut = true;
+      return;
+    }
+    const k = holdAtT(shown);
+    const still = now - sScrollAt;
+    if (moving || still < S_QUIET) {
+      phase = "transition";
+      if (k >= 0 && k !== sPrev) { sPrev = k; emit("dest", payload(k, "free", { preview: true })); }
+      if (!moving) { clearTimeout(sQuietTimer); sQuietTimer = setTimeout(() => wake(), Math.ceil((S_QUIET - still) * 1000) + 8); }
+      return;
+    }
+    phase = "rest";
+    if (k < 0) return;                                  // still mid-ramp: rendered stays the last landed checkpoint
+    const j = sJump && sJump.k === k ? sJump : null;
+    if (k === kR && kD === k && !j && !sOut) return;
+    const re = sOut && !j;
+    sJump = null; sPrev = k; sOut = false;
+    const src = j ? j.source : "settle";
+    if (kD !== k) { kD = k; srcD = src; emit("dest", payload(k, src)); }
+    kR = k;
+    announce(k);
+    emit("land", payload(k, src, re ? { final: true, reentry: true } : { final: true }));
+  }
+  function scrubTick() {
+    const now = clock();
+    const dt = clamp(now - lastNow, 0.0005, 0.05);
+    lastNow = now;
+    const y = window.scrollY;
+    const tNew = mapScroll(y), step = Math.abs(tNew - sTarget);
+    if (step > 1e-4) sMoved = now;
+    if (Math.abs(y - sLastY) >= 1) { sLastY = y; sScrollAt = now; }
+    if (sNat && (Math.abs(y - sNat.aim) <= 1 || now > sNat.until)) sNat = null;
+    // (a PageDown is a one-frame step of ~2.7 s: forwards that plays; a jump dips going back, or when asked for one)
+    const jumped = step > S_JUMP && (tNew < sTarget || now - navJumpAt < 0.5);
+    sTarget = tNew;
+    let busy = false;
+    if (sIntro) {
+      // the arrival plays at natural speed to the hold frame; the first genuine scroll ends it
+      const it = Math.min(TL.HOLD, (now - sIntro.t0) * sIntro.rate);
+      shown = it;
+      sVel = it < TL.HOLD ? sIntro.rate : 0;
+      if (Math.abs(y - sIntro.y0) > 1) sIntro = null;
+      else { busy = it < TL.HOLD; if (!busy) sIntro = null; }
+    }
+    if (!sIntro) {
+      if (sDip) {
+        const u = now - sDip.t0;
+        if (u < CFG.DIP_OUT) { setDip(1 - u / CFG.DIP_OUT); scrubDipBand(1 - u / CFG.DIP_OUT); }
+        else {
+          if (!sDip.jumped) { shown = sTarget; sVel = 0; sDip.jumped = true; }
+          const a = Math.min(1, (u - CFG.DIP_OUT) / CFG.DIP_IN);
+          setDip(a); scrubDipBand(a);
+          if (a >= 1) { sDip = null; clearDip(); }
+        }
+        busy = true;
+      } else if (Math.abs(sTarget - shown) > S_JUMP && !(shown < TL.HOLD && sTarget <= TL.HOLD + 0.1) &&
+          (jumped || (sTarget < shown && now - sMoved > 0.12 && shown - sTarget > REWIND))) {
+        sDip = { t0: now, jumped: false, band0: bandOnAt(shown) };
+        busy = true;
+      } else {
+        const [e, v] = follow(shown - sTarget, sVel, dt, (e1, v1) => sCapAt(sTarget + e1, v1, sTarget));
+        shown = sTarget + e; sVel = v;
+        if (Math.abs(e) < 0.0006 && Math.abs(v) < 0.006) { shown = sTarget; sVel = 0; } else busy = true;
+      }
+    }
+    // the direction gate: hysteresis (DIR_EPS) on the target's movement; forwards restores the hand and the presses
+    if (sIntro) { dirSign = 1; dirAnchor = sTarget; }
+    else if (dirSign > 0) { if (sTarget < dirAnchor - DIR_EPS) { dirSign = -1; dirAnchor = sTarget; } else if (sTarget > dirAnchor) dirAnchor = sTarget; }
+    else if (sTarget > dirAnchor + DIR_EPS) { dirSign = 1; dirAnchor = sTarget; } else if (sTarget < dirAnchor) dirAnchor = sTarget;
+    const gTo = dirSign > 0 ? 1 : 0;
+    FX.gate.press = gTo;
+    const g0 = FX.gate.cursor;
+    if (g0 !== gTo) { FX.gate.cursor = gTo > g0 ? Math.min(1, g0 + dt / 0.15) : Math.max(0, g0 - dt / 0.15); busy = true; }
+    scrubLand(y, busy, now);
+    if (window.__fxTrace) window.__fxTrace.push([now, shown, sTarget, phase, FX.gate.cursor]);   // test hook (off unless set)
+    const key = `${shown.toFixed(5)}|${FX.gate.cursor.toFixed(3)}|${FX.gate.press}`;
+    if (key !== lastDrawn) { lastDrawn = key; render(shown); }
+    updateCaptions(shown, false);
+    if (busy) raf = requestAnimationFrame(tick);
+  }
+  // C5's band rule for the scrub's dip: a cut that turns the Ride's band on or off fades the band with the stage
+  function scrubDipBand(a) {
+    const to = bandOnAt(sDip && sDip.jumped ? shown : sTarget);
+    if (sDip && sDip.band0 !== to && a < 0.999) band.style.opacity = a.toFixed(3); else band.style.removeProperty("opacity");
+  }
 
   /* ---------------- the loop: one rAF; sleeps when there is nothing to do ---------------- */
-  let shown = 0, vel = 0, target = 0, raf = 0, lastNow = 0, intro = null, dip = null, held = false, gateTo = 1, lastDrawn = null;
-  let dirSign = 1, dirAnchor = 0, lastTargetMove = 0, navJumpAt = -1;
-  // an explicit jump (a nav link, a rail tick, focus reaching a caption) may dip forwards too; scrolling never does
-  function navScrollTo(y) { navJumpAt = FX.now(); window.scrollTo(0, y); wake(); }
-  function wake() {
-    if (!raf && TL && motion()) { lastNow = FX.now(); raf = requestAnimationFrame(tick); }
+  function wake(t0) {
+    if (!raf && TL && motion()) { lastNow = t0 != null ? Math.min(t0, clock()) : clock(); raf = requestAnimationFrame(tick); }
   }
   function tick() {
     raf = 0;
     if (!TL || held) return;
-    const now = FX.now();
-    const dt = clamp(now - lastNow, 0.0005, 0.05);
+    if (MAP) return scrubTick();
+    const now = clock();
+    const dt = clamp(now - lastNow, 0, 0.1);
     lastNow = now;
-    // v2.1c (Daniel: "while scrolling it felt like it was skipping some scenes then when i scroll back i see them"):
-    // ordinary scrolling NEVER skips. The stage plays every scene in order at up to the cap, even if it trails the
-    // scroll for a moment. Only a one-frame jump (a nav anchor, a scrollbar grab) dips and lands.
-    const tNew = mapScroll(window.scrollY), step = Math.abs(tNew - target);
-    if (step > 1e-4) lastTargetMove = now;
-    // (v2.3, Sol: a PageDown is a one-frame step of ~2.7 s; forwards that must play, not dip. A jump dips when it goes
-    // back, or when the visitor asked for it: a link, a rail tick)
-    const jumped = step > JUMP && (tNew < target || now - navJumpAt < 0.5);
-    target = tNew;
-    let busy = false;
-    if (intro) {
-      // the arrival plays at natural speed to the hold frame; the first genuine scroll ends it (the follower takes over
-      // from the arrival's own time and speed)
-      const it = Math.min(TL.HOLD, (now - intro.t0) * intro.rate);
-      shown = it;
-      vel = it < TL.HOLD ? intro.rate : 0;
-      if (Math.abs(window.scrollY - intro.y0) > 1) intro = null;
-      else { busy = it < TL.HOLD; if (!busy) intro = null; }
-    }
-    if (!intro) {
-      if (dip) {
-        const u = now - dip.t0;
-        if (u < 0.1) setDip(1 - u / 0.1);
-        else {
-          if (!dip.jumped) { shown = target; vel = 0; dip.jumped = true; }
-          const a = Math.min(1, (u - 0.1) / 0.1);
-          setDip(a);
-          if (a >= 1) { clearDip(); dip = null; }
-        }
-        busy = true;
-      } else if (Math.abs(target - shown) > JUMP && !(shown < TL.HOLD && target <= TL.HOLD + 0.1) &&
-          (jumped || (target < shown && now - lastTargetMove > 0.12 && shown - target > REWIND))) {
-        // dip and land instead of gliding: (a) a one-frame jump (an anchor, a scrollbar grab), or (b) a LONG way back
-        // (more than REWIND s of story, e.g. back to the top) once the scroll has paused. Forward never skips: every
-        // scene plays, in order. (Except inside the arrival's own stretch: a scroll during the arrival fast-forwards
-        // it to the hold.)
-        dip = { t0: now, jumped: false };
-        busy = true;
-      } else {
-        const [e, v] = follow(shown - target, vel, dt, (e1, v1) => capAt(target + e1, v1, target));
-        shown = target + e; vel = v;
-        if (Math.abs(e) < 0.0006 && Math.abs(v) < 0.006) { shown = target; vel = 0; } else busy = true;
-      }
-    }
-    // the direction gate: symmetric hysteresis (DIR_EPS of story time either way) on the TARGET's movement, so a small
-    // move can't strand it; going forwards it explicitly restores the hand and the presses
-    if (intro) { dirSign = 1; dirAnchor = target; }
-    else if (dirSign > 0) { if (target < dirAnchor - DIR_EPS) { dirSign = -1; dirAnchor = target; } else if (target > dirAnchor) dirAnchor = target; }
-    else if (target > dirAnchor + DIR_EPS) { dirSign = 1; dirAnchor = target; } else if (target < dirAnchor) dirAnchor = target;
-    gateTo = dirSign > 0 ? 1 : 0;
-    FX.gate.press = gateTo;
+    if (xf) xfStep(now);
+    if (dip) dipStep(now);
+    else if (run) runStep(dt);
+    if (!dip && wait && now >= wait) { wait = 0; decide(); }
+    // never stranded mid-move with nothing to play (ICX-REST.2)
+    if (phase === "transition" && !run && !dip && !wait) decide();
+    if (phase === "transition" && !run && !dip && !wait) enforceRest(kD);
+    // BT-1 backstop: a foreign scroll seen on the frame even if its event is late
+    if (ack && performance.now() > ack.until) ack = null;
+    if (CP.length && !dip && !ack && phase !== "free" && phase !== "released" && Math.abs(window.scrollY - trackY(kR)) > CFG.ACK_TOL) foreign(window.scrollY);
+    let busy = !!(run || dip || wait || xf);
+    // the direction gate: the hand never walks backwards (it fades while the story runs back) and presses squash only
+    // forwards; it comes back on the way to rest
+    const gTo = run && run.dir < 0 ? 0 : 1;
+    FX.gate.press = gTo;
     const g0 = FX.gate.cursor;
-    if (g0 !== gateTo) {
-      FX.gate.cursor = gateTo > g0 ? Math.min(1, g0 + dt / 0.15) : Math.max(0, g0 - dt / 0.15);
+    if (g0 !== gTo) {
+      FX.gate.cursor = gTo > g0 ? Math.min(1, g0 + dt / 0.15) : Math.max(0, g0 - dt / 0.15);
       busy = true;
     }
-    if (window.__fxTrace) window.__fxTrace.push([now, shown, target, !!intro, FX.gate.cursor]);   // test hook (off unless set)
-    const key = `${shown.toFixed(5)}|${FX.gate.cursor.toFixed(3)}|${FX.gate.press}`;
-    if (key !== lastDrawn) { lastDrawn = key; render(shown); }
+    if (window.__fxTrace) window.__fxTrace.push([now, shown, run ? run.to : shown, phase, FX.gate.cursor]);   // test hook (off unless set)
+    const k = `${shown.toFixed(5)}|${FX.gate.cursor.toFixed(3)}|${FX.gate.press}`;
+    if (k !== lastDrawn) { lastDrawn = k; render(shown); }
     updateCaptions(shown, false);
-    if (navOn) {
-      if (!intro && !navIn) navReveal();              // the rail draws in once the arrival has handed over
-      if (navTick(shown, dt, false)) busy = true;
-    }
+    if (railOn && !railIn && !(run && run.intro)) railReveal();   // the rail draws in once the arrival has handed over
     if (busy) raf = requestAnimationFrame(tick);
   }
-  window.addEventListener("scroll", wake, { passive: true });
-
-  /* ---------------- anchors: a jump lands on the beat's readable frame (the loop dips the stage if it's far) ---------------- */
-  const ANCHOR = { top: "make", how: "look", pricing: "price", download: "end" };
-  function jumpTo(id) {
-    const beat = ANCHOR[id];
-    const y = id === "top" ? 0 : scrollForBeat(beat);
-    if (y == null) return false;
-    navScrollTo(y);
-    return true;
+  // story time between frames, for state(): the run's own clock (the shown frame is at most one frame behind it)
+  function liveT() {
+    if (!run || document.hidden) return shown;
+    const x = shown + run.dir * Math.min(run.rate, capAt(shown)) * clamp(clock() - lastNow, 0, 0.1);
+    return (run.to - x) * run.dir <= 0 ? run.to : x;
   }
-  document.addEventListener("click", (e) => {
-    const a = e.target.closest && e.target.closest('a[href^="#"]');
-    if (!a || !TL || !motion()) return;
-    const id = a.getAttribute("href").slice(1);
-    if (!(id in ANCHOR) || !TL.beats.includes(ANCHOR[id])) return;   // not in the story (phones: a page section): native
-    e.preventDefault();
-    if (jumpTo(id)) { try { history.replaceState(null, "", "#" + id); } catch (err) { /* file:// */ } }
-  });
-  // (phones, F2) a hash set by other means (typed, a script) to a story anchor: the End section's copy is in the pin, so
-  // the browser has no box to scroll to for #download; land on the beat's readable frame as a click would
-  window.addEventListener("hashchange", () => {
-    const id = location.hash.slice(1);
-    if (TL && TL.p === "tall" && motion() && id !== "top" && id in ANCHOR && TL.beats.includes(ANCHOR[id])) jumpTo(id);
-  });
+
   // focus that reaches an idle caption (a screen reader's cursor) brings that beat up, so focus is never invisible
   capsEl.addEventListener("focusin", (e) => {
     if (!TL || !motion()) return;
     const c = e.target.closest && e.target.closest(".beat-copy");
     if (!c || c.classList.contains("is-on")) return;
-    const beat = c.getAttribute("data-copy");
-    const y = beat === "make" ? 0 : scrollForBeat(beat);
-    if (y != null) navScrollTo(y);
+    const k = CP.indexOf(c.getAttribute("data-copy"));
+    if (k >= 0) jump(k, "focus");                      // a focus landing replaces, never pushes (ICX-HIST, C4-engine)
   });
 
   /* ---------------- start, refresh (theme / layout / motion preference / late fonts), resize, teardown ---------------- */
   let layoutKey = "";
   const key = () => `${theme()}|${desktop() ? "desk" : "phone"}|${preset()}|${motion() ? "motion" : "calm"}`;
   const navType = () => { try { return performance.getEntriesByType("navigation")[0].type; } catch (e) { return "navigate"; } };
+  function mode() {
+    if (!motion()) return doc.classList.contains("calm") ? (classicPref === true ? "classic" : "calm") : "static";
+    return !TL ? "static" : TL.isDesk ? "desktop" : TL.p === "tall" ? "phone" : "tablet";
+  }
+  function modeChanged() {
+    const m = mode();
+    if (m === lastMode) return;
+    lastMode = m;
+    emit("mode", { mode: m, destinations: destinations() });
+  }
+  function resetEngine() {
+    cancelAnimationFrame(raf); raf = 0;
+    endFree();
+    // (INT-4, Sol HIGH / Astra MEDIUM) a rebuild mid-dip (a theme switch in its fade-in) drops the dip: its layers'
+    // opacity goes back to rest with it, or the stage came to rest nearly invisible
+    clearDip();
+    run = null; dip = null; wait = 0; passK = -1; ack = null; swallow = -1;
+    kR = kD = 0; phase = "rest";
+    sDip = null; sIntro = null; sJump = null; sVel = 0; sPrev = -1; sOut = false; clearTimeout(sQuietTimer);
+  }
   function teardown() {
     // everything the story put on the page goes: the mounts, the page-level layers' styles, the global classes, the
     // dip, pending frames and timers (the stacked page must not inherit any of it)
-    cancelAnimationFrame(raf); raf = 0;
+    resetEngine();
     clearTimeout(capTimer);
-    intro = null; dip = null; held = false;
+    held = false;
     clearStage();
-    TL = null; MAP = null; OV = null; L = null;
+    TL = null; OV = null; L = null; TRACK = null; MAP = null; CP = []; RE = [];
     lastG = {}; curSeg = -1; lastDrawn = null; capIdx = -1;
     doc.classList.remove("on-band", "past-band");
     pin.setAttribute("class", "pin");
@@ -1404,15 +1930,188 @@
     label.removeAttribute("data-mode");
     label.style.removeProperty("transform");
     FX.gate.cursor = 1; FX.gate.press = 1;
-    navTeardown();
+    railTeardown();
     placeCopies([]);
   }
-  // keep: a snapshot of where the story is (refresh), restored onto the rebuilt timeline
-  function start(firstLoad, keep) {
+  // the first landing (ICX-JUMP.3): a deep link plays its chapter's demo from its rest-entry, a reload or a history
+  // visit lands on its rest frame, a fresh arrival at the top plays Make's arrival to its hold frame. No history.
+  // (judge C3-1 #1) with scroll restoration manual, the reading place of a reload or a history visit with no chapter
+  // hash is the engine's: saved on pagehide (the checkpoint in the pin, or the distance below it) and re-applied by
+  // init() after layout. Per tab (sessionStorage), this page only; a new visit (navigate) never reads it.
+  const PLACE_KEY = "fe-story-place";
+  const entryK = () => { const s = history.state; return s && typeof s === "object" && s.k ? s.k : null; };   // story-url.js's entry key
+  window.addEventListener("pagehide", () => {
     try {
-      cancelAnimationFrame(raf); raf = 0;
+      if (!TL || !CP.length || !motion()) { sessionStorage.removeItem(PLACE_KEY); return; }
+      if (MAP) {                                        // (SCRUB) a reload keeps the pixel, as the live site did
+        sessionStorage.setItem(PLACE_KEY, JSON.stringify({ y: Math.round(window.scrollY), w: window.innerWidth,
+          path: location.pathname, cp: CP.join(), h: location.hash, k: entryK() }));
+        return;
+      }
+      const below = phase === "released" || window.scrollY > storyEnd() + 1;
+      const p = below ? { past: Math.round(window.scrollY - storyEnd()) } : { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR] };
+      p.path = location.pathname; p.cp = CP.join();
+      p.h = location.hash; p.k = entryK();             // (INT5-fix 5) the entry left: its URL's chapter and its key
+      sessionStorage.setItem(PLACE_KEY, JSON.stringify(p));
+    } catch (e) { /* storage off: the page starts on its first chapter */ }
+  });
+  function savedPlace() {
+    try { const p = JSON.parse(sessionStorage.getItem(PLACE_KEY) || "null"); sessionStorage.removeItem(PLACE_KEY); return p; } catch (e) { return null; }
+  }
+  // RELOAD: story-url.js keeps the reader's place inside a native section ({story, y, w, m}) in the entry's history.state and,
+  // when the page is left, in sessionStorage "fe-story-held" (+ path and the entry's state key k). A reload or history visit
+  // to that same chapter, in the same mode at the same width, comes back to that pixel, not the chapter's anchor (the
+  // shipped site, with no chapter hashes, kept the pixel). A fresh deep link lands on the anchor. Same rule as story-url.js
+  // heldY (calm / classic restore there); kept in both because this runs before the engine's first frame.
+  function heldY(slug) {
+    const nt = navType();
+    if (nt !== "reload" && nt !== "back_forward") return null;
+    const fits = (p) => !!p && p.story === slug && typeof p.y === "number" && p.w === window.innerWidth && p.m === mode();
+    const s = history.state, k = s && typeof s === "object" && s.k ? s.k : null;
+    let p = null;
+    try { p = JSON.parse(sessionStorage.getItem("fe-story-held") || "null"); } catch (e) { p = null; }
+    if (fits(p) && p.path === location.pathname && (p.k || null) === k) return Math.max(0, Math.round(p.y));
+    if (s && typeof s === "object" && fits(s)) return Math.max(0, Math.round(s.y));
+    return null;
+  }
+  function init() {
+    // the engine owns the reading place: the browser's own scroll restoration on a reload or a history visit would land
+    // after this one, read as a foreign scroll and settle elsewhere (not a history write: no entry, no URL change)
+    try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) { /* ignore */ }
+    let h = "";
+    try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) { h = ""; }
+    const b = LEGACY[h] || BEATS.find((x) => SLUG[x] === h) || null;
+    const nt = navType();
+    kR = kD = 0; shown = RE[0][1]; phase = "rest";
+    const saved = savedPlace();                        // read once: savedPlace() removes the record
+    if (MAP && (!b || CP.includes(b))) return scrubInit(b, nt, saved);
+    if (b && CP.includes(b)) {
+      const k = CP.indexOf(b);
+      // (INT5-fix 5; Sol + Astra INT-5) a reload / history visit of the SAME entry the reader left below the story (scrolled
+      // past it into the footer: the URL still names the chapter it was released from): that same distance past it, not
+      // the chapter's rest frame. A fresh visit (navigate), another entry or another URL lands on the chapter.
+      if (nt !== "navigate" && saved && saved.past != null && saved.cp === CP.join() && saved.path === location.pathname &&
+          saved.h === location.hash && (saved.k || null) === entryK()) {
+        phase = "released"; kR = kD = last(); shown = RE[kR][1];
+        keepPast(Math.max(2, saved.past));
+        initial = { index: bi(kR), source: "restored" };
+        return;
+      }
+      kR = kD = k; srcD = "init";
+      initial = { index: BEATS.indexOf(b), source: nt === "navigate" ? "init" : nt };
+      syncScroll(trackY(k));
+      if (nt === "navigate") { shown = RE[k][0]; contentRun(); if (k === 0) run.intro = true; }
+      else shown = RE[k][1];
+      emit("land", payload(k, "init", { final: true }));
+      return;
+    }
+    if (b) {                                           // a native row in this layout: the anchor's own section
+      const sec = document.getElementById(SLUG[b]);
+      const held = heldY(SLUG[b]);                     // a reload / history visit inside it: the reader's pixel (RELOAD)
+      if (held != null) window.scrollTo(0, held);
+      else if (sec) window.scrollTo(0, Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - (L ? L.hh : 0))));
+      initial = { index: BEATS.indexOf(b), source: "native" };
+      return;
+    }
+    if (saved && nt !== "navigate" && saved.path === location.pathname) {
+      if (saved.past != null && saved.cp === CP.join()) {   // below the pin: the same distance past it
+        phase = "released"; kR = kD = last(); shown = RE[kR][1];
+        keepPast(Math.max(2, saved.past));
+        initial = { index: bi(kR), source: "restored" };
+        return;
+      }
+      if (saved.beat && CP.includes(saved.beat)) {          // in the pin: that checkpoint's rest frame
+        kR = kD = CP.indexOf(saved.beat); shown = RE[kR][1];
+        syncScroll(trackY(kR));
+        initial = { index: bi(kR), source: "restored" };
+        return;
+      }
+    }
+    const y = window.scrollY;
+    if (y < 4 && nt === "navigate") { shown = 0; contentRun(); run.intro = true; initial = { index: 0, source: "arrival" }; return; }
+    if (y > storyEnd() + 1) { phase = "released"; kR = kD = last(); shown = RE[kR][1]; initial = { index: bi(kR), source: "restored" }; return; }
+    kR = kD = nearestK(y); shown = RE[kR][1];
+    syncScroll(trackY(kR));
+    initial = { index: bi(kR), source: "restored" };
+  }
+  // (SCRUB) the first place: the reader's own pixel on a reload / history visit of the same entry at the same width (the
+  // live site kept it); a deep link to a pinned row: its hold (ICX-SCRUB.6); a fresh arrival at the top: Make's arrival
+  function scrubInit(b, nt, saved) {
+    const k = b ? CP.indexOf(b) : -1;
+    const same = !!saved && nt !== "navigate" && saved.path === location.pathname && saved.cp === CP.join() &&
+      typeof saved.y === "number" && saved.w === window.innerWidth && saved.h === location.hash && (saved.k || null) === entryK();
+    if (same) { window.scrollTo(0, Math.max(0, saved.y)); kR = holdK(window.scrollY); initial = { index: bi(kR), source: "restored" }; return; }
+    if (k >= 0) {
+      window.scrollTo(0, trackY(k));
+      kR = kD = k;
+      initial = { index: BEATS.indexOf(b), source: nt === "navigate" ? "init" : nt };
+      emit("land", payload(k, "init", { final: true }));
+      return;
+    }
+    if (window.scrollY < 4 && nt === "navigate") { sIntro = { t0: clock(), rate: 1, y0: window.scrollY }; shown = 0; kR = 0; initial = { index: 0, source: "arrival" }; return; }
+    kR = holdK(window.scrollY);
+    initial = { index: bi(kR), source: "restored" };
+  }
+  // the engine's state from the scroll position as it is now (k: the checkpoint already landed, else the nearest hold)
+  function scrubSync(k) {
+    readerY = window.scrollY;
+    sTarget = mapScroll(readerY);
+    if (!sIntro) { shown = sTarget; sVel = 0; } else sVel = sIntro.rate;
+    dirSign = 1; dirAnchor = sTarget;
+    const rel = readerY > storyEnd() + 1;
+    kR = kD = rel ? last() : k != null && k >= 0 ? k : holdK(readerY);
+    sPrev = kR; sOut = rel; sLastY = readerY;
+    phase = rel ? "released" : sIntro ? "transition" : "rest";
+  }
+  // a native row's smooth scroll asked again for the same target under the new layout (smooth: it carries on from here)
+  function natResume(sn) {
+    const sec = document.getElementById(sn.id), hh = header ? header.getBoundingClientRect().height : 0;
+    const aim = sn.y != null ? sn.y : sec ? Math.max(0, Math.round(sec.getBoundingClientRect().top + window.scrollY - hh)) : sn.aim;
+    sNat = { ...sn, aim };
+    window.scrollTo({ top: aim, behavior: "smooth" });
+  }
+  function scrubStart(firstLoad, keep, sn) {
+    if (keep && keep.scrub && keep.cp === CP.join()) {
+      // the same story time under the new map (a theme switch, late fonts, a refit): nothing moves; below the story, the
+      // same distance past it. (Sol SCRUB-1 MEDIUM) A native row's smooth scroll still in flight: the reader asked to go
+      // there, so it is asked again for the same target (smooth: it carries on from wherever it is now).
+      if (sn) natResume(sn);
+      else if (keep.past != null) keepPast(keep.past); else if (!keep.intro) anchorScroll(keep.tp);
+      sIntro = keep.intro;
+      scrubSync(keep.kR);
+      if (keep.out) sOut = true;
+      const pl = placeIn(keep.id, keep.u);
+      if (pl) { shown = clamp(pl.sg.T0 + pl.u, pl.sg.T0, pl.sg.T1); sVel = keep.vel; }
+      FX.gate.cursor = keep.cursor; dirSign = keep.dirSign;
+      sJump = keep.jump;
+      if (sJump) kD = sJump.k;
+      if (phase !== "released" && Math.abs(shown - sTarget) > 1e-6) phase = "transition";
+    } else {
+      if (firstLoad) init();
+      scrubSync(firstLoad ? kR : null);
+    }
+    FX.gate.press = dirSign > 0 ? 1 : 0;
+  }
+  // keep: a snapshot of where the story is (refresh), restored onto the rebuilt timeline when the checkpoints are the
+  // same (a theme change, late fonts, a phone's caption refit). Across a layout change (a new destination table) the
+  // reading place is restorePlace's job.
+  function start(firstLoad, keep, pre) {
+    dropRebuild(pre);                                   // any other (re)start supersedes a theme rebuild in flight
+    // (INT5-fix 3; Astra INT-5) a native row's smooth scroll still in flight (the tablet menu's Price, then the theme
+    // toggled): the reader asked to go there, so the rebuild carries it through to its target. The snapshot's place is
+    // the scroll's mid-way FREE / release, and restoring it (an instant scroll) ended the smooth one at the pinned origin
+    // while story-url.js's arrival still pushed the target's URL.
+    const nat = native && typeof native.aim === "number" ? native : null;
+    const sn = sNat && clock() <= sNat.until ? sNat : null;   // (SCRUB) the same, for a scrub build's native jump
+    sNat = null;
+    try {
+      resetEngine();
       layoutKey = key();
-      if (!motion()) { teardown(); doc.classList.add("fx-ready"); return; }
+      if (!motion()) {
+        // (calm / static: the browser keeps the place itself, as it always did)
+        try { if ("scrollRestoration" in history) history.scrollRestoration = "auto"; } catch (e) { /* ignore */ }
+        teardown(); doc.classList.add("fx-ready"); seqEnable(); modeChanged(); return;
+      }
       if (desktop()) placeCopies(BEATS);
       else if (preset() === "tall") placeCopies(TALL_PIN, true);
       else placeCopies(PHONE_BEATS);
@@ -1420,69 +2119,163 @@
         capRO.disconnect();
         if (preset() === "tall") for (const b of TALL_BEATS) { const c = capFor(b); if (c) capRO.observe(c); }
       }
-      build();
-      navBuild();
-      const h = location.hash.slice(1);
-      const anchored = firstLoad && h in ANCHOR && TL.beats.includes(ANCHOR[h]);
-      if (anchored) window.scrollTo(0, h === "top" ? 0 : scrollForBeat(ANCHOR[h]));
-      else if (keep && keep.past != null && pastMode()) keepPast(keep.past);   // (phones, touch tablets (F2b): below the story, stay there)
-      else if (keep && !keep.intro) anchorScroll(keep.tp);      // the same story time under the new map: nothing moves
-      target = mapScroll(window.scrollY);
-      readerY = window.scrollY;
+      build(pre);
+      railMeasure();
       held = false;
-      if (dip) { dip = null; clearDip(); }
-      intro = null; shown = target; vel = 0; dirSign = 1; FX.gate.cursor = 1;
-      if (keep) {
+      FX.gate.cursor = 1; FX.gate.press = 1;
+      if (MAP) scrubStart(firstLoad, keep, sn);
+      else if (keep && keep.cp === CP.join()) {
+        kR = Math.max(0, CP.indexOf(keep.beat)); kD = Math.max(0, CP.indexOf(keep.dest));
         const pl = placeIn(keep.id, keep.u);
-        if (pl) { shown = clamp(pl.sg.T0 + pl.u, pl.sg.T0, pl.sg.T1); vel = keep.vel; }
-        intro = keep.intro;                            // still arriving: it carries on, on its own clock
-        FX.gate.cursor = keep.cursor; dirSign = keep.dirSign;
-      } else if (firstLoad && !anchored && window.scrollY < 4 && navType() === "navigate") {
-        // a fresh arrival (not an anchor, a reload or a history visit: those land on their frame, never replaying)
-        intro = { t0: FX.now(), rate: 1, y0: window.scrollY };
-        shown = 0; vel = 1;
-      }
-      dirAnchor = target;
-      gateTo = dirSign > 0 ? 1 : 0; FX.gate.press = gateTo;
+        if (nat) {
+          // the engine as the native jump had it (its origin's rest; released if it began below), the page left to the
+          // scroll, which is asked again for the same target (smooth: it carries on from wherever it is now)
+          kR = kD = nat.phase0 === "released" ? last() : nat.k; shown = RE[kR][1]; phase = nat.phase0 === "released" ? "released" : "rest";
+          window.scrollTo({ top: nat.aim, behavior: "smooth" });
+          startNative(nat.aim);
+        } else if (keep.phase === "released") {
+          phase = "released"; kR = kD = last(); shown = RE[kR][1];
+          if (keep.past != null) keepPast(keep.past);
+        } else if (keep.phase === "rest" || !pl) {
+          shown = RE[kR][1]; phase = "rest"; kD = kR; syncScroll(trackY(kR));
+        } else {
+          shown = clamp(pl.sg.T0 + pl.u, 0, TL.T1); phase = "transition";   // the move carries on from the same frame
+          syncScroll(trackY(kR));
+          lastDipAt = -1e9;
+          decide();
+          // (INT-4) the arrival carries on as the arrival across a rebuild (a theme switch mid-arrival): the rail draws in
+          // only once it hands over, as on the base
+          if (keep.intro && run && run.purpose === "content" && kR === 0) run.intro = true;
+        }
+      } else if (firstLoad) init();
+      else { kR = kD = 0; shown = RE[0][1]; }
       curSeg = -1; lastDrawn = null; capIdx = -1;
       render(shown);
       updateCaptions(shown, true);
-      navTick(shown, 0, true);
-      if (!intro) navReveal();                          // an anchor, a reload or a rebuild: the rail is up at once
+      if (!(run && run.intro)) railReveal();            // an anchor, a reload or a rebuild: the rail is up at once
       doc.classList.add("fx-ready");
+      seqEnable();
+      modeChanged();
       wake();
     } catch (err) {
       doc.classList.remove("motion", "calm");
+      if (pre) for (const m of Object.values(pre.m)) m.rootEl.remove();
       try { teardown(); } catch (e) { /* ignore */ }
+      seqEnable();
       console.warn("The story fell back to its static layout:", err);
     }
   }
   function snapshot() {
-    if (!TL) return null;
+    if (!TL || !CP.length) return null;
+    if (MAP) {
+      const sc = TL.segs[segAt(clamp(shown, 0, TL.T1))];
+      return { cp: CP.join(), scrub: true, beat: CP[kR], dest: CP[kD], phase: phase === "released" ? "released" : "rest",
+        id: sc.id, u: shown - sc.T0, vel: sVel, intro: sIntro ? { ...sIntro } : null, cursor: FX.gate.cursor, dirSign,
+        tp: sIntro ? null : targetPlace(), past: pastStory(), kR, jump: sJump, out: sOut };
+    }
     const sg = TL.segs[segAt(shown)];
-    return { id: sg.id, u: shown - sg.T0, vel, intro: intro ? { ...intro } : null, cursor: FX.gate.cursor, dirSign, tp: targetPlace(), past: pastStory() };
+    return { cp: CP.join(), beat: CP[kR], dest: CP[kD], phase, id: sg.id, u: shown - sg.T0, intro: !!(run && run.intro),
+      past: phase === "released" ? readerY - storyEnd() : null };
   }
-  // a rebuild that keeps the story where it is: the same segment and local time, the follower's speed, the arrival
-  // (if it's still playing) and the direction gate. The map is rebuilt; the scroll position is untouched.
-  // (phones, F2b, Sol F2 #3) across the phone line (tall <-> tablet: a resize, or a caption's own refit, can be first),
-  // the phone ending's places map to the tablet's Yours and End sections and back
-  function refresh() {
-    const p0 = TL ? TL.p : null, pl = p0 && phoneish() ? readingPlace() : null;
-    start(false, snapshot());
-    if (TL && TL.p !== p0 && (p0 === "tall" || TL.p === "tall") && endingPlace(pl)) restorePlace(pl);
+  function refresh() { start(false, snapshot()); }
+  // C5b (the circle starts on the press, Daniel's "feel instant"): mounting the scenes is most of a rebuild (16-28 ms in
+  // Chromium, 55-88 ms in WebKit, measured 2026-10-16), and inside the view-transition update it held the circle back by
+  // that much. So a theme switch inside a circle reveal mounts the new theme's scenes AFTER the circle's first frame, a
+  // few per task between frames, hidden beside the old ones, then swaps them in with the same refresh as before (the
+  // story's place carried over). Until the swap the old scenes are still on the stage, outside the circle: before any
+  // frame that could show the circle reaching the stage (or the overlay card), the rest is done at once, so no frame
+  // shows a scene in the old palette inside the circle. An instant switch (no circle) rebuilds synchronously, as before.
+  const RB_BUDGET = 8;                                // ms of mounting per task
+  const RB_SLACK = 34;                                // ms: the next paint may come up to two frames after a task ends
+  const revealEase = FX.bezier(0.55, 0, 0.25, 1);     // theme.js's reveal: 420 ms, cubic-bezier(.55,0,.25,1)
+  let rb = null;                                      // the theme rebuild in flight
+  function dropRebuild(keep) {
+    if (!rb) return;
+    const r = rb;
+    rb = null;
+    r.dead = true;
+    cancelAnimationFrame(r.raf); clearTimeout(r.timer);
+    if (r !== keep) for (const m of Object.values(r.m)) m.rootEl.remove();
+  }
+  const sameLayout = () => layoutKey.slice(layoutKey.indexOf("|")) === key().slice(key().indexOf("|"));
+  function themeRebuild() {
+    dropRebuild();
+    if (!TL || !CP.length || !motion() || !doc.classList.contains("vt-theme") || !sameLayout()) { refresh(); return; }
+    const r = (rb = { m: {}, t0: performance.now(), todo: null, touch: 0, raf: 0, timer: 0, frames: 0, dead: false });
+    r.raf = requestAnimationFrame((ts) => rebuildFrame(r, ts));
+  }
+  // (Sol C5b-1 HIGH) a frame callback stays pending while the rebuild runs, so EVERY frame checks before it paints: if
+  // the circle could reach the stage by this frame, the rest is done here, before the paint. The mounting itself runs in
+  // tasks between frames, from the second frame on (the first is the new snapshot's capture, the second the circle's
+  // first frame, where its start time is set: no work sits in front of either).
+  function rebuildFrame(r, ts) {
+    if (r.dead || r !== rb) return;
+    if (++r.frames >= 2 && !r.todo && !rebuildPrep(r)) return;
+    if (r.todo && (!doc.classList.contains("vt-theme") || Math.max(ts, performance.now()) + 4 - r.t0 >= r.touch)) { rebuildStep(r, true); return; }
+    r.raf = requestAnimationFrame((t) => rebuildFrame(r, t));
+    if (r.todo && !r.timer) r.timer = setTimeout(() => { r.timer = 0; rebuildStep(r, false); });
+  }
+  function rebuildPrep(r) {
+    if (!TL || !motion() || !sameLayout()) { refresh(); return false; }
+    const p = preset();
+    Object.assign(r, { p, s0: stage.clientWidth / SIZE[p][0], dark: theme() === "dark", touch: circleReach() });
+    r.todo = mountNames(desktop(), p).map((n) => () => { const m = mount(n, r.p, r.s0); m.show(false); r.m[n] = m; });
+    return true;
+  }
+  // ms after the switch at which the circle's outer edge could first reach the stage or a card over it (an early bound:
+  // t0 is before the circle's start, the end radius is theme.js's largest)
+  function circleReach() {
+    const x = parseFloat(doc.style.getPropertyValue("--vt-x")), y = parseFloat(doc.style.getPropertyValue("--vt-y"));
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return 0;
+    const far = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)), end = far + 222;
+    let d = Infinity;
+    for (const el of [stage, ...over.children]) {
+      const b = el.getBoundingClientRect();
+      if (b.width && b.height) d = Math.min(d, Math.hypot(Math.max(b.left - x, 0, x - b.right), Math.max(b.top - y, 0, y - b.bottom)));
+    }
+    let ms = 0;
+    while (ms < 420 && revealEase(ms / 420) * end < d) ms += 4;
+    return ms;
+  }
+  // all: finish now (a frame that could show the circle on the stage, or the circle is gone). Otherwise mount for about
+  // RB_BUDGET ms, and keep going when the circle could reach the stage within RB_SLACK (fewer last-moment stalls)
+  function rebuildStep(r, all) {
+    if (r.dead || r !== rb || !r.todo) return;
+    const t = performance.now(), now = () => performance.now();
+    while (r.todo.length) {
+      r.todo.shift()();
+      if (r.dead) return;
+      const late = all || !doc.classList.contains("vt-theme") || now() + RB_SLACK - r.t0 >= r.touch;
+      if (!late && r.todo.length && now() - t >= RB_BUDGET) return;      // the pending frame callback carries on
+    }
+    start(false, snapshot(), r);
+  }
+  // ICX-SETTLE-7: every resize re-measures at once (no debounce for the re-snap); the layout itself follows, debounced
+  function onGeometry() {
+    if (!TL || !CP.length || !motion() || MAP) return;  // (SCRUB: the debounced relayout re-anchors the map)
+    const bp = Math.max(1, Math.round(pin.clientHeight));
+    if (bp === beatPx) return;                          // 100svh did not move (a phone's bars): nothing to re-snap
+    const past = phase === "released" ? readerY - storyEnd() : null;
+    buildTrack();
+    geomAt = clock();
+    if (past != null) keepPast(past);
+    else if (phase !== "free") syncScroll(trackY(kR));
   }
   let resizeT = 0;
   window.addEventListener("resize", () => {
+    onGeometry();
+    // (SCRUB-fix 2) a resize stops the page's smooth scroll at once, and a still page reads as the native jump's arrival
+    // (story-url.js: 160 ms idle) before the debounced refit below: the jump is asked again now; the refit re-aims it
+    if (MAP && sNat && clock() <= sNat.until) natResume(sNat);
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
-      // (round D: a rotation can cross the short-touch line; the reader keeps their place across it)
+      // a mode change (a rotation across the short-touch line, 640 or 1024 px) keeps the reader's place (ICX-DEST.4)
       const pl = readingPlace();
-      if (syncMode()) { refresh(); restorePlace(pl); return; }
-      if (key() !== layoutKey) { refresh(); return; }
+      noteView();
+      if (syncMode() || key() !== layoutKey) { refresh(); restorePlace(pl); return; }
       if (!TL) return;
       // phones (Sol mobile P2): the browser's bars showing or hiding change the height only, by less than ~150 px. The
-      // pin and the map both use the stable 100svh, so there is nothing to re-lay or re-anchor; a width (orientation)
-      // change or a real height change still lays out again.
+      // pin uses the stable 100svh, so there is nothing to re-lay; a width (orientation) or real height change re-lays.
       if (TL.p === "tall" && window.innerWidth === sizeW && Math.abs(window.innerHeight - sizeH) < 150) return;
       relayoutChecked();
     }, 140);
@@ -1496,15 +2289,28 @@
     relayout();
   }
   function relayout() {
-    const tp = intro ? null : targetPlace();
-    const past = pastStory();
+    if (MAP) {                                          // (SCRUB) the same story time under the new map, or past it
+      const tp = sIntro ? null : targetPlace(), pst = pastStory();
+      // (SCRUB-fix 2; Astra RELEASE-1) a same-mode refit while the menu's native jump (Price) still scrolls carries the
+      // jump to its target, as a theme rebuild does (ICX-JUMP.5): an instant re-anchor stopped it mid-story while its
+      // arrival still wrote the target's URL
+      const sn = sNat && clock() <= sNat.until ? sNat : null;
+      layout();
+      if (MAP) {
+        if (sn) natResume(sn); else if (pst != null) keepPast(pst); else anchorScroll(tp);
+        sTarget = mapScroll(window.scrollY);
+      }
+      lastDrawn = null;
+      render(shown);
+      wake();
+      return;
+    }
+    const past = phase === "released" ? readerY - storyEnd() : null;
     layout();
-    // the story stays where it is: the scroll position follows the new map (and the follower keeps its state)
-    // (phones, Sol mobile pA P2: only a reader inside the pinned story is anchored to story time; one below it keeps
-    // their place among the page's sections, the same distance past the story's end: no jump back into Chase)
+    geomAt = clock();
+    // the story stays where it is: on its checkpoint's track position, or the same distance below the pin
     if (past != null) keepPast(past);
-    else anchorScroll(tp);
-    target = mapScroll(window.scrollY);
+    else if (phase !== "free") syncScroll(trackY(kR));
     lastDrawn = null;
     render(shown);
     wake();
@@ -1517,67 +2323,73 @@
   const coarse = window.matchMedia("(pointer: coarse)");
   const shortTouch = () => { try { return coarse.matches && (cssPx("100svh") || window.innerHeight) < SHORT_TOUCH; } catch (e) { return false; } };
   // true when the mode changed (the caller refreshes); on a resize, a page that fell back to its static layout (no
-  // motion, no calm class) stays there (a change of the motion preference sets the mode, as it always did)
+  // motion, no calm class) stays there (a change of the motion preference sets the mode, as it always did).
+  // K1's classic view (setClassic) overrides the reduced-motion query; a short touch screen is calm either way.
   function syncMode(force) {
     if (!force && !doc.classList.contains("motion") && !doc.classList.contains("calm")) return false;
-    const short = !mq.matches && shortTouch(), calm = mq.matches || short;
+    const rm = classicPref != null ? classicPref : mq.matches;
+    const short = !rm && shortTouch(), calm = rm || short;
     doc.classList.toggle("short-touch", short);
     if (calm === doc.classList.contains("calm") && !calm === doc.classList.contains("motion")) return false;
     doc.classList.toggle("calm", calm); doc.classList.toggle("motion", !calm);
     return true;
   }
-  // (Sol round D P2) a mode change (motion <-> stacked: a rotation across the short-touch line, the motion preference)
-  // keeps the reader's place: the story beat they were reading, or the section under the header. Taken BEFORE the
-  // classes flip (the stacked sections appear at once), applied after the rebuild.
+  // (Sol round D P2; K1-fix) a mode change keeps the reader's place: the checkpoint they are on, or the section they are
+  // reading. Taken BEFORE the classes flip (the stacked sections appear at once), applied after the rebuild. "The section
+  // they are reading" is the one the rail shows as current: the last whose top is at or above 40 % of the viewport
+  // (rail.js SPY_LINE, ICX-HL.4; phones have no rail, so the rule is repeated here, not imported). The section under the
+  // bar was one chapter behind whenever the next section's top sat between the bar and that line.
+  // (K1-fix2) Only on a SAME-SIZE mode change (the Classic switch, a motion-preference flip). A size change (a rotation,
+  // a resize) keeps the section under the bar: the browser re-lays the sections before the resize event while scrollY
+  // still holds the old number, so a line farther down reads the wrong section then. viewW/viewH: the size at the last
+  // resize the debounced handler saw (or at load).
+  const READ_LINE = 0.4;
+  let viewW = window.innerWidth, viewH = window.innerHeight;
+  const noteView = () => { viewW = window.innerWidth; viewH = window.innerHeight; };
   function readingPlace() {
-    const hb = header ? header.getBoundingClientRect().bottom : 0;
-    if (TL && motion() && pastStory() == null && window.scrollY >= storyTop - 1) {
-      let b = TL.beats[capIdx] || (window.scrollY < storyTop + 4 ? "make" : null);
-      // (phones, F2b, Sol F2 #3) between two captions of the phone ending (the band drawing back, the card flying), the
-      // place is the last beat that had one
-      for (let j = capIdx; !b && TL.p === "tall" && j >= 0; j--) b = TL.beats[j];
-      if (b) return { beat: b };
-    }
-    for (const el of document.querySelectorAll(".beat:not(.is-moved), .site-footer")) {
-      const r = el.getBoundingClientRect();
-      if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) {
-        const b = el.classList.contains("beat") ? el.dataset.beat : null;
-        // (F2b) the section's beat goes along: a section the new mode moves into the pin (the phone's End) lands on its
-        // beat; and off the phone story (a tablet, stacked), Yours and End are the phone story's last two beats
-        const ending = phoneish() && !(TL && TL.p === "tall") && (b === "yours" || b === "end");
-        return b && (PHONE_BEATS.includes(b) || ending) ? { beat: b } : phoneish() ? { el, off: r.top, beat: b } : { el, off: r.top };
+    if (TL && motion() && CP.length && phase !== "released" && window.scrollY <= storyEnd() + 1) {
+      if (MAP) {                                        // (SCRUB) the beat whose caption is up (the last one that had one)
+        let b = TL.beats[capIdx];
+        for (let j = capIdx; !b && j >= 0; j--) b = TL.beats[j];
+        return { beat: CP.includes(b) ? b : CP[holdK(window.scrollY)], inStory: true };
       }
+      return { beat: CP[phase === "free" ? nearestK(window.scrollY) : kR], inStory: true };
     }
-    return null;
+    const beatOf = (el) => (el.classList.contains("beat") ? el.dataset.beat : null);
+    const els = document.querySelectorAll(".beat:not(.is-moved), .site-footer");
+    if (window.innerWidth !== viewW || window.innerHeight !== viewH) {
+      const hb = header ? header.getBoundingClientRect().bottom : 0;
+      for (const el of els) {
+        const r = el.getBoundingClientRect();
+        if (r.height > 0 && r.top <= hb + 1 && r.bottom > hb + 1) return { el, off: r.top, beat: beatOf(el) };
+      }
+      return null;
+    }
+    const line = window.innerHeight * READ_LINE;
+    let cur = null, top = 0;
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0 && r.top <= line) { cur = el; top = r.top; }
+    }
+    return cur ? { el: cur, off: top, beat: beatOf(cur) } : null;
   }
-  // (phones, F2b, Sol F2 #3) the phone ending's places: the story's Yours and End beats, or the sections they are on a
-  // tablet and stacked; a rebuild across the phone line (tall <-> tablet) keeps them as a mode change does
-  const endingPlace = (pl) => !!(pl && phoneish() && (pl.beat === "yours" || pl.beat === "end"));
-  // (F2b, Sol re-check) phones and touch tablets only: a >= 640 px fine-pointer window keeps the baseline
-  function phoneish() { try { return coarse.matches || window.innerWidth < 640; } catch (e) { return false; } }
   function restorePlace(pl) {
     if (!pl) return;
+    // a checkpoint in the new layout: land on its rest frame (no move, no replay)
+    if (pl.beat && TL && motion() && CP.includes(pl.beat)) { landAt(CP.indexOf(pl.beat)); return; }
     const hb = header ? header.getBoundingClientRect().bottom : 0;
     let y = null;
-    // (F2b: a section the new mode hid, moved into the pin, falls back to its beat; a beat the new map does not hold, a
-    // tablet's Yours or End, to its section)
-    // (an element place with no beat, desktop, is used as it always was)
-    const elOk = !!(pl.el && pl.el.isConnected && (!pl.beat || pl.el.getBoundingClientRect().height > 0));
-    if (elOk) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
-    else if (pl.beat && TL && motion()) y = pl.beat === "make" ? 0 : scrollForBeat(pl.beat);
-    if (y == null && pl.beat && !elOk) {
+    if (pl.el && pl.el.isConnected && pl.el.getBoundingClientRect().height > 0) y = window.scrollY + pl.el.getBoundingClientRect().top - pl.off;
+    else if (pl.beat) {
       const sec = $(`.beat[data-beat="${pl.beat}"]`);
-      if (sec) y = window.scrollY + sec.getBoundingClientRect().top - hb;
+      const sr = sec ? sec.getBoundingClientRect() : null;
+      // its top under the bar, or lower when the section is so short that the next one would cross the reading line
+      // (then the rail, and the next visit's readingPlace, would name the next section)
+      if (sr && sr.height > 0) y = window.scrollY + sr.top - Math.max(hb, window.innerHeight * READ_LINE - sr.height + 1);
     }
     if (y == null) return;
-    y = Math.max(0, Math.round(y));
-    window.scrollTo(0, y);
+    window.scrollTo(0, Math.max(0, Math.round(y)));
     readerY = window.scrollY;
-    if (TL && motion()) {
-      target = shown = mapScroll(window.scrollY); vel = 0; intro = null;
-      lastDrawn = null; capIdx = -1;
-      render(shown); updateCaptions(shown, true); navTick(shown, 0, true);
-    }
   }
   const onMq = () => { const pl = readingPlace(); syncMode(true); refresh(); restorePlace(pl); };
   if (mq.addEventListener) mq.addEventListener("change", onMq);
@@ -1591,39 +2403,93 @@
       if (why === "timeout") fontsLoaded.then(() => { if (TL) refresh(); }, () => { /* no fonts: keep the fallback */ });
     });
 
-  /* ---------------- test hooks (headless checks): pure seeks of the master, the map, the follower's state ---------------- */
+  /* ---------------- FEStory: the engine's contract (PLAN § C3; C4, B5, B6 and K1 consume it) ---------------- */
+  // destinations: ICX-DEST rows {beat, name, slug, anchor, kind: "pinned"|"native", rest, entry} for the current mode.
+  // mode: desktop | tablet | phone | calm | classic | static. rendered / dest: BEATS indexes. phase: rest | transition |
+  // dip | free | released. state(): {phase, dest, rendered, T, trackY, beat, dip, step, settles, mode, scrollend}.
+  // goTo(target, {source}): target = a BEATS index, beat id, slug or legacy hash; source step | jump | init | popstate
+  // (a native row is a smooth anchor scroll, instant in calm, ICX-JUMP.5; opts.y, native rows only: scroll to that offset
+  // instead of the anchor, story-url.js's Back to a held native place).
+  // onDest(fn): fn({index, beat, slug, source, preview?}) whenever dest changes (the highlight, ICX-HL.1; source "free"
+  //   with preview: true is FREE's nearest, ICX-HL.3).
+  // onLand(fn): fn({index, beat, slug, source: step | jump | settle | init | popstate | focus, final}) at every landing; final =
+  //   rendered == dest after it (only a final landing writes history, ICX-HIST; pass-through landings carry final: false).
+  // onModeChange(fn): fn({mode, destinations}). setClassic(on): K1's hook (true = calm layout, false = the story, null =
+  //   follow prefers-reduced-motion); it keeps the reading place. initial: how the first landing happened.
+  function goTo(target, opts) {
+    const source = (opts && opts.source) || "jump";
+    const b = typeof target === "number" ? BEATS[target] : LEGACY[target] || BEATS.find((x) => x === target || SLUG[x] === target);
+    if (!b) return false;
+    if (!TL || !motion() || !CP.includes(b) || held) {
+      const sec = document.getElementById(SLUG[b]);
+      if (!sec) return false;
+      const hh = header ? header.getBoundingClientRect().height : 0;
+      const smooth = motion() && !mq.matches;
+      // the latest explicit jump wins (C4-engine), the reverse of stopNative: a pinned run or dip still in flight is
+      // cancelled now, before its cut or arrival can land and pin the page back (an instant scroll ends the smooth one).
+      // The engine goes FREE here, exactly as the native scroll's first event would make it: no cut, no landing, no
+      // announce, no history from the cancelled move; the dip's fade is cleared (clearDip) and the settle plans afresh.
+      if (TL && motion() && CP.length && !held && !MAP && (run || dip || wait) && phase !== "free" && phase !== "released") foreign(window.scrollY);
+      if (MAP) { sJump = null; navJumpAt = -1; }        // (SCRUB) a native row: the page's own scroll, the stage follows
+      nativeSeq++;                                      // a new native scroll: a cancelled one's residue guard no longer applies
+      // opts.y (RELOAD): Back to a native entry lands on the pixel the reader left (story-url.js), not the anchor
+      const to = opts && typeof opts.y === "number" ? opts.y : sec.getBoundingClientRect().top + window.scrollY - hh;
+      window.scrollTo({ top: Math.max(0, Math.round(to)), behavior: smooth ? "smooth" : "instant" });
+      if (smooth && TL && motion() && CP.length && !held && !MAP) startNative(Math.max(0, Math.round(to)));
+      if (MAP) sNat = smooth ? { id: sec.id, y: opts && typeof opts.y === "number" ? opts.y : null, aim: Math.max(0, Math.round(to)), until: clock() + 2.5 } : null;
+      return true;
+    }
+    jump(CP.indexOf(b), source);
+    return true;
+  }
+  const on = (kind) => (fn) => { listeners[kind].push(fn); return () => { const i = listeners[kind].indexOf(fn); if (i >= 0) listeners[kind].splice(i, 1); }; };
+  function state() {
+    const has = CP.length > 0;
+    return { phase, dest: has ? bi(kD) : null, rendered: has ? bi(kR) : null, T: +liveT().toFixed(4), trackY: has ? trackY(kD) : null,
+      beat: TL ? TL.beats[capIdx] ?? null : null, dip: !!(dip || sDip), step: run ? run.purpose : null, settles, mode: mode(), scrollend: HAS_SCROLLEND };
+  }
+  window.FEStory = Object.freeze({
+    get destinations() { return destinations(); },
+    get mode() { return mode(); },
+    get rendered() { return CP.length ? bi(kR) : null; },
+    get dest() { return CP.length ? bi(kD) : null; },
+    get phase() { return phase; },
+    get initial() { return initial; },
+    state, goTo,
+    onDest: on("dest"), onLand: on("land"), onModeChange: on("mode"),
+    setClassic(v) { classicPref = v == null ? null : !!v; const pl = readingPlace(); syncMode(true); refresh(); restorePlace(pl); },
+    CONFIG: CFG,
+  });
+
+  /* ---------------- test hooks (headless checks): pure seeks of the master, the timeline, the engine's state ---------------- */
   window.__site = {
     mounts,
     get TL() { return TL; },
     seekMaster(T) {
-      held = true; intro = null; dip = null; clearDip();
-      shown = target = T; vel = 0;
+      held = true; run = null; wait = 0; dip = null; sDip = null; sIntro = null; clearDip();
+      shown = T;
       render(T);
       updateCaptions(T, true);
-      navReveal();
-      navTick(T, 0, true);
+      railReveal();
       return T;
     },
     release() { held = false; wake(); },
     map() {
       return {
-        T0: 0, T1: TL.T1, H: TL.HOLD, desktop: TL.isDesk, preset: TL.p, scrollLen: Math.round(MAP.L), storyTop: Math.round(storyTop),
+        T0: 0, T1: TL.T1, H: TL.HOLD, desktop: TL.isDesk, preset: TL.p, scrollLen: TRACK ? TRACK.L : 0, storyTop: Math.round(storyTop), beatPx,
         segs: TL.segs.map((s) => ({ id: s.id, kind: s.kind, T0: +s.T0.toFixed(3), T1: +s.T1.toFixed(3) })),
-        beats: TL.beats, switches: TL.switches.map(([b, t]) => [b, +t.toFixed(3)]),
-        pieces: MAP.pieces.map((p) => ({ kind: p.kind, beat: p.beat, s0: Math.round(p.s0), s1: Math.round(p.s1), T0: +p.T0.toFixed(3), T1: +p.T1.toFixed(3) })),
+        beats: TL.beats, switches: TL.switches.map(([b, t, w]) => (w == null ? [b, +t.toFixed(3)] : [b, +t.toFixed(3), w])), dests: destinations(),
+        // (SCRUB) the scroll map's pieces, in the live site's own format (652d12a __site.map)
+        scrub: !!MAP, pieces: MAP ? MAP.pieces.map((p) => ({ kind: p.kind, beat: p.beat, s0: Math.round(p.s0), s1: Math.round(p.s1), T0: +p.T0.toFixed(3), T1: +p.T1.toFixed(3) })) : null,
       };
     },
-    scrollFor(beat) { return scrollForBeat(beat); },
-    mapScroll(y) { return mapScroll(y); },
-    state() { return { shown, target, vel, beat: TL ? TL.beats[capIdx] : null, intro: !!intro, dip: !!dip, gate: { ...FX.gate }, dirSign }; },
-    pinEl() { return pin; },
-    nav() {
-      return { on: navOn, in: navIn, active: navA, beat: navCP[navA] ? navCP[navA].b : null, p: navP, h: navH, y: navY, tip: navTipK,
-        band: !!(nav && nav.classList.contains("on-band")),
-        ticks: navCP.map((c) => ({ b: c.b, w: parseFloat(c.w) || 0, f: parseFloat(c.fw) || 0, start: +c.start.toFixed(3), anchor: +c.anchor.toFixed(3) })) };
+    scrollFor(beat) { return MAP ? scrollForBeat(beat) : null; },
+    state() {
+      if (MAP) return { shown, target: sTarget, vel: sVel, beat: TL ? TL.beats[capIdx] : null, intro: !!sIntro, dip: !!sDip, gate: { ...FX.gate }, phase };
+      return { shown: liveT(), target: run ? run.to : shown, vel: run ? run.dir * run.rate : 0, beat: TL ? TL.beats[capIdx] : null, intro: !!(run && run.intro), dip: !!dip, gate: { ...FX.gate }, phase };
     },
-    setGate(c, p) { FX.gate.cursor = c; FX.gate.press = p; gateTo = c; lastDrawn = null; },
-    follow(e, v, dt) { return follow(e, v, dt); },
+    pinEl() { return pin; },
+    setGate(c, p) { FX.gate.cursor = c; FX.gate.press = p; lastDrawn = null; },
     refresh() { refresh(); },
   };
 })();

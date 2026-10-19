@@ -19,10 +19,13 @@
   <!-- NEW COPY (page title, from the homepage button) -->
   <title>Watch the 25-second tour · Freelance Easy</title>
   <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
-  <!-- The 25-second tour: a quick, watch-only animatic of the released app (v0.3.0-beta), derived from ../tour/.
+  <link rel="canonical" href="https://freelance-easy.com/tour/">
+  <!-- The 25-second tour: a quick animatic of the released app (v0.3.0-beta), derived from ../tour/.
        Same released screens, CSS and fictional account; Sign in and Your name skipped. #embed = chrome-less (the
        homepage's dialog), #light / #dark, #reduced. Plays once on open; never loops; a hidden tab pauses it. -->
   <link rel="stylesheet" href="quick.css">
+  <link rel="stylesheet" href="/assets/shared/theme.css">
+  <script src="/assets/shared/theme.js" defer></script>
   <script src="release-screens.js" defer></script>
   <script src="fe-motion.js" defer></script>
   <script src="quick.js" defer></script>
@@ -45,7 +48,7 @@
       <div class="frame-surround">
         <div class="frame-top"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Freelance Easy</span><span class="fictional">Fictional data</span></div>
         <div class="pframe-box" id="pframe-box">
-          <iframe id="app-frame" title="Watch-only example of the released Freelance Easy app" width="1440" height="900" inert tabindex="-1" aria-hidden="true"></iframe>
+          <iframe id="app-frame" title="Example of the released Freelance Easy app" width="1440" height="900" inert tabindex="-1" aria-hidden="true"></iframe>
         </div>
       </div>
       <div class="bar">
@@ -63,9 +66,8 @@
       </div>
       <!-- NEW COPY -->
       <p class="player-note" id="player-note" hidden>Reduced motion · The final screen of the tour.</p>
-      <p class="example-note">Example account with saved invoices and email already configured.</p>
     </section>
-    <noscript><p>This watch-only tour needs JavaScript to show the app screens.</p></noscript>
+    <noscript><p>This tour needs JavaScript to show the app screens.</p></noscript>
   </main>
   <!-- Captions: the full tour's canonical captions, verbatim (../tour/index.html, queued for legal). This tour shows
        3–7, one per chapter; 1 and 2 (Sign in, Your name) are kept so the list stays identical to the reviewed one. -->
@@ -75,7 +77,7 @@
     <!-- NEW COPY --><p>The dashboard shows collected, outstanding, and overdue amounts.</p>
     <!-- NEW COPY --><p>Use the status tabs to filter your invoices.</p>
     <!-- NEW COPY --><p>Choose a client, add line items, and create the invoice.</p>
-    <!-- NEW COPY --><p>Review the invoice, then compose and send its email.</p>
+    <!-- NEW COPY --><p>Review the invoice and send it once email is set up.</p>
     <!-- NEW COPY --><p>Mark the invoice paid, then return to the updated dashboard.</p>
   </template>
 </body>

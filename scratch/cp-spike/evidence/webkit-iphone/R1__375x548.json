@@ -1,0 +1,642 @@
+{
+ "row": "R1",
+ "item": "programmatic-scroll acknowledgement",
+ "column": "webkit-iphone",
+ "browser": "webkit 26.6",
+ "viewport": [
+  375,
+  548,
+  "iphone"
+ ],
+ "variant": "",
+ "status": "PASS",
+ "workaround": [],
+ "synthesised": [
+  "mobile WebKit has no wheel: gestures are synthetic swipes"
+ ],
+ "checks": [
+  {
+   "name": "one gesture = one step (beat 4)",
+   "ok": true,
+   "detail": {
+    "phase": "rest",
+    "rendered": 4,
+    "dest": 4,
+    "busy": false,
+    "held": false,
+    "free": false,
+    "ack": {
+     "y": 1968,
+     "events": 1
+    },
+    "gest": null,
+    "y": 1968,
+    "aligned": 0
+   }
+  },
+  {
+   "name": "no programmatic scroll was misread as foreign",
+   "ok": true,
+   "detail": {
+    "scroll": 6,
+    "acked": 6,
+    "scrollend": 6,
+    "steps": 4,
+    "lands": 6,
+    "dips": 2,
+    "touchSteps": 1
+   }
+  },
+  {
+   "name": "every programmatic scroll produced an acknowledged scroll event",
+   "ok": true,
+   "detail": {
+    "scroll": 6,
+    "acked": 6,
+    "scrollend": 6,
+    "steps": 4,
+    "lands": 6,
+    "dips": 2,
+    "touchSteps": 1
+   }
+  },
+  {
+   "name": "at rest and aligned on beat 0",
+   "ok": true,
+   "detail": {
+    "phase": "rest",
+    "rendered": 0,
+    "dest": 0,
+    "busy": false,
+    "held": false,
+    "free": false,
+    "ack": {
+     "y": 0,
+     "events": 1
+    },
+    "gest": null,
+    "y": 0,
+    "aligned": 0
+   }
+  },
+  {
+   "name": "each scrollTo produced exactly one scroll event",
+   "ok": true,
+   "detail": [
+    {
+     "acks": 1,
+     "scrollend": 1
+    },
+    {
+     "acks": 1,
+     "scrollend": 1
+    },
+    {
+     "acks": 1,
+     "scrollend": 1
+    },
+    {
+     "acks": 1,
+     "scrollend": 1
+    },
+    {
+     "acks": 1,
+     "scrollend": 1
+    },
+    {
+     "acks": 1,
+     "scrollend": 1
+    }
+   ]
+  },
+  {
+   "name": "no-op sync arms nothing",
+   "ok": true,
+   "detail": {
+    "phase": "rest",
+    "rendered": 0,
+    "dest": 0,
+    "busy": false,
+    "held": false,
+    "free": false,
+    "ack": {
+     "y": 0,
+     "events": 1
+    },
+    "gest": null,
+    "y": 0,
+    "aligned": 0
+   }
+  },
+  {
+   "name": "a foreign scroll right after is still seen as foreign",
+   "ok": true,
+   "detail": {
+    "scroll": 8,
+    "acked": 7,
+    "foreign": 1,
+    "scrollend": 8,
+    "settles": 1,
+    "settleCancel": 0,
+    "steps": 4,
+    "lands": 8,
+    "dips": 2,
+    "wheel": 0,
+    "wheelPrevented": 0,
+    "wheelPassed": 0,
+    "resizeSnaps": 0,
+    "barDown": 0,
+    "barUp": 0,
+    "holdTimeouts": 0,
+    "touchSteps": 1
+   }
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {
+  "counters": {
+   "scroll": 6,
+   "acked": 6,
+   "scrollend": 6,
+   "steps": 4,
+   "lands": 6,
+   "dips": 2,
+   "touchSteps": 1
+  },
+  "syncs": 6,
+  "scrollTo_applied_synchronously": true,
+  "events_per_sync": [
+   {
+    "acks": 1,
+    "scrollend": 1
+   },
+   {
+    "acks": 1,
+    "scrollend": 1
+   },
+   {
+    "acks": 1,
+    "scrollend": 1
+   },
+   {
+    "acks": 1,
+    "scrollend": 1
+   },
+   {
+    "acks": 1,
+    "scrollend": 1
+   },
+   {
+    "acks": 1,
+    "scrollend": 1
+   }
+  ],
+  "native_scrollend": true
+ },
+ "log": [
+  {
+   "t": 15,
+   "ev": "boot",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "P": 492,
+   "svh": 548,
+   "nativeScrollend": true,
+   "hasScrollend": true
+  },
+  {
+   "t": 16,
+   "ev": "vv-resize",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "scale": 1,
+   "h": 548
+  },
+  {
+   "t": 193,
+   "ev": "step",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "src": "key",
+   "delta": 1,
+   "from": 0
+  },
+  {
+   "t": 194,
+   "ev": "sync",
+   "y": 492,
+   "ph": "rest",
+   "r": 0,
+   "d": 1,
+   "to": 492,
+   "why": "dest:key",
+   "syncY": 492
+  },
+  {
+   "t": 204,
+   "ev": "scroll-ack",
+   "y": 492,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "n": 1
+  },
+  {
+   "t": 221,
+   "ev": "scrollend",
+   "y": 492,
+   "ph": "play",
+   "r": 0,
+   "d": 1,
+   "native": true
+  },
+  {
+   "t": 1395,
+   "ev": "land",
+   "y": 492,
+   "ph": "rest",
+   "r": 1,
+   "d": 1,
+   "aligned": 0
+  },
+  {
+   "t": 1581,
+   "ev": "step",
+   "y": 492,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "src": "key",
+   "delta": 1,
+   "from": 1
+  },
+  {
+   "t": 1581,
+   "ev": "sync",
+   "y": 984,
+   "ph": "rest",
+   "r": 1,
+   "d": 2,
+   "to": 984,
+   "why": "dest:key",
+   "syncY": 984
+  },
+  {
+   "t": 1588,
+   "ev": "scroll-ack",
+   "y": 984,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "n": 1
+  },
+  {
+   "t": 1605,
+   "ev": "scrollend",
+   "y": 984,
+   "ph": "play",
+   "r": 1,
+   "d": 2,
+   "native": true
+  },
+  {
+   "t": 2782,
+   "ev": "land",
+   "y": 984,
+   "ph": "rest",
+   "r": 2,
+   "d": 2,
+   "aligned": 0
+  },
+  {
+   "t": 2961,
+   "ev": "step",
+   "y": 984,
+   "ph": "rest",
+   "r": 2,
+   "d": 3,
+   "src": "key",
+   "delta": 1,
+   "from": 2
+  },
+  {
+   "t": 2962,
+   "ev": "sync",
+   "y": 1476,
+   "ph": "rest",
+   "r": 2,
+   "d": 3,
+   "to": 1476,
+   "why": "dest:key",
+   "syncY": 1476
+  },
+  {
+   "t": 2971,
+   "ev": "scroll-ack",
+   "y": 1476,
+   "ph": "play",
+   "r": 2,
+   "d": 3,
+   "n": 1
+  },
+  {
+   "t": 2988,
+   "ev": "scrollend",
+   "y": 1476,
+   "ph": "play",
+   "r": 2,
+   "d": 3,
+   "native": true
+  },
+  {
+   "t": 4164,
+   "ev": "land",
+   "y": 1476,
+   "ph": "rest",
+   "r": 3,
+   "d": 3,
+   "aligned": 0
+  },
+  {
+   "t": 4341,
+   "ev": "touch-decide",
+   "y": 1476,
+   "ph": "rest",
+   "r": 3,
+   "d": 3,
+   "decided": "intercept",
+   "trusted": false
+  },
+  {
+   "t": 4358,
+   "ev": "step",
+   "y": 1476,
+   "ph": "rest",
+   "r": 3,
+   "d": 4,
+   "src": "touch",
+   "delta": 1,
+   "from": 3
+  },
+  {
+   "t": 4361,
+   "ev": "sync",
+   "y": 1968,
+   "ph": "rest",
+   "r": 3,
+   "d": 4,
+   "to": 1968,
+   "why": "dest:touch",
+   "syncY": 1968
+  },
+  {
+   "t": 4370,
+   "ev": "scroll-ack",
+   "y": 1968,
+   "ph": "play",
+   "r": 3,
+   "d": 4,
+   "n": 1
+  },
+  {
+   "t": 4387,
+   "ev": "scrollend",
+   "y": 1968,
+   "ph": "play",
+   "r": 3,
+   "d": 4,
+   "native": true
+  },
+  {
+   "t": 4500,
+   "ev": "touch-end",
+   "y": 1968,
+   "ph": "play",
+   "r": 3,
+   "d": 4,
+   "decided": "intercept",
+   "stepped": true
+  },
+  {
+   "t": 5561,
+   "ev": "land",
+   "y": 1968,
+   "ph": "rest",
+   "r": 4,
+   "d": 4,
+   "aligned": 0
+  },
+  {
+   "t": 5743,
+   "ev": "goto",
+   "y": 1968,
+   "ph": "rest",
+   "r": 4,
+   "d": 8,
+   "src": "key",
+   "to": 8
+  },
+  {
+   "t": 5744,
+   "ev": "sync",
+   "y": 3936,
+   "ph": "rest",
+   "r": 4,
+   "d": 8,
+   "to": 3936,
+   "why": "goto:key",
+   "syncY": 3936
+  },
+  {
+   "t": 5753,
+   "ev": "scroll-ack",
+   "y": 3936,
+   "ph": "dip",
+   "r": 4,
+   "d": 8,
+   "n": 1
+  },
+  {
+   "t": 5772,
+   "ev": "scrollend",
+   "y": 3936,
+   "ph": "dip",
+   "r": 4,
+   "d": 8,
+   "native": true
+  },
+  {
+   "t": 6668,
+   "ev": "land",
+   "y": 3936,
+   "ph": "rest",
+   "r": 8,
+   "d": 8,
+   "aligned": 0
+  },
+  {
+   "t": 6847,
+   "ev": "goto",
+   "y": 3936,
+   "ph": "rest",
+   "r": 8,
+   "d": 0,
+   "src": "key",
+   "to": 0
+  },
+  {
+   "t": 6847,
+   "ev": "sync",
+   "y": 0,
+   "ph": "rest",
+   "r": 8,
+   "d": 0,
+   "to": 0,
+   "why": "goto:key",
+   "syncY": 0
+  },
+  {
+   "t": 6855,
+   "ev": "scroll-ack",
+   "y": 0,
+   "ph": "dip",
+   "r": 8,
+   "d": 0,
+   "n": 1
+  },
+  {
+   "t": 6871,
+   "ev": "scrollend",
+   "y": 0,
+   "ph": "dip",
+   "r": 8,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 7071,
+   "ev": "land",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "aligned": 0
+  },
+  {
+   "t": 7243,
+   "ev": "goto",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "src": "api",
+   "to": 0
+  },
+  {
+   "t": 7243,
+   "ev": "sync-noop",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "to": 0,
+   "why": "goto:api"
+  },
+  {
+   "t": 7243,
+   "ev": "land",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "aligned": 0
+  },
+  {
+   "t": 7422,
+   "ev": "free-enter",
+   "y": 37,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "from": "rest"
+  },
+  {
+   "t": 7438,
+   "ev": "scrollend",
+   "y": 37,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "native": true
+  },
+  {
+   "t": 7490,
+   "ev": "settle",
+   "y": 37,
+   "ph": "free",
+   "r": 0,
+   "d": 0,
+   "trigger": "scrollend",
+   "to": 0,
+   "quiet": 68
+  },
+  {
+   "t": 7490,
+   "ev": "goto",
+   "y": 37,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "src": "settle",
+   "to": 0
+  },
+  {
+   "t": 7490,
+   "ev": "sync",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "to": 0,
+   "why": "goto:settle",
+   "syncY": 0
+  },
+  {
+   "t": 7490,
+   "ev": "land",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "aligned": 0
+  },
+  {
+   "t": 7504,
+   "ev": "scroll-ack",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "n": 1
+  },
+  {
+   "t": 7520,
+   "ev": "scrollend",
+   "y": 0,
+   "ph": "rest",
+   "r": 0,
+   "d": 0,
+   "native": true
+  }
+ ]
+}

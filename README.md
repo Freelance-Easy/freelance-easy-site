@@ -1,6 +1,6 @@
 # Freelance Easy — landing page
 
-Static landing page for [freelance-easy.com](https://freelance-easy.com). Plain HTML + CSS + a tiny bit of JS — no build step, no framework. Drops straight into Cloudflare Pages.
+Static landing page for [freelance-easy.com](https://freelance-easy.com). Plain HTML + CSS + a tiny bit of JS — no deploy build step, no framework; pages are generated from `src/` with `scripts/build-site.py` and committed. Drops straight into Cloudflare Pages.
 
 > **Deploying this?** Read **[HANDOFF.md](./HANDOFF.md)** first — it has the full canonical-fact compliance audit, framework decisions, and known TODOs.
 

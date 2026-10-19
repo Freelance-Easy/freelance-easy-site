@@ -1,0 +1,20 @@
+      <!-- the chapter rail v3 (B5, desktop): the story's menu. One tick and one always-visible name per chapter; the
+           current chapter's tick is longer and its name the strongest ink and a step bigger. No numbers, no fills, no
+           counters (ICX-NOPROG). Without JS these are plain anchors to the chapter sections (decisions #20); with JS
+           assets/story/rail.js renders them from FEStory.destinations, turns a click into a jump (FEStory.goTo) and owns
+           the highlight and aria-current (ICX-HL). -->
+      <link rel="stylesheet" href="/assets/story/rail.css" />
+      <nav class="story-nav" aria-label="Chapters" hidden><!-- NEW COPY (the rail's label and checkpoint names) -->
+        <ol>
+          <li><a href="#new-invoice" data-go="make" data-name="New invoice"><span class="tk" aria-hidden="true"></span><span class="nm">New invoice</span></a></li>
+          <li><a href="#templates" data-go="look" data-name="Templates"><span class="tk" aria-hidden="true"></span><span class="nm">Templates</span></a></li>
+          <li><a href="#invoices" data-go="know" data-name="Invoices"><span class="tk" aria-hidden="true"></span><span class="nm">Invoices</span></a></li>
+          <li><a href="#dashboard" data-go="grow" data-name="Dashboard"><span class="tk" aria-hidden="true"></span><span class="nm">Dashboard</span></a></li>
+          <li><a href="#email" data-go="chase" data-name="Email"><span class="tk" aria-hidden="true"></span><span class="nm">Email</span></a></li>
+          <li><a href="#your-data" data-go="yours" data-name="Your data"><span class="tk" aria-hidden="true"></span><span class="nm">Your data</span></a></li>
+          <li><a href="#price" data-go="price" data-name="Price"><span class="tk" aria-hidden="true"></span><span class="nm">Price</span></a></li>
+          <li><a href="#a-note" data-go="note" data-name="A note"><span class="tk" aria-hidden="true"></span><span class="nm">A note</span></a></li>
+          <li><a href="#get-the-app" data-go="end" data-name="Get the app"><span class="tk" aria-hidden="true"></span><span class="nm">Get the app</span></a></li>
+        </ol>
+      </nav>
+      <script src="/assets/story/rail.js" defer></script>

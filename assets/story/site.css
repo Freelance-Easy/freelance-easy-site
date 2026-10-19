@@ -288,6 +288,14 @@ p {
   background: var(--bg-2);
   box-shadow: inset 0 0 0 1px var(--line-3);
 }
+/* (B4) on the Ride's band the header's text is --ride-text, which the page's --bg-2 hover fill matched (dark on dark,
+   white on light grey): there the pill fills with --ride-text and its label takes --text-0, the opposite end in both
+   themes (>= 4.5:1 whatever colour site.js reads for --ride) */
+html.on-band:where(:not(.past-band)) .site-header .nav a.nav-cta:hover {
+  color: var(--text-0);
+  background: var(--ride-text);
+  box-shadow: inset 0 0 0 1px var(--ride-text);
+}
 /* the theme toggle (2026-10-12, Daniel: "one button, not a slider pill"): the audio pages' round icon button
    (styles.css .theme-toggle), the moon in dark, the sun in light */
 .theme-toggle {
@@ -649,15 +657,7 @@ p {
   justify-content: flex-start;
 }
 
-/* ---------- the chapter rail (v2.2, desktop with motion) ----------
-   Daniel (2026-10-05): "checkpoints that they could maybe like click on the left side of the screen … some kind of
-   dynamic animated scroller or animated bars … [Codex's rail] when you hover on it it expands into the more angled bars".
-   One tick per checkpoint, 24 px apart (WCAG 2.5.8's spacing). site.js writes each tick's length and fill (and the
-   fill's brightness) per frame, only while something moves; CSS owns the colours, the entrance and the label. Every
-   tick's track stays >= 3:1 against what's behind it (--nav-a0), on the page and on the band. */
-.story-nav {
-  display: none;
-}
+/* ---------- the chapter rail: assets/story/rail.css (B5, rail v3; its tag is in src/partials/rail.html) ---------- */
 @media (min-width: 1024px) {
   .js.motion {
     /* room for the rail at the narrow desktops: a left gutter of at least --nav-room (wide screens already have it) */
@@ -666,139 +666,6 @@ p {
   .js.motion .shell {
     padding-left: var(--pad-l);
   }
-  .js.motion .story-nav:not([hidden]) {
-    display: block;
-  }
-}
-.story-nav {
-  position: absolute;
-  /* about a third of the way into the left gutter: 16–44 px from the edge */
-  left: clamp(16px, calc((max(0px, (100vw - var(--shell)) / 2) + var(--pad-l, var(--pad))) * 0.32), 44px);
-  top: 50%;
-  z-index: 8;
-  translate: 0 -50%;
-  color: var(--text-0);
-  visibility: hidden;
-  transition: color 0.3s var(--ease);
-}
-.story-nav.is-in {
-  visibility: visible;
-}
-.story-nav ol {
-  list-style: none;
-}
-.story-nav button {
-  position: relative;
-  display: block;
-  width: 60px;
-  height: 24px;
-  margin-left: -10px;                /* the hit area reaches a little left of the ticks */
-  -webkit-tap-highlight-color: transparent;
-}
-.story-nav button:focus-visible {
-  outline: none;
-}
-.story-nav .tk {
-  position: absolute;
-  left: 10px;
-  top: 11px;
-  width: 10px;                       /* site.js: the tick's length */
-  height: 2px;
-  border-radius: 1px;
-  pointer-events: none;
-  transform-origin: 0 50%;
-  scale: 0 1;
-  opacity: 0;
-  transition: scale 0.56s var(--ease), opacity 0.3s var(--ease);
-  transition-delay: calc(var(--i, 0) * 36ms);
-}
-/* the entrance: the ticks draw in from the edge, top to bottom */
-.story-nav.is-in .tk {
-  scale: 1 1;
-  opacity: 1;
-}
-.story-nav .tk i,
-.story-nav .tk b {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  border-radius: inherit;
-  background: currentColor;
-}
-.story-nav .tk i {
-  width: 100%;
-  opacity: var(--nav-a0);            /* the track */
-  transition: opacity 0.18s var(--ease);
-}
-.story-nav .tk.is-tip i {
-  opacity: 0.95;                     /* the tick under the pointer (or the focus) */
-}
-.story-nav .tk b {
-  width: 0;                          /* site.js: the fill, and its brightness */
-  opacity: 0.4;
-}
-/* the filling tick's leading edge is soft (the house's feathered edge: the theme circle, the paid sweep) */
-.story-nav .tk.is-filling b {
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 6px), transparent);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 6px), transparent);
-}
-.story-nav .tk::after {
-  content: "";
-  position: absolute;
-  inset: -6px -7px;
-  border-radius: 7px;
-  box-shadow: 0 0 0 2px var(--focus);
-  opacity: 0;
-}
-.story-nav button:focus-visible .tk::after {
-  opacity: 1;
-}
-/* the name of the tick under the pointer (or the focus): a frosted pill beside it */
-.nav-tip {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  height: 26px;
-  padding: 0 11px 0 10px;
-  border-radius: var(--r-pill);
-  font-size: 12.5px;
-  font-weight: 560;
-  line-height: 1;
-  letter-spacing: -0.004em;
-  white-space: nowrap;
-  color: var(--text-0);
-  /* near-opaque: at the narrow desktops it sits over the caption's edge, like a popover */
-  background: color-mix(in srgb, var(--bg-1) 94%, transparent);
-  -webkit-backdrop-filter: saturate(1.4) blur(12px);
-  backdrop-filter: saturate(1.4) blur(12px);
-  box-shadow: inset 0 0 0 1px var(--line-2), 0 12px 30px -16px rgba(0, 0, 0, 0.45);
-  opacity: 0;                        /* site.js: with the rail's open amount */
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-.nav-tip .n {
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-.nav-tip .n:empty {
-  display: none;
-}
-/* on the Ride's band the rail takes the band's text colour (site.js: once the band has reached it) */
-.story-nav.on-band {
-  color: var(--ride-text);
-  --nav-a0: 0.68;
-}
-.story-nav.on-band .nav-tip {
-  color: var(--ride-text);
-  background: color-mix(in srgb, var(--ride) 94%, transparent);
-  box-shadow: inset 0 0 0 1px var(--ride-line), 0 12px 30px -16px rgba(0, 0, 0, 0.3);
-}
-.story-nav.on-band .nav-tip .n {
-  color: var(--ride-text-2);
 }
 
 /* ---------- 05 Chase: the Ride's colour field becomes this chapter's backdrop (a full-bleed band) ---------- */
@@ -821,9 +688,13 @@ p {
 .chapter--chase .step::after {
   background: var(--ride-line);
 }
-.chapter--chase p,
-.chapter--chase .stage-caption {
+.chapter--chase p {
   color: var(--ride-text-2);
+}
+/* (A10, fe:claims #3) the stacked layout's "Fictional data" caption on the Ride's field is the disclosure there:
+   full-strength text (light: white on #378081 = 4.6:1; the 80 % white was 3.6-4.1:1) */
+.chapter--chase .stage-caption {
+  color: var(--ride-text);
 }
 .chapter--chase .stage {
   overflow: visible;
@@ -1142,7 +1013,7 @@ details.disclosure p a {
   letter-spacing: -0.014em;
   color: var(--text-2);
 }
-.end-copy > [data-tour-quick] {
+.end-copy > [data-tour-link] {
   display: flex;
   justify-content: center;
   width: 100%;
@@ -2043,6 +1914,12 @@ details.disclosure p a {
 .track {
   height: 0;
 }
+/* (C3, ICX-SETTLE-7) the checkpoint track: one viewport per checkpoint (site.js sets its height); the browser must not
+   move the page to keep an anchor in view when the track or a caption changes size (that scroll would read as FREE) */
+html.js.motion,
+html.js.motion body {
+  overflow-anchor: none;
+}
 /* the Ride's band: the bar's colour flooding the page from the stage outwards (clip-path, per frame) */
 .pin-band {
   position: absolute;
@@ -2105,26 +1982,39 @@ details.disclosure p a {
 .pin.full-field .stage-wrap .stage::after {
   opacity: 0;
 }
-/* a small visible label wherever the stage shows money adding up (legal, 2026-10-05) or a made-up client */
+/* a small visible label wherever the stage shows money adding up (legal, 2026-10-05; narrowed by A10, R5 A.2: Know,
+   Grow, Chase only). A10 (Daniel: "within legal boundaries, but also just dont make it so visable"): quieter, never
+   smaller or timed: the secondary text colour, no outline, >= 4.5:1 on the rendered pixels behind its words
+   (tests/story/test_fictional_label.py).
+   LABEL (2026-10-17, Daniel: "as quiet as legally possible"): plain grey text, no visible pill. Plain --text-2 alone
+   holds on the stage at rest (worst rendered pixel: light 4.8-5.24:1, dark 6.93-6.99:1, 820-1440 wide + 844x390), but
+   not on every frame: the Look invoice is still behind the label on the first Look -> Know frame (1.06:1 dark at
+   1024) and the Ride's field fades in behind it before the pin is .on-field (1.27:1 dark, 1.69:1 light), and CSS has
+   no hook for those frames. So the backing stays, in the stage's own corner colour, opaque and feathered: invisible at
+   rest, it shows only while something else passes behind the words (worst frame with it: light 5.32:1, dark 7.12:1).
+   Weight 500 (was 540): the floor R5 cleared; it still reads at 12.5 px on the renders. */
 .stage-label {
+  --label-chip: color-mix(in srgb, var(--bg-0) 88%, var(--text-2));
+  --label-page: color-mix(in srgb, var(--bg-0) 55%, transparent);
   position: absolute;
-  left: 14px;
-  bottom: 12px;
+  left: 20px;
+  bottom: 14px;
   z-index: 6;
   margin: 0;
-  padding: 4px 10px;
+  padding: 2px 4px;
   border-radius: var(--r-pill);
   font-size: 12.5px;
-  font-weight: 540;
+  font-weight: 500;
   line-height: 1.3;
   letter-spacing: -0.004em;
-  color: var(--text-1);
-  background: color-mix(in srgb, var(--bg-1) 78%, transparent);
-  box-shadow: inset 0 0 0 1px var(--line-1);
+  color: var(--text-2);
+  background: var(--label-chip);
+  box-shadow: 0 0 4px 2px var(--label-chip);
   opacity: 0;
-  /* legal v-story (2026-10-08): the label never fades; it is fully there whenever records are on stage, at once
-     (only its colours ease, onto and off the Ride's field) */
-  transition: color 0.24s var(--ease), background-color 0.24s var(--ease);
+  /* legal v-story (2026-10-08): the label never fades; it is fully there whenever records are on stage, at once.
+     (A10, Sol: its colours no longer ease onto/off the Ride's field either: a 0.24 s ease between the two palettes
+     passed through ~1:1 mid-way; each palette switches whole, so every frame is >= 4.5:1) */
+  transition: none;
   pointer-events: none;
 }
 .stage-label span {
@@ -2136,27 +2026,20 @@ details.disclosure p a {
 .stage-label[data-mode="data"] {
   opacity: 1;
 }
+/* (LABEL: the dark stage's corner, rendered (14, 18, 23) on average) */
+[data-theme="dark"] .stage-label {
+  --label-chip: color-mix(in srgb, var(--bg-0) 96%, var(--text-2));
+  --label-page: color-mix(in srgb, var(--bg-1) 70%, transparent);
+}
+/* (A10: on the Ride's field the old chip, translucent and tinted TOWARD the text, measured 3.41:1 light / 4.1:1 dark,
+   and less over the Email dialog's shadow or the field still fading in. This one is opaque, the band's own colour
+   moved away from the text (--text-1 is the opposite end of --ride-text in both themes), so what passes under it
+   never changes the ratio.) LABEL: plain --ride-text on the field measures 4.11-4.16:1 light (white on the rendered
+   rgb(65, 135, 136)) and 1.5:1 dark under the Email dialog's shadow, so the chip stays, but only 16% off the band
+   (was 28%), feathered: close to the field's own colour, worst frame light 4.91:1, dark 6.49:1 */
 .pin.on-field .stage-label {
+  --label-chip: color-mix(in srgb, var(--ride) 84%, var(--text-1));
   color: var(--ride-text);
-  background: color-mix(in srgb, var(--ride-text) 12%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
-}
-/* v2.1 (Daniel: "the same light and dark mode circle effect … on the website and the app"): the theme switch reveals the
-   new theme through a soft-edged circle from the toggle (site.js themeReveal animates --vt-r on the new root snapshot;
-   the old snapshot stays opaque underneath). Same numbers as the app: feather ~22% of the radius, 48–220 px. */
-@property --vt-r {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 0px;
-}
-html.vt-theme::view-transition-group(root),
-html.vt-theme::view-transition-old(root) {
-  animation: none;
-}
-html.vt-theme::view-transition-new(root) {
-  animation: none;
-  -webkit-mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
-  mask-image: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-r) - clamp(48px, calc(var(--vt-r) * 0.22), 220px)), transparent var(--vt-r));
 }
 /* v2.1 (Daniel: "you can see the edges of the shadows on this section"): while the band is the page and the field fills
    the stage, the stage box is invisible, so it must not clip: a tall card's shadow (Chase's email card) would end in a
@@ -2166,7 +2049,10 @@ html.on-band .pin.full-field .stage {
 }
 /* while the Ride's band is the page, the header takes its colour */
 html.on-band:where(:not(.past-band)) .site-header {
-  background: color-mix(in srgb, var(--ride) 88%, transparent);
+  /* (BX) the bar's resting text on the band: --ride-text over the band's own colour measured 4.13:1 light (white on
+     rgb(62,136,136) once the page behind lifted it). The bar's fill is the band moved a little toward --text-1, the
+     end opposite --ride-text in both themes (A10's move), opaque so what passes behind never changes the ratio */
+  background: color-mix(in srgb, var(--ride) 91%, var(--text-1));
   border-bottom-color: transparent;
 }
 html.on-band:where(:not(.past-band)) .site-header .brand,
@@ -2451,7 +2337,8 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
     width: auto;
   }
   /* "Fictional data" (Sol mobile P1 #3): its own unscaled row under the stage, left-aligned with it, 8 px below it; the
-     row is always there (the captions never move), its words show whenever records are on the stage */
+     row is always there (the captions never move), its words show whenever records are on the stage. (LABEL: 12.5 px
+     like every other width (it was 12 px, under the floor); the row stays 20 px tall.) */
   .stage-col > .stage-label {
     position: relative;
     left: auto;
@@ -2461,19 +2348,24 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
     height: 20px;
     margin: 8px 0 0 calc((100% - var(--stage-w, 100%)) / 2);
     padding: 0 8px;
-    font-size: 12px;
+    font-size: 12.5px;
     line-height: 20px;
   }
-  /* (under the stage it sits on the page, not on the field: it takes the Ride's colours only once the band is the page) */
+  /* (under the stage it sits on the page, not on the field: it takes the Ride's colours only once the band is the page.)
+     LABEL: plain --text-2 on the page holds 5.54-7.04:1 here, except as the band leaves behind it at Chase -> Yours
+     (4.45:1 dark), so the backing is a part-clear wash of the page's own colour (--label-page: bg-0 light, bg-1 dark,
+     the nearest tokens to the rendered page there): no visible pill at rest. No feather here (judge: over the Yours
+     card at the end of Chase -> Yours the feathered wash read as a dark blurry blob); a crisp pill instead, which also
+     holds the band's chip below */
+  .stage-col > .stage-label,
   .pin.on-field .stage-col > .stage-label {
-    color: var(--text-1);
-    background: color-mix(in srgb, var(--bg-1) 78%, transparent);
-    box-shadow: inset 0 0 0 1px var(--line-1);
+    --label-chip: var(--label-page);
+    color: var(--text-2);
+    box-shadow: none;
   }
   html.on-band .pin.on-field .stage-col > .stage-label {
+    --label-chip: color-mix(in srgb, var(--ride) 84%, var(--text-1));
     color: var(--ride-text);
-    background: color-mix(in srgb, var(--ride-text) 12%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ride-text) 22%, transparent);
   }
   /* (F1, app first) the hero's copy as the pinned Make caption (site.js heroSplit; motion only): "01" and the h1 in the
      chapter headline treatment (round B1's look: one flowing headline, its second half in the hero's tone). (F1c: the
@@ -2580,7 +2472,7 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
     font-size: 14px;
     line-height: 19px;
   }
-  .captions > .end-copy > [data-tour-quick] {
+  .captions > .end-copy > [data-tour-link] {
     min-height: 44px;
     margin-top: 8px;
   }
@@ -2742,9 +2634,21 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
   .captions > .end-copy .disclose {
     margin-top: 8px;
   }
-  .captions > .end-copy > [data-tour-quick] {
+  .captions > .end-copy > [data-tour-link] {
     margin-top: 6px;
   }
+}
+
+/* ---------- The theme circle starts alone (REVEAL, 2026-10-17) ----------
+   While FETheme's circle runs (html.vt-theme, theme.js), the flip starts no CSS transition: the circle reveals the new
+   theme's final colours. Left on, the flip started ~40 (link colours, button fills, the rail ticks' opacity); the
+   opacity ones run on the compositor, which holds the circle's start back a frame, and the colour ones repaint the new
+   view every frame under it, so at 1440 the circle started past its 50 ms budget in about half the runs
+   (tests/theme/test_reveal_start.py). */
+html.vt-theme *,
+html.vt-theme *::before,
+html.vt-theme *::after {
+  transition: none !important;
 }
 
 /* ---------- Reduced motion ---------- */
@@ -2761,8 +2665,7 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
 }
 
 /* =====================================================================================================================
-   The 25-second tour (2026-10-06): the hero's secondary button and the dialog it opens (assets/tour-modal.js; the
-   tour itself is /tour/quick/, in an iframe). Placed before the generated fx-lightvars block, which the build
+   The tour link (2026-10-06; the dialog it once opened is retired, B12): the hero's secondary button. Placed before the generated fx-lightvars block, which the build
    script rewrites.
    ===================================================================================================================== */
 /* the secondary button: the header's outlined Download pill (.nav-cta) at the hero's button size, both themes */
@@ -2778,108 +2681,6 @@ html.on-band:where(:not(.past-band)) .theme-toggle:hover {
 .btn-ghost svg {
   width: 16px;
   height: 16px;
-}
-/* the scroll lock: overflow only (scrollY is kept, so the story's follower never sees a jump); the gutter stays, so
-   classic scrollbars don't shift the page sideways */
-html.tq-locked {
-  overflow: hidden;
-  scrollbar-gutter: stable;
-}
-/* the dialog fills the viewport (a click on it, outside .tq-box, is a backdrop click); the box is centred.
-   --tq-chrome: the tour's own bar and notes under its 16:10 window (measured: ~108 px desktop, ~146 px at 390) */
-.tq-dialog {
-  --tq-chrome: 112px;
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  padding: 16px;
-  border: 0;
-  background: transparent;
-  color: var(--text-0);
-  overflow: hidden;
-  container-type: size;                                /* .tq-box sizes itself in cqw / cqh: no 100vw scrollbar maths */
-}
-.tq-dialog[open] {
-  display: grid;
-  place-items: center;
-}
-.tq-dialog::backdrop {
-  background: rgba(4, 6, 10, 0.74);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-[data-theme="light"] .tq-dialog::backdrop {
-  background: rgba(226, 227, 222, 0.8);
-}
-/* 16:10 window, up to 1100 px wide, never taller than the viewport (the close row is 44 px + an 8 px gap) */
-.tq-box {
-  --tq-w: min(1100px, 100cqw, calc((100cqh - 52px - var(--tq-chrome)) * 1.6));
-  width: var(--tq-w);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-.tq-close {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  color: var(--text-1);
-  background: color-mix(in srgb, var(--bg-2) 82%, transparent);
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  transition: color 0.15s, box-shadow 0.15s;
-}
-.tq-close:hover {
-  color: var(--text-0);
-  box-shadow: inset 0 0 0 1px var(--line-3);
-}
-.tq-close svg {
-  width: 16px;
-  height: 16px;
-}
-.tq-frame {
-  width: 100%;
-  height: calc(var(--tq-w) / 1.6 + var(--tq-chrome));
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--bg-0);
-  box-shadow: 0 0 0 1px var(--line-2), 0 40px 100px -40px rgba(0, 0, 0, 0.7);
-}
-.tq-frame iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-/* one calm arrival (the global reduced-motion rule above switches it off) */
-.tq-dialog[open] .tq-box {
-  animation: tq-in 0.28s var(--ease) both;
-}
-.tq-dialog[open]::backdrop {
-  animation: tq-fade 0.28s ease both;
-}
-@keyframes tq-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.985); }
-}
-@keyframes tq-fade {
-  from { opacity: 0; }
-}
-@media (max-width: 639px) {
-  .tq-dialog {
-    --tq-chrome: 150px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tq-dialog[open] .tq-box,
-  .tq-dialog[open]::backdrop {
-    animation: none !important;
-  }
 }
 /* (F1c, Sol F1c #2) on a phone (< 640 px, or a short touch screen) site.js moves the hero's sub line and tour into the
    offer card and takes its CTA row, trial line and fine print off the page (ctaEnd), once the engine starts (fonts, up

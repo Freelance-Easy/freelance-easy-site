@@ -1,23 +1,181 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Not found — Freelance Easy</title>
     <meta name="robots" content="noindex" />
     <link rel="icon" href="/favicon.ico" />
+    <!-- (B7) the body face is preloaded: its swap on the long pages shifted the text (terms CLS 0.0245) -->
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
     <script>
       (function () {
-        try {
-          var t = localStorage.getItem("fe-theme");
-          if (t === "light")
-            document.documentElement.setAttribute("data-theme", "light");
-        } catch (e) {}
+        // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
+        // then this visit's theme from /mac (fe-theme-visit, the audio pages' contract), else dark
+        var d = document.documentElement, t = null, h = location.hash.slice(1);
+        if (h === "dark" || h === "light") t = h;
+        if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+        d.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        var calm = false;
+        try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { calm = false; }
+        // a short touch screen (a phone with its browser bars, or any phone held sideways: under 600 px of small
+        // viewport) gets the stacked beats too: a pinned stage plus its caption would leave a thumbnail. Touch only
+        // (pointer: coarse), so a desktop window is never affected. site.js re-checks on rotation (the same test).
+        var short = false;
+        if (!calm) {
+          try {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              var pr = document.createElement("div");
+              pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+              d.appendChild(pr);
+              var sv = pr.getBoundingClientRect().height || window.innerHeight;
+              d.removeChild(pr);
+              short = sv < 600;
+            }
+          } catch (e) { short = false; }
+        }
+        d.classList.remove("no-js");
+        d.classList.add("js", calm || short ? "calm" : "motion");
+        if (short) d.classList.add("short-touch");
+        // a safety net: if the engine never comes up, the beats fall back to their stacked, static layout
+        setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
       })();
     </script>
-    <link rel="stylesheet" href="./styles.css" />
+    <!-- fe-classic (K1): the visitor's remembered view decides calm or motion before the first paint, over the
+         reduced-motion query: "1" = Classic (calm), "0" = the story. A short touch screen stays calm either way, and is
+         marked calm-auto (the Classic switch is not shown there: calm is automatic). -->
+    <script>
+      (function () {
+        var d = document.documentElement, c = null, short = false;
+        try {
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            var pr = document.createElement("div");
+            pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+            d.appendChild(pr);
+            short = (pr.getBoundingClientRect().height || window.innerHeight) < 600;
+            d.removeChild(pr);
+          }
+        } catch (e) { short = false; }
+        if (short) d.classList.add("calm-auto");
+        try { c = localStorage.getItem("fe-classic"); } catch (e) { c = null; }
+        if (c !== "1" && c !== "0") return;
+        if (!d.classList.contains("motion") && !d.classList.contains("calm")) return;
+        // "1": calm, as site.js's setClassic(true) leaves it (Classic by choice, not a short touch screen)
+        if (c === "1") { d.classList.remove("motion", "short-touch"); d.classList.add("calm"); return; }
+        // "0": only a page made calm by the reduced-motion query turns to the story, never a short touch screen
+        if (!d.classList.contains("calm")) return;
+        if (short) { d.classList.add("short-touch"); return; }
+        d.classList.remove("calm"); d.classList.add("motion");
+      })();
+    </script>
+    <!-- /fe-classic -->
+    <link rel="stylesheet" href="/assets/shared/theme.css" />
+    <script src="/assets/shared/theme.js"></script>
+    <link rel="stylesheet" href="/assets/site/shell.css" />
+    <script src="/assets/site/shell.js" defer></script>
+    <script src="/assets/story/story-url.js" defer></script>
+    <!-- /fe-shell:head -->
+    <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
+  <body data-page="404">
+<header class="site-header">
+  <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
+  <link rel="stylesheet" href="/assets/story/dl-status.css">
+  <script>
+      /* (BX) a Mac or Windows desktop, decided like download.js's detectPlatform, before the first paint, ahead of the nav it sizes */
+      (function () {
+        var u = (navigator.userAgent || "").toLowerCase(), p = (navigator.platform || "").toLowerCase();
+        if (/iphone|ipod|ipad|android|windows phone/.test(u)) return;
+        var mac = /mac/.test(p) || /mac os x|macintosh/.test(u);
+        if (mac && navigator.maxTouchPoints > 1) return;
+        var win = !mac && (/win/.test(p) || /windows/.test(u));
+        if (mac || win) document.documentElement.setAttribute("data-dl-os", mac ? "mac" : "win");
+      })();
+  </script>
+  <!-- (B4) the slim bar (DEC-1): site-level actions only. No link here jumps inside the story: the chapter rail is the
+       page's own menu (B5). Sticky, never hides, 56 px (assets/site/shell.css). -->
+  <div class="shell">
+    <a class="brand" href="/" aria-label="Freelance Easy home"><!-- NEW COPY (aria-label) -->
+      <img src="/assets/story/fe-mark.png" alt="" width="28" height="28">
+      <span>Freelance Easy</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <!-- "How it works" is the full tour, available at will (DEC-3) -->
+      <a href="/tour/">How it works</a><!-- NEW COPY (nav label) -->
+      <a href="/pricing">Pricing</a>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6) -->
+      <a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a><!-- NEW COPY (nav label) -->
+      <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
+           and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
+      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden><!-- (BX) the words download.js will put here, held invisibly so the fill moves nothing (dl-status.css); keep them equal to NOTES in download.js (tests/shell/test_bar_polish.py checks) --><span data-ph="mac"><span class="dl-note-part">Apple Silicon Macs</span><span class="dl-note-sep"> </span><span class="dl-note-part">(M1 or later)</span></span><span data-ph="win"><span class="dl-note-part">Windows 10 and 11</span><span class="dl-note-sep">, </span><span class="dl-note-part">64-bit</span></span></span><!-- NEW COPY -->
+      <a class="nav-cta" href="/install" data-dl data-placement="header" data-platforms="mac,win">Download</a>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
+        <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
+      </button>
+      <!-- (B4) slots, empty until their pieces fill them (shell.css hides an empty slot): K1's classic switch beside the
+           theme toggle, B6's phone/tablet menu button -->
+      <span class="fe-shell-slot" data-classic-slot></span>
+      <span class="fe-shell-slot" data-menu-slot></span>
+    </nav>
+    <script>
+      /* (K1) the Classic view switch, on the story page only, put in its slot as the parser passes (before the first
+         paint, so it never shifts the bar in); assets/shared/classic.js wires it. Hidden where calm is automatic
+         (html.calm-auto, head.html). The doc pages keep the slot empty. */
+      (function () {
+        if (!document.body || document.body.getAttribute("data-page") !== "home") return;
+        var s = document.querySelector(".site-header [data-classic-slot]"), d = document.documentElement, on = false;
+        if (!s || s.firstChild) return;
+        try { var c = localStorage.getItem("fe-classic"); on = c === "1" ? true : c === "0" ? false : window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { on = false; }
+        s.innerHTML = '<button type="button" class="classic-toggle" data-classic-toggle aria-pressed="' + on + '" aria-label="Classic view" title="Classic view">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="2" /><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" /></svg>' +
+          '<span class="classic-label">Classic</span></button>';   // NEW COPY (aria-label, tooltip, bar label)
+        if (d.classList.contains("calm-auto")) s.firstChild.hidden = true;
+      })();
+    </script>
+  </div>
+  <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
+</header>
+<!-- (B6) the phone/tablet menu sheet. Its button goes in the bar's [data-menu-slot] (the script below moves it there
+     before the first paint); shell.js opens and closes the sheet, fills the chapter list from FEStory.destinations (the
+     rail's source, rail.js) and hands a chapter tap to FEStoryURL.jump / FEStory.goTo. shell.css shows the button where
+     the bar has dropped How it works and Pricing (< 640 px) and, on the story page, wherever the chapter rail is hidden
+     (< 1024 px). Without JS the button stays hidden (.js gate in shell.css): no dead control; the footer keeps the links. -->
+<button type="button" class="fe-menu-btn" data-menu-open aria-controls="fe-menu" aria-expanded="false" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <svg class="fe-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path class="fe-menu-bars" d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" /><path class="fe-menu-x" d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
+</button>
+<script>
+  (function () {
+    var b = document.querySelector("[data-menu-open]"), s = document.querySelector(".site-header [data-menu-slot]");
+    if (b && s && b.parentNode !== s) s.appendChild(b);
+  })();
+</script>
+<dialog class="fe-menu" id="fe-menu" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <div class="fe-menu-panel">
+    <!-- (PHONE) the list scrolls inside the sheet; Close stays below it, always in view, and the sheet ends above a dim
+         tap-out strip (shell.css). classic.js puts the Classic view row right under the site links, away from the
+         sheet's end, where a stray "tap outside" lands -->
+    <div class="fe-menu-scroll">
+    <nav class="fe-menu-site" aria-label="Site"><!-- NEW COPY (aria-label) -->
+      <ul>
+        <li><a href="/tour/">How it works</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <!-- web sign-up is paused: exactly as the bar's Sign in (header.html), shown with its href only when shell.js's
+             web-signup flag is on -->
+        <li><a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a></li>
+      </ul>
+    </nav>
+    <nav class="fe-menu-chapters" aria-labelledby="fe-menu-chapters-h" hidden>
+      <p class="fe-menu-label" id="fe-menu-chapters-h">Chapters</p><!-- NEW COPY -->
+      <ol></ol>
+    </nav>
+    </div>
+    <button type="button" class="fe-menu-close" data-menu-close>Close</button><!-- NEW COPY -->
+  </div>
+</dialog>
     <main class="doc" style="text-align: center">
       <h1 style="font-size: clamp(56px, 10vw, 120px); margin-bottom: 8px">404</h1>
       <p class="muted" style="font-size: 18px">
@@ -29,5 +187,29 @@
         </a>
       </p>
     </main>
+<footer class="site-footer fe-shell-footer">
+  <div class="shell">
+    <!-- the footnotes block (B2): the site's fine print, collected here; page-specific notes join this list -->
+    <section class="fe-shell-footnotes" aria-label="Footnotes">
+      <!-- NEW COPY --><p class="fe-shell-footnote" data-footnote="fictional">Clients, invoices and amounts in the demos, screenshots and tour are fictional.</p>
+    </section>
+    <a class="brand" href="#top"><img src="/assets/story/fe-mark.png" alt="" width="22" height="22"><span>Freelance Easy</span></a>
+    <ul class="foot-links">
+      <li><a href="/install">Download</a></li>
+      <li><a href="/tour/">Watch the tour</a></li>
+      <li><a href="/install">Installation help</a></li>
+      <li><a href="/releases"><span class="version">v0.3.2-beta</span> on GitHub</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/terms">Terms</a></li>
+      <li><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></li>
+      <!-- web billing is paused: shell.js shows this, and gives it its href, only when its web-billing flag is on
+           (web-account contract § 6); /account does not exist yet, so the off state ships no link to it -->
+      <li data-flag="web-billing" hidden><a data-flag-href="/account">Manage subscription</a></li>
+    </ul>
+    <p class="foot-meta">© 2026 Freelance Easy LLC</p>
+  </div>
+</footer>
+    <script>FETheme.init({ hashPolicy: "none" });</script>
+    <script src="/assets/story/download.js"></script>
   </body>
 </html>

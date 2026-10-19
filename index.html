@@ -30,6 +30,10 @@
          a seam; scrolling back plays it backwards. Every sentence not on the previous homepage is marked NEW COPY for
          legal. Fictional persona and clients. Without JS, or with reduced motion, the beats stack with still images.
          Files: /assets/story/ (see HANDOFF.md). All fonts are self-hosted; the page makes no third-party request. -->
+    <!-- (chores-2) the body face is preloaded, as on the doc pages (B7): its swap nudged the bar's labels 3-5 px about
+         120 ms after load (BX's finding) -->
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
     <script>
       (function () {
         // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
@@ -64,6 +68,40 @@
         setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
       })();
     </script>
+    <!-- fe-classic (K1): the visitor's remembered view decides calm or motion before the first paint, over the
+         reduced-motion query: "1" = Classic (calm), "0" = the story. A short touch screen stays calm either way, and is
+         marked calm-auto (the Classic switch is not shown there: calm is automatic). -->
+    <script>
+      (function () {
+        var d = document.documentElement, c = null, short = false;
+        try {
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            var pr = document.createElement("div");
+            pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+            d.appendChild(pr);
+            short = (pr.getBoundingClientRect().height || window.innerHeight) < 600;
+            d.removeChild(pr);
+          }
+        } catch (e) { short = false; }
+        if (short) d.classList.add("calm-auto");
+        try { c = localStorage.getItem("fe-classic"); } catch (e) { c = null; }
+        if (c !== "1" && c !== "0") return;
+        if (!d.classList.contains("motion") && !d.classList.contains("calm")) return;
+        // "1": calm, as site.js's setClassic(true) leaves it (Classic by choice, not a short touch screen)
+        if (c === "1") { d.classList.remove("motion", "short-touch"); d.classList.add("calm"); return; }
+        // "0": only a page made calm by the reduced-motion query turns to the story, never a short touch screen
+        if (!d.classList.contains("calm")) return;
+        if (short) { d.classList.add("short-touch"); return; }
+        d.classList.remove("calm"); d.classList.add("motion");
+      })();
+    </script>
+    <!-- /fe-classic -->
+    <link rel="stylesheet" href="/assets/shared/theme.css" />
+    <script src="/assets/shared/theme.js"></script>
+    <link rel="stylesheet" href="/assets/site/shell.css" />
+    <script src="/assets/site/shell.js" defer></script>
+    <script src="/assets/story/story-url.js" defer></script>
+    <!-- /fe-shell:head -->
     <link rel="stylesheet" href="/assets/story/app.css" />
     <link rel="stylesheet" href="/assets/story/site.css" />
 
@@ -96,23 +134,101 @@
   </head>
 <body data-page="home" data-campaign="site">
 <header class="site-header">
+  <!-- (A9) the header Download's platform note and status line: download.js fills them, dl-status.css styles them -->
+  <link rel="stylesheet" href="/assets/story/dl-status.css">
+  <script>
+      /* (BX) a Mac or Windows desktop, decided like download.js's detectPlatform, before the first paint, ahead of the nav it sizes */
+      (function () {
+        var u = (navigator.userAgent || "").toLowerCase(), p = (navigator.platform || "").toLowerCase();
+        if (/iphone|ipod|ipad|android|windows phone/.test(u)) return;
+        var mac = /mac/.test(p) || /mac os x|macintosh/.test(u);
+        if (mac && navigator.maxTouchPoints > 1) return;
+        var win = !mac && (/win/.test(p) || /windows/.test(u));
+        if (mac || win) document.documentElement.setAttribute("data-dl-os", mac ? "mac" : "win");
+      })();
+  </script>
+  <!-- (B4) the slim bar (DEC-1): site-level actions only. No link here jumps inside the story: the chapter rail is the
+       page's own menu (B5). Sticky, never hides, 56 px (assets/site/shell.css). -->
   <div class="shell">
-    <a class="brand" href="#top" aria-label="Freelance Easy, back to the top">
+    <a class="brand" href="/" aria-label="Freelance Easy home"><!-- NEW COPY (aria-label) -->
       <img src="/assets/story/fe-mark.png" alt="" width="28" height="28">
       <span>Freelance Easy</span>
     </a>
     <nav class="nav" aria-label="Primary">
-      <!-- "How it works" opens the 25-second tour's dialog (tour-modal.js); #how stays the no-JS / no-<dialog> fallback -->
-      <a href="#how" data-tour-quick>How it works</a><!-- NEW COPY (nav label) -->
-      <a href="#pricing">Pricing</a>
-      <a class="nav-cta" href="#download">Download</a>
+      <!-- "How it works" is the full tour, available at will (DEC-3) -->
+      <a href="/tour/">How it works</a><!-- NEW COPY (nav label) -->
+      <a href="/pricing">Pricing</a>
+      <!-- web sign-up is paused: shell.js shows this, and gives it its href, only when its web-signup flag is on
+           (contract snapshot children/E-web-account-contract.md § 6) -->
+      <a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a><!-- NEW COPY (nav label) -->
+      <!-- (A9) Mac and Windows: a real download in place (download.js sets /dl/<os>/<campaign>); phones, other desktops
+           and no JS keep the jump to the download block. The note keeps the platform next to the button (R5). -->
+      <span class="dl-note" id="dl-note-header" data-dl-note data-for="header" hidden><!-- (BX) the words download.js will put here, held invisibly so the fill moves nothing (dl-status.css); keep them equal to NOTES in download.js (tests/shell/test_bar_polish.py checks) --><span data-ph="mac"><span class="dl-note-part">Apple Silicon Macs</span><span class="dl-note-sep"> </span><span class="dl-note-part">(M1 or later)</span></span><span data-ph="win"><span class="dl-note-part">Windows 10 and 11</span><span class="dl-note-sep">, </span><span class="dl-note-part">64-bit</span></span></span><!-- NEW COPY -->
+      <a class="nav-cta" href="#download" data-dl data-placement="header" data-platforms="mac,win">Download</a>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark and light theme" title="Switch theme">
         <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z" /></svg>
         <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" /></svg>
       </button>
+      <!-- (B4) slots, empty until their pieces fill them (shell.css hides an empty slot): K1's classic switch beside the
+           theme toggle, B6's phone/tablet menu button -->
+      <span class="fe-shell-slot" data-classic-slot></span>
+      <span class="fe-shell-slot" data-menu-slot></span>
     </nav>
+    <script>
+      /* (K1) the Classic view switch, on the story page only, put in its slot as the parser passes (before the first
+         paint, so it never shifts the bar in); assets/shared/classic.js wires it. Hidden where calm is automatic
+         (html.calm-auto, head.html). The doc pages keep the slot empty. */
+      (function () {
+        if (!document.body || document.body.getAttribute("data-page") !== "home") return;
+        var s = document.querySelector(".site-header [data-classic-slot]"), d = document.documentElement, on = false;
+        if (!s || s.firstChild) return;
+        try { var c = localStorage.getItem("fe-classic"); on = c === "1" ? true : c === "0" ? false : window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { on = false; }
+        s.innerHTML = '<button type="button" class="classic-toggle" data-classic-toggle aria-pressed="' + on + '" aria-label="Classic view" title="Classic view">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="2" /><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" /></svg>' +
+          '<span class="classic-label">Classic</span></button>';   // NEW COPY (aria-label, tooltip, bar label)
+        if (d.classList.contains("calm-auto")) s.firstChild.hidden = true;
+      })();
+    </script>
   </div>
+  <div class="dl-header-status" data-dl-status data-for="header" role="status" aria-live="polite"></div>
 </header>
+<!-- (B6) the phone/tablet menu sheet. Its button goes in the bar's [data-menu-slot] (the script below moves it there
+     before the first paint); shell.js opens and closes the sheet, fills the chapter list from FEStory.destinations (the
+     rail's source, rail.js) and hands a chapter tap to FEStoryURL.jump / FEStory.goTo. shell.css shows the button where
+     the bar has dropped How it works and Pricing (< 640 px) and, on the story page, wherever the chapter rail is hidden
+     (< 1024 px). Without JS the button stays hidden (.js gate in shell.css): no dead control; the footer keeps the links. -->
+<button type="button" class="fe-menu-btn" data-menu-open aria-controls="fe-menu" aria-expanded="false" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <svg class="fe-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path class="fe-menu-bars" d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" /><path class="fe-menu-x" d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
+</button>
+<script>
+  (function () {
+    var b = document.querySelector("[data-menu-open]"), s = document.querySelector(".site-header [data-menu-slot]");
+    if (b && s && b.parentNode !== s) s.appendChild(b);
+  })();
+</script>
+<dialog class="fe-menu" id="fe-menu" aria-label="Menu"><!-- NEW COPY (aria-label) -->
+  <div class="fe-menu-panel">
+    <!-- (PHONE) the list scrolls inside the sheet; Close stays below it, always in view, and the sheet ends above a dim
+         tap-out strip (shell.css). classic.js puts the Classic view row right under the site links, away from the
+         sheet's end, where a stray "tap outside" lands -->
+    <div class="fe-menu-scroll">
+    <nav class="fe-menu-site" aria-label="Site"><!-- NEW COPY (aria-label) -->
+      <ul>
+        <li><a href="/tour/">How it works</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <!-- web sign-up is paused: exactly as the bar's Sign in (header.html), shown with its href only when shell.js's
+             web-signup flag is on -->
+        <li><a data-flag="web-signup" data-flag-href="/account" hidden>Sign in</a></li>
+      </ul>
+    </nav>
+    <nav class="fe-menu-chapters" aria-labelledby="fe-menu-chapters-h" hidden>
+      <p class="fe-menu-label" id="fe-menu-chapters-h">Chapters</p><!-- NEW COPY -->
+      <ol></ol>
+    </nav>
+    </div>
+    <button type="button" class="fe-menu-close" data-menu-close>Close</button><!-- NEW COPY -->
+  </div>
+</dialog>
 
 <main id="top">
   <div data-header-sentinel aria-hidden="true"></div>
@@ -121,22 +237,26 @@
   <div class="story" id="story">
     <div class="pin">
       <div class="pin-band" aria-hidden="true"></div>
-      <!-- the chapter rail (desktop, with motion): one tick per checkpoint. site.js shows it, fills the current tick as
-           its scene plays, opens it like a dock on hover or focus, and lands a click on that checkpoint's readable frame -->
+      <!-- the chapter rail v3 (B5, desktop): the story's menu. One tick and one always-visible name per chapter; the
+           current chapter's tick is longer and its name the strongest ink and a step bigger. No numbers, no fills, no
+           counters (ICX-NOPROG). Without JS these are plain anchors to the chapter sections (decisions #20); with JS
+           assets/story/rail.js renders them from FEStory.destinations, turns a click into a jump (FEStory.goTo) and owns
+           the highlight and aria-current (ICX-HL). -->
+      <link rel="stylesheet" href="/assets/story/rail.css" />
       <nav class="story-nav" aria-label="Chapters" hidden><!-- NEW COPY (the rail's label and checkpoint names) -->
         <ol>
-          <li><button type="button" data-go="make" data-n="01" data-name="Make" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">01 Make</span></button></li>
-          <li><button type="button" data-go="look" data-n="02" data-name="Look" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">02 Look</span></button></li>
-          <li><button type="button" data-go="know" data-n="03" data-name="Know" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">03 Know</span></button></li>
-          <li><button type="button" data-go="grow" data-n="04" data-name="Track" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">04 Track</span></button></li>
-          <li><button type="button" data-go="chase" data-n="05" data-name="Chase" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">05 Chase</span></button></li>
-          <li><button type="button" data-go="yours" data-n="" data-name="Your data" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">Your data</span></button></li>
-          <li><button type="button" data-go="price" data-n="" data-name="Pricing" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">Pricing</span></button></li>
-          <li><button type="button" data-go="note" data-n="" data-name="A note" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">A note</span></button></li>
-          <li><button type="button" data-go="end" data-n="" data-name="Download" tabindex="-1"><span class="tk" aria-hidden="true"><i></i><b></b></span><span class="visually-hidden">Download</span></button></li>
+          <li><a href="#new-invoice" data-go="make" data-name="New invoice"><span class="tk" aria-hidden="true"></span><span class="nm">New invoice</span></a></li>
+          <li><a href="#templates" data-go="look" data-name="Templates"><span class="tk" aria-hidden="true"></span><span class="nm">Templates</span></a></li>
+          <li><a href="#invoices" data-go="know" data-name="Invoices"><span class="tk" aria-hidden="true"></span><span class="nm">Invoices</span></a></li>
+          <li><a href="#dashboard" data-go="grow" data-name="Dashboard"><span class="tk" aria-hidden="true"></span><span class="nm">Dashboard</span></a></li>
+          <li><a href="#email" data-go="chase" data-name="Email"><span class="tk" aria-hidden="true"></span><span class="nm">Email</span></a></li>
+          <li><a href="#your-data" data-go="yours" data-name="Your data"><span class="tk" aria-hidden="true"></span><span class="nm">Your data</span></a></li>
+          <li><a href="#price" data-go="price" data-name="Price"><span class="tk" aria-hidden="true"></span><span class="nm">Price</span></a></li>
+          <li><a href="#a-note" data-go="note" data-name="A note"><span class="tk" aria-hidden="true"></span><span class="nm">A note</span></a></li>
+          <li><a href="#get-the-app" data-go="end" data-name="Get the app"><span class="tk" aria-hidden="true"></span><span class="nm">Get the app</span></a></li>
         </ol>
-        <span class="nav-tip" aria-hidden="true"><span class="n"></span><span class="t"></span></span>
       </nav>
+      <script src="/assets/story/rail.js" defer></script>
       <div class="shell pin-grid">
         <div class="stage-col">
           <div class="stage-wrap">
@@ -156,7 +276,7 @@
   </div>
 
   <!-- ============ 01 MAKE: the hero ============ -->
-  <section class="hero beat" data-beat="make" aria-labelledby="hero-title">
+  <section class="hero beat" id="new-invoice" data-beat="make" aria-labelledby="hero-title">
     <div class="shell hero-grid">
       <div class="hero-copy beat-copy" data-copy="make">
         <h1 id="hero-title"><span class="line">Invoice your next client</span> <span class="line tone">for $5 a month.</span></h1>
@@ -171,12 +291,12 @@
             <span data-label>Download for Mac</span>
           </a>
           <a class="link-quiet" data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>
-          <!-- the quick walkthrough (tour-modal.js opens it in a dialog over the page; without JS this link opens the
-               standalone /tour/quick/ page). The scroll story is untouched. Its own row under the two downloads. -->
-          <a class="btn btn-ghost" href="/tour/quick/" data-tour-quick>
+          <!-- the tour: a plain link to the full tour (B12, DEC-2: /tour/ is the one tour; the homepage dialog is retired).
+               Its own row under the two downloads. -->
+          <a class="btn btn-ghost" href="/tour/" data-tour-link>
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7.1" stroke="currentColor" stroke-width="1.3"/><path d="M6.6 5.3v5.4L10.9 8z" fill="currentColor"/></svg>
             <!-- NEW COPY -->
-            Watch the 25-second tour
+            Watch the tour
           </a>
         </div>
         <p class="disclose strong">Free for seven days, with every feature and no card.</p>
@@ -193,16 +313,16 @@
             <picture class="st-light"><source media="(max-width: 639px)" srcset="/assets/story/static/make-tall.webp"><img src="/assets/story/static/make-wide.webp" alt="" loading="lazy" decoding="async"></picture><picture class="st-dark"><source media="(max-width: 639px)" srcset="/assets/story/static/make-tall-dark.webp"><img src="/assets/story/static/make-wide-dark.webp" alt="" loading="lazy" decoding="async"></picture>
           </div>
         </div>
-        <figcaption class="stage-caption"><span>Fictional data</span><!-- NEW COPY (legal v-story) --></figcaption>
       </figure>
     </div>
   </section>
 
   <!-- ============ 02-05: the product story ============ -->
-  <section class="chapter beat" id="how" data-beat="look" aria-labelledby="look-title">
+  <section class="chapter beat" id="templates" data-beat="look" aria-labelledby="look-title">
+    <span class="anchor-legacy" id="how" aria-hidden="true"></span><!-- legacy #how (decisions #19) -->
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="look">
-        <span class="step">02</span>
+        <span class="step">Templates</span><!-- NEW COPY (B3): the chapter name, not a number -->
         <h2 id="look-title">Your invoice, your <span class="serif">look</span>.</h2><!-- NEW COPY -->
         <p>Four invoice templates. Your logo and accent color on every invoice.</p><!-- NEW COPY (legal v-story) -->
       </div>
@@ -210,20 +330,19 @@
         <div class="stage" data-stage="look" role="img" aria-label="The Theme page's style picker sets the invoice's template, then an accent color and a logo; the invoice is the real PDF.">
           <div class="stage-static"><picture><source media="(max-width: 639px)" srcset="/assets/story/paper/INV1056-bold-brand-logo.svg"><img src="/assets/story/paper/INV1056-bold-brand-logo.svg" alt="" loading="lazy" decoding="async"></picture></div>
         </div>
-        <figcaption class="stage-caption"><span>Fictional data</span><!-- NEW COPY (legal v-story) --></figcaption>
       </figure>
     </div></div>
   </section>
 
-  <section class="chapter beat" data-beat="know" aria-labelledby="know-title">
+  <section class="chapter beat" id="invoices" data-beat="know" aria-labelledby="know-title">
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="know">
-        <span class="step">03</span>
+        <span class="step">Invoices</span><!-- NEW COPY (B3): the chapter name, not a number -->
         <h2 id="know-title">Know who's <span class="serif">paid</span>.</h2><!-- NEW COPY -->
         <p>An invoice is outstanding until the money arrives and you mark it paid.</p>
       </div>
       <figure class="chapter-stage beat-static">
-        <div class="stage" data-stage="know" role="img" aria-label="The invoice list filtered by status: All Invoices, Overdue and Paid. Fictional data.">
+        <div class="stage" data-stage="know" role="img" aria-label="The invoice list filtered by status: All Invoices, Overdue and Paid."><!-- NEW COPY (A10): this aria-label; its figcaption carries "Fictional data" -->
           <div class="stage-static"><picture class="st-light"><source media="(max-width: 639px)" srcset="/assets/story/static/know-tall.webp"><img src="/assets/story/static/know-wide.webp" alt="" loading="lazy" decoding="async"></picture><picture class="st-dark"><source media="(max-width: 639px)" srcset="/assets/story/static/know-tall-dark.webp"><img src="/assets/story/static/know-wide-dark.webp" alt="" loading="lazy" decoding="async"></picture></div>
         </div>
         <figcaption class="stage-caption"><span>Fictional data</span></figcaption>
@@ -231,15 +350,15 @@
     </div></div>
   </section>
 
-  <section class="chapter beat" data-beat="grow" aria-labelledby="grow-title">
+  <section class="chapter beat" id="dashboard" data-beat="grow" aria-labelledby="grow-title">
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="grow">
-        <span class="step">04</span>
+        <span class="step">Dashboard</span><!-- NEW COPY (B3): the chapter name, not a number -->
         <h2 id="grow-title">Watch it add <span class="serif">up</span>.</h2><!-- NEW COPY -->
         <p>The dashboard shows what came in, what's still out and what's overdue.</p>
       </div>
       <figure class="chapter-stage beat-static">
-        <div class="stage" data-stage="grow" role="img" aria-label="The dashboard: Collected YTD $21,450, Outstanding $675, Overdue $450, and revenue by month over the last twelve months. Fictional data."><!-- NEW COPY (legal v-story): this aria-label -->
+        <div class="stage" data-stage="grow" role="img" aria-label="The dashboard: Collected YTD $21,450, Outstanding $675, Overdue $450, and revenue by month over the last twelve months."><!-- NEW COPY (A10): this aria-label; its figcaption carries "Fictional data" -->
           <div class="stage-static"><picture class="st-light"><source media="(max-width: 639px)" srcset="/assets/story/static/grow-tall.webp"><img src="/assets/story/static/grow-wide.webp" alt="" loading="lazy" decoding="async"></picture><picture class="st-dark"><source media="(max-width: 639px)" srcset="/assets/story/static/grow-tall-dark.webp"><img src="/assets/story/static/grow-wide-dark.webp" alt="" loading="lazy" decoding="async"></picture></div>
         </div>
         <figcaption class="stage-caption"><span>Fictional data</span></figcaption>
@@ -247,15 +366,15 @@
     </div></div>
   </section>
 
-  <section class="chapter chapter--chase beat" data-beat="chase" aria-labelledby="chase-title">
+  <section class="chapter chapter--chase beat" id="email" data-beat="chase" aria-labelledby="chase-title">
     <div class="shell"><div class="chapter-grid">
       <div class="chapter-copy beat-copy" data-copy="chase">
-        <span class="step">05</span>
+        <span class="step">Email</span><!-- NEW COPY (B3): the chapter name, not a number -->
         <h2 id="chase-title">Follow up in two <span class="serif">clicks</span>.</h2><!-- NEW COPY: the row's Email action, then Send -->
         <p>Once your email is set up, invoices go out from your own address. Clients pay you the way they do now, and you mark the invoice paid.</p><!-- NEW COPY (legal v-story) -->
       </div>
       <figure class="chapter-stage beat-static">
-        <div class="stage" data-stage="chase" role="img" aria-label="With email already configured, an overdue invoice is emailed from its row in two clicks, then manually marked paid on the dashboard. Collected YTD rises to $21,900 and Overdue falls to $0. Fictional data."><!-- NEW COPY (legal v-story): this aria-label -->
+        <div class="stage" data-stage="chase" role="img" aria-label="With email already configured, an overdue invoice is emailed from its row in two clicks, then manually marked paid on the dashboard. Collected YTD rises to $21,900 and Overdue falls to $0."><!-- NEW COPY (A10): this aria-label; its figcaption carries "Fictional data" -->
           <div class="stage-static"><picture class="st-light"><source media="(max-width: 639px)" srcset="/assets/story/static/chase-tall.webp"><img src="/assets/story/static/chase-wide.webp" alt="" loading="lazy" decoding="async"></picture><picture class="st-dark"><source media="(max-width: 639px)" srcset="/assets/story/static/chase-tall-dark.webp"><img src="/assets/story/static/chase-wide-dark.webp" alt="" loading="lazy" decoding="async"></picture></div>
         </div>
         <figcaption class="stage-caption"><span>Fictional data</span></figcaption>
@@ -264,7 +383,7 @@
   </section>
 
   <!-- ============ 06 Yours: what stays yours ============ -->
-  <section class="yours beat" data-beat="yours" aria-labelledby="yours-title">
+  <section class="yours beat" id="your-data" data-beat="yours" aria-labelledby="yours-title">
     <div class="shell">
       <div class="yours-copy beat-copy" data-copy="yours">
         <div class="section-head">
@@ -308,7 +427,8 @@
   </section>
 
   <!-- ============ 07 Price: one card ============ -->
-  <section class="price beat" id="pricing" data-beat="price" aria-labelledby="price-title">
+  <section class="price beat" id="price" data-beat="price" aria-labelledby="price-title">
+    <span class="anchor-legacy" id="pricing" aria-hidden="true"></span><!-- legacy #pricing (decisions #19) -->
     <div class="shell">
       <div class="price-copy beat-copy" data-copy="price">
         <div class="section-head">
@@ -351,7 +471,7 @@
   </section>
 
   <!-- ============ 08 A note from Daniel ============ -->
-  <section class="note beat" data-beat="note" aria-labelledby="note-title">
+  <section class="note beat" id="a-note" data-beat="note" aria-labelledby="note-title">
     <div class="shell">
       <div class="note-card beat-copy" data-copy="note">
         <h2 id="note-title">A note from Daniel</h2>
@@ -364,7 +484,8 @@
   </section>
 
   <!-- ============ 09 The brand ending: the last shape resolves into the mark ============ -->
-  <section class="brand-end beat" id="download" data-beat="end" aria-labelledby="end-title">
+  <section class="brand-end beat" id="get-the-app" data-beat="end" aria-labelledby="end-title">
+    <span class="anchor-legacy" id="download" aria-hidden="true"></span><!-- legacy #download (decisions #19) -->
     <div class="shell">
       <div class="brand-stage beat-static" role="img" aria-label="The Freelance Easy mark.">
         <div class="stage-static"><img src="/assets/story/fe-mark.png" alt="" width="128" height="128"></div>
@@ -386,16 +507,24 @@
   </section>
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer fe-shell-footer">
   <div class="shell">
+    <!-- the footnotes block (B2): the site's fine print, collected here; page-specific notes join this list -->
+    <section class="fe-shell-footnotes" aria-label="Footnotes">
+      <!-- NEW COPY --><p class="fe-shell-footnote" data-footnote="fictional">Clients, invoices and amounts in the demos, screenshots and tour are fictional.</p>
+    </section>
     <a class="brand" href="#top"><img src="/assets/story/fe-mark.png" alt="" width="22" height="22"><span>Freelance Easy</span></a>
     <ul class="foot-links">
       <li><a href="#download">Download</a></li>
+      <li><a href="/tour/">Watch the tour</a></li>
       <li><a href="/install">Installation help</a></li>
       <li><a href="/releases"><span class="version">v0.3.2-beta</span> on GitHub</a></li>
       <li><a href="/privacy">Privacy</a></li>
       <li><a href="/terms">Terms</a></li>
       <li><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></li>
+      <!-- web billing is paused: shell.js shows this, and gives it its href, only when its web-billing flag is on
+           (web-account contract § 6); /account does not exist yet, so the off state ships no link to it -->
+      <li data-flag="web-billing" hidden><a data-flag-href="/account">Manage subscription</a></li>
     </ul>
     <p class="foot-meta">© 2026 Freelance Easy LLC</p>
   </div>
@@ -405,21 +534,10 @@
 <script src="/assets/story/engine.js"></script>
 <script src="/assets/story/scenes.js"></script>
 <script src="/assets/story/seams.js"></script>
+<script src="/assets/shared/checkpoint-input.js"></script>
 <script src="/assets/story/site.js"></script>
 <script src="/assets/story/download.js"></script>
-<!-- the 25-second tour's dialog: native <dialog> + showModal() (Esc, inertness, top layer). tour-modal.js creates the
-     tour's iframe (/tour/quick/) on open and removes it on close, so it restarts every time and costs nothing until
-     it's asked for. -->
-<!-- NEW COPY (the dialog's accessible name, the same words as the hero button) -->
-<dialog class="tq-dialog" id="tour-quick" aria-label="Watch the 25-second tour">
-  <div class="tq-box">
-    <!-- NEW COPY (accessible name) -->
-    <button type="button" class="tq-close" aria-label="Close" autofocus>
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-    </button>
-    <div class="tq-frame"></div>
-  </div>
-</dialog>
-<script src="/assets/story/tour-modal.js" defer></script>
+<!-- (K1) the Classic view switch: after site.js (FEStory), before the engine's first start -->
+<script src="/assets/shared/classic.js"></script>
 </body>
 </html>

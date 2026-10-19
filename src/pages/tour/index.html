@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>How it works · Freelance Easy</title>
+    <meta name="description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
+    <link rel="canonical" href="https://freelance-easy.com/tour/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="How it works · Freelance Easy">
+    <meta property="og:description" content="Watch a walkthrough of Freelance Easy with fictional invoices and clients.">
+    <meta property="og:url" content="https://freelance-easy.com/tour/">
+    <meta property="og:image" content="https://freelance-easy.com/assets/tour/og-tour.png">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preload" href="/assets/story/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- #include partials/head.html -->
+    <script>
+      (function () {
+        // (TOUR) the tour's own hash flags, after the shared head: the shell reads #light / #dark alone; the tour also
+        // reads them among other flags (#light&reduced&email), as it always has. Then fe-theme, then fe-theme-visit.
+        var t = null, f = location.hash.slice(1).split(/[&,]/);
+        if (f.indexOf("light") >= 0) t = "light"; else if (f.indexOf("dark") >= 0) t = "dark";
+        if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      })();
+    </script>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="proto.css">
+    <!-- (K1) the Classic switch: classic.js fills the bar's slot (body[data-page="tour"]); proto.js stops the tour on it -->
+    <script src="/assets/shared/classic.js" defer></script>
+    <script src="release-screens.js" defer></script>
+    <script src="fe-motion.js" defer></script>
+    <script src="proto.js" defer></script>
+    <script src="/assets/story/download.js" defer></script>
+  </head>
+  <body data-page="tour">
+    <!-- (TOUR) the shared slim bar, a direct child of <body> (sticky; shell.js keeps it live while the menu sheet is open);
+         classic.js wires its Classic slot to the tour by body[data-page="tour"] -->
+    <!-- #include partials/header.html dl_fallback=/install -->
+    <!-- #include partials/menu.html -->
+    <main class="doc tour-page">
+      <div class="shell">
+        <section class="tour-intro" aria-labelledby="tour-title">
+          <!-- NEW COPY --><p class="tour-eyebrow">How it works</p>
+          <!-- NEW COPY --><h1 id="tour-title">One invoice, from <span class="nb">sign-in</span> to marking it paid.</h1>
+          <!-- NEW COPY (ships "Pick any step." — true with no script, in Classic and under reduced motion, where there is no
+               Play; proto.js adds "Play it through, or pick any step." once the player runs with motion) -->
+          <p class="tour-lead"><span id="tour-lead-act">Pick any step.</span> Clients, invoices and amounts in the player are fictional.</p>
+        </section>
+        <section class="tour-stage" aria-label="Freelance Easy walkthrough">
+          <div class="frame-surround">
+            <div class="frame-top"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Freelance Easy</span><span class="fictional">Fictional data</span></div>
+            <div class="pframe-box" id="pframe-box">
+              <iframe id="app-frame" title="Example of the released Freelance Easy app" width="1440" height="900" inert tabindex="-1" aria-hidden="true"></iframe>
+              <!-- (TOUR) the poster: the frame is never an empty box. It holds the play button from the first paint, over
+                   the tour's last screen once the frame is ready; proto.js hides it on the first play or chapter pick. -->
+              <div class="poster" id="poster">
+                <button type="button" class="poster-play" id="poster-play" aria-label="Play the tour">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+                </button>
+                <!-- NEW COPY --><p class="poster-label">Play the tour <span>1:20</span></p>
+              </div>
+              <!-- (TOUR) the end: watch again, or get the app -->
+              <div class="end-card" id="end-card" hidden>
+                <button type="button" id="replay" class="btn tour-btn-quiet">Watch again</button>
+                <!-- NEW COPY --><a class="btn btn-primary" href="#get-the-app">Get the app</a>
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <button type="button" id="play" class="play" aria-label="Play">
+              <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+              <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.5v13H7zM13.5 5.5H17v13h-3.5z" fill="currentColor" /></svg>
+              <!-- (TOUR r2) both words always laid out, one shown: the button never changes width, so the track never moves -->
+              <span class="play-label"><span class="pl-play">Play</span><span class="pl-pause" aria-hidden="true">Pause</span></span>
+            </button>
+            <div class="progress" id="progress" role="progressbar" aria-label="Tour progress" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><span id="progress-fill"></span></div>
+            <span class="time" id="time">0:00 / 1:20</span>
+          </div>
+          <div class="caption" aria-live="polite" aria-atomic="true">
+            <!-- (TOUR r2) empty while the poster shows: proto.js fills them on the first play or chapter pick -->
+            <p class="caption-title" id="caption-title"></p>
+            <p id="caption"></p>
+          </div>
+          <!-- NEW COPY --><p class="player-note" id="player-note">1 min 20 sec · Space to play or pause</p>
+          <!-- (TOUR) the chapters, rail-style (B5's look, this page's own rules in proto.css): names only, no counter;
+               the current one is aria-current, brighter and a step bigger -->
+          <nav class="tour-steps" aria-label="Tour chapters">
+            <ol class="chapters" id="chapters">
+              <li><button type="button" data-chapter="0"><span class="tk" aria-hidden="true"></span><span class="nm">Sign in</span></button></li>
+              <li><button type="button" data-chapter="1"><span class="tk" aria-hidden="true"></span><span class="nm">Your name</span></button></li>
+              <li><button type="button" data-chapter="2"><span class="tk" aria-hidden="true"></span><span class="nm">Dashboard</span></button></li>
+              <li><button type="button" data-chapter="3"><span class="tk" aria-hidden="true"></span><span class="nm">Invoices</span></button></li>
+              <li><button type="button" data-chapter="4"><span class="tk" aria-hidden="true"></span><span class="nm">New invoice</span></button></li>
+              <li><button type="button" data-chapter="5"><span class="tk" aria-hidden="true"></span><span class="nm">Email</span></button></li>
+              <li><button type="button" data-chapter="6"><span class="tk" aria-hidden="true"></span><span class="nm">Paid</span></button></li>
+            </ol>
+          </nav>
+        </section>
+        <noscript><p class="tour-noscript">This tour needs JavaScript to show the app screens.</p></noscript>
+        <!-- (TOUR) the clear end, as the homepage ends: its heading, buttons and trial line, verbatim -->
+        <section class="tour-end" id="get-the-app" aria-labelledby="tour-end-title">
+          <img src="/assets/story/fe-mark.png" alt="" width="56" height="56">
+          <h2 id="tour-end-title">Invoice your next client <span class="tone">for $5 a month.</span></h2>
+          <div class="cta-row" data-dl data-placement="tour-end">
+            <a class="btn btn-primary" data-platform="mac" data-role="primary" href="/download/mac">
+              <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-icon="mac"><path d="M11.18 8.43c-.02-2.04 1.66-3.02 1.74-3.07-.95-1.39-2.43-1.58-2.95-1.6-1.26-.13-2.45.74-3.09.74-.65 0-1.63-.72-2.68-.7-1.38.02-2.65.8-3.36 2.04C-.6 8.4.43 12 1.85 13.97c.7.97 1.52 2.06 2.6 2.02 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.62.68 2.73.66 1.13-.02 1.84-.99 2.53-1.97.8-1.13 1.13-2.23 1.15-2.29-.03-.01-2.2-.84-2.22-3.32-.02-2.07 1.69-3.07 1.77-3.12-.97-1.42-2.47-1.58-2.99-1.62zM9.27 2.42c.57-.7.96-1.66.85-2.62-.83.04-1.83.55-2.42 1.24-.53.62-1 1.6-.87 2.54.93.07 1.87-.46 2.44-1.16z"/></svg>
+              <span data-label>Download for Mac</span>
+            </a>
+            <a class="tour-link-quiet" data-platform="win" data-role="alt" href="/download/win"><span data-label>Download for Windows</span></a>
+          </div>
+          <p class="tour-disclose">Free for seven days, with every feature and no card.</p>
+          <p class="tour-fine"><span data-support="mac">For Apple Silicon Macs, M1 or later, running macOS 12 Monterey or later. Intel Macs aren't supported. The app is signed with an Apple Developer ID and notarized by Apple.</span><span data-support="win">For Windows 10 and 11, 64-bit. The installer isn't code-signed yet, so Windows shows a security warning the first time you open it.</span><span data-support="mobile">Runs on Apple Silicon Macs (M1 or later) and Windows 10 or 11. Send yourself the link and download it there.</span><span class="dl-status" data-share-status data-for="tour-end" aria-live="polite"></span></p>
+          <!-- NEW COPY --><p class="tour-more"><a href="/pricing">See pricing</a></p>
+        </section>
+      </div>
+    </main>
+    <!-- #include partials/footer.html dl_fallback=/install -->
+    <!-- Captions are the tour's presentation copy; app copy is released markup. -->
+    <template id="caption-copy">
+    <!-- NEW COPY --><p>Sign in with Google, then finish signing in in your browser.</p>
+    <!-- NEW COPY --><p>Set the name that appears on your invoices.</p>
+    <!-- NEW COPY --><p>The dashboard shows collected, outstanding, and overdue amounts.</p>
+    <!-- NEW COPY --><p>Use the status tabs to filter your invoices.</p>
+    <!-- NEW COPY --><p>Choose a client, add line items, and create the invoice.</p>
+    <!-- NEW COPY --><p>Review the invoice and send it once email is set up.</p>
+    <!-- NEW COPY --><p>Mark the invoice paid, then return to the updated dashboard.</p>
+  </template>
+  </body>
+</html>

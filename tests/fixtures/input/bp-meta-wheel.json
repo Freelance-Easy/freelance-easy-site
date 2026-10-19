@@ -1,0 +1,58 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 100,
+   "metaKey": true,
+   "t": 0,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -120
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 100,
+   "metaKey": true,
+   "t": 300,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -120
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 100,
+   "metaKey": true,
+   "t": 600,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -120
+  }
+ ],
+ "name": "bp-meta-wheel",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

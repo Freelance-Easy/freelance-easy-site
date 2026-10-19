@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C0a sticky-track spike (scratch, never deployed)</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --header-h: 56px; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html { overflow-anchor: none; }               /* the spike owns every scroll correction (C0a rule S7) */
+  body { margin: 0; font: 15px/1.4 -apple-system, system-ui, sans-serif; background: #0d1016; color: #e8ecf3; overflow-anchor: none; }
+  .hdr { position: sticky; top: 0; z-index: 5; height: var(--header-h); display: flex; align-items: center; gap: 16px;
+         padding: 0 16px; background: #151a23; border-bottom: 1px solid #263042; }
+  .hdr b { font-weight: 600; }
+  .hdr .st { margin-left: auto; font: 12px/1 ui-monospace, monospace; opacity: .8; white-space: nowrap; overflow: hidden; }
+  #svh { position: absolute; top: 0; left: 0; width: 1px; height: 100vh; height: 100svh; visibility: hidden; pointer-events: none; }
+  .story { position: relative; }
+  .pin { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); overflow: hidden;
+         display: grid; place-items: center; touch-action: pan-x pan-y pinch-zoom; }
+  .track { height: 0; }
+  .stage { width: min(80vw, 640px); aspect-ratio: 10 / 9; max-height: 70%; border-radius: 18px; display: grid; place-items: center;
+           background: hsl(calc(var(--b, 0) * 40) 55% 42%); transition: opacity 100ms ease-in; }
+  .stage.dark { opacity: 0; }
+  .stage .name { font-size: clamp(28px, 6vw, 64px); font-weight: 700; }
+  .stage .ph { font: 13px/1 ui-monospace, monospace; opacity: .85; margin-top: 8px; text-align: center; }
+  .bar { position: absolute; left: 0; bottom: 0; height: 4px; background: #fff8; width: 0; }
+  .rail { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); display: grid; gap: 8px; }
+  .rail i { width: 10px; height: 10px; border-radius: 50%; background: #fff3; display: block; }
+  .rail i.dest { outline: 2px solid #fff9; }
+  .rail i.cur { background: #fff; }
+  .rail i.pv { background: #ffd54a; }
+  .after section { min-height: 70vh; padding: 48px 24px; border-top: 1px solid #263042; }
+  footer { padding: 48px 24px; background: #151a23; }
+</style>
+</head>
+<body>
+<div id="svh"></div>
+<header class="hdr"><b>cp-spike</b><span>C0a sticky track</span><span class="st" id="st"></span></header>
+<main>
+  <section class="story" id="story">
+    <div class="pin">
+      <div class="stage" id="stage"><div><div class="name" id="name">make</div><div class="ph" id="ph">rest</div></div></div>
+      <nav class="rail" id="rail" aria-label="Story"></nav>
+      <div class="bar" id="bar"></div>
+    </div>
+    <div class="track"></div>
+  </section>
+  <div class="after">
+    <section id="price"><h2>After the story: Price</h2><p>Native section. The page scrolls normally here (RELEASED).</p></section>
+    <section id="note"><h2>Note</h2><p>Native section.</p></section>
+  </div>
+</main>
+<footer>Footer</footer>
+<script src="./spike.js"></script>
+</body>
+</html>

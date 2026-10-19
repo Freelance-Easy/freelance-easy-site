@@ -1,0 +1,575 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 2,
+   "metaKey": false,
+   "t": 0,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -2
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 8,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 8,
+   "metaKey": false,
+   "t": 16,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -10
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 13,
+   "metaKey": false,
+   "t": 24,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -16
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 17,
+   "metaKey": false,
+   "t": 32,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -20
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 19,
+   "metaKey": false,
+   "t": 40,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -23
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 18,
+   "metaKey": false,
+   "t": 48,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -22
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 18,
+   "metaKey": false,
+   "t": 56,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -22
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 18,
+   "metaKey": false,
+   "t": 64,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -22
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 17,
+   "metaKey": false,
+   "t": 72,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -20
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 17,
+   "metaKey": false,
+   "t": 80,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -20
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 16,
+   "metaKey": false,
+   "t": 88,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -19
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 16,
+   "metaKey": false,
+   "t": 96,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -19
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 15,
+   "metaKey": false,
+   "t": 104,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -18
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 15,
+   "metaKey": false,
+   "t": 112,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -18
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 15,
+   "metaKey": false,
+   "t": 120,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -18
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 15,
+   "metaKey": false,
+   "t": 128,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -18
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 14,
+   "metaKey": false,
+   "t": 136,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -17
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 13,
+   "metaKey": false,
+   "t": 144,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -16
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 14,
+   "metaKey": false,
+   "t": 152,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -17
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 136,
+   "metaKey": false,
+   "t": 248,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -163
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 19,
+   "metaKey": false,
+   "t": 264,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -23
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 18,
+   "metaKey": false,
+   "t": 280,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -22
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 103,
+   "metaKey": false,
+   "t": 392,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -124
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 12,
+   "metaKey": false,
+   "t": 408,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -14
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 52,
+   "metaKey": false,
+   "t": 488,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -62
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 9,
+   "metaKey": false,
+   "t": 504,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -11
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 8,
+   "metaKey": false,
+   "t": 520,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -10
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 43,
+   "metaKey": false,
+   "t": 616,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -52
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 6,
+   "metaKey": false,
+   "t": 632,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -7
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 5,
+   "metaKey": false,
+   "t": 648,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -6
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 33,
+   "metaKey": false,
+   "t": 760,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -40
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 3,
+   "metaKey": false,
+   "t": 776,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -4
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 16,
+   "metaKey": false,
+   "t": 856,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -19
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 3,
+   "metaKey": false,
+   "t": 872,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -4
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 3,
+   "metaKey": false,
+   "t": 888,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -4
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 13,
+   "metaKey": false,
+   "t": 984,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -16
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 2,
+   "metaKey": false,
+   "t": 1000,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -2
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 2,
+   "metaKey": false,
+   "t": 1016,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -2
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 10,
+   "metaKey": false,
+   "t": 1128,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -12
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1,
+   "metaKey": false,
+   "t": 1144,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 5,
+   "metaKey": false,
+   "t": 1224,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -6
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1,
+   "metaKey": false,
+   "t": 1240,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1,
+   "metaKey": false,
+   "t": 1256,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 4,
+   "metaKey": false,
+   "t": 1352,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -5
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1,
+   "metaKey": false,
+   "t": 1384,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 3,
+   "metaKey": false,
+   "t": 1496,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -4
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 2,
+   "metaKey": false,
+   "t": 1592,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -2
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1,
+   "metaKey": false,
+   "t": 1624,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1,
+   "metaKey": false,
+   "t": 1720,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  }
+ ],
+ "name": "tp-tail-jank-120hz",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

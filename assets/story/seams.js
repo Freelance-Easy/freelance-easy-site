@@ -372,9 +372,10 @@
      site v2.2 (Astra: "pricing arrives as an empty slab"): the price copy (the caption, switched by site.js) arrives as
      soon as the card can hold it. PRICE_IN is that moment: the card's spring at ~92 %, where it covers 98 % of the
      copy's box (measured at 1440, both themes); the card goes on settling under readable copy. */
-  SEAMS.yoursPrice = function ({ A }) {
+  SEAMS.yoursPrice = function ({ A, tall }) {
     const a = A.inst.X;
-    const DUR = 1.25, LIFT = 0.1;
+    // C5 (DEC-8) the card is still from u 0.457 (frame by frame, 67f6b3a): 0.30 s of that still stays (0.76, was 1.25)
+    const DUR = FX.trim(tall) ? 0.76 : 1.25, LIFT = 0.1;
     const PRICE_IN = +(LIFT + 0.19).toFixed(3);
     return {
       DUR, PRICE_IN,
@@ -426,8 +427,9 @@
      House order (never ink and size at once): the card shrinks to the mark's tile, then the tile's colour seals it from
      the centre. v2.1: the real raster (assets/fe-mark.png, at its own rect, opacity only) starts arriving while the tile
      is still forming (it overlaps the tile's last 0.26 s), so the identity is there as the tile appears. */
-  SEAMS.priceBrand = function () {
-    const DUR = 1.3;
+  SEAMS.priceBrand = function ({ tall }) {
+    // C5 (DEC-8) the mark is whole and still from u 0.573 (frame by frame, 67f6b3a): 0.30 s of that stays (0.87, was 1.3)
+    const DUR = FX.trim(tall) ? 0.87 : 1.3;
     return {
       DUR,
       seek() {},

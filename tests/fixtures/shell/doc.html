@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shell fixture — a doc page · Freelance Easy</title>
+    <meta name="robots" content="noindex" />
+    <!-- B2 fixture: a doc page on the shared shell (tests/shell/test_shell.py). The span between the fe-shell:head
+         markers is a byte copy of src/partials/head.html and the footer is a byte copy of src/partials/footer.html;
+         the tests hold both copies to their partials. -->
+    <!-- fe-shell:head (B2): the theme + shell head, byte-identical on every page that includes partials/head.html -->
+    <script>
+      (function () {
+        // the theme: #dark / #light first, then the visitor's stored choice (fe-theme, shared with the other pages),
+        // then this visit's theme from /mac (fe-theme-visit, the audio pages' contract), else dark
+        var d = document.documentElement, t = null, h = location.hash.slice(1);
+        if (h === "dark" || h === "light") t = h;
+        if (!t) { try { t = localStorage.getItem("fe-theme"); } catch (e) { t = null; } }
+        if (t !== "dark" && t !== "light") { try { t = sessionStorage.getItem("fe-theme-visit"); } catch (e) { t = null; } }
+        d.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        var calm = false;
+        try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { calm = false; }
+        // a short touch screen (a phone with its browser bars, or any phone held sideways: under 600 px of small
+        // viewport) gets the stacked beats too: a pinned stage plus its caption would leave a thumbnail. Touch only
+        // (pointer: coarse), so a desktop window is never affected. site.js re-checks on rotation (the same test).
+        var short = false;
+        if (!calm) {
+          try {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              var pr = document.createElement("div");
+              pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+              d.appendChild(pr);
+              var sv = pr.getBoundingClientRect().height || window.innerHeight;
+              d.removeChild(pr);
+              short = sv < 600;
+            }
+          } catch (e) { short = false; }
+        }
+        d.classList.remove("no-js");
+        d.classList.add("js", calm || short ? "calm" : "motion");
+        if (short) d.classList.add("short-touch");
+        // a safety net: if the engine never comes up, the beats fall back to their stacked, static layout
+        setTimeout(function () { if (!d.classList.contains("fx-ready")) d.classList.remove("motion", "calm"); }, 4000);
+      })();
+    </script>
+    <!-- fe-classic (K1): the visitor's remembered view decides calm or motion before the first paint, over the
+         reduced-motion query: "1" = Classic (calm), "0" = the story. A short touch screen stays calm either way, and is
+         marked calm-auto (the Classic switch is not shown there: calm is automatic). -->
+    <script>
+      (function () {
+        var d = document.documentElement, c = null, short = false;
+        try {
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            var pr = document.createElement("div");
+            pr.style.cssText = "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+            d.appendChild(pr);
+            short = (pr.getBoundingClientRect().height || window.innerHeight) < 600;
+            d.removeChild(pr);
+          }
+        } catch (e) { short = false; }
+        if (short) d.classList.add("calm-auto");
+        try { c = localStorage.getItem("fe-classic"); } catch (e) { c = null; }
+        if (c !== "1" && c !== "0") return;
+        if (!d.classList.contains("motion") && !d.classList.contains("calm")) return;
+        // "1": calm, as site.js's setClassic(true) leaves it (Classic by choice, not a short touch screen)
+        if (c === "1") { d.classList.remove("motion", "short-touch"); d.classList.add("calm"); return; }
+        // "0": only a page made calm by the reduced-motion query turns to the story, never a short touch screen
+        if (!d.classList.contains("calm")) return;
+        if (short) { d.classList.add("short-touch"); return; }
+        d.classList.remove("calm"); d.classList.add("motion");
+      })();
+    </script>
+    <!-- /fe-classic -->
+    <link rel="stylesheet" href="/assets/shared/theme.css" />
+    <script src="/assets/shared/theme.js"></script>
+    <link rel="stylesheet" href="/assets/site/shell.css" />
+    <script src="/assets/site/shell.js" defer></script>
+    <script src="/assets/story/story-url.js" defer></script>
+    <!-- /fe-shell:head -->
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="shell-fixture">
+    <main class="doc" id="top">
+      <div class="shell">
+        <h1>Shell fixture</h1>
+        <p>A doc page on the shared shell: the theme head, then the footer with its footnotes block.</p>
+        <!-- the flag guard's CSS half: a flagged control the page styles with its own display stays hidden -->
+        <p><a class="fixture-flagged" data-flag-href="/account" data-flag="web-signup" hidden style="display: inline-flex">Sign in</a></p>
+      </div>
+    </main>
+<footer class="site-footer fe-shell-footer">
+  <div class="shell">
+    <!-- the footnotes block (B2): the site's fine print, collected here; page-specific notes join this list -->
+    <section class="fe-shell-footnotes" aria-label="Footnotes">
+      <!-- NEW COPY --><p class="fe-shell-footnote" data-footnote="fictional">Clients, invoices and amounts in the demos, screenshots and tour are fictional.</p>
+    </section>
+    <a class="brand" href="#top"><img src="/assets/story/fe-mark.png" alt="" width="22" height="22"><span>Freelance Easy</span></a>
+    <ul class="foot-links">
+      <li><a href="#download">Download</a></li>
+      <li><a href="/tour/">Watch the tour</a></li>
+      <li><a href="/install">Installation help</a></li>
+      <li><a href="/releases"><span class="version">v0.3.2-beta</span> on GitHub</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/terms">Terms</a></li>
+      <li><a href="mailto:support@freelance-easy.com">support@freelance-easy.com</a></li>
+      <!-- web billing is paused: shell.js shows this, and gives it its href, only when its web-billing flag is on
+           (web-account contract § 6); /account does not exist yet, so the off state ships no link to it -->
+      <li data-flag="web-billing" hidden><a data-flag-href="/account">Manage subscription</a></li>
+    </ul>
+    <p class="foot-meta">© 2026 Freelance Easy LLC</p>
+  </div>
+</footer>
+  </body>
+</html>

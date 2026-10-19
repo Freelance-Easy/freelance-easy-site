@@ -1,0 +1,61 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "altKey": false,
+   "ctrlKey": true,
+   "defaultPrevented": false,
+   "key": "ArrowDown",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 0,
+   "target": "body",
+   "type": "keydown"
+  },
+  {
+   "altKey": true,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": "ArrowDown",
+   "metaKey": false,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 500,
+   "target": "body",
+   "type": "keydown"
+  },
+  {
+   "altKey": false,
+   "ctrlKey": false,
+   "defaultPrevented": false,
+   "key": "ArrowDown",
+   "metaKey": true,
+   "repeat": false,
+   "shiftKey": false,
+   "t": 1000,
+   "target": "body",
+   "type": "keydown"
+  }
+ ],
+ "name": "key-modifiers",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}

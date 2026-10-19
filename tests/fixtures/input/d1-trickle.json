@@ -1,0 +1,146 @@
+{
+ "env": {
+  "consumer": {
+   "mode": "intercept"
+  },
+  "enabled": true,
+  "innerHeight": 800,
+  "pinHeight": 800,
+  "visualScale": 1
+ },
+ "events": [
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 60,
+   "metaKey": false,
+   "t": 0,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -72
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 1.0,
+   "metaKey": false,
+   "t": 100,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.9733,
+   "metaKey": false,
+   "t": 200,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.9467,
+   "metaKey": false,
+   "t": 300,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.92,
+   "metaKey": false,
+   "t": 400,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.8933,
+   "metaKey": false,
+   "t": 500,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.8667,
+   "metaKey": false,
+   "t": 600,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.84,
+   "metaKey": false,
+   "t": 700,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.8133,
+   "metaKey": false,
+   "t": 800,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.7867,
+   "metaKey": false,
+   "t": 900,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  },
+  {
+   "ctrlKey": false,
+   "deltaMode": 0,
+   "deltaX": 0,
+   "deltaY": 0.76,
+   "metaKey": false,
+   "t": 1000,
+   "target": "body",
+   "type": "wheel",
+   "wheelDeltaY": -1
+  }
+ ],
+ "name": "d1-trickle",
+ "nodes": {
+  "body": {
+   "parent": "html",
+   "tag": "BODY"
+  },
+  "html": {
+   "parent": null,
+   "tag": "HTML"
+  }
+ },
+ "synthetic": true
+}
