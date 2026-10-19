@@ -1560,8 +1560,9 @@
     foreign(y);                                         // BT-1: FREE is entered here, synchronously in the scroll event
   }
   window.addEventListener("scroll", onScroll, { passive: true });
-  // (SCRUB) the reader's own touch or wheel takes over from a native jump's smooth scroll: a rebuild no longer resumes it
-  for (const ev of ["touchstart", "wheel"]) window.addEventListener(ev, () => { sNat = null; }, { passive: true });
+  // (SCRUB) the reader's own drag or wheel takes over from a native jump's smooth scroll: a rebuild no longer resumes it.
+  // Not touchstart: a tap (the theme toggle itself, Sol SCRUB-2) does not scroll, and must not cancel the carry-through.
+  for (const ev of ["touchmove", "wheel"]) window.addEventListener(ev, () => { sNat = null; }, { passive: true });
   window.addEventListener("scrollend", () => { endNative(); if (HAS_SCROLLEND && free) armSettle("scrollend"); });
 
   /* -- a native row's smooth anchor scroll in flight (goTo, ICX-JUMP.5), and its cancel by a later explicit jump -- */

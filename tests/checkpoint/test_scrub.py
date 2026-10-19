@@ -256,7 +256,10 @@ def test_theme_switch_carries_a_menu_jump_to_price_through(browser, site_url):
         pg.wait_for_timeout(250)                      # the smooth scroll is under way
         mid = pg.evaluate("() => scrollY")
         assert pg.evaluate(PRICE_TOP) > 300, "harness: the smooth scroll had already arrived"
-        pg.evaluate("() => document.querySelector('[data-theme-toggle]').click()")
+        # a tap on the toggle: its touchstart (Sol SCRUB-2: a tap must not cancel the carry-through), then the click
+        pg.evaluate("() => { const t = document.querySelector('[data-theme-toggle]');"
+                    " t.dispatchEvent(new TouchEvent('touchstart', {bubbles: true, cancelable: true}));"
+                    " t.dispatchEvent(new TouchEvent('touchend', {bubbles: true, cancelable: true})); t.click(); }")
         pg.wait_for_timeout(4000)
         top = pg.evaluate(PRICE_TOP)
         H = pg.evaluate("() => window.__h")
