@@ -74,7 +74,9 @@ Not on the page because neither Terms nor code proves it:
 - **Payment methods shown at checkout.** LS `billing.py` never passes `payment_method_types` (Stripe decides per
   buyer), so no list is provable.
 - **Switching between monthly and yearly.** No in-app switch route found in the v0.3.2-beta templates; the Stripe
-  portal's plan-switch setting is dashboard-only (unread).
+  portal's plan-switch setting is dashboard-only. (2026-10-19: the update orchestrator verified in the live Stripe
+  dashboard on 10-18 that the portal allows monthly↔yearly switching with proration — Terms §7's promise holds. The page
+  still states nothing about switching.)
 - **A failed payment.** It makes the app read-only at once (`past_due` → `PLAN_LAPSED`, App `session.py` `plan_state`), not at the end of the period; the Terms are silent on it.
 - **Live values not read:** `FREE_TRIAL_DAYS` and `STRIPE_MANAGED_PAYMENTS` on Railway (the page relies on the code default of 7 days and on Terms §2), and the Stripe portal's "cancel at period end" setting (the page relies on Terms §7 and the 2026-10b wording).
 - **Who the seller is.** Managed Payments' live state (`STRIPE_MANAGED_PAYMENTS` on Railway) is unread; the page only

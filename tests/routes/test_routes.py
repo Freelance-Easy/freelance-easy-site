@@ -24,6 +24,9 @@ CUT = "652d12a"
 DOC = ["install", "privacy", "terms", "404"]
 LEGAL = ["install", "privacy", "terms"]
 MAIN = re.compile(rb"<main\b.*?</main>", re.S)
+# the app's version label ("Current version v0.3.2-beta" on install) is a routine release bump, not legal text: it is
+# masked before the bytes are compared, so a release can bump it while every other byte stays held to CUT
+VERSION = re.compile(rb"v\d+\.\d+\.\d+(?:-beta)?")
 HEAD_SPAN = re.compile(r"[ \t]*<!-- fe-shell:head .*?<!-- /fe-shell:head -->\n", re.S)
 
 
@@ -56,7 +59,7 @@ def test_legal_main_unchanged(built, name):
     was = MAIN.search(subprocess.run(["git", "-C", str(ROOT), "show", f"{CUT}:{name}.html"],
                                      capture_output=True, check=True).stdout)
     assert now and was
-    assert now.group(0) == was.group(0), f"{name}: <main> bytes differ from {CUT}"
+    assert VERSION.sub(b"vX", now.group(0)) == VERSION.sub(b"vX", was.group(0)), f"{name}: <main> bytes differ from {CUT}"
 
 
 @pytest.mark.parametrize("name", DOC)
