@@ -149,7 +149,7 @@
     grow: "On the stage: the dashboard. Revenue by month over the last twelve months, then Collected YTD $21,450, Outstanding $675 and Overdue $450. Fictional data.",
     chase: "On the stage: with email already configured, an overdue invoice is emailed from its row in two clicks, then manually marked paid on the dashboard. Collected YTD rises to $21,900 and Overdue falls to $0. Fictional data.",
     yours: "On the stage: Settings, Data storage. Your invoices, clients, settings, logos and documents are saved in a folder on your computer.",
-    price: "On the stage: one price, $5 a month or $50 a year.",
+    price: "On the stage: one subscription, $5 a month or $50 a year.",
     note: "On the stage: the Freelance Easy mark.",
     end: "On the stage: the Freelance Easy mark.",
   };
