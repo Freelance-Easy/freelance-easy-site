@@ -2,7 +2,7 @@
 
 Run: uv run --with pytest --with playwright python3 -m pytest tests/routes -q
 The legal text must not change: the <main>...</main> bytes of privacy, terms and install are held to the cut
-commit's (652d12a, branch (a), no A3). The wrangler test is opt-in (FE_WRANGLER=1): it starts `wrangler dev` on
+commit's (652d12a, branch (a), no A3; privacy v3 to its own commit, CUTS). The wrangler test is opt-in (FE_WRANGLER=1): it starts `wrangler dev` on
 127.0.0.1 and never reaches freelance-easy.com or GitHub.
 """
 from __future__ import annotations
@@ -21,7 +21,10 @@ import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CUT = "652d12a"
-DOC = ["install", "privacy", "terms", "404"]
+# privacy v3 (2026-10-27) is held to its own commit; v2's <main> lives on in privacy-2026-10-11.html
+CUTS = {"privacy": "ad79c87"}
+V2_ARCHIVE = "privacy-2026-10-11.html"
+DOC =["install", "privacy", "terms", "404"]
 LEGAL = ["install", "privacy", "terms"]
 MAIN = re.compile(rb"<main\b.*?</main>", re.S)
 # the app's version label ("Current version v0.3.2-beta" on install) is a routine release bump, not legal text: it is
@@ -55,11 +58,21 @@ def test_pricing_rule_and_sitemap():
 
 @pytest.mark.parametrize("name", LEGAL)
 def test_legal_main_unchanged(built, name):
+    cut = CUTS.get(name, CUT)
     now = MAIN.search((built / f"{name}.html").read_bytes())
-    was = MAIN.search(subprocess.run(["git", "-C", str(ROOT), "show", f"{CUT}:{name}.html"],
+    was = MAIN.search(subprocess.run(["git", "-C", str(ROOT), "show", f"{cut}:{name}.html"],
                                      capture_output=True, check=True).stdout)
     assert now and was
-    assert VERSION.sub(b"vX", now.group(0)) == VERSION.sub(b"vX", was.group(0)), f"{name}: <main> bytes differ from {CUT}"
+    assert VERSION.sub(b"vX", now.group(0)) == VERSION.sub(b"vX", was.group(0)), f"{name}: <main> bytes differ from {cut}"
+
+
+def test_privacy_v2_archive_is_v2():
+    """The dated v2 archive keeps the exact <main> users saw from 2026-10-11 (held to CUT)."""
+    now = MAIN.search((ROOT / V2_ARCHIVE).read_bytes())
+    was = MAIN.search(subprocess.run(["git", "-C", str(ROOT), "show", f"{CUT}:privacy.html"],
+                                     capture_output=True, check=True).stdout)
+    assert now and was
+    assert VERSION.sub(b"vX", now.group(0)) == VERSION.sub(b"vX", was.group(0))
 
 
 @pytest.mark.parametrize("name", DOC)
