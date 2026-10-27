@@ -22,7 +22,7 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CUT = "652d12a"
 # privacy v3 (2026-10-27) is held to its own commit; v2's <main> lives on in privacy-2026-10-11.html
-CUTS = {"privacy": "4a2b724"}
+CUTS = {"privacy": "e29be0e"}
 V2_ARCHIVE = "privacy-2026-10-11.html"
 DOC =["install", "privacy", "terms", "404"]
 LEGAL = ["install", "privacy", "terms"]
