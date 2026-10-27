@@ -24,7 +24,7 @@
     <main class="doc">
       <a class="back" href="/">← Back to Freelance Easy</a>
       <h1>Privacy policy</h1>
-      <p class="updated">Effective October 27, 2026. This version removes descriptions of things the app doesn't do (it stopped downloading fonts from Google in version 0.3.2, and usage statistics were never switched on), describes some technical details more briefly, and changes how we tell you about future changes (§12). <a href="/privacy-2026-10-11">Previous version (October 11, 2026)</a>.</p>
+      <p class="updated">Effective October 27, 2026, for accounts created on or after that date and for visitors to our website. If your account is older, the October 11, 2026 version still applies to you until we change it with the notice and consent that version requires. What changed: we removed descriptions of things the app doesn't do (it stopped downloading fonts from Google in version 0.3.2, and usage statistics were never switched on) and describe some technical details more briefly; §5 lists the providers we use today and says we update the list when that changes; §3 states our advertising practices as no sale, no sharing for cross-context behavioral advertising, and no advertising cookies, retargeting pixels or cross-site advertising tracking; §10 says we notify you of security incidents as the law requires; §7 says how Anthropic handles support messages; and §12 changes how we tell you about future changes. <a href="/privacy-2026-10-11">Previous version (October 11, 2026)</a>.</p>
 
       <div class="tldr">
         <p>
@@ -36,9 +36,9 @@
           you heard about us and whether you want tips by email, if you tell us,
           and anything you choose to send us in a support message. Our website's
           analytics are cookieless and don't store raw IP addresses or use
-          persistent visitor identifiers. We don't sell personal information, and
-          we share it only with the service providers we use to run the service,
-          listed below.
+          persistent visitor identifiers. We don't sell personal information. We
+          share it with the service providers we use to run the service, and in
+          the other cases §5 describes.
         </p>
       </div>
 
@@ -104,12 +104,12 @@
         <li>A log of requests to export or delete your data: the kind of request, when it was made and how it ended, under a coded reference instead of your email or account identifier</li>
         <li>Server logs: the request log (IP address, request path, time) and our server's own log, which notes your account identifier with events such as signing in, subscription checks, checkouts and payments</li>
         <li>Error reports and sampled performance traces from <em>our server</em> (not from the app on your computer), sent to our error-tracking service. Each report is rebuilt from a list of allowed technical fields: request bodies and IP addresses are never included. A report may include Stripe references, and an account appears, if at all, only as a coded reference. Personal details inside an error message could still slip through.</li>
-        <li>A bug report, only if you choose to send one from inside the app. It holds the subject and description you type, plus technical details the app adds: the app's version and engine, your operating system and its version, the screen you were on, how quickly your data folder responds and whether a sync service holds it, and the state of sign-in and folder sync on that computer (states and counts only — no file names or paths). A report sent while you're signed in is linked to your account. One sent while you're signed out carries no account, only the reply address you type, if you type one; our server also uses your IP address to limit how many of those can be sent, and doesn't save it with the report.</li>
+        <li>A bug report, only if you choose to send one from inside the app. It holds the subject and description you type, plus technical details the app adds: the app and Electron versions, a shortened browser identification string (which names your operating system), the screen you were on, how quickly your data folder responds and whether a sync service holds it, counts of sign-in attempts on that computer, and the state of folder sync (counts and states only — no file names or paths). A report sent while you're signed in is linked to your account when our server accepts your sign-in; otherwise it's sent without an account. One sent while you're signed out carries no account, only the reply address you type, if you type one; our server also uses your IP address to limit how many of those can be sent, and doesn't save it with the report.</li>
         <li>Anything you send to our email addresses, in our company mailbox</li>
       </ul>
       <h3>Connections the app makes</h3>
       <ul>
-        <li><strong>Our server</strong> — the app checks your account <strong>when it starts and after you sign in</strong>, repeats checks on payment and lapsed-subscription screens, and checks a few more times while it finishes setting up the encryption of your email password. Each check carries your account identifier, the app version and which features that version supports. Checks never carry your invoices, your clients or how many invoices you've made; the free plan is counted on your own computer.</li>
+        <li><strong>Our server</strong> — the app checks your account <strong>when it starts and after you sign in</strong>, repeats checks on payment and lapsed-subscription screens, and may repeat checks every few minutes while it finishes setting up the encryption of your email password. Each check carries your account identifier, the app version and whether that version supports the free trial. Checks never carry your invoices, your clients or how many invoices you've made; the free plan is counted on your own computer.</li>
         <li><strong>GitHub</strong> — every time the app starts, it asks GitHub whether an update is available, and downloads any update automatically; an update installs when you choose to restart the app. GitHub receives your IP address and a random install identifier the update system creates once on your computer (it is not linked to your account, and we can't see it).</li>
         <li><strong>Google Fonts</strong> — versions before 0.3.2 downloaded three typefaces from Google when you opened an invoice or the Theme page, so Google received your IP address and browser details. Current versions include their fonts and don't download them from Google.</li>
         <li><strong>Your email provider</strong> — when you send an invoice, the app connects to your own email account's server with the details you entered. We never see those emails.</li>
@@ -168,7 +168,7 @@
       </p>
 
       <h2>5. Who we share data with</h2>
-      <p>We do <strong>not</strong> sell your personal information or share it for advertising. We share it with service providers that help us run the service. These are the ones we use today:</p>
+      <p>We do <strong>not</strong> sell your personal information or share it for cross-context behavioral advertising. We share it with service providers that help us run the service. These are the ones we use today:</p>
       <table>
         <thead><tr><th>Provider</th><th>What they handle</th><th>Location</th></tr></thead>
         <tbody>
@@ -216,8 +216,11 @@
         providers — Google, Stripe, Sentry, GitHub and Anthropic — process data
         there. Where data moves between countries, we rely on the Standard
         Contractual Clauses in our providers' data processing agreements or on
-        their certification under the EU–U.S. Data Privacy Framework, where the
-        provider offers one. Ask
+        their certification under the EU–U.S. Data Privacy Framework.
+        Anthropic is the exception: we triage support email and bug reports
+        with Claude's consumer service, so Anthropic handles them under its
+        consumer terms and privacy policy, not under a data processing
+        agreement with us. Ask
         <a href="mailto:privacy@freelance-easy.com">privacy@freelance-easy.com</a>
         and we'll tell you which applies to each provider. Information processed
         in another country may be accessible to authorities there under its laws.
@@ -273,11 +276,11 @@
         When we change this policy, we post the new version here with its
         effective date and keep earlier versions available. If a change
         materially affects how we handle your personal information, we'll tell
-        you in the app or by email before it takes effect, and ask for your
-        consent where the law requires it. Corrections and clarifications of
-        existing practices may be published immediately, and typographical
-        fixes happen without notice. For information we collected under an
-        earlier version, we keep the promises that version made.
+        you by email and in the app before it takes effect, and ask for your
+        consent where the law requires it, including before we use information
+        collected under an earlier version in a materially different way.
+        Corrections and clarifications of existing practices may be published
+        immediately, and typographical fixes happen without notice.
         For accounts created under this version, checkout may identify Link as
         the seller of a new subscription (§4) without a separate switch-day
         notice. Each subscription keeps its original seller.
