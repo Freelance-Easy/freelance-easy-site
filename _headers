@@ -99,6 +99,8 @@
   X-Robots-Tag: noindex
 /privacy-2026-09-29
   X-Robots-Tag: noindex
+/privacy-2026-10-11
+  X-Robots-Tag: noindex
 
 # The tours (2026-10-08). Outside assets/, so their HTML/CSS/JS get the
 # platform default (revalidate every load); only the fonts are long-cached.
